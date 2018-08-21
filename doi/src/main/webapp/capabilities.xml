@@ -25,9 +25,6 @@
 
   <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0">
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/doi/instances</accessURL>
-    </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="base">http://replace.me.com/doi/auth-instances</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#BasicAA"/>
     </interface>

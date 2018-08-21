@@ -78,6 +78,11 @@
     </servlet-mapping>
 
     <servlet-mapping>
+        <servlet-name>DOIServlet</servlet-name>
+        <url-pattern>/auth-instances/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>CapabilitiesServlet</servlet-name>
         <url-pattern>/capabilities</url-pattern>
     </servlet-mapping>
