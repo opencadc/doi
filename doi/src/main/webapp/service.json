@@ -1,720 +1,316 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.0",
-    "title": "CADC Digital Object Identifier Service",
-    "description": "The Digital Object Identifier (DOI) Service supports initializing and minting DOIs using DataCite.org .\n"
+    "description": "The Digital Object Identifier (DOI) Service supports initializing and minting DOIs using DataCite.org.",
+    "version": "1.0.0",
+    "title": "CADC DOI Service"
   },
-  "host": "www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca",
+  "host": "apps.canfar.net",
+  "basePath": "/doi/instances",
+  "tags": [
+    {
+      "name": "instances",
+      "description": "Main endpoint for the DOI service."
+    }
+  ],
+  "schemes": [
+    "https",
+    "http"
+  ],
   "paths": {
-    "/doi/": {
-      "get": {
-        "tags": [
-          "CADC Digital Object Identifier Service (ivo://cadc.nrc.ca/doi)"
-        ],
-        "summary": "List all DOIs for user",
-        "description": "GET will produce a list of metadata for all DOIs the authenticated user has initialized or minted.\n",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "produces": [
-          "text/tab-separated-values"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "401": {
-            "description": "Not Authenticated"
-          }
-        }
-      }
-    },
-    "/ams/obs23/{collection}": {
-      "get": {
-        "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
-        ],
-        "description": "GET will produce a summary listing of caom2 observations for a particular collection.  The list is ordered by the Observation maxLastModifed field (increasing).\n",
-        "summary": "List observations",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "produces": [
-          "text/tab-separated-values"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "collection",
-            "description": "The collection to list.",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "maxrec",
-            "description": "The maximum number of records to return.",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "in": "query",
-            "name": "start",
-            "description": "The minimum last modified date (IVOA timestamp format).",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "in": "query",
-            "name": "end",
-            "description": "The maximum last modified date (IVOA timestamp format).",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal error"
-          },
-          "503": {
-            "description": "Service busy"
-          },
-          "default": {
-            "description": "Unexpeced error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/ams/obs23/{collection}/{observationID}": {
-      "get": {
-        "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
-        ],
-        "description": "GET retrieves the observation as a CAOM-2.3 xml document\n",
-        "summary": "Get an observation",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              "title": "CAOM2 Observation",
-              "$ref": "#/definitions/Observation"
-            }
-          },
-          "400": {
-            "description": "(bad request) with the text \"invalid ObservationURI\" if a valid ObservationURI cannot be constructed from the requested path"
-          },
-          "403": {
-            "description": "(forbidden) if the caller does not have read permission"
-          },
-          "404": {
-            "description": "(not found) if the specified collection does not exist or the observation is not in the repository"
-          },
-          "500": {
-            "description": "Internal error"
-          },
-          "503": {
-            "description": "Service busy"
-          },
-          "default": {
-            "description": "Unexpeced error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
-        ],
-        "description": "DELETE removes an existing observation from the repository and will fail (with a 404 \"not found\") if it does not exist.\n",
-        "summary": "Delete an observation",
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "404": {
-            "description": "(not found)"
-          },
-          "500": {
-            "description": "Internal error"
-          },
-          "503": {
-            "description": "Service busy"
-          },
-          "default": {
-            "description": "Unexpeced error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
+    "/instances": {
       "post": {
         "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
+          "instances"
         ],
-        "description": "POST updates (replaces) an existing observation and will fail (with a 404 \"not found\") if it does not exist. The delivered content must be a CAOM-2.0 xml document.\n",
-        "summary": "Modify an observation",
-        "schemes": [
-          "http",
-          "https"
-        ],
+        "summary": "Initialize a new DOI",
+        "description": "Generates a VOSpace directory the calling user will have permission to upload DOI data to, and an XML file using DataCite metadata XSD format.",
+        "operationId": "createDOI",
         "consumes": [
-          "text/xml"
+          "application/json",
+          "application/xml"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
         ],
         "parameters": [
           {
             "in": "body",
             "name": "body",
-            "description": "An updated observation object.",
+            "description": "Basic information for starting DOI process",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/Observation"
+              "$ref": "#/definitions/DOIMeta"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "DOI creation successful. Next steps found at..."
           },
-          "400": {
-            "description": "(bad request) with the text \"request path does not match ObservationURI\" if the path of URI in the document submitted does not match the path in the URL to which the document was posted"
+          "401": {
+            "description": "Not authenticated"
           },
-          "404": {
-            "description": "Not Found"
+          "403": {
+            "description": "Not authorised"
           },
-          "413": {
-            "description": "413 (too large) if the size of the document exceeds the 500Kb maximum imposed in this web service"
-          },
-          "500": {
-            "description": "Internal error"
-          },
-          "503": {
-            "description": "Service busy"
-          },
-          "default": {
-            "description": "Unexpeced error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
+          "405": {
+            "description": "Invalid input"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       },
       "put": {
         "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
+          "instances"
         ],
-        "description": "PUT stores a new observation and will fail if it already exists. The delivered content must be a CAOM-2.0 xml document.\n",
-        "summary": "Create a new observation",
-        "schemes": [
-          "http",
-          "https"
-        ],
+        "summary": "Not Yet Implemented",
+        "description": "Update an existing unminted DOI",
+        "operationId": "updateDOI",
         "consumes": [
-          "text/xml"
+          "application/json",
+          "application/xml"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
         ],
         "parameters": [
           {
             "in": "body",
             "name": "body",
-            "description": "A new observation object.",
+            "description": "DOI object details... ",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/Observation"
+              "$ref": "#/definitions/DOIMeta"
             }
           }
         ],
         "responses": {
+          "401": {
+            "description": "Unauthorised"
+          },
+          "403": {
+            "description": "User not authenticated for this DOI"
+          },
+          "404": {
+            "description": "DOI not found"
+          }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "instances"
+        ],
+        "summary": "Not Yet Implemented",
+        "description": " List all DOIs for authenticated user. Calling user must have access",
+        "operationId": "getAllDOI",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status values that need to be considered for filter",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "available",
+                "pending",
+                "sold"
+              ],
+              "default": "available"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DOIMeta"
+              }
+            }
           },
           "400": {
-            "description": "(bad request) with the text \"request path does not match ObservationURI\" if the path of URI in the document submitted does not match the path in the URL to which the document was posted"
-          },
-          "404": {
-            "description": "(not found) only if the collection does not exist, - 400 (bad request) with the text \"invalid XML\" if the submitted document is not valid (well-formedness and schema validation),"
-          },
-          "413": {
-            "description": "413 (too large) if the size of the document exceeds the 500Kb maximum imposed in this web service"
-          },
-          "500": {
-            "description": "Internal error"
-          },
-          "503": {
-            "description": "Service busy"
-          },
-          "default": {
-            "description": "Unexpeced error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
+            "description": "Invalid status value"
           }
-        }
-      },
-      "parameters": [
-        {
-          "name": "collection",
-          "in": "path",
-          "description": "The collection",
-          "required": true,
-          "type": "string"
         },
-        {
-          "name": "observationID",
-          "in": "path",
-          "description": "The ID of the target observation",
-          "required": true,
-          "type": "string"
-        }
-      ]
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      }
     },
-    "/ams/availability": {
+    "/instances/{DOINum}": {
       "get": {
         "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
+          "instances"
         ],
-        "summary": "VOSI Availability",
-        "description": "Indicates whether the service is operable and the reliability of the service for extended and scheduled requests.\n",
+        "summary": "Not Yet Implemented",
+        "description": "Get specified DOI for authenticated user. Calling user must have access",
+        "operationId": "ListDOI",
         "produces": [
-          "text/xml"
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "DOINum",
+            "in": "path",
+            "description": "Digital Object Identifier number to retrieve",
+            "required": true,
+            "type": "string"
+          }
         ],
         "responses": {
           "200": {
-            "description": "A VOSI availability document in XML.",
+            "description": "successful operation",
             "schema": {
-              "$ref": "#/definitions/availability"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DOIMeta"
+              }
             }
           },
-          "default": {
-            "description": "Unexpected error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
+          "400": {
+            "description": "Invalid status value"
           }
-        }
-      }
-    },
-    "/ams/capabilities": {
-      "get": {
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      },
+      "delete": {
         "tags": [
-          "CAOM Archive Metadata Service (ivo://cadc.nrc.ca/ams)"
+          "instances"
         ],
-        "summary": "VOSI Capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
+        "summary": "Not Yet Implemented",
+        "description": "Delete specified DOI for authenticated user, including associated VOSPace data directory. Calling user must have access",
+        "operationId": "deleteDOI",
         "produces": [
-          "text/xml"
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "DOINum",
+            "in": "path",
+            "description": "Digital Object Identifier number to retrieve",
+            "required": true,
+            "type": "string"
+          }
         ],
         "responses": {
           "200": {
-            "description": "A VOResource capabilities document in XML.",
+            "description": "successful operation",
             "schema": {
-              "$ref": "#/definitions/capabilities"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DOIMeta"
+              }
             }
           },
-          "default": {
-            "description": "Unexpected error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
+          "400": {
+            "description": "Bad parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Unauthorised"
           }
-        }
-      }
-    },
-    "/ams/maq": {
-      "get": {
-        "tags": [
-          "MAQ database TAP service (ivo://cadc.nrc.ca/ams/maq)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the MAQ TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
           }
-        }
-      }
-    },
-    "/ams/maq/capabilities": {
-      "get": {
-        "tags": [
-          "MAQ database TAP service (ivo://cadc.nrc.ca/ams/maq)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/mast": {
-      "get": {
-        "tags": [
-          "MAST database TAP service (ivo://cadc.nrc.ca/ams/mast)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the MAST TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/mast/capabilities": {
-      "get": {
-        "tags": [
-          "MAST database TAP service (ivo://cadc.nrc.ca/ams/mast)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/cfht": {
-      "get": {
-        "tags": [
-          "CFHT database TAP service (ivo://cadc.nrc.ca/ams/cfht)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the CFHT TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/cfht/capabilities": {
-      "get": {
-        "tags": [
-          "CFHT database TAP service (ivo://cadc.nrc.ca/ams/cfht)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/dao": {
-      "get": {
-        "tags": [
-          "DAO database TAP service (ivo://cadc.nrc.ca/ams/dao)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the DAO TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/dao/capabilities": {
-      "get": {
-        "tags": [
-          "DAO database TAP service (ivo://cadc.nrc.ca/ams/dao)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/drao": {
-      "get": {
-        "tags": [
-          "DRAO database TAP service (ivo://cadc.nrc.ca/ams/drao)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the DRAO TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/drao/capabilities": {
-      "get": {
-        "tags": [
-          "DRAO database TAP service (ivo://cadc.nrc.ca/ams/drao)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/eao": {
-      "get": {
-        "tags": [
-          "EAO database TAP service (ivo://cadc.nrc.ca/ams/eao)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the EAO TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/eao/capabilities": {
-      "get": {
-        "tags": [
-          "EAO database TAP service (ivo://cadc.nrc.ca/ams/eao)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/omm": {
-      "get": {
-        "tags": [
-          "OMM database TAP service (ivo://cadc.nrc.ca/ams/omm)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the OMM TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/omm/capabilities": {
-      "get": {
-        "tags": [
-          "OMM database TAP service (ivo://cadc.nrc.ca/ams/omm)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
-      }
-    },
-    "/ams/shared": {
-      "get": {
-        "tags": [
-          "Shared database TAP service (ivo://cadc.nrc.ca/ams/shared)"
-        ],
-        "summary": "TAP-1.1",
-        "description": "Base endpoint for the shared TAP service.\n",
-        "responses": {
-          "404": {
-            "description": "Base URL not usable."
-          }
-        }
-      }
-    },
-    "/ams/shared/capabilities": {
-      "get": {
-        "tags": [
-          "Shared database TAP service (ivo://cadc.nrc.ca/ams/shared)"
-        ],
-        "summary": "VOSI capabilities",
-        "description": "Produces a document describing the capabilities of this service.\n",
-        "produces": [
-          "text/xml"
-        ],
-        "responses": {
-          "200": {
-            "description": "A VOResource capabilities document in XML.",
-            "schema": {
-              "$ref": "#/definitions/capabilities"
-            }
-          }
-        }
+        ]
       }
     }
   },
+  "securityDefinitions": {
+    "petstore_auth": {
+      "type": "oauth2",
+      "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
+      "flow": "implicit",
+      "scopes": {
+        "write:pets": "modify pets in your account",
+        "read:pets": "read your pets"
+      }
+    },
+    "api_key": {
+      "type": "apiKey",
+      "name": "api_key",
+      "in": "header"
+    }
+  },
   "definitions": {
-    "Observation": {
+    "DOIMeta": {
       "type": "object",
-      "xml": {
-        "namespace": "http://www.opencadc.org/caom2/xml/v2.3"
-      },
-      "description": "The Common Archive Observation Model (CAOM) is the core data model used across all collections at the Canadian Astronomy Data Centre (CADC)."
-    },
-    "availability": {
-      "type": "object",
-      "xml": {
-        "namespace": "http://www.ivoa.net/xml/VOSIAvailability/v1.0",
-        "prefix": "vosi"
-      },
-      "properties": {
-        "available": {
-          "type": "boolean",
-          "xml": {
-            "attribute": true,
-            "prefix": "vosi"
-          }
-        },
-        "note": {
-          "type": "string",
-          "xml": {
-            "attribute": true,
-            "prefix": "vosi"
-          }
-        }
-      }
-    },
-    "capabilities": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/capability"
-      },
-      "xml": {
-        "namespace": "http://www.ivoa.net/xml/VOSICapabilities/v1.0",
-        "prefix": "vosi",
-        "wrapped": true
-      }
-    },
-    "capability": {
-      "type": "object",
-      "properties": {
-        "standardID": {
-          "type": "string",
-          "format": "uri",
-          "xml": {
-            "attribute": true
-          }
-        },
-        "interface": {
-          "type": "object",
-          "properties": {
-            "accessURL": {
-              "type": "string",
-              "properties": {
-                "use": {
-                  "type": "string",
-                  "xml": {
-                    "attribute": true
-                  }
-                }
-              }
-            },
-            "securityMethod": {
-              "type": "string",
-              "properties": {
-                "standardID": {
-                  "type": "string",
-                  "format": "uri",
-                  "xml": {
-                    "attribute": true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "Error": {
       "required": [
-        "code",
-        "message"
+        "author",
+        "title"
       ],
       "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
+        "author": {
+          "type": "string",
+          "example": "Fred Dooley, Phd"
         },
-        "message": {
-          "type": "string"
+        "title": {
+          "type": "string",
+          "example": "Views of Neptune, 2018 through 2020"
+        },
+        "publicationDOI": {
+          "type": "string",
+          "example": "11.2335/90.9090"
+        },
+        "status": {
+          "type": "string",
+          "description": "Where the DOI is in the creation process",
+          "enum": [
+            "inprogress",
+            "pending",
+            "minted"
+          ]
         }
+      },
+      "xml": {
+        "name": "DOIMetadata"
       }
     }
   }

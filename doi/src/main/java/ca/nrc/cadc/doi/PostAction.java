@@ -100,6 +100,10 @@ public class PostAction extends DOIAction {
 
 //    private static final String ILLEGAL_NAME_CHARS = "[~#@*+%{}<>\\[\\]|\"\\_^- \n\r\t]";
 
+    private static final String AUTHOR_PARAM = "author";
+    private static final String TITLE_PARAM = "title";
+    private static final String CADC_DOI_PREFIX = "10.11570";
+
     public PostAction() {
         super();
     }
@@ -112,45 +116,81 @@ public class PostAction extends DOIAction {
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
         
-        if (DOINum.equals("")) {
+        if (DOINum == null) {
             requestType = CREATE_REQUEST;
-            String nextDOI = getNextDOI();
-            log.info("Next DOI is: " + nextDOI);
+
+            validateDOIMetadata();
+
+            // generate next doi
+            String nextDOISuffix = getNextDOISuffix();
+            log.info("Next DOI is: " + CADC_DOI_PREFIX + "/" + nextDOISuffix);
+
+            // Create VOSpace folder using nextDOISuffix
+
+            // parse metadata into XML format
+
+            // put XML file to new VOSPace folder
+            // create data folder in parent VOSpace folder
+            // generate vospace group using calling user as admin
+            // apply permissions to folder using vospace group & calling user as node attribute
+
+            // return pointer to parent folder
+
+
+
+
         }
         else {
             throw new UnsupportedOperationException("Editing DOI Metadata not supported.");
-            // gather parameters
-//            String software = syncInput.getParameter("software");
-//            String targetIP = syncInput.getParameter("target-ip");
+            // validate DOI supplied
+            // determine if user has access to this DOI
+            // validate metadata supplied
+
         }
+
+
     }
 
 
     /*
      * Confirm that required information is provided
      */
-    private void validateDOIMetadata(String name) {
-        if (!StringUtil.hasText(name)) {
-            throw new IllegalArgumentException("name must have a value");
+    private void validateDOIMetadata() {
+        // replace 'syncInput' with DOIMetadata object that reader/writer will create
+        String author = syncInput.getParameter(AUTHOR_PARAM);
+
+        if (!StringUtil.hasText(author)) {
+            throw new IllegalArgumentException("Author is required");
         }
-        if (!name.matches("[A-Za-z0-9\\-]+")) {
-            throw new IllegalArgumentException("name can only contain alpha-numeric chars and '-'");
+        if (!author.matches("[A-Za-z0-9\\-]+")) {
+            throw new IllegalArgumentException("Author can only contain alpha-numeric chars and '-'");
         }
+
+        String title = syncInput.getParameter(TITLE_PARAM);
+
+        if (!StringUtil.hasText(title)) {
+            throw new IllegalArgumentException("Title is required");
+        }
+
         // Required:
         // author
         // title
+
+        // At this point the DOIMetadata pojo will be populated, once code for XMLReader/Writer is merged
+        // into here.
+        // Q: will this validate the DOIMetadata object after it's read? Might be most efficient...
     }
 
 
     /*
      * Generate next DOI, format: YY.####
      */
-    private String getNextDOI() {
+    private String getNextDOISuffix() {
         // Check VOSpace folder names under AstroDaaCititationDOI, get the 'largest' of the current year
         // 'YY' is a 2 digit year
         DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
         String formattedDate = df.format(Calendar.getInstance().getTime());
-        return formattedDate + "####";
+        return formattedDate + ".####";
     }
     
 //    private void injectProxyCert(final Subject subject, String userid, String imageID)

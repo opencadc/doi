@@ -149,9 +149,10 @@ public abstract class DOIAction extends RestAction {
         if (path == null) {
             return;
         }
-        
+
+        //
         String[] parts = path.split("/");
-        // Q: which part is the DOI #? which is /instance?
+        //
         if (parts.length > 0) {
             requestType = CREATE_REQUEST;
             DOINum = parts[0];
@@ -230,6 +231,7 @@ public abstract class DOIAction extends RestAction {
         // Verify that a VOSpace directory exists for this DOI
         throw new IllegalArgumentException("DOI not validated (code not implemented yet)");
     }
+
 
     /*
      * Validate that calling user has permission to access this DOI
