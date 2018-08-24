@@ -23,20 +23,17 @@
     </interface>
   </capability>
 
-  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#obs-1.1">
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0">
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/doi/</accessURL>
-    </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/doi/auth</accessURL>
+      <accessURL use="base">http://replace.me.com/doi/auth-instances</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#BasicAA"/>
     </interface>
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/doi/</accessURL>
+      <accessURL use="base">http://replace.me.com/doi/instances</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
     </interface>
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">https://replace.me.com/doi</accessURL>
+      <accessURL use="base">https://replace.me.com/doi/instances</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
     </interface>
   </capability>

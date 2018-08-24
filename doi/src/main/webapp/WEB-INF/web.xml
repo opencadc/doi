@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN" "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
 <web-app>
-    <display-name>ams</display-name>
+    <display-name>doi</display-name>
     
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
@@ -13,521 +13,89 @@
         <servlet-class>ca.nrc.cadc.log.LogControlServlet</servlet-class>
         <init-param>
             <param-name>logLevel</param-name>
-            <param-value>info</param-value>
+            <param-value>debug</param-value>
         </init-param>
         <init-param>
             <param-name>logLevelPackages</param-name>
             <param-value>
-                ca.nrc.cadc.ams
-                ca.nrc.cadc.caom2
-                ca.nrc.cadc.tap
-                ca.nrc.cadc.rest
-                ca.nrc.cadc.uws
-                ca.nrc.cadc.wcs
+                org.opencadc
+                com.spotify
+                ca.nrc.cadc
                 ca.nrc.cadc.auth
-                ca.nrc.cadc.gms
-                ca.nrc.cadc.vosi
             </param-value>
         </init-param>
         <init-param>
             <param-name>logAccessGroup</param-name>
             <param-value>ivo://cadc.nrc.ca/gms?CADC</param-value>
         </init-param>
-        <init-param>
-            <param-name>groupAuthorizer</param-name>
-            <param-value>ca.nrc.cadc.ac.client.GroupAuthorizer</param-value>
-        </init-param>
         <load-on-startup>1</load-on-startup>
-    </servlet>
-    
-    <servlet>
-        <servlet-name>credInjection</servlet-name>
-        <servlet-class>ca.nrc.cadc.cred.util.CredInjectionServlet</servlet-class>
-        <init-param>
-            <param-name>authorized_dn</param-name>
-            <param-value>cn=servops_4a2,ou=cadc,o=hia,c=ca</param-value>
-        </init-param>
-        <init-param>
-            <param-name>authorized_uid</param-name>
-            <param-value>servops</param-value>
-        </init-param>
-    </servlet>
-    
-    <servlet>
-        <servlet-name>obsServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
-        <load-on-startup>2</load-on-startup>
-        <init-param>
-            <param-name>get</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.GetAction</param-value>
-        </init-param>
-        <init-param>
-            <param-name>put</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.PutAction</param-value>
-        </init-param>
-        <init-param>
-            <param-name>post</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.PostAction</param-value>
-        </init-param>
-        <init-param>
-            <param-name>delete</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.DeleteAction</param-value>
-        </init-param>
-    </servlet>
-    
-    <servlet>
-        <servlet-name>deletionsServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
-        <load-on-startup>2</load-on-startup>
-        <init-param>
-            <param-name>get</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.GetDeletedAction</param-value>
-        </init-param>
     </servlet>
 
     <servlet>
-        <load-on-startup>3</load-on-startup>
-        <servlet-name>availabilityServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.vosi.AvailabilityServlet</servlet-class>
-        <init-param>
-            <description>
-            </description>
-            <param-name>ca.nrc.cadc.vosi.WebService</param-name>
-            <param-value>ca.nrc.cadc.ams.ArchiveMetadataService</param-value>
-        </init-param>
-    </servlet>
-    
-    <servlet>
-      <servlet-name>capabilitiesServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    
-    <servlet>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.uws.server.SyncServlet</servlet-class>
-        <init-param>
-            <param-name>ca.nrc.cadc.uws.server.SyncServlet.execOnGET</param-name>
-            <param-value>true</param-value>
-        </init-param>
-        <init-param>
-            <param-name>ca.nrc.cadc.uws.server.SyncServlet.execOnPOST</param-name>
-            <param-value>false</param-value>
-        </init-param>
-        <init-param>
-            <param-name>ca.nrc.cadc.uws.server.JobManager</param-name>
-            <param-value>ca.nrc.cadc.ams.tap.SyncQueryJobManager</param-value>
-        </init-param>
-        <!-- not needed until we support UPLOAD
-        <init-param>
-            <param-name>ca.nrc.cadc.uws.web.InlineContentHandler</param-name>
-            <param-value>ca.nrc.cadc.tap.impl.TapInlineContentHandler</param-value>
-        </init-param>
-        -->
-        <load-on-startup>2</load-on-startup>
-    </servlet>
-    
-    <servlet>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.uws.server.AsyncServlet</servlet-class>
-        <init-param>
-            <param-name>ca.nrc.cadc.uws.server.JobManager</param-name>
-            <param-value>ca.nrc.cadc.ams.tap.AsyncQueryJobManager</param-value>
-        </init-param>
-        <!-- not needed until we support UPLOAD
-        <init-param>
-            <param-name>ca.nrc.cadc.uws.web.InlineContentHandler</param-name>
-            <param-value>ca.nrc.cadc.tap.impl.TapInlineContentHandler</param-value>
-        </init-param>
-        -->
-        <!-- actions -->
+        <servlet-name>DOIServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
             <param-name>get</param-name>
-            <param-value>ca.nrc.cadc.uws.web.GetAction</param-value>
+            <param-value>ca.nrc.cadc.doi.GetAction</param-value>
         </init-param>
         <init-param>
             <param-name>post</param-name>
-            <param-value>ca.nrc.cadc.uws.web.PostAction</param-value>
+            <param-value>ca.nrc.cadc.doi.PostAction</param-value>
         </init-param>
-        <init-param>
-            <param-name>delete</param-name>
-            <param-value>ca.nrc.cadc.uws.web.DeleteAction</param-value>
-        </init-param>
+        <!--<init-param>-->
+            <!--<param-name>delete</param-name>-->
+            <!--<param-value>ca.nrc.cadc.doi.DeleteAction</param-value>-->
+        <!--</init-param>-->
         <load-on-startup>2</load-on-startup>
     </servlet>
-    
+
+
+    <!-- Servlet that checks the availability status of doi -->
     <servlet>
-      <servlet-name>maqCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/maq-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
+        <servlet-name>AvailabilityServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.vosi.AvailabilityServlet</servlet-class>
+        <init-param>
+            <param-name>ca.nrc.cadc.vosi.WebService</param-name>
+            <param-value>org.opencadc.doi.Availability</param-value>
+        </init-param>
     </servlet>
+
+    <!-- Servlet that identifies the services provided by doi -->
     <servlet>
-      <servlet-name>mastCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/mast-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    <servlet>
-      <servlet-name>cfhtCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/cfht-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    <servlet>
-      <servlet-name>daoCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/dao-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    <servlet>
-      <servlet-name>draoCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/drao-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    <servlet>
-      <servlet-name>eaoCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/eao-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    <servlet>
-      <servlet-name>ommCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/omm-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    <servlet>
-      <servlet-name>sharedCapServlet</servlet-name>
-      <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
-      <init-param>
-        <param-name>input</param-name>
-        <param-value>/shared-capabilities.xml</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-    
-    <servlet>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.ams.tap.TableServletImpl</servlet-class>
         <load-on-startup>3</load-on-startup>
+        <servlet-name>CapabilitiesServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.vosi.CapabilitiesServlet</servlet-class>
+        <init-param>
+            <param-name>input</param-name>
+            <param-value>/capabilities.xml</param-value>
+        </init-param>
     </servlet>
-    
-    <!-- URL-to-servlet mapping -->
+
+
+    <servlet-mapping>
+        <servlet-name>DOIServlet</servlet-name>
+        <url-pattern>/instances/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>DOIServlet</servlet-name>
+        <url-pattern>/auth-instances/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>CapabilitiesServlet</servlet-name>
+        <url-pattern>/capabilities</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>AvailabilityServlet</servlet-name>
+        <url-pattern>/availability</url-pattern>
+    </servlet-mapping>
+
+    <!-- Log control servlet endpoint -->
     <servlet-mapping>
         <servlet-name>logControl</servlet-name>
         <url-pattern>/logControl</url-pattern>
     </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>credInjection</servlet-name>
-        <url-pattern>/cinject</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>availabilityServlet</servlet-name>
-        <url-pattern>/availability</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>capabilitiesServlet</servlet-name>
-        <url-pattern>/capabilities</url-pattern>
-    </servlet-mapping>
-    
-    <!-- repository -->
-    <servlet-mapping>
-        <servlet-name>obsServlet</servlet-name>
-        <url-pattern>/obs23/*</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>obsServlet</servlet-name>
-        <url-pattern>/auth-obs23/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>deletionsServlet</servlet-name>
-        <url-pattern>/deletions/*</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>deletionsServlet</servlet-name>
-        <url-pattern>/auth-deletions/*</url-pattern>
-    </servlet-mapping>
-    
-    <!-- per-database TAP endpoints -->
-    <servlet-mapping>
-        <servlet-name>maqCapServlet</servlet-name>
-        <url-pattern>/maq/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/maq/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/maq/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/maq/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/maq/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/maq/auth-async/*</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>mastCapServlet</servlet-name>
-        <url-pattern>/mast/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/mast/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/mast/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/mast/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/mast/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/mast/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>cfhtCapServlet</servlet-name>
-        <url-pattern>/cfht/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/cfht/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/cfht/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/cfht/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/cfht/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/cfht/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>daoCapServlet</servlet-name>
-        <url-pattern>/dao/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/dao/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/dao/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/dao/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/dao/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/dao/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>draoCapServlet</servlet-name>
-        <url-pattern>/drao/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/drao/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/drao/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/drao/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/drao/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/drao/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>eaoCapServlet</servlet-name>
-        <url-pattern>/eao/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/eao/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/eao/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/eao/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/eao/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/eao/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>ommCapServlet</servlet-name>
-        <url-pattern>/omm/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/omm/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/omm/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/omm/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/omm/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/omm/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet-mapping>
-        <servlet-name>sharedCapServlet</servlet-name>
-        <url-pattern>/shared/capabilities</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>caom2TableServlet</servlet-name>
-        <url-pattern>/shared/tables</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/shared/sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>SyncTapServlet</servlet-name>
-        <url-pattern>/shared/auth-sync/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/shared/async/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>AsyncTapServlet</servlet-name>
-        <url-pattern>/shared/auth-async/*</url-pattern>
-    </servlet-mapping>
-    
-    <!-- security constraints -->
-    <security-role>
-        <description>Public security role</description>
-        <role-name>public</role-name>
-    </security-role>
-
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>auth</web-resource-name>
-            <description/>
-            <url-pattern>/auth-obs23/*</url-pattern>
-            <url-pattern>/auth-deletions/*</url-pattern>
-            <url-pattern>/maq/auth-sync/*</url-pattern>
-            <url-pattern>/maq/auth-async/*</url-pattern>
-            <url-pattern>/mast/auth-sync/*</url-pattern>
-            <url-pattern>/mast/auth-async/*</url-pattern>
-            <url-pattern>/cfht/auth-sync/*</url-pattern>
-            <url-pattern>/cfht/auth-async/*</url-pattern>
-            <url-pattern>/dao/auth-sync/*</url-pattern>
-            <url-pattern>/dao/auth-async/*</url-pattern>
-            <url-pattern>/drao/auth-sync/*</url-pattern>
-            <url-pattern>/drao/auth-async/*</url-pattern>
-            <url-pattern>/eao/auth-sync/*</url-pattern>
-            <url-pattern>/eao/auth-async/*</url-pattern>
-            <url-pattern>/omm/auth-sync/*</url-pattern>
-            <url-pattern>/omm/auth-async/*</url-pattern>
-            <url-pattern>/shared/auth-sync/*</url-pattern>
-            <url-pattern>/shared/auth-async/*</url-pattern>
-            <url-pattern>/logControl/*</url-pattern>
-            <http-method>GET</http-method>
-            <http-method>POST</http-method>
-            <http-method>HEAD</http-method>
-            <http-method>PUT</http-method>
-            <http-method>OPTIONS</http-method>
-            <http-method>TRACE</http-method>
-            <http-method>DELETE</http-method>
-        </web-resource-collection>
-        <auth-constraint>
-            <description>force authentication for all requests</description>
-            <role-name>public</role-name>
-        </auth-constraint>
-    </security-constraint>
-    
-    <login-config>
-        <auth-method>BASIC</auth-method>
-        <realm-name>Canadian Astronomy Data Centre</realm-name>
-    </login-config>
     
 </web-app>
