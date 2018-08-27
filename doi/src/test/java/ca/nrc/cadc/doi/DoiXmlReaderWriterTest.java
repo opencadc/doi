@@ -140,6 +140,14 @@ public class DoiXmlReaderWriterTest
         Assert.assertTrue("Namespace URIs are different", ns1.getURI().equals(ns2.getURI()));
     }
     
+    private void compareAttributes(Attribute attribute1, Attribute attribute2, String key, String value, String tag)
+    {
+        Assert.assertTrue(tag + " " + key + " attribute name is incorrect", attribute1.getName().equals(key));
+        Assert.assertEquals(tag + " " + key + " attribute names are different", attribute1.getName(), attribute2.getName());
+        Assert.assertTrue(tag + " " + key + " attribute value is incorrect", attribute1.getValue().equals(value));
+        Assert.assertEquals(tag + " " + key + " attribute values are different", attribute1.getValue(), attribute2.getValue());
+    }
+
     private void compareCreators(Element creator1, Element creator2, Namespace ns)
     {
         // compare creator name attributes
@@ -149,10 +157,7 @@ public class DoiXmlReaderWriterTest
         Assert.assertEquals("Number of creatorName attributes are different", attributes1.size(), attributes2.size());
         Attribute attribute1 = attributes1.get(0);
         Attribute attribute2 = attributes2.get(0);
-        Assert.assertTrue("Incorrect creatorName attribute name", attribute1.getName().equals("nameType"));
-        Assert.assertEquals("Creator creatorName attribute names are different", attribute1.getName(), attribute2.getName());
-        Assert.assertTrue("Incorrect creatorName attribute value", attribute1.getValue().equals("Personal"));
-        Assert.assertEquals("Creator creatorName attribute values are different", attribute1.getValue(), attribute2.getValue());
+        compareAttributes(attribute1, attribute2, "nameType", "Personal", "CreatorName");
 
         // compare creator name
         String creatorName1 = creator1.getChildText("creatorName", ns);
@@ -179,16 +184,10 @@ public class DoiXmlReaderWriterTest
         Assert.assertEquals("Number of nameIdentifier attributes are different", attributes1.size(), attributes2.size());
         attribute1 = attributes1.get(0);
         attribute2 = attributes2.get(0);
-        Assert.assertTrue("Incorrect creator schemeURI attribute name", attribute1.getName().equals("schemeURI"));
-        Assert.assertEquals("Creator attribute schemeURI names are different", attribute1.getName(), attribute2.getName());
-        Assert.assertTrue("Incorrect creator schemeURI attribute value", attribute1.getValue().equals("http://orcid.org/"));
-        Assert.assertEquals("Creator attribute schemeURI values are different", attribute1.getValue(), attribute2.getValue());
+        compareAttributes(attribute1, attribute2, "schemeURI", "http://orcid.org/", "Creator");
         attribute1 = attributes1.get(1);
         attribute2 = attributes2.get(1);
-        Assert.assertTrue("Incorrect creator nameIdentifierScheme attribute name", attribute1.getName().equals("nameIdentifierScheme"));
-        Assert.assertEquals("Creator attribute nameIdentifierScheme names are different", attribute1.getName(), attribute2.getName());
-        Assert.assertTrue("Incorrect creator nameIdentifierScheme attribute value", attribute1.getValue().equals("ORCID"));
-        Assert.assertEquals("Creator attribute nameIdentifierScheme values are different", attribute1.getValue(), attribute2.getValue());
+        compareAttributes(attribute1, attribute2, "nameIdentifierScheme", "ORCID", "Creator");
         String nameIdentifier1 = creator1.getChildText("nameIdentifier", ns);
         String nameIdentifier2 = creator2.getChildText("nameIdentifier", ns);
         Assert.assertTrue("Incorrect creator affiliation", nameIdentifier1.equals("0000-0001-5000-0007"));
@@ -218,10 +217,7 @@ public class DoiXmlReaderWriterTest
         Assert.assertEquals("Number of title attributes are different", attributes1.size(), attributes2.size());
         Attribute attribute1 = attributes1.get(0);
         Attribute attribute2 = attributes2.get(0);
-        Assert.assertTrue("Incorrect title xml:lang attribute name", attribute1.getName().equals("lang"));
-        Assert.assertEquals("Title attribute xml:lang names are different", attribute1.getName(), attribute2.getName());
-        Assert.assertTrue("Incorrect title xml:lang attribute value", attribute1.getValue().equals("en-US"));
-        Assert.assertEquals("Title attribute xml:lang values are different", attribute1.getValue(), attribute2.getValue());
+        compareAttributes(attribute1, attribute2, "lang", "en-US", "Title");
         String title1Text = title1.getText();
         String title2Text = title2.getText();
         Assert.assertTrue("Incorrect title", title1Text.equals("Full DataCite XML Example"));
@@ -236,22 +232,47 @@ public class DoiXmlReaderWriterTest
         Assert.assertEquals("Number of title attributes are different", attributes1.size(), attributes2.size());
         attribute1 = attributes1.get(0);
         attribute2 = attributes2.get(0);
-        Assert.assertTrue("Incorrect title xml:lang attribute name", attribute1.getName().equals("lang"));
-        Assert.assertEquals("Title attribute xml:lang names are different", attribute1.getName(), attribute2.getName());
-        Assert.assertTrue("Incorrect title xml:lang attribute value", attribute1.getValue().equals("en-US"));
-        Assert.assertEquals("Title attribute xml:lang values are different", attribute1.getValue(), attribute2.getValue());
+        compareAttributes(attribute1, attribute2, "lang", "en-US", "Title");
         attribute1 = attributes1.get(1);
         attribute2 = attributes2.get(1);
-        Assert.assertTrue("Incorrect titleType name", attribute1.getName().equals("titleType"));
-        Assert.assertEquals("Title attribute titleType names are different", attribute1.getName(), attribute2.getName());
-        Assert.assertTrue("Incorrect titleType attribute value", attribute1.getValue().equals("Subtitle"));
-        Assert.assertEquals("Title attribute titleType values are different", attribute1.getValue(), attribute2.getValue());
+        compareAttributes(attribute1, attribute2, "titleType", "Subtitle", "Title");
         title1Text = title1.getText();
         title2Text = title2.getText();
         Assert.assertTrue("Incorrect title", title1Text.equals("Demonstration of DataCite Properties."));
         Assert.assertTrue("Titles are different", title1Text.equals(title2Text));
     }
     
+    
+    private void compareSubjects(Element subjects1, Element subjects2, Namespace ns)
+    {
+        // compare number of titles element
+        List<Element> subjectList1 = subjects1.getChildren();
+        List<Element> subjectList2 = subjects2.getChildren();
+        Assert.assertTrue("Incorrect number of subjects", subjectList1.size() == 1);
+        Assert.assertEquals("Number of subjectss are different", subjectList1.size(), subjectList2.size());
+        
+        // compare first title
+        Element subject1 = subjectList1.get(0);
+        Element subject2 = subjectList2.get(0);
+        List<Attribute> attributes1 = subject1.getAttributes();
+        List<Attribute> attributes2 = subject2.getAttributes();
+        Assert.assertTrue("Incorrect number of subject attributes", attributes1.size() == 3);
+        Assert.assertEquals("Number of subject attributes are different", attributes1.size(), attributes2.size());
+        Attribute attribute1 = attributes1.get(0);
+        Attribute attribute2 = attributes2.get(0);
+        compareAttributes(attribute1, attribute2, "lang", "en-US", "Subject");
+        attribute1 = attributes1.get(1);
+        attribute2 = attributes2.get(1);
+        compareAttributes(attribute1, attribute2, "schemeURI", "http://dewey.info/", "Subject");
+        attribute1 = attributes1.get(2);
+        attribute2 = attributes2.get(2);
+        compareAttributes(attribute1, attribute2, "subjectScheme", "dewey", "Subject");
+        String subject1Text = subject1.getText();
+        String subject2Text = subject2.getText();
+        Assert.assertTrue("Incorrect subject", subject1Text.equals("000 computer science"));
+        Assert.assertTrue("Subjects are different", subject1Text.equals(subject2Text));
+    }
+
     private void compareDocs(Document docFromReader, Document docFromWriter)
     {
         
@@ -283,6 +304,13 @@ public class DoiXmlReaderWriterTest
         Element publicationYearFromWriter = rootFromWriter.getChild("publicationYear", ns);
         Assert.assertTrue("Incorrect publisher text", publicationYearFromReader.getText().equals("2014"));
         Assert.assertTrue("Publisher texts are different", publicationYearFromReader.getText().equals(publicationYearFromWriter.getText()));
+        
+        // compare subjects
+        Element subjectsFromReader = rootFromReader.getChild("subjects", ns);
+        Element subjectsFromWriter = rootFromWriter.getChild("subjects", ns);
+        compareSubjects(subjectsFromReader, subjectsFromWriter, ns);
+
+
     }
     
     @Test
