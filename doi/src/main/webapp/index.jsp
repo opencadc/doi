@@ -151,7 +151,6 @@
 <div id='header'>
   <div class="swagger-ui-wrap">
     <a id="logo" href="${request.servletPath}">Digital Object Identifier (DOI) API Doc</a>
-    <i>Under Construction...</i>
     <!-- <form id='api_selector'>
       <div class='input'><input placeholder="http://example.com/api" id="input_baseUrl" name="baseUrl" type="text"/></div>
       <div class='input'><input placeholder="api_key" id="input_apiKey" name="apiKey" type="text"/></div>
