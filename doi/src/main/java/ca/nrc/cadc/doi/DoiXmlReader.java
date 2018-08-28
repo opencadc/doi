@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -94,7 +94,6 @@ public class DoiXmlReader
 {
     private static final Logger log = Logger.getLogger(DoiXmlReader.class);
     
-    static final String XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance";
     static final String DOI_NS_41 = "http://datacite.org/schema/kernel-4";
     static final String DOI_SCHEMA_RESOURCE_41 = "DoiMetadata-4.1.xsd";
 
@@ -130,8 +129,6 @@ public class DoiXmlReader
         }
         else
             log.debug("schema validation disabled");
-
-        xsiNamespace = Namespace.getNamespace(XSI_NAMESPACE);
     }
 
     /**
