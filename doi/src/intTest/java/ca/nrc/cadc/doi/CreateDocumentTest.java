@@ -150,7 +150,7 @@ public class CreateDocumentTest
             public Object run() throws Exception
             {
                 // post the job
-                URL postUrl = new URL(baseURL+ "/instances");
+                URL postUrl = new URL(baseURL);
 
                 log.debug("baseURL: " + baseURL);
                 log.debug("posting to: " + postUrl);
