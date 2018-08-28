@@ -69,27 +69,44 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.NodeProperty;
+import ca.nrc.cadc.vos.NodeWriter;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientTransfer;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
 
 /**
  *
@@ -103,42 +120,81 @@ public class PostAction extends DOIAction {
     private static final String AUTHOR_PARAM = "author";
     private static final String TITLE_PARAM = "title";
     private static final String CADC_DOI_PREFIX = "10.11570";
+    private static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
+
+    private VOSURI target;
+    private List<NodeProperty> properties;
 
     public PostAction() {
         super();
     }
 
     @Override
-    public void doAction() throws Exception {
-
-        // Discover whether a DOI Number has been provided or not
-        super.initRequest();
+    public void doActionImpl() throws Exception {
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
-        
+
+        // DOINum is parsed out in DOIAction.initRequest()
         if (DOINum == null) {
             requestType = CREATE_REQUEST;
 
-            validateDOIMetadata();
+            // TODO: add the CISTI.CANFAR directory
 
-            // generate next doi
+            // Perhaps validate that content has been provided in syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY)
+
+            // Generate next doi
             String nextDOISuffix = getNextDOISuffix();
             log.info("Next DOI is: " + CADC_DOI_PREFIX + "/" + nextDOISuffix);
 
-            // Create VOSpace folder using nextDOISuffix
+            Document doiXmlDoc = (Document)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
 
-            // parse metadata into XML format
+            // Create VOSpace data folder using nextDOISuffix
+            String baseUri = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI";
+            VOSURI astroDataURI = new VOSURI(new URI(baseUri ));
 
-            // put XML file to new VOSPace folder
-            // create data folder in parent VOSpace folder
-            // generate vospace group using calling user as admin
+            VOSpaceClient vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
+
+            // Determine next DOI number
+            Node baseNode = vosClient.getNode(astroDataURI.getPath());
+            String nextDoiStr = generateNextDOINumber((ContainerNode)baseNode);
+
+            // Create containing folder
+            String folderName = baseUri + "/" + nextDoiStr;
+            target = new VOSURI(new URI(folderName));
+            // Need to include properties later?
+            Node newFolder = new ContainerNode(target);
+            vosClient.createNode(newFolder);
+
+            // Create 'data' folder under this node.
+            String dataFolderName = folderName + "/data";
+            target = new VOSURI(new URI(dataFolderName));
+            Node newDataFolder = new ContainerNode(target);
+            vosClient.createNode(newDataFolder);
+
+            // Next make a transfer to push xml data read in up to new data node
+            String nextDoiFilename = getNextDOIFilename(nextDoiStr);
+            log.debug("next doi filename: " + nextDoiFilename);
+
+            String doiFilename = folderName + "/" + nextDoiFilename;
+            target = new VOSURI(new URI(doiFilename));
+
+            // Need to include properties later?
+            Node doiFileDataNode = new DataNode(target);
+            vosClient.createNode(doiFileDataNode);
+
+            List<Protocol> protocols = new ArrayList<Protocol>();
+            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+
+            // upload
+            Transfer transfer = new Transfer(new URI(doiFilename), Direction.pushToVoSpace, protocols);
+            ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+            DoiOutputStream outStream = new DoiOutputStream(doiXmlDoc);
+            clientTransfer.setOutputStreamWrapper(outStream);
+            clientTransfer.run();
+
             // apply permissions to folder using vospace group & calling user as node attribute
 
             // return pointer to parent folder
-
-
-
-
         }
         else {
             throw new UnsupportedOperationException("Editing DOI Metadata not supported.");
@@ -154,6 +210,8 @@ public class PostAction extends DOIAction {
 
     /*
      * Confirm that required information is provided
+     * TODO: as been replaced by DoiInlineContentHandler class to parse input streams
+     * Q: will key-value pairs be accepted ever?
      */
     private void validateDOIMetadata() {
         // replace 'syncInput' with DOIMetadata object that reader/writer will create
@@ -182,6 +240,8 @@ public class PostAction extends DOIAction {
     }
 
 
+
+
     /*
      * Generate next DOI, format: YY.####
      */
@@ -192,149 +252,41 @@ public class PostAction extends DOIAction {
         String formattedDate = df.format(Calendar.getInstance().getTime());
         return formattedDate + ".####";
     }
-    
-//    private void injectProxyCert(final Subject subject, String userid, String imageID)
-//            throws PrivilegedActionException, IOException, InterruptedException {
-//
-//        // creating cert home dir
-//        execute(new String[] {"docker", "exec", "--user", "root", imageID, "mkdir", "-p", "/home/guest/.ssl"});
-//
-//        // get the proxy cert
-//        Subject opsSubject = CredUtil.createOpsSubject();
-//        String proxyCert = Subject.doAs(opsSubject, new PrivilegedExceptionAction<String>() {
-//            @Override
-//            public String run() throws Exception {
-//                ByteArrayOutputStream out = new ByteArrayOutputStream();
-//                String userid = subject.getPrincipals(HttpPrincipal.class).iterator().next().getName();
-//                HttpDownload download = new HttpDownload(
-//                        new URL("https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cred/priv/userid/" + userid), out);
-//                download.run();
-//                String proxyCert = out.toString();
-//
-//                return proxyCert;
-//            }
-//        });
-//        log.debug("Proxy cert: " + proxyCert);
-//        // inject the proxy cert
-//        log.debug("Running docker exec to insert cert");
-//
-//        String tmpFileName = stageFile(proxyCert);
-//        String[] injectCert = new String[] {"docker", "cp",  tmpFileName, imageID + ":/home/guest/.ssl/cadcproxy.pem"};
-//        execute(injectCert);
-//        execute(new String[] {"docker", "exec", "--user", "root", imageID, "chown", "-R", "guest:guest", "/home/guest"});
-//    }
-//
-//    private String stageFile(String data) throws IOException {
-//        String tmpFileName = "/tmp/" + UUID.randomUUID();
-//        File file = new File(tmpFileName);
-//        if (!file.setExecutable(true, false)) {
-//            log.warn("Failed to set execution permssion on file " + tmpFileName);
-//        }
-//        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-//        writer.write(data + "\n");
-//        writer.flush();
-//        writer.close();
-//        return tmpFileName;
-//    }
-//
-//    private String getSoftwareScript(String dockerID) {
-//        return
-//            "#!/bin/bash\n" +
-//            "TARGET_IP=`hostname --ip-address`\n" +
-//            "/opt/shibboleth/bin/curl -v -L -k -E /home/guest/.ssl/cadcproxy.pem " +
-//            "-d \"target-ip=$TARGET_IP\" -d \"software=" + dockerID + "\" " +
-//            "https://" + server + "/quarry/session/" + sessionID + "/app";
-//    }
-//
-//    private String getKillSessionScript() {
-//        return
-//            "#!/bin/bash\n" +
-//            "/opt/shibboleth/bin/curl -v -L -k -E /home/guest/.ssl/cadcproxy.pem " +
-//            "-X DELETE " +
-//            "https://" + server + "/quarry/session/" + sessionID;
-//    }
-//
-//    private String getDesktopEntry(String name, String categories) {
-//        return
-//            "[Desktop Entry]\n" +
-//            "Version=1.0\n" +
-//            "Name=" + name + "\n" +
-//            "Comment=" + name + "\n" +
-//            "Keywords=" + name + "\n" +
-//            "Exec=/usr/local/bin/" + name + ".sh\n" +
-//            "Terminal=false\n" +
-//            "X-MultipleArgs=false\n" +
-//            "Type=Application\n" +
-//            "Categories=" + categories;
-//    }
-//
-//    private void confirmSoftware(String software) {
-//        PropertiesReader pr = new PropertiesReader("software-containers.properties");
-//        MultiValuedProperties mp = pr.getAllProperties();
-//        Set<String> names = mp.keySet();
-//        Iterator<String> it = names.iterator();
-//        while (it.hasNext()) {
-//            String value = mp.getProperty(it.next()).get(0);
-//            if (value.equals(software)) {
-//                return;
-//            }
-//        }
-//        throw new IllegalArgumentException("Software with ID " + software + " is not available.");
-//    }
-//
-//    private void injectSoftware(String imageID) throws IOException, InterruptedException {
-//
-//        PropertiesReader pr = new PropertiesReader("software-containers.properties");
-//        MultiValuedProperties mp = pr.getAllProperties();
-//        Set<String> names = mp.keySet();
-//        if (names.isEmpty()) {
-//            log.warn("No softare configured in ~/config/software-containers.properties");
-//            return;
-//        }
-//        for (String name : names) {
-//            String dockerID = mp.getProperty(name).get(0);
-//
-//            String script = getSoftwareScript(dockerID);
-//            String stagedScript = stageFile(script);
-//            String[] addExec = new String[] {"docker", "cp", stagedScript, imageID + ":/usr/local/bin/" + name + ".sh"};
-//            execute(addExec);
-//            execute(new String[] {"docker", "exec", "--user", "root", imageID, "chmod", "755", "/usr/local/bin/" + name + ".sh"});
-//
-//            String desktopEntry = getDesktopEntry(name, "CANFAR;");
-//            String stagedDesktopEntry = stageFile(desktopEntry);
-//            String[] addMenuEntry = new String[] {"docker", "cp", stagedDesktopEntry,
-//                    imageID + ":/usr/share/applications/" + name + ".desktop"};
-//            execute(addMenuEntry);
-//            execute(new String[] {"docker", "exec", "--user", "root", imageID, "chmod", "755", "/usr/share/applications/" + name + ".desktop"});
-//
-//            log.debug("Added software container link: " + name + "->" + dockerID);
-//
-//            // add xterm to the desktop too...
-//            if (name.equals("xterm")) {
-//                String[] addDesktopEntry = new String[] {"docker", "cp", stagedDesktopEntry,
-//                        imageID + ":/headless/Desktop/" + name + ".desktop"};
-//                execute(addDesktopEntry);
-//                execute(new String[] {"docker", "exec", "--user", "root", imageID, "chmod", "755", "/headless/Desktop/" + name + ".desktop"});
-//            }
-//        }
-//
-//        String killScript = getKillSessionScript();
-//        String stagedScript = stageFile(killScript);
-//        String[] addExec = new String[] {"docker", "cp", stagedScript, imageID + ":/usr/local/bin/kill-session.sh"};
-//        execute(addExec);
-//        execute(new String[] {"docker", "exec", "--user", "root", imageID, "chmod", "755", "/usr/local/bin/kill-session.sh"});
-//
-//        String desktopEntry = getDesktopEntry("kill-session", "CANFAR;");
-//        String stagedDesktopEntry = stageFile(desktopEntry);
-//        String[] addMenuEntry = new String[] {"docker", "cp", stagedDesktopEntry,
-//                imageID + ":/usr/share/applications/kill-session.desktop"};
-//        execute(addMenuEntry);
-//        execute(new String[] {"docker", "exec", "--user", "root", imageID, "chmod", "755", "/usr/share/applications/kill-session.desktop"});
-//
-//        // wildcards don't work with docker exec
-//        //
-////        execute(new String[] {"docker", "exec", imageID, "chmod", "+x", "/usr/local/bin/*.sh"});
-////        execute(new String[] {"docker", "exec", imageID, "chmod", "+x", "/headless/Desktop/*.desktop"});
-//
-//    }
+
+    private String generateNextDOINumber(ContainerNode baseNode) {
+
+        // child nodes of baseNode should have structure YY.XXXX
+        // go through list of child nodes
+        // extract XXXX
+        // track largest
+        // add 1
+        // reconstruct YY.XXXX structure and return
+
+        // Look into the node list for folders from current year only
+        DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
+        String currentYear = df.format(Calendar.getInstance().getTime());
+
+        String nextDOI = "";
+        Integer maxDoi = 0;
+        if (baseNode.getNodes().size() > 0) {
+            for( Node childNode : baseNode.getNodes()) {
+                String[] nameParts = childNode.getName().split("\\.");
+                if (nameParts[0].equals(currentYear)) {
+                    int curDoiNum = Integer.parseInt(nameParts[1]);
+                    if (curDoiNum > maxDoi) {
+                        maxDoi = curDoiNum;
+                    }
+                }
+            }
+        }
+
+        maxDoi++;
+        String formattedDOI = String.format("%04d", maxDoi);
+        return currentYear + "." + formattedDOI;
+    }
+
+    private String getNextDOIFilename(String suffix) {
+        return CADC_CISTI_PREFIX + suffix + ".xml";
+    }
+
 }

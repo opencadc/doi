@@ -42,6 +42,7 @@ dependencies {
     compile 'org.opencadc:cadc-rest:[1.1.1,)'
     compile 'org.opencadc:cadc-access-control-identity:1.+'
     compile 'org.opencadc:cadc-vosi:[1.2,2.0)'
+    compile 'org.opencadc:cadc-vos:[1.1.1,)'
 
     runtime 'org.opencadc:cadc-registry:[1.4.1,)'
 

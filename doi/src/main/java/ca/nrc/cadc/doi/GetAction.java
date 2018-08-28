@@ -89,7 +89,7 @@ public class GetAction extends DOIAction {
     }
 
     @Override
-    public void doAction() throws Exception {
+    public void doActionImpl() throws Exception {
 
         // Discover whether a DOI Number has been provided or not
         super.initRequest();

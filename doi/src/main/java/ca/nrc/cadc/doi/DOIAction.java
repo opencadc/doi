@@ -69,17 +69,27 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.NodeWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.security.AccessControlException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
 
 public abstract class DOIAction extends RestAction {
 
@@ -105,26 +115,50 @@ public abstract class DOIAction extends RestAction {
     protected String userID;
     protected String requestType;  // from list above
     protected String DOINum;
-//    protected String appID;
-//    protected String server;
-//    protected String homedir;
-//    protected String scratchdir;
 
     public DOIAction() {
         // initialise and debug statements go here...
 
-//        server = System.getenv("databench.hostname");
-//        homedir = System.getenv("databench.homedir");
-//        scratchdir = System.getenv("databench.scratchdir");
-//        log.debug("databench.hostname=" + server);
-//        log.debug("databench.homedir=" + homedir);
-//        log.debug("databench.scratchdir=" + scratchdir);
     }
-    
+
+    /**
+     * Parse input documents
+     * @return
+     */
     @Override
     protected InlineContentHandler getInlineContentHandler() {
-        return null;
+        return new DoiInlineContentHandler();
     }
+
+
+    protected abstract void doActionImpl() throws Exception;
+
+    /**
+     * Capture the initial request, and continue any work necessary using a new subject,
+     * using doiadmin credentials
+     * @throws Exception
+     */
+    @Override
+    public void doAction() throws Exception {
+
+        // Discover whether a DOI Number has been provided or not
+        initRequest();
+
+        Subject subject = AuthenticationUtil.getCurrentSubject();
+        // Grab any user credentials necessary
+
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                doActionImpl();
+                return "don";
+            }
+        } );
+
+    }
+
 
     protected void initRequest() throws AccessControlException, IOException {
         
@@ -150,7 +184,7 @@ public abstract class DOIAction extends RestAction {
             return;
         }
 
-        //
+        // Parse the request path to see if a DOI number has been provided
         String[] parts = path.split("/");
         //
         if (parts.length > 0) {
@@ -194,34 +228,6 @@ public abstract class DOIAction extends RestAction {
         String sessionID = parts[parts.length - 2];
         return sessionID;
     }
-    
-//    protected String parseCURL(String vncName) {
-//        String sessionID = parseCID(vncName);
-//        return getVNCURL(sessionID);
-//    }
-//
-//    protected String parseCName(String vncName) {
-//        String[] parts = vncName.split("_");
-//        return parts[parts.length - 1];
-//    }
-//
-//    protected String getVNCURL(String sessionID) {
-//        //return "http://" + server + "/quarry/session/" + sessionID;
-//        return "http://" + server + "/quarry/session/" + sessionID + "/connect?" +
-//               "path=quarry/session/" + sessionID + "/websockify&" +
-//               "password=" + sessionID;
-//    }
-//
-//    protected void createUserMountSpace(String userid) throws Exception {
-//        File scratch = new File("/home/" + userid);
-//        if (!scratch.exists()) {
-//            scratch.mkdir();
-//        }
-//        File home = new File("/scratch/" + userid);
-//        if (!home.exists()) {
-//            home.mkdir();
-//        }
-//    }
 
     /*
      * Validate that calling user has permission to access this DOI
@@ -250,5 +256,48 @@ public abstract class DOIAction extends RestAction {
         // Verify that the calling user has access to this DOI
         throw new IllegalArgumentException("Unauthorised to read DOI(code not implemented yet)");
     }
+
+
+
+    private Document parseInput() {
+        // Check input type
+        String contentType = syncInput.getHeader("Content-type");
+
+        Document userInput = new Document();
+        if (contentType.toLowerCase().equals("text/xml")) {
+
+            try {
+                // read test xml file
+                DoiXmlReader reader = new DoiXmlReader(false);
+//                syncInput.
+//                InputStream fis = syncInput.request.getInputStream();
+//                userInput = reader.read(fis);
+//                fis.close();
+            } catch (Exception e) {
+                log.debug(e);
+            }
+
+        }
+
+        return userInput;
+    }
+
+    protected class DoiOutputStream implements OutputStreamWrapper
+    {
+        private Document xmlDoc;
+
+        public DoiOutputStream(Document xmlDoc)
+        {
+            this.xmlDoc = xmlDoc;
+        }
+
+        public void write(OutputStream out) throws IOException
+        {
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(xmlDoc, out);
+        }
+
+    }
+
 
 }
