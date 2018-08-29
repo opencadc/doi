@@ -67,65 +67,40 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.ac.Group;
+import ca.nrc.cadc.ac.GroupURI;
+import ca.nrc.cadc.ac.User;
+import ca.nrc.cadc.ac.client.GMSClient;
+import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.HttpPrincipal;
-import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
-import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeProperty;
-import ca.nrc.cadc.vos.NodeWriter;
-import ca.nrc.cadc.vos.Protocol;
-import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.ClientTransfer;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.security.Principal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.Namespace;
 
 /**
  *
  */
 public class PostAction extends DOIAction {
-
     private static final Logger log = Logger.getLogger(PostAction.class);
-
-//    private static final String ILLEGAL_NAME_CHARS = "[~#@*+%{}<>\\[\\]|\"\\_^- \n\r\t]";
-
-    private static final String AUTHOR_PARAM = "author";
-    private static final String TITLE_PARAM = "title";
-    private static final String CADC_DOI_PREFIX = "10.11570";
-    private static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
 
     private VOSURI target;
     private List<NodeProperty> properties;
+    private String AUTHOR_PARAM = "author";
+    private String TITLE_PARAM = "title";
 
     public PostAction() {
         super();
@@ -145,6 +120,19 @@ public class PostAction extends DOIAction {
             String nextDoiSuffix = generateNextDOINumber((ContainerNode)baseNode);
             log.info("Next DOI suffix is: " + nextDoiSuffix);
 
+            properties = new ArrayList<NodeProperty>();
+            NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "true");
+
+            // Get numeric id for setting doiRequestor property
+            ACIdentityManager acIdentMgr = new ACIdentityManager();
+            Integer userNumericID = (Integer)acIdentMgr.toOwner(callingSubject);
+            NodeProperty doiRequestor = new NodeProperty("doiRequestor", userNumericID.toString());
+
+            // All folders will be publicly readable at first
+            // writable only
+            properties.add(isPublic);
+            properties.add(doiRequestor);
+
             // Update DOI xml with DOI number
             Element identifier = doiDocRoot.getChild("identifier", doiNamespace);
             identifier.setText(CADC_DOI_PREFIX + "/" + nextDoiSuffix);
@@ -152,21 +140,11 @@ public class PostAction extends DOIAction {
             // Create containing folder
             String folderName = DOI_BASE_VOSPACE + "/" + nextDoiSuffix;
             target = new VOSURI(new URI(folderName));
-            // Need to include properties later?
-            Node newFolder = new ContainerNode(target);
+            Node newFolder = new ContainerNode(target, properties);
             vosClient.createNode(newFolder);
 
-            // Create 'data' folder under containing folder.
-            // This is where the calling user will upload their DOI data
-            // TODO: set permissions on this folder, including group where
-            // calling user is the admin
-            String dataFolderName = folderName + "/data";
-            target = new VOSURI(new URI(dataFolderName));
-            Node newDataFolder = new ContainerNode(target);
-            vosClient.createNode(newDataFolder);
-
             // Create VOSpace data node to house XML doc using doi filename
-            String nextDoiFilename = getNextDOIFilename(nextDoiSuffix);
+            String nextDoiFilename = getDOIFilename(nextDoiSuffix);
             log.debug("next doi filename: " + nextDoiFilename);
 
             String doiFilename = folderName + "/" + nextDoiFilename;
@@ -174,17 +152,42 @@ public class PostAction extends DOIAction {
             Node doiFileDataNode = new DataNode(target);
             vosClient.createNode(doiFileDataNode);
 
-            writeDoiDocToVospace(doiFilename);
+            postDoiDocToVospace(doiFilename);
 
-            // TODO: apply permissions to folder using vospace group & calling user as node attribute
+            // Create 'data' folder under containing folder.
+            // This is where the calling user will upload their DOI data
+
+            // Create group first in order to apply permissions
+            String gmsUriBase = "ivo://cadc.nrc.ca/gms";
+            GMSClient gmsClient = new GMSClient(new URI(gmsUriBase));
+
+            String doiGroupName = "DOI-" + nextDoiSuffix;
+            String doiGroupURI = gmsUriBase + "?" + doiGroupName;
+            GroupURI guri = new GroupURI(new URI(doiGroupURI));
+
+            Group doiRWGroup = new Group(guri);
+            User member = new User();
+            for (Principal p : callingSubject.getPrincipals()) {
+                member.getIdentities().add(p);
+            }
+            doiRWGroup.getUserMembers().add(member);
+            doiRWGroup.getUserAdmins().add(member);
+            gmsClient.createGroup(doiRWGroup);
+
+            log.info("group uri being made for " + nextDoiSuffix + ": " + doiGroupURI);
+
+            NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD,doiGroupURI);
+            NodeProperty wGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE,doiGroupURI);
+
+            properties.add(rGroup);
+            properties.add(wGroup);
+            String dataFolderName = folderName + "/data";
+            target = new VOSURI(new URI(dataFolderName));
+            Node newDataFolder = new ContainerNode(target, properties);
+            vosClient.createNode(newDataFolder);
 
             // output document to syncOutput
             writeDoiDocToSyncOutput();
-//            StringBuilder doiXmlString = new StringBuilder();
-//            DoiXmlWriter writer = new DoiXmlWriter();
-//            writer.write(doiDocument,doiXmlString);
-//            syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
-
         }
         else {
             throw new UnsupportedOperationException("Editing DOI Metadata not supported.");
@@ -220,16 +223,7 @@ public class PostAction extends DOIAction {
             throw new IllegalArgumentException("Title is required");
         }
 
-        // Required:
-        // author
-        // title
-
-        // At this point the DOIMetadata pojo will be populated, once code for XMLReader/Writer is merged
-        // into here.
-        // Q: will this validate the DOIMetadata object after it's read? Might be most efficient...
     }
-
-
 
 
     /*
@@ -244,8 +238,7 @@ public class PostAction extends DOIAction {
     }
 
     private String generateNextDOINumber(ContainerNode baseNode) {
-
-        // child nodes of baseNode should have structure YY.XXXX
+        // child nodes of baseNode should have name structure YY.XXXX
         // go through list of child nodes
         // extract XXXX
         // track largest
@@ -256,7 +249,6 @@ public class PostAction extends DOIAction {
         DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
         String currentYear = df.format(Calendar.getInstance().getTime());
 
-        String nextDOI = "";
         Integer maxDoi = 0;
         if (baseNode.getNodes().size() > 0) {
             for( Node childNode : baseNode.getNodes()) {
@@ -273,10 +265,6 @@ public class PostAction extends DOIAction {
         maxDoi++;
         String formattedDOI = String.format("%04d", maxDoi);
         return currentYear + "." + formattedDOI;
-    }
-
-    private String getNextDOIFilename(String suffix) {
-        return CADC_CISTI_PREFIX + suffix + ".xml";
     }
 
 }

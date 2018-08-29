@@ -69,11 +69,18 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.VOSURI;
+import java.io.FileInputStream;
+import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
 
 /**
  *
@@ -91,11 +98,6 @@ public class GetAction extends DOIAction {
     @Override
     public void doActionImpl() throws Exception {
 
-        // Discover whether a DOI Number has been provided or not
-        super.initRequest();
-
-        Subject subject = AuthenticationUtil.getCurrentSubject();
-        
         if (DOINumInputStr.equals("")) {
             requestType = GET_ALL_REQUEST;
             String nextDOI = getNextDOI();
@@ -104,10 +106,17 @@ public class GetAction extends DOIAction {
         else {
             requestType = GET_ONE_REQUEST;
 
+            // Get DOI number from input
+//            String doiSuffix = getDOISuffix(DOINumInputStr);
+            String doiSuffix = DOINumInputStr;
+            String doiFilename = getDOIFilename(doiSuffix);
 
-            // gather parameters
-//            String software = syncInput.getParameter("software");
-//            String targetIP = syncInput.getParameter("target-ip");
+            // Construct URI for node
+            String doiDatafileName = getDoiFolderPath(doiSuffix) + getDOIFilename(doiSuffix);
+
+            getDoiDocFromVospace(doiDatafileName);
+
+            writeDoiDocToSyncOutput();
         }
     }
 
