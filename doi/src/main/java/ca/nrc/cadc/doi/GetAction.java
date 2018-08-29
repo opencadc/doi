@@ -96,7 +96,7 @@ public class GetAction extends DOIAction {
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
         
-        if (DOINum.equals("")) {
+        if (DOINumInputStr.equals("")) {
             requestType = CREATE_REQUEST;
             String nextDOI = getNextDOI();
             log.info("Next DOI is: " + nextDOI);

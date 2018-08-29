@@ -74,31 +74,45 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeWriter;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientTransfer;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public abstract class DOIAction extends RestAction {
 
     private static final Logger log = Logger.getLogger(DOIAction.class);
 
+    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
+
     // Request types handled in the GetAction, PostAction, DeleteAction classes
     // as of 21/8/18, only some have been implemented. All are named here because
     // the API has been planned out more fully than has been implemented.
-
     // GetAction
     protected static final String GET_ONE_REQUEST = "getOne";
     protected static final String GET_ALL_REQUEST = "getAll";
@@ -111,14 +125,18 @@ public abstract class DOIAction extends RestAction {
     // DeleteAction
 //    protected static final String INIT_REQUEST = "init";
 
-
     protected String userID;
+    protected String userDN; // pulled from incoming Subject
     protected String requestType;  // from list above
-    protected String DOINum;
+    protected String DOINumInputStr; // value used
+    protected Element doiDocRoot;
+    protected Namespace doiNamespace;
+    protected Document doiDocument;
+    protected VOSpaceClient vosClient;
+    protected VOSURI astroDataURI;
 
     public DOIAction() {
         // initialise and debug statements go here...
-
     }
 
     /**
@@ -141,12 +159,25 @@ public abstract class DOIAction extends RestAction {
     @Override
     public void doAction() throws Exception {
 
-        // Discover whether a DOI Number has been provided or not
+        // Discover what kind of request this is
         initRequest();
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
-        // Grab any user credentials necessary
+        // Store any user credentials from the current subject that
+        // may be necessary for later steps
+        // ie: username to be used as node property, for setting up vospace groups, checking permissions, etc.
 
+        // Get the submitted form data, which has been put in a JDOM2 Document
+        // Set up values needed to access the xml document
+        doiDocument = (Document)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        doiDocRoot = doiDocument.getRootElement();
+        doiNamespace = doiDocument.getRootElement().getNamespace();
+
+        // Create VOSpace data folder using DOI_BASE_VOSPACE
+        astroDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
+
+        // Do all subsequent work as doiadmin...
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
         Subject doiadminSubject = SSLUtil.createSubject(pemFile);
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
@@ -158,7 +189,6 @@ public abstract class DOIAction extends RestAction {
         } );
 
     }
-
 
     protected void initRequest() throws AccessControlException, IOException {
         
@@ -189,15 +219,29 @@ public abstract class DOIAction extends RestAction {
         //
         if (parts.length > 0) {
             requestType = CREATE_REQUEST;
-            DOINum = parts[0];
+            DOINumInputStr = parts[0];
         }
         if (parts.length > 1) {
             throw new IllegalArgumentException("Invalid request: " + path);
         }
         log.debug("request type: " + requestType);
-        log.debug("DOI Number: " + DOINum);
+        log.debug("DOI Number: " + DOINumInputStr);
     }
-    
+
+    protected void writeDoiDocToVospace (String dataNodeName) throws URISyntaxException {
+        // Upload document to named data node
+        // Data node has already been created
+        // TODO: trap errors in this function
+
+        List<Protocol> protocols = new ArrayList<Protocol>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
+        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+        DoiOutputStream outStream = new DoiOutputStream(doiDocument);
+        clientTransfer.setOutputStreamWrapper(outStream);
+        clientTransfer.run();
+    }
+
     protected String readStream(InputStream in) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int nRead;

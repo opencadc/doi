@@ -107,6 +107,8 @@ import java.util.UUID;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 /**
  *
@@ -135,66 +137,48 @@ public class PostAction extends DOIAction {
         Subject subject = AuthenticationUtil.getCurrentSubject();
 
         // DOINum is parsed out in DOIAction.initRequest()
-        if (DOINum == null) {
+        if (DOINumInputStr == null) {
             requestType = CREATE_REQUEST;
-
-            // TODO: add the CISTI.CANFAR directory
-
-            // Perhaps validate that content has been provided in syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY)
-
-            // Generate next doi
-            String nextDOISuffix = getNextDOISuffix();
-            log.info("Next DOI is: " + CADC_DOI_PREFIX + "/" + nextDOISuffix);
-
-            Document doiXmlDoc = (Document)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-
-            // Create VOSpace data folder using nextDOISuffix
-            String baseUri = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI";
-            VOSURI astroDataURI = new VOSURI(new URI(baseUri ));
-
-            VOSpaceClient vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
 
             // Determine next DOI number
             Node baseNode = vosClient.getNode(astroDataURI.getPath());
-            String nextDoiStr = generateNextDOINumber((ContainerNode)baseNode);
+            String nextDoiSuffix = generateNextDOINumber((ContainerNode)baseNode);
+            log.info("Next DOI suffix is: " + nextDoiSuffix);
+
+            // Update DOI xml with DOI number
+            Element identifier = doiDocRoot.getChild("identifier", doiNamespace);
+            identifier.setText(CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
             // Create containing folder
-            String folderName = baseUri + "/" + nextDoiStr;
+            String folderName = DOI_BASE_VOSPACE + "/" + nextDoiSuffix;
             target = new VOSURI(new URI(folderName));
             // Need to include properties later?
             Node newFolder = new ContainerNode(target);
             vosClient.createNode(newFolder);
 
-            // Create 'data' folder under this node.
+            // Create 'data' folder under containing folder.
+            // This is where the calling user will upload their DOI data
+            // TODO: set permissions on this folder, including group where
+            // calling user is the admin
             String dataFolderName = folderName + "/data";
             target = new VOSURI(new URI(dataFolderName));
             Node newDataFolder = new ContainerNode(target);
             vosClient.createNode(newDataFolder);
 
-            // Next make a transfer to push xml data read in up to new data node
-            String nextDoiFilename = getNextDOIFilename(nextDoiStr);
+            // Create VOSpace data node to house XML doc using doi filename
+            String nextDoiFilename = getNextDOIFilename(nextDoiSuffix);
             log.debug("next doi filename: " + nextDoiFilename);
 
             String doiFilename = folderName + "/" + nextDoiFilename;
             target = new VOSURI(new URI(doiFilename));
-
-            // Need to include properties later?
             Node doiFileDataNode = new DataNode(target);
             vosClient.createNode(doiFileDataNode);
 
-            List<Protocol> protocols = new ArrayList<Protocol>();
-            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
 
-            // upload
-            Transfer transfer = new Transfer(new URI(doiFilename), Direction.pushToVoSpace, protocols);
-            ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-            DoiOutputStream outStream = new DoiOutputStream(doiXmlDoc);
-            clientTransfer.setOutputStreamWrapper(outStream);
-            clientTransfer.run();
+            writeDoiDocToVospace(doiFilename);
 
-            // apply permissions to folder using vospace group & calling user as node attribute
+            // TODO: apply permissions to folder using vospace group & calling user as node attribute
 
-            // return pointer to parent folder
         }
         else {
             throw new UnsupportedOperationException("Editing DOI Metadata not supported.");
