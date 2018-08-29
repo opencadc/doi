@@ -97,12 +97,14 @@ public class GetAction extends DOIAction {
         Subject subject = AuthenticationUtil.getCurrentSubject();
         
         if (DOINumInputStr.equals("")) {
-            requestType = CREATE_REQUEST;
+            requestType = GET_ALL_REQUEST;
             String nextDOI = getNextDOI();
             log.info("Next DOI is: " + nextDOI);
         }
         else {
-            throw new UnsupportedOperationException("Not Implemented.");
+            requestType = GET_ONE_REQUEST;
+
+
             // gather parameters
 //            String software = syncInput.getParameter("software");
 //            String targetIP = syncInput.getParameter("target-ip");

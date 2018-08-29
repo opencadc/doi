@@ -174,10 +174,16 @@ public class PostAction extends DOIAction {
             Node doiFileDataNode = new DataNode(target);
             vosClient.createNode(doiFileDataNode);
 
-
             writeDoiDocToVospace(doiFilename);
 
             // TODO: apply permissions to folder using vospace group & calling user as node attribute
+
+            // output document to syncOutput
+            writeDoiDocToSyncOutput();
+//            StringBuilder doiXmlString = new StringBuilder();
+//            DoiXmlWriter writer = new DoiXmlWriter();
+//            writer.write(doiDocument,doiXmlString);
+//            syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
 
         }
         else {

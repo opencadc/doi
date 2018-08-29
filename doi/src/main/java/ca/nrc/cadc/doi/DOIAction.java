@@ -302,30 +302,6 @@ public abstract class DOIAction extends RestAction {
     }
 
 
-
-    private Document parseInput() {
-        // Check input type
-        String contentType = syncInput.getHeader("Content-type");
-
-        Document userInput = new Document();
-        if (contentType.toLowerCase().equals("text/xml")) {
-
-            try {
-                // read test xml file
-                DoiXmlReader reader = new DoiXmlReader(false);
-//                syncInput.
-//                InputStream fis = syncInput.request.getInputStream();
-//                userInput = reader.read(fis);
-//                fis.close();
-            } catch (Exception e) {
-                log.debug(e);
-            }
-
-        }
-
-        return userInput;
-    }
-
     protected class DoiOutputStream implements OutputStreamWrapper
     {
         private Document xmlDoc;
@@ -343,5 +319,11 @@ public abstract class DOIAction extends RestAction {
 
     }
 
+    protected void writeDoiDocToSyncOutput () throws IOException {
+        StringBuilder doiXmlString = new StringBuilder();
+        DoiXmlWriter writer = new DoiXmlWriter();
+        writer.write(doiDocument,doiXmlString);
+        syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
+    }
 
 }
