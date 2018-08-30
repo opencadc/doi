@@ -176,10 +176,8 @@ public class PostAction extends DOIAction {
 
             log.info("group uri being made for " + nextDoiSuffix + ": " + doiGroupURI);
 
-            NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD,doiGroupURI);
             NodeProperty wGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE,doiGroupURI);
 
-            properties.add(rGroup);
             properties.add(wGroup);
             String dataFolderName = folderName + "/data";
             target = new VOSURI(new URI(dataFolderName));

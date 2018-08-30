@@ -69,12 +69,23 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientTransfer;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
@@ -98,35 +109,51 @@ import ca.nrc.cadc.util.Log4jInit;
  *
  * @author majorb
  */
-public class CreateDocumentTest
+public class InitializeDOIFolderTest
 {
-    private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
+    private static final Logger log = Logger.getLogger(InitializeDOIFolderTest.class);
 
     private static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
-    private static File SSL_CERT;
+    private static File CADCAUTHTEST_CERT;
+    private static File CADCREGTEST_CERT;
     private static String baseURL;
+    private static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
+    private static VOSpaceClient vosClient;
+    private static VOSURI astroDataURI;
 
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
-    public CreateDocumentTest() { }
+    public InitializeDOIFolderTest() { }
 
-//    @BeforeClass
+    @BeforeClass
     public static void staticInit() throws Exception
     {
-        SSL_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", CreateDocumentTest.class);
+        // CadcAuthtest1 will have write access to DOI data folders
+        // CadcRegtest1 will only have read access
+        CADCAUTHTEST_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", InitializeDOIFolderTest.class);
+        CADCREGTEST_CERT = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", InitializeDOIFolderTest.class);
         
         RegistryClient rc = new RegistryClient();
         URL doi = rc.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
         baseURL = doi.toExternalForm();
+
+        // Initialize vosClient for later use
+        astroDataURI = new VOSURI(new URI(DOI_BASE_NODE ));
+        vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
     }
 
-//    @Test
-    public void testCreateDocument() throws Throwable
+    @Test
+    public void testInitDoi() throws Throwable
     {
-        final Subject s = SSLUtil.createSubject(SSL_CERT);
+        // new folder is created - calling user should have read access but not write
+        // new XML file is created - calling user should have read access
+        // data folder created - calling user should have write access
+
+        final Subject cadcauthtest_sub = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+        final Subject cadcregtest_sub = SSLUtil.createSubject(CADCREGTEST_CERT);
 
         // read test xml file
         final DoiXmlReader reader = new DoiXmlReader(true);
@@ -146,7 +173,8 @@ public class CreateDocumentTest
         DoiXmlWriter writer = new DoiXmlWriter();
         writer.write(testDoc, builder);
 
-        Subject.doAs(s, new PrivilegedExceptionAction<Object>()
+        // Create the folder for the test, and the initial XML file
+        Subject.doAs(cadcauthtest_sub, new PrivilegedExceptionAction<Object>()
         {
             public Object run() throws Exception
             {
@@ -159,26 +187,66 @@ public class CreateDocumentTest
                 HttpPost httpPost = new HttpPost(postUrl, builder.toString(), "text/xml", true);
                 httpPost.run();
                 
-                // Check that there was no exception thrown
-                if (httpPost.getThrowable() != null)
-                    throw new RuntimeException(httpPost.getThrowable());
-                
-                // Check that the HttpPost was sent successfully
-                Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);
+//                // Check that there was no exception thrown
+//                if (httpPost.getThrowable() != null)
+//                    throw new RuntimeException(httpPost.getThrowable());
+//
+//                // Check that the HttpPost was sent successfully
+//                Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);
 
+
+                // TODO: the PostAction needs to send a redirect, does this need to change
+                // in order to process the output? - HttpPost will need to? (it already says followRedirects, so
+                // hopefully not...
+                // May be this is an explicit GetAction that proves the XML file is readable
                 // Check that the doi server processed the document and added an identifier
                 String returnedDoc = httpPost.getResponseBody();
                 Document doc = reader.read(returnedDoc);
                 Element root = doc.getRootElement();
                 Element identifier = root.getChild("identifier", root.getNamespace());
                 String returnedIdentifier = identifier.getText();
-                log.debug("doi identifier of created document is " + returnedIdentifier);
+                log.info("doi identifier of created document is " + returnedIdentifier);
                 Assert.assertFalse("New identifier not received from doi service.", dummyIdentifier.equals(returnedIdentifier));
 
-                // todo: containing folder needs to be deleted using doiadmin credentials
+                String[] doiNumberParts = returnedIdentifier.split("/");
+                // Folder name should be /AstroDataCitationDOI/CISTI.CANFAR/<doiSuffix>
+                String doiSuffix = doiNumberParts[1];
+
+                // Check access permissions for DOI Containing folder (get DOI & parse suffix from
+                // <identifier> in document)
+
+                String dataNodeName = DOI_BASE_NODE + "/" + doiSuffix + "/data";
+                log.info("Atempting to write to " + dataNodeName);
+
+
+                // Test writing to the data directory
+                List<Protocol> protocols = new ArrayList<Protocol>();
+                protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+                String fileName = "doi-test-write-file.txt";
+                String dataFileToWrite = dataNodeName + "/" + fileName;
+
+                VOSURI target = new VOSURI(new URI(dataFileToWrite));
+                Node doiFileDataNode = new DataNode(target);
+                vosClient.createNode(doiFileDataNode);
+
+                Transfer transfer = new Transfer(new URI(dataFileToWrite), Direction.pushToVoSpace, protocols);
+                log.info("file to be written: " + dataFileToWrite);
+                ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+                File testFile = new File("src/test/data/" + fileName);
+                clientTransfer.setFile(testFile);
+                clientTransfer.run();
+
+                log.info("done client transfer.");
+                String newFilePath = target.getPath();
+                log.info("getting this path:" + newFilePath);
+
+                // Check that file is there.
+                vosClient.getNode(newFilePath);
 
                 return doc;
             }
         });
+
+        // Do cadcregtest1 tests as well.
     }
 }
