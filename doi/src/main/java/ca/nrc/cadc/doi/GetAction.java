@@ -116,6 +116,7 @@ public class GetAction extends DOIAction {
 
             getDoiDocFromVospace(doiDatafileName);
 
+            // Write XML to output
             writeDoiDocToSyncOutput();
         }
     }

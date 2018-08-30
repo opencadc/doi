@@ -152,6 +152,7 @@ public class PostAction extends DOIAction {
             Node doiFileDataNode = new DataNode(target);
             vosClient.createNode(doiFileDataNode);
 
+
             postDoiDocToVospace(doiFilename);
 
             // Create 'data' folder under containing folder.
@@ -184,15 +185,13 @@ public class PostAction extends DOIAction {
             Node newDataFolder = new ContainerNode(target, properties);
             vosClient.createNode(newDataFolder);
 
-            // output document to syncOutput
-            writeDoiDocToSyncOutput();
+            // Send redirect on return
+            String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
+            syncOutput.setHeader("Location", redirectUrl);
+            syncOutput.setCode(303);
         }
         else {
             throw new UnsupportedOperationException("Editing DOI Metadata not supported.");
-            // validate DOI supplied
-            // determine if user has access to this DOI
-            // validate metadata supplied
-
         }
 
 

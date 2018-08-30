@@ -70,33 +70,24 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.auth.X500IdentityManager;
-import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.vos.Direction;
-import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.NodeWriter;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
@@ -126,7 +117,7 @@ public abstract class DOIAction extends RestAction {
 //    protected static final String MINT_REQUEST = "mint";
 
     // DeleteAction
-//    protected static final String INIT_REQUEST = "init";
+//    protected static final String DELETE_REQUEST = "delete";
 
     protected Subject callingSubject;
     protected String userID;
@@ -238,8 +229,6 @@ public abstract class DOIAction extends RestAction {
     protected void postDoiDocToVospace (String dataNodeName) throws URISyntaxException {
         // Upload document to named data node
         // Data node has already been created
-        // TODO: trap errors in this function
-
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
         Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
@@ -252,7 +241,6 @@ public abstract class DOIAction extends RestAction {
     protected void getDoiDocFromVospace (String dataNodeName) throws URISyntaxException {
         // Upload document to named data node
         // Data node has already been created
-        // TODO: trap errors in this function
 
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
