@@ -113,7 +113,7 @@ public class CreateDocumentTest
 
     public CreateDocumentTest() { }
 
-//    @BeforeClass
+    @BeforeClass
     public static void staticInit() throws Exception
     {
         SSL_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", CreateDocumentTest.class);
@@ -123,7 +123,7 @@ public class CreateDocumentTest
         baseURL = doi.toExternalForm();
     }
 
-//    @Test
+    @Test
     public void testCreateDocument() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(SSL_CERT);
@@ -172,10 +172,12 @@ public class CreateDocumentTest
                 Element root = doc.getRootElement();
                 Element identifier = root.getChild("identifier", root.getNamespace());
                 String returnedIdentifier = identifier.getText();
-                log.debug("doi identifier of created document is " + returnedIdentifier);
+                log.info("doi identifier of created document is " + returnedIdentifier);
                 Assert.assertFalse("New identifier not received from doi service.", dummyIdentifier.equals(returnedIdentifier));
 
                 // todo: containing folder needs to be deleted using doiadmin credentials
+
+                
 
                 return doc;
             }
