@@ -177,7 +177,7 @@ public class CreateDocumentTest
 
                 // todo: containing folder needs to be deleted using doiadmin credentials
 
-                
+
 
                 return doc;
             }

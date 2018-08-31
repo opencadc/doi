@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
@@ -75,6 +76,7 @@ import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
@@ -103,8 +105,12 @@ public abstract class DOIAction extends RestAction {
 
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
+    protected String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
     protected static final String CADC_DOI_PREFIX = "10.11570";
     protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
+    protected static final String DOI_REQUESTER_KEY = "doiRequester";
+    protected static final String DOI_MINTED = "minted";
+    protected static final String DOI_GROUP_PREFIX = "DOI-";
 
     // Request types handled in the GetAction, PostAction, DeleteAction classes
     // as of 21/8/18, only some have been implemented. All are named here because
@@ -119,7 +125,7 @@ public abstract class DOIAction extends RestAction {
 //    protected static final String MINT_REQUEST = "mint";
 
     // DeleteAction
-//    protected static final String DELETE_REQUEST = "delete";
+    protected static final String DELETE_REQUEST = "delete";
 
     protected Subject callingSubject;
     protected String userID;
@@ -129,7 +135,9 @@ public abstract class DOIAction extends RestAction {
     protected Namespace doiNamespace;
     protected Document doiDocument;
     protected VOSpaceClient vosClient;
-    protected VOSURI astroDataURI;
+    protected VOSURI doiDataURI;
+    protected List<NodeProperty> properties;
+
 
     public DOIAction() {
         // initialise and debug statements go here...
@@ -174,8 +182,8 @@ public abstract class DOIAction extends RestAction {
         }
 
         // Create VOSpace data folder using DOI_BASE_VOSPACE
-        astroDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
-        vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
+        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
         // Do all subsequent work as doiadmin...
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
@@ -261,9 +269,9 @@ public abstract class DOIAction extends RestAction {
 
     protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }
 
-    protected String getDoiFilePath(String suffix, String filename) { return  DOI_BASE_FILEPATH + "/" + suffix + "/" + filename; }
+    protected String getDoiParentPath(String suffix) { return  doiDataURI.getPath() + "/" + suffix; }
 
-    protected String getDoiNodePath(String suffix) { return DOI_BASE_VOSPACE + "/" + suffix; }
+    protected String getDoiNodeUri(String suffix) { return doiDataURI.getURI() + "/" + suffix; }
 
     protected class DoiOutputStream implements OutputStreamWrapper
     {
@@ -297,7 +305,5 @@ public abstract class DOIAction extends RestAction {
             }
         }
     }
-
-
 
 }

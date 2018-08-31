@@ -42,10 +42,10 @@
             <param-name>post</param-name>
             <param-value>ca.nrc.cadc.doi.PostAction</param-value>
         </init-param>
-        <!--<init-param>-->
-            <!--<param-name>delete</param-name>-->
-            <!--<param-value>ca.nrc.cadc.doi.DeleteAction</param-value>-->
-        <!--</init-param>-->
+        <init-param>
+            <param-name>delete</param-name>
+            <param-value>ca.nrc.cadc.doi.DeleteAction</param-value>
+        </init-param>
         <load-on-startup>2</load-on-startup>
     </servlet>
 

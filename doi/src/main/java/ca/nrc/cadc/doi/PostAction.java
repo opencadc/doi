@@ -99,10 +99,10 @@ public class PostAction extends DOIAction {
 
     private String AUTHOR_PARAM = "author";
     private String TITLE_PARAM = "title";
-    private String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
+
 
     private VOSURI target;
-    private List<NodeProperty> properties;
+
 
     public PostAction() {
         super();
@@ -118,17 +118,23 @@ public class PostAction extends DOIAction {
             requestType = CREATE_REQUEST;
 
             // Determine next DOI number
-            Node baseNode = vosClient.getNode(astroDataURI.getPath());
+            Node baseNode = vosClient.getNode(doiDataURI.getPath());
             String nextDoiSuffix = generateNextDOINumber((ContainerNode)baseNode);
             log.info("Next DOI suffix is: " + nextDoiSuffix);
 
-            properties = new ArrayList<NodeProperty>();
+            properties = new ArrayList<>();
+
             NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "true");
 
             // Get numeric id for setting doiRequestor property
             ACIdentityManager acIdentMgr = new ACIdentityManager();
             Integer userNumericID = (Integer)acIdentMgr.toOwner(callingSubject);
-            NodeProperty doiRequestor = new NodeProperty("doiRequestor", userNumericID.toString());
+            int n = (int)acIdentMgr.toOwner(callingSubject);
+            log.info("int version: " + n);
+            // numeric id isn't parsing out correctly. getting only first digit?
+            log.info ("user numeric id on post POSTFOUND: " + userNumericID + " string version: " + userNumericID.toString());
+            NodeProperty doiRequestor = new NodeProperty(DOI_REQUESTER_KEY, userNumericID.toString());
+            log.info(doiRequestor.getPropertyValue());
 
             // All folders will be publicly readable at first
             // writable only
@@ -140,8 +146,10 @@ public class PostAction extends DOIAction {
             identifier.setText(CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
             // Create containing folder
-            String folderName = getDoiNodePath(nextDoiSuffix);
-            target = new VOSURI(new URI(folderName));
+            String folderName = getDoiNodeUri(nextDoiSuffix);
+            String folderURI = getDoiNodeUri(nextDoiSuffix);
+            log.info("MAKING this folder: " + folderName + ": " + folderURI);
+            target = new VOSURI(new URI(folderURI));
             Node newFolder = new ContainerNode(target, properties);
             vosClient.createNode(newFolder);
 
@@ -149,11 +157,12 @@ public class PostAction extends DOIAction {
             String nextDoiFilename = getDoiFilename(nextDoiSuffix);
             log.debug("next doi filename: " + nextDoiFilename);
 
+            String doiFileUri = folderURI + "/" + nextDoiFilename;
             String doiFilename = folderName + "/" + nextDoiFilename;
-            target = new VOSURI(new URI(doiFilename));
+            log.info("MAKING doi uri: " + doiFileUri + ": " + doiFilename);
+            target = new VOSURI(new URI(doiFileUri));
             Node doiFileDataNode = new DataNode(target);
             vosClient.createNode(doiFileDataNode);
-
 
             postDoiDocToVospace(doiFilename);
 
@@ -164,8 +173,9 @@ public class PostAction extends DOIAction {
 
             GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
 
-            String doiGroupName = "DOI-" + nextDoiSuffix;
+            String doiGroupName = DOI_GROUP_PREFIX + nextDoiSuffix;
             String doiGroupURI = GMS_URI_BASE + "?" + doiGroupName;
+            log.info("MAKING "+ doiGroupName  + ": " + doiGroupURI);
             GroupURI guri = new GroupURI(new URI(doiGroupURI));
 
             Group doiRWGroup = new Group(guri);
@@ -177,7 +187,7 @@ public class PostAction extends DOIAction {
             doiRWGroup.getUserAdmins().add(member);
             gmsClient.createGroup(doiRWGroup);
 
-            log.info("group uri being made for " + nextDoiSuffix + ": " + doiGroupURI);
+            log.info("MAKING group uri being made for " + nextDoiSuffix + ": " + doiGroupURI);
 
             NodeProperty wGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE,doiGroupURI);
 
