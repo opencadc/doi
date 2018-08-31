@@ -70,6 +70,7 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
@@ -82,6 +83,7 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,10 +99,10 @@ import org.jdom2.Element;
 import org.jdom2.Namespace;
 
 public abstract class DOIAction extends RestAction {
-
     private static final Logger log = Logger.getLogger(DOIAction.class);
 
-    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
+    protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
+    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     protected static final String CADC_DOI_PREFIX = "10.11570";
     protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
 
@@ -189,7 +191,6 @@ public abstract class DOIAction extends RestAction {
     }
 
     protected void initRequest() throws AccessControlException, IOException {
-        
         final Subject subject = AuthenticationUtil.getCurrentSubject();
         log.debug("Subject: " + subject);
         
@@ -214,7 +215,6 @@ public abstract class DOIAction extends RestAction {
 
         // Parse the request path to see if a DOI number has been provided
         String[] parts = path.split("/");
-        //
         if (parts.length > 0) {
             requestType = CREATE_REQUEST;
             DOINumInputStr = parts[0];
@@ -238,21 +238,32 @@ public abstract class DOIAction extends RestAction {
         clientTransfer.run();
     }
 
-    protected void getDoiDocFromVospace (String dataNodeName) throws URISyntaxException {
-        // Upload document to named data node
-        // Data node has already been created
-
+    protected void getDoiDocFromVospace (String dataNodePath) throws URISyntaxException {
         List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pullFromVoSpace, protocols);
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-        // inputStream object being added - will need to have a DoiInputStream wrapper, etc.
-        // coming 29/8/18?
-//        DoiOutputStream outStream = new DoiOutputStream(doiDocument);
-//        clientTransfer.setOutputStreamWrapper(outStream);
+        clientTransfer.setInputStreamWrapper(new DoiInputStream());
         clientTransfer.run();
     }
 
+    protected void writeDoiDocToSyncOutput () throws IOException {
+        StringBuilder doiXmlString = new StringBuilder();
+        DoiXmlWriter writer = new DoiXmlWriter();
+        writer.write(doiDocument,doiXmlString);
+        syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
+    }
+
+    protected String getDOISuffix(String doiStr) {
+        String[] doiParts = doiStr.split("/");
+        return doiParts[1];
+    }
+
+    protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }
+
+    protected String getDoiFilePath(String suffix, String filename) { return  DOI_BASE_FILEPATH + "/" + suffix + "/" + filename; }
+
+    protected String getDoiNodePath(String suffix) { return DOI_BASE_VOSPACE + "/" + suffix; }
 
     protected class DoiOutputStream implements OutputStreamWrapper
     {
@@ -268,25 +279,25 @@ public abstract class DOIAction extends RestAction {
             DoiXmlWriter writer = new DoiXmlWriter();
             writer.write(xmlDoc, out);
         }
-
     }
 
-    protected void writeDoiDocToSyncOutput () throws IOException {
-        StringBuilder doiXmlString = new StringBuilder();
-        DoiXmlWriter writer = new DoiXmlWriter();
-        writer.write(doiDocument,doiXmlString);
-        syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
+    protected class DoiInputStream implements InputStreamWrapper
+    {
+        private Document xmlDoc;
+
+        public DoiInputStream() { }
+
+        public void read(InputStream in) throws IOException
+        {
+            try {
+                DoiXmlReader reader = new DoiXmlReader(true);
+                doiDocument = reader.read(in);
+            } catch (DoiParsingException dpe) {
+                throw new IOException(dpe);
+            }
+        }
     }
 
-    protected String getDOISuffix(String doiStr) {
-        String[] doiParts = doiStr.split("/");
-        return doiParts[1];
-    }
 
-    protected String getDOIFilename(String suffix) {
-        return CADC_CISTI_PREFIX + suffix + ".xml";
-    }
-
-    protected String getDoiFolderPath(String suffix) { return DOI_BASE_VOSPACE + "/" + suffix; }
 
 }

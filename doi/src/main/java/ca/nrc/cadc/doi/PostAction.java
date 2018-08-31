@@ -97,10 +97,12 @@ import org.jdom2.Element;
 public class PostAction extends DOIAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    private VOSURI target;
-    private List<NodeProperty> properties;
     private String AUTHOR_PARAM = "author";
     private String TITLE_PARAM = "title";
+    private String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
+
+    private VOSURI target;
+    private List<NodeProperty> properties;
 
     public PostAction() {
         super();
@@ -138,13 +140,13 @@ public class PostAction extends DOIAction {
             identifier.setText(CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
             // Create containing folder
-            String folderName = DOI_BASE_VOSPACE + "/" + nextDoiSuffix;
+            String folderName = getDoiNodePath(nextDoiSuffix);
             target = new VOSURI(new URI(folderName));
             Node newFolder = new ContainerNode(target, properties);
             vosClient.createNode(newFolder);
 
             // Create VOSpace data node to house XML doc using doi filename
-            String nextDoiFilename = getDOIFilename(nextDoiSuffix);
+            String nextDoiFilename = getDoiFilename(nextDoiSuffix);
             log.debug("next doi filename: " + nextDoiFilename);
 
             String doiFilename = folderName + "/" + nextDoiFilename;
@@ -159,11 +161,11 @@ public class PostAction extends DOIAction {
             // This is where the calling user will upload their DOI data
 
             // Create group first in order to apply permissions
-            String gmsUriBase = "ivo://cadc.nrc.ca/gms";
-            GMSClient gmsClient = new GMSClient(new URI(gmsUriBase));
+
+            GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
 
             String doiGroupName = "DOI-" + nextDoiSuffix;
-            String doiGroupURI = gmsUriBase + "?" + doiGroupName;
+            String doiGroupURI = GMS_URI_BASE + "?" + doiGroupName;
             GroupURI guri = new GroupURI(new URI(doiGroupURI));
 
             Group doiRWGroup = new Group(guri);
