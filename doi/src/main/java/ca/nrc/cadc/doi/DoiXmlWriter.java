@@ -70,6 +70,7 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.util.StringBuilderWriter;
+import ca.nrc.cadc.vos.Node;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -137,5 +138,6 @@ public class DoiXmlWriter
         outputter.setFormat(Format.getPrettyFormat());
         outputter.output(document, writer);
     }
+
 
 }

@@ -67,28 +67,54 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import java.io.ByteArrayOutputStream;
+import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.NodeProperty;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientTransfer;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
-import java.util.Arrays;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 public abstract class DOIAction extends RestAction {
-
     private static final Logger log = Logger.getLogger(DOIAction.class);
+
+    protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
+    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
+    protected String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
+    protected static final String CADC_DOI_PREFIX = "10.11570";
+    protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
+    protected static final String DOI_REQUESTER_KEY = "doiRequester";
+    protected static final String DOI_MINTED = "minted";
+    protected static final String DOI_GROUP_PREFIX = "DOI-";
 
     // Request types handled in the GetAction, PostAction, DeleteAction classes
     // as of 21/8/18, only some have been implemented. All are named here because
     // the API has been planned out more fully than has been implemented.
-
     // GetAction
     protected static final String GET_ONE_REQUEST = "getOne";
     protected static final String GET_ALL_REQUEST = "getAll";
@@ -99,35 +125,80 @@ public abstract class DOIAction extends RestAction {
 //    protected static final String MINT_REQUEST = "mint";
 
     // DeleteAction
-//    protected static final String INIT_REQUEST = "init";
+    protected static final String DELETE_REQUEST = "delete";
 
-
+    protected Subject callingSubject;
     protected String userID;
     protected String requestType;  // from list above
-    protected String DOINum;
-//    protected String appID;
-//    protected String server;
-//    protected String homedir;
-//    protected String scratchdir;
+    protected String DOINumInputStr; // value used
+    protected Element doiDocRoot;
+    protected Namespace doiNamespace;
+    protected Document doiDocument;
+    protected VOSpaceClient vosClient;
+    protected VOSURI doiDataURI;
+    protected List<NodeProperty> properties;
+
 
     public DOIAction() {
         // initialise and debug statements go here...
-
-//        server = System.getenv("databench.hostname");
-//        homedir = System.getenv("databench.homedir");
-//        scratchdir = System.getenv("databench.scratchdir");
-//        log.debug("databench.hostname=" + server);
-//        log.debug("databench.homedir=" + homedir);
-//        log.debug("databench.scratchdir=" + scratchdir);
     }
-    
+
+    /**
+     * Parse input documents
+     * @return
+     */
     @Override
     protected InlineContentHandler getInlineContentHandler() {
-        return null;
+        return new DoiInlineContentHandler();
+    }
+
+
+    protected abstract void doActionImpl() throws Exception;
+
+    /**
+     * Capture the initial request, and continue any work necessary using a new subject,
+     * using doiadmin credentials
+     * @throws Exception
+     */
+    @Override
+    public void doAction() throws Exception {
+
+        // Discover what kind of request this is
+        initRequest();
+
+        // Store the calling subject so that user principal information can be
+        // pulled out in doActionImpl however it needs to be for the action type (GET, POST, DELETE)
+        callingSubject = AuthenticationUtil.getCurrentSubject();
+
+        // Get the submitted form data, if it exists
+        // which has been put in a JDOM2 Document
+        // Set up values needed to access the xml document
+        // TODO: may move this into the PostAction doActionImpl if not used outside of that.
+        // doiDocument will be used though? (in GetAction? - not finalised however.)
+        doiDocument = (Document)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        if (doiDocument != null) {
+            doiDocRoot = doiDocument.getRootElement();
+            doiNamespace = doiDocument.getRootElement().getNamespace();
+        }
+
+        // Create VOSpace data folder using DOI_BASE_VOSPACE
+        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+
+        // Do all subsequent work as doiadmin...
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                doActionImpl();
+                return "done";
+            }
+        } );
+
     }
 
     protected void initRequest() throws AccessControlException, IOException {
-        
         final Subject subject = AuthenticationUtil.getCurrentSubject();
         log.debug("Subject: " + subject);
         
@@ -150,105 +221,89 @@ public abstract class DOIAction extends RestAction {
             return;
         }
 
-        //
+        // Parse the request path to see if a DOI number has been provided
         String[] parts = path.split("/");
-        //
         if (parts.length > 0) {
             requestType = CREATE_REQUEST;
-            DOINum = parts[0];
+            DOINumInputStr = parts[0];
         }
         if (parts.length > 1) {
             throw new IllegalArgumentException("Invalid request: " + path);
         }
         log.debug("request type: " + requestType);
-        log.debug("DOI Number: " + DOINum);
+        log.debug("DOI Number: " + DOINumInputStr);
     }
-    
-    protected String readStream(InputStream in) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        int nRead;
-        byte[] data = new byte[1024];
-        while ((nRead = in.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
+
+    protected void postDoiDocToVospace (String dataNodeName) throws URISyntaxException {
+        // Upload document to named data node
+        // Data node has already been created
+        List<Protocol> protocols = new ArrayList<Protocol>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
+        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+        DoiOutputStream outStream = new DoiOutputStream(doiDocument);
+        clientTransfer.setOutputStreamWrapper(outStream);
+        clientTransfer.run();
+    }
+
+    protected void getDoiDocFromVospace (String dataNodePath) throws URISyntaxException {
+        List<Protocol> protocols = new ArrayList<Protocol>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
+        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+        clientTransfer.setInputStreamWrapper(new DoiInputStream());
+        clientTransfer.run();
+    }
+
+    protected void writeDoiDocToSyncOutput () throws IOException {
+        StringBuilder doiXmlString = new StringBuilder();
+        DoiXmlWriter writer = new DoiXmlWriter();
+        writer.write(doiDocument,doiXmlString);
+        syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
+    }
+
+    protected String getDOISuffix(String doiStr) {
+        String[] doiParts = doiStr.split("/");
+        return doiParts[1];
+    }
+
+    protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }
+
+    protected String getDoiParentPath(String suffix) { return  doiDataURI.getPath() + "/" + suffix; }
+
+    protected String getDoiNodeUri(String suffix) { return doiDataURI.getURI() + "/" + suffix; }
+
+    protected class DoiOutputStream implements OutputStreamWrapper
+    {
+        private Document xmlDoc;
+
+        public DoiOutputStream(Document xmlDoc)
+        {
+            this.xmlDoc = xmlDoc;
         }
-        return buffer.toString("UTF-8");
-    }
-    
-    protected String execute(String[] command) throws IOException, InterruptedException {
-        Process p = Runtime.getRuntime().exec(command);
-        int status = p.waitFor();
-        log.debug("Status=" + status + " for command: " + Arrays.toString(command));
-        String stdout = readStream(p.getInputStream());
-        String stderr = readStream(p.getErrorStream());
-        log.debug("stdout: " + stdout);
-        log.debug("stderr: " + stderr);
-        if (status != 0) {
-            String message = "Error executing command: " + Arrays.toString(command) + " Error: " + stderr;
-            throw new IOException(message);
-        } 
-        return stdout.trim();
-    }
-    
-    protected String parseCID(String vncName) {
-        String[] parts = vncName.split("_");
-        String sessionID = parts[parts.length - 2];
-        return sessionID;
-    }
-    
-//    protected String parseCURL(String vncName) {
-//        String sessionID = parseCID(vncName);
-//        return getVNCURL(sessionID);
-//    }
-//
-//    protected String parseCName(String vncName) {
-//        String[] parts = vncName.split("_");
-//        return parts[parts.length - 1];
-//    }
-//
-//    protected String getVNCURL(String sessionID) {
-//        //return "http://" + server + "/quarry/session/" + sessionID;
-//        return "http://" + server + "/quarry/session/" + sessionID + "/connect?" +
-//               "path=quarry/session/" + sessionID + "/websockify&" +
-//               "password=" + sessionID;
-//    }
-//
-//    protected void createUserMountSpace(String userid) throws Exception {
-//        File scratch = new File("/home/" + userid);
-//        if (!scratch.exists()) {
-//            scratch.mkdir();
-//        }
-//        File home = new File("/scratch/" + userid);
-//        if (!home.exists()) {
-//            home.mkdir();
-//        }
-//    }
 
-    /*
-     * Validate that calling user has permission to access this DOI
-     * (there will be an attribute on the VOSpace directory corresponding to this DOI
-     */
-    protected void validateDOI(String doiNum) {
-        // Verify that a VOSpace directory exists for this DOI
-        throw new IllegalArgumentException("DOI not validated (code not implemented yet)");
+        public void write(OutputStream out) throws IOException
+        {
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(xmlDoc, out);
+        }
     }
 
+    protected class DoiInputStream implements InputStreamWrapper
+    {
+        private Document xmlDoc;
 
-    /*
-     * Validate that calling user has permission to access this DOI
-     * (there will be an attribute on the VOSpace directory corresponding to this DOI
-     */
-    protected void checkWritePermission(String doiNum) {
-        // Verify that the calling user has access to this DOI
-        throw new IllegalArgumentException("Unauthorised to write to DOI(code not implemented yet)");
-    }
+        public DoiInputStream() { }
 
-    /*
-     * Validate that calling user has permission to access this DOI
-     * (there will be an attribute on the VOSpace directory corresponding to this DOI
-     */
-    protected void checkReadPermission(String doiNum) {
-        // Verify that the calling user has access to this DOI
-        throw new IllegalArgumentException("Unauthorised to read DOI(code not implemented yet)");
+        public void read(InputStream in) throws IOException
+        {
+            try {
+                DoiXmlReader reader = new DoiXmlReader(true);
+                doiDocument = reader.read(in);
+            } catch (DoiParsingException dpe) {
+                throw new IOException(dpe);
+            }
+        }
     }
 
 }
