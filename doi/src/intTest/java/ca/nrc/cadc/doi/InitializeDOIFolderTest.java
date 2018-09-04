@@ -179,11 +179,6 @@ public class InitializeDOIFolderTest extends IntTestBase
                 // Pull the next DOI number from the redirect returned
                 String returnedDoc = redirectUrl.getPath();
 
-
-                // GET the document just created
-                HttpDownload getTask = new HttpDownload(redirectUrl, new OutputStream()
-                );
-;
                 log.debug("redirect url returned from post: " + returnedDoc);
 
                 String[] doiNumberParts = returnedDoc.split("/");
