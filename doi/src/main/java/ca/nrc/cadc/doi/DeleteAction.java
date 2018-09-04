@@ -74,6 +74,7 @@ import ca.nrc.cadc.vos.NodeProperty;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.InvalidParameterException;
+import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
@@ -108,21 +109,18 @@ public class DeleteAction extends DOIAction {
                         throw new AccessControlException("Unable to delete " + DOINumInputStr + "DOI already minted.\n");
                     }
                 }
-                // Check if user has permission:
+                // Check if user has permission: ensure principals set is same for doiRequester
+                // numeric id stored as node attribute as for calling user...
                 if (np.getPropertyURI().equals(DOI_REQUESTER_KEY)) {
-                    // compare to calling user's numeric id
                     ACIdentityManager acIdentMgr = new ACIdentityManager();
-                    Integer userNumericID = (Integer)acIdentMgr.toOwner(callingSubject);
+                    // change the numeric id back into a subject and compare to calling subject
+                    Subject doiRequesterSubject = acIdentMgr.toSubject(Integer.parseInt(np.getPropertyValue()));
 
-                    log.info("FOUND calling user numeric id:  " + userNumericID.toString());
-                    log.info(DOI_REQUESTER_KEY + " numerid id FOUND: " + np.getPropertyValue());
-
-                    if (!np.getPropertyValue().equals(userNumericID.toString())) {
-                        throw new AccessControlException("User not authorised to delete " + DOINumInputStr + "\n");
-                    } else {
-                        // If everything is okay, delete parent container
+                    if (callingSubject.getPrincipals().equals(doiRequesterSubject.getPrincipals())) {
                         hasPermission = true;
                         break;
+                    } else {
+                        throw new AccessControlException("User not authorised to delete " + DOINumInputStr + "\n");
                     }
                 }
             }
@@ -130,11 +128,11 @@ public class DeleteAction extends DOIAction {
             if (hasPermission == true) {
                 // Delete group created. Will be format DOI-<DOINumInputStr>
                 GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
-                String doiGroupURI = GMS_URI_BASE + "?" + DOI_GROUP_PREFIX + DOINumInputStr;
-                log.info("deleting this group: " + doiGroupURI);
-                gmsClient.deleteGroup(doiGroupURI);
+                String doiGroupURI = GMS_URI_BASE + "#" + DOI_GROUP_PREFIX + DOINumInputStr;
+                log.debug("deleting this group: " + doiGroupURI);
+                gmsClient.deleteGroup(DOI_GROUP_PREFIX + DOINumInputStr);
 
-                log.info("deleting this node: " + doiParentPath);
+                log.debug("deleting this node: " + doiParentPath);
                 vosClient.deleteNode(doiParentPath);
             } else {
                 throw new RuntimeException(DOI_REQUESTER_KEY + " not found on main DOI folder. Unable to determine permissions.\n");

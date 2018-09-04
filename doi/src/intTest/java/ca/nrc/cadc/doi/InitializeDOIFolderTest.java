@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.net.HttpDelete;
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
@@ -80,6 +82,8 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -110,17 +114,9 @@ import ca.nrc.cadc.util.Log4jInit;
  *
  * @author majorb
  */
-public class InitializeDOIFolderTest
+public class InitializeDOIFolderTest extends IntTestBase
 {
     private static final Logger log = Logger.getLogger(InitializeDOIFolderTest.class);
-
-    private static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
-    private static File CADCAUTHTEST_CERT;
-    private static File CADCREGTEST_CERT;
-    private static String baseURL;
-    private static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
-    private static VOSpaceClient vosClient;
-    private static VOSURI astroDataURI;
 
     static
     {
@@ -128,23 +124,6 @@ public class InitializeDOIFolderTest
     }
 
     public InitializeDOIFolderTest() { }
-
-    @BeforeClass
-    public static void staticInit() throws Exception
-    {
-        // CadcAuthtest1 will have write access to DOI data folders
-        // CadcRegtest1 will only have read access
-        CADCAUTHTEST_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", InitializeDOIFolderTest.class);
-        CADCREGTEST_CERT = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", InitializeDOIFolderTest.class);
-        
-        RegistryClient rc = new RegistryClient();
-        URL doi = rc.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        baseURL = doi.toExternalForm();
-
-        // Initialize vosClient for later use
-        astroDataURI = new VOSURI(new URI(DOI_BASE_NODE ));
-        vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
-    }
 
     @Test
     public void testInitDoi() throws Throwable
@@ -200,6 +179,11 @@ public class InitializeDOIFolderTest
                 // Pull the next DOI number from the redirect returned
                 String returnedDoc = redirectUrl.getPath();
 
+
+                // GET the document just created
+                HttpDownload getTask = new HttpDownload(redirectUrl, new OutputStream()
+                );
+;
                 log.debug("redirect url returned from post: " + returnedDoc);
 
                 String[] doiNumberParts = returnedDoc.split("/");
@@ -257,10 +241,10 @@ public class InitializeDOIFolderTest
                     }
                 });
 
+                deleteTestFolder(doiSuffix);
                 return "done";
             }
         });
-
 
     }
 }
