@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,7 +62,7 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
@@ -70,27 +70,35 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.util.StringBuilderWriter;
+import ca.nrc.cadc.xml.JsonOutputter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 
 /**
- * Writes a Node as XML to an output.
- * 
- * @author jburke
+ *
+ * @author pdowler
  */
-public class DoiXmlWriter 
-{
-    private static Logger log = Logger.getLogger(DoiXmlWriter.class);
-        
-    public DoiXmlWriter() { }
+public class DoiJsonWriter implements Serializable {
+    private static final long serialVersionUID = 20150205121500L;
+
+    private static final Logger log = Logger.getLogger(DoiJsonWriter.class);
+
+    private boolean prettyPrint;
+
+    public DoiJsonWriter() {
+        this(true);
+    }
+
+    public DoiJsonWriter(boolean prettyPrint) {
+        this.prettyPrint = prettyPrint;
+    }
 
     /**
      * Write a doi metadata DOM document to an OutputStream using UTF-8 encoding.
@@ -125,17 +133,38 @@ public class DoiXmlWriter
     }
 
     /**
-     * Write to root Element to a writer.
+     * Write the document to a writer.
      *
-     * @param root Root Element to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
+     * @param doc
+     *            Document to write.
+     * @param writer
+     *            Writer to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
-    protected void write(Document document, Writer writer) throws IOException
-    {
-        XMLOutputter outputter = new XMLOutputter();
-        outputter.setFormat(Format.getPrettyFormat());
+    public void write(Document document, Writer writer) throws IOException {
+        JsonOutputter outputter = new JsonOutputter();
+        outputter.getListElementNames().add("creators");
+        outputter.getListElementNames().add("titles");
+        outputter.getListElementNames().add("subjects");
+        outputter.getListElementNames().add("contributors");
+        outputter.getListElementNames().add("dates");
+        outputter.getListElementNames().add("alternateIdentifiers");
+        outputter.getListElementNames().add("sizes");
+        outputter.getListElementNames().add("formats");
+        outputter.getListElementNames().add("rightsList");
+        outputter.getListElementNames().add("descriptions");
+        outputter.getListElementNames().add("geoLocations");
+        outputter.getListElementNames().add("fundingReferences");
+        outputter.getListElementNames().add("relatedIdentifiers");
+        outputter.getListElementNames().add("geoLocationPolygon");
+
+        Format fmt = null;
+        if (prettyPrint) {
+            fmt = Format.getPrettyFormat();
+            fmt.setIndent("  "); // 2 spaces
+        }
+        outputter.setFormat(fmt);
         outputter.output(document, writer);
     }
-
 }

@@ -69,73 +69,46 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.util.StringBuilderWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-
+import ca.nrc.cadc.xml.JsonInputter;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 
 /**
- * Writes a Node as XML to an output.
- * 
- * @author jburke
+ * Constructs a DoiMetadata from a JSON source. This class is not thread safe but it is
+ * re-usable  so it can safely be used to sequentially parse multiple JSON node
+ * documents.
+ *
+ * @author yeunga
  */
-public class DoiXmlWriter 
+public class DoiJsonReader
 {
-    private static Logger log = Logger.getLogger(DoiXmlWriter.class);
-        
-    public DoiXmlWriter() { }
+    private static final Logger log = Logger.getLogger(DoiJsonReader.class);
+ 
+    /**
+     * Constructor. XML Schema validation is enabled by default.
+     */
+    public DoiJsonReader() { }
 
     /**
-     * Write a doi metadata DOM document to an OutputStream using UTF-8 encoding.
+     *  Construct a DOM document from a JSON String source.
      *
-     * @param document DOM document to write.
-     * @param out OutputStream to write to.
-     * @throws IOException if the writer fails to write.
+     * @param xml String of the JSON.
+     * @return Document DOM document.
+     * @throws DoiParsingException if there is an error parsing the JSON.
      */
-    public void write(Document document, OutputStream out) throws IOException
+    public Document read(String json) throws DoiParsingException
     {
-        OutputStreamWriter outWriter;
+        if (json == null)
+            throw new IllegalArgumentException("JSON string must not be null");
         try
         {
-            outWriter = new OutputStreamWriter(out, "UTF-8");
+            JsonInputter inputter = new JsonInputter();
+            return inputter.input(json);
         }
-        catch (UnsupportedEncodingException e)
+        catch (Exception ex)
         {
-            throw new RuntimeException("UTF-8 encoding not supported", e);
+            String error = "Error reading JSON string: " + ex.getMessage();
+            throw new DoiParsingException(error, ex);
         }
-        write(document, outWriter);
     }
-
-    /**
-     * Write a doi metadata DOM document to a StringBuilder.
-     * @param document
-     * @param builder
-     * @throws IOException
-     */
-    public void write(Document document, StringBuilder builder) throws IOException
-    {
-        write(document, new StringBuilderWriter(builder));
-    }
-
-    /**
-     * Write to root Element to a writer.
-     *
-     * @param root Root Element to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
-     */
-    protected void write(Document document, Writer writer) throws IOException
-    {
-        XMLOutputter outputter = new XMLOutputter();
-        outputter.setFormat(Format.getPrettyFormat());
-        outputter.output(document, writer);
-    }
-
 }
