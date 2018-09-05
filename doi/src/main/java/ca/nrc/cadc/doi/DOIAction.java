@@ -67,31 +67,19 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.net.InputStreamWrapper;
-import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.NodeProperty;
-import ca.nrc.cadc.vos.Protocol;
-import ca.nrc.cadc.vos.Transfer;
-import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
@@ -234,34 +222,6 @@ public abstract class DOIAction extends RestAction {
         log.debug("DOI Number: " + DOINumInputStr);
     }
 
-    protected void postDoiDocToVospace (String dataNodeName) throws URISyntaxException {
-        // Upload document to named data node
-        // Data node has already been created
-        List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
-        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-        DoiOutputStream outStream = new DoiOutputStream(doiDocument);
-        clientTransfer.setOutputStreamWrapper(outStream);
-        clientTransfer.run();
-    }
-
-    protected void getDoiDocFromVospace (String dataNodePath) throws URISyntaxException {
-        List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-        Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
-        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-        clientTransfer.setInputStreamWrapper(new DoiInputStream());
-        clientTransfer.run();
-    }
-
-    protected void writeDoiDocToSyncOutput () throws IOException {
-        StringBuilder doiXmlString = new StringBuilder();
-        DoiXmlWriter writer = new DoiXmlWriter();
-        writer.write(doiDocument,doiXmlString);
-        syncOutput.getOutputStream().write(doiXmlString.toString().getBytes());
-    }
-
     protected String getDOISuffix(String doiStr) {
         String[] doiParts = doiStr.split("/");
         return doiParts[1];
@@ -272,38 +232,5 @@ public abstract class DOIAction extends RestAction {
     protected String getDoiParentPath(String suffix) { return  doiDataURI.getPath() + "/" + suffix; }
 
     protected String getDoiNodeUri(String suffix) { return doiDataURI.getURI() + "/" + suffix; }
-
-    protected class DoiOutputStream implements OutputStreamWrapper
-    {
-        private Document xmlDoc;
-
-        public DoiOutputStream(Document xmlDoc)
-        {
-            this.xmlDoc = xmlDoc;
-        }
-
-        public void write(OutputStream out) throws IOException
-        {
-            DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(xmlDoc, out);
-        }
-    }
-
-    protected class DoiInputStream implements InputStreamWrapper
-    {
-        private Document xmlDoc;
-
-        public DoiInputStream() { }
-
-        public void read(InputStream in) throws IOException
-        {
-            try {
-                DoiXmlReader reader = new DoiXmlReader(true);
-                doiDocument = reader.read(in);
-            } catch (DoiParsingException dpe) {
-                throw new IOException(dpe);
-            }
-        }
-    }
 
 }

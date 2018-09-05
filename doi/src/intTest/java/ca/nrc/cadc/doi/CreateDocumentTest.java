@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
@@ -82,15 +82,11 @@ import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**
@@ -103,6 +99,7 @@ public class CreateDocumentTest extends IntTestBase
     private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
 
     private static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
+    static final String JSON = "application/json";
 
     static
     {
@@ -163,11 +160,20 @@ public class CreateDocumentTest extends IntTestBase
                 log.info("doi identifier of created document is " + returnedIdentifier);
                 Assert.assertFalse("New identifier not received from doi service.", dummyIdentifier.equals(returnedIdentifier));
 
-                // todo: containing folder needs to be deleted using doiadmin credentials
-
-                log.info("RETURNED: " + returnedIdentifier);
+                 log.info("RETURNED: " + returnedIdentifier);
                 // Pull the suffix from the identifier
                 String[] doiNumberParts = returnedIdentifier.split("/");
+
+                // Get the document in JSON format
+                URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                HttpDownload get = new HttpDownload(docURL, bos);
+                get.setRequestProperty("Accept", JSON);
+                get.run();
+                Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
+                Assert.assertEquals(JSON, get.getContentType());
+
+                // delete containing folder using doiadmin credentials
                 deleteTestFolder(doiNumberParts[1]);
 
                 return doc;

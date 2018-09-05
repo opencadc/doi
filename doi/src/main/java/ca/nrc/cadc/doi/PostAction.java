@@ -73,14 +73,23 @@ import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeProperty;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientTransfer;
+
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -89,6 +98,7 @@ import java.util.Calendar;
 import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
 import org.jdom2.Element;
 
 /**
@@ -205,10 +215,19 @@ public class PostAction extends DOIAction {
         else {
             throw new UnsupportedOperationException("Editing DOI Metadata not supported.");
         }
-
-
     }
 
+    private void postDoiDocToVospace (String dataNodeName) throws URISyntaxException {
+        // Upload document to named data node
+        // Data node has already been created
+        List<Protocol> protocols = new ArrayList<Protocol>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
+        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+        DoiOutputStream outStream = new DoiOutputStream(doiDocument);
+        clientTransfer.setOutputStreamWrapper(outStream);
+        clientTransfer.run();
+    }
 
     /*
      * Confirm that required information is provided
@@ -274,6 +293,22 @@ public class PostAction extends DOIAction {
         maxDoi++;
         String formattedDOI = String.format("%04d", maxDoi);
         return currentYear + "." + formattedDOI;
+    }
+
+    private class DoiOutputStream implements OutputStreamWrapper
+    {
+        private Document xmlDoc;
+
+        public DoiOutputStream(Document xmlDoc)
+        {
+            this.xmlDoc = xmlDoc;
+        }
+
+        public void write(OutputStream out) throws IOException
+        {
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(xmlDoc, out);
+        }
     }
 
 }

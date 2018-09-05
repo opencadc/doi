@@ -67,7 +67,22 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.Protocol;
+import ca.nrc.cadc.vos.Transfer;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.client.ClientTransfer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
 
 /**
  *
@@ -102,6 +117,53 @@ public class GetAction extends DOIAction {
 
             // Write XML to output
             writeDoiDocToSyncOutput();
+        }
+    }
+
+    private void writeDoiDocToSyncOutput () throws IOException {
+        StringBuilder doiBuilder = new StringBuilder();
+        String docFormat = this.syncInput.getHeader("Accept");
+        log.debug("'Accept' value in header was " + docFormat);
+        if (docFormat != null && docFormat.equals("application/json"))
+        {
+            // json document
+            syncOutput.setHeader("Content-Type", "application/json");
+            DoiJsonWriter writer = new DoiJsonWriter();
+            writer.write(doiDocument, doiBuilder);
+        }
+        else
+        {
+            // xml document
+            syncOutput.setHeader("Content-Type", "text/xml");
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(doiDocument,doiBuilder);
+        }
+        syncOutput.getOutputStream().write(doiBuilder.toString().getBytes());
+    }
+
+    private void getDoiDocFromVospace (String dataNodePath) throws URISyntaxException {
+        List<Protocol> protocols = new ArrayList<Protocol>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
+        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+        clientTransfer.setInputStreamWrapper(new DoiInputStream());
+        clientTransfer.run();
+    }
+
+    private class DoiInputStream implements InputStreamWrapper
+    {
+        private Document xmlDoc;
+
+        public DoiInputStream() { }
+
+        public void read(InputStream in) throws IOException
+        {
+            try {
+                DoiXmlReader reader = new DoiXmlReader(true);
+                doiDocument = reader.read(in);
+            } catch (DoiParsingException dpe) {
+                throw new IOException(dpe);
+            }
         }
     }
 }
