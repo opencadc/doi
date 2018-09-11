@@ -15,12 +15,12 @@
 
   <servlet>
     <servlet-name>DataCitation</servlet-name>
-    <jsp-file>/request/index.jsp</jsp-file>
+    <jsp-file>/WEB-INF/request/index.jsp</jsp-file>
   </servlet>
 
   <servlet-mapping>
     <servlet-name>DataCitation</servlet-name>
-    <url-pattern>/citation</url-pattern>
+    <url-pattern>/citation/request</url-pattern>
   </servlet-mapping>
 
   <jsp-config>
@@ -35,8 +35,8 @@
     </taglib>
   </jsp-config>
 
-  <!--<welcome-file-list>-->
-    <!--<welcome-file>/request/index.jsp</welcome-file>-->
-  <!--</welcome-file-list>-->
+  <welcome-file-list>
+    <welcome-file>/WEB-INF/request/index.jsp</welcome-file>
+  </welcome-file-list>
 
 </web-app>

@@ -25,106 +25,19 @@
 
         <c:import url="${baseURL}/canfar/includes/_page_top_styles.shtml" />
 
-        <link rel="stylesheet" type="text/css" href="<c:out value=" ${baseURL}/cadcVOTV/css/slick.grid.css " />" media="screen" />
-        <link rel="stylesheet" type="text/css" href="<c:out value=" ${baseURL}/cadcVOTV/css/slick.pager.css " />" media="screen" />
-        <link rel="stylesheet" type="text/css" href="<c:out value=" ${baseURL}/cadcVOTV/css/jquery-ui-1.11.4.min.css " />" media="screen"
+        <link rel="stylesheet" type="text/css"
+              href="<c:out value=" ${baseURL}/cadcVOTV/css/jquery-ui-1.11.4.min.css " />" media="screen"
         />
-        <link rel="stylesheet" type="text/css" href="<c:out value=" ${baseURL}/cadcVOTV/css/slick.columnpicker.css " />" media="screen"
-        />
-        <link rel="stylesheet" type="text/css" href="<c:out value=" ${baseURL}/cadcVOTV/css/cadc.votv.css " />" media="screen" />
-        <link rel="stylesheet" type="text/css" href="${contextPath}/css/cadc.gms.css" media="screen" />
 
-        <style type="text/css">
-          html,
-          body {
-            width: 100%;
-            height: 96%;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            margin: auto;
-          }
+        <!-- Located in ROOT.war -->
+        <script type="application/javascript" src="${baseURL}/citation/js/jquery-2.2.4.min.js"></script>
+        <script type="application/javascript" ${baseURL}/citation/js/bootstrap.min.js"></script>
 
-          .group_container div.modal-content,
-          .associates div.modal-content {
-            height: 400px;
-          }
-
-          .group_container div.modal-body,
-          .associates div.modal-body {
-            width: 600px;
-          }
-
-          .container {
-            width: auto;
-          }
-
-          .fill {
-            width: 100%;
-            min-width: 100%;
-            min-height: 98%;
-            height: 98%;
-            margin: auto;
-          }
-
-          .fill-mostly {
-            margin: auto;
-            width: 100%;
-            min-width: 100%;
-            min-height: 98%;
-            height: 98%;
-          }
-
-          #group_list_grid {
-            width: 100% !important;
-            font-size: 1.0em;
-            outline: 0;
-            background: #fff;
-            border: 1px solid gray;
-            z-index: 100 !important;
-          }
-
-          #content_column_main {
-            margin-top: 5px;
-          }
-
-          /**
-      Used to determine column widths.
-    */
-
-          #lengthFinder {
-            position: absolute;
-            visibility: hidden;
-            height: auto;
-            font-size: 1.4em;
-            /*width: auto;*/
-            white-space: nowrap;
-
-            /* Be generous with spacing. */
-            /*font-size: 1.1em;*/
-            font-family: Verdana, Arial, sans-serif;
-          }
-
-          .slick-header-column .slick-column-name {
-            font-weight: normal;
-          }
-        </style>
-
-        <script type="application/javascript" src="${contextPath}/js/jquery-2.2.4.min.js"></script>
-        <script type="application/javascript" src="${contextPath}/js/bootstrap.min.js"></script>
-
-        <!-- Internationalization libraries -->
-        <script type="text/javascript" src="${contextPath}/js/jquery.i18n.js"></script>
-        <script type="text/javascript" src="${contextPath}/js/jquery.i18n.messagestore.js"></script>
-        <script type="text/javascript" src="${contextPath}/js/jquery.i18n.fallbacks.js"></script>
-        <script type="text/javascript" src="${contextPath}/js/jquery.i18n.parser.js"></script>
-        <script type="text/javascript" src="${contextPath}/js/jquery.i18n.emitter.js"></script>
-        <script type="text/javascript" src="${contextPath}/js/jquery.i18n.language.js"></script>
 
         <!--[if lt IE 9]>
-  <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
-        <title>CANFAR</title>
+            <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <title>Data Citation</title>
       </head>
 
       <body>
@@ -136,83 +49,95 @@
                 <section id="main_content" class="fill">
 
                   <h2>
-                    <a id="canfar-beta" class="anchor" href="#canfar-beta" aria-hidden="true">
+                    <a id="canfar-doi" class="anchor" href="#canfar-doi" aria-hidden="true">
                       <span aria-hidden="true" class="octicon octicon-link"></span>
-                    </a>Group Management
+                    </a>Data Citation
                   </h2>
 
-                  <!-- Content starts -->
-                  <!-- (Start, initialize) DOI button -->
-                  <button type="button" class="btn btn-primary" id="add_group_button" data-toggle="modal" data-target="#add_group_modal" disabled="disabled">
-                    <span class="glyphicon glyphicon-plus"></span>
-                    <span class="button_text"></span>
-                  </button>
-
-                  <div id="content_column_main" class="fill">
-                    <div class="loader_container">
-                      <div class="text-center">
-                        <img src="images/ajax-loader.gif" alt="Loading" />
-                      </div>
-                      <div class="clear"></div>
-                    </div>
-
-                    <div id="content_column_main_inner" class="sr-only fill">
-                      <div class="grid-container margin-top-medium fill">
-                        <div id="group-results-grid-header" class="grid-header" style="width: 100%;">
-                          <span class="grid-header-label"></span>
-                        </div>
-                        <div id="group_list_grid" class="fill-mostly"></div>
-                      </div>
-                    </div>
-                    <div id="lengthFinder"></div>
-                  </div>
-                  <div id="new_doi_container" class="doi_container" data-operate="create">
-                    <!-- Create Group modal -->
-
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                            <h4 class="modal-title" id="add_group_modal_label"></h4>
+                    <div class="doi-form-body">
+                      <form id="doi_request_form" class="form-horizontal">
+                        <!-- DOI Number -->
+                        <!-- will need to be read only for GET display -->
+                        <div class="form-group">
+                          <label for="doi_number" class="col-sm-2 control-label" id="doi_number_label">DOI Number</label>
+                          <div class="col-sm-10">
+                            <input type="text" class="form-control" id="doi_number" name="doi-number" placeholder="YY.####" tabindex="1"
+                            />
                           </div>
-                          <div class="modal-body">
-                            <form class="form-horizontal" method="post" action="${contextPath}/doi/instances" name="doiForm">
-                              <!-- DOI Number -->
-                              <div class="form-group">
-                                <label for="doi_number" class="col-sm-2 control-label" id="doi_number_label"></label>
-                                <div class="col-sm-10">
-                                  <input type="text" class="form-control" id="doi_number" name="doi-number" placeholder="doi number" tabindex="1"
-                                  />
-                                </div>
-                              </div>
-                              <!-- First Author -->
-                              <div class="form-group">
-                                <label for="doi_first_author" class="col-sm-2 control-label" id="doi_first_author_label"></label>
-                                <div class="col-sm-10">
-                                  <input type="text" class="form-control" id="doi_first_author" name="first-author" placeholder="first author" tabindex="1"
-                                  />
-                                </div>
-                              </div>
-                              <!-- Publication Title -->
-                              <div class="form-group">
-                                <label for="doi_publication_title" class="col-sm-2 control-label" id="doi_publication_title_label"></label>
-                                <div class="col-sm-10">
-                                  <textarea class="form-control" id="doi_publication_title" name="publication-title" tabindex="2"></textarea>
-                                </div>
-                              </div>
-                              <!-- Buttons -->
-                              <div class="form-group">
-                                <div class="col-sm-offset-2 col-sm-10">
-                                  <div class="btn-group" role="group">
-                                    <button type="submit" class="btn btn-primary" id="add_group_update_button" value="SUBMIT_EXECUTE"></button>
-                                    <input type="reset" class="btn btn-default" id="add_group_reset_button" />
-                                    <button type="button" class="btn btn-default" id="add_group_close_button" data-dismiss="modal"></button>
-                                  </div>
-                                </div>
-                              </div>
-                            </form>
+                        </div>
+                        <!-- First Author -->
+                        <!-- TODO: consider how to add multiples of this set of info to the form for author list -->
+                        <div class="form-group">
+                          <div class="col-sm-1"></div>
+                          <div class="col-sm-10"><em>Author's Information</em></div>
+                        </div>
+                        <div class="form-group">
+                          <label for="doi_first_name" class="col-sm-2 control-label" id="doi_first_name_label">Given</label>
+                          <div class="col-sm-10">
+                            <input type="text" class="form-control" id="doi_first_name" name="givenName" placeholder="given name" tabindex="2"
+                            />
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="doi_last_name" class="col-sm-2 control-label" id="doi_last_name_label">Family</label>
+                          <div class="col-sm-10">
+                            <input type="text" class="form-control" id="doi_last_name" name="familyName" placeholder="family name" tabindex="3"
+                            />
+                          </div>
+                        </div>
+                        <%--<div class="form-group">--%>
+                          <%--<label for="doi_orcid" class="col-sm-2 control-label" id="doi_orcid_label">ORCID ID</label>--%>
+                          <%--<div class="col-sm-10">--%>
+                            <%--<input type="text" class="form-control" id="doi_orcid" name="orcidID" placeholder="" tabindex="4"--%>
+                            <%--/>--%>
+                          <%--</div>--%>
+                        <%--</div>--%>
+                        <%--<div class="form-group">--%>
+                          <%--<label for="doi_affiliation" class="col-sm-2 control-label" id="doi_aff_label">Affiliation</label>--%>
+                          <%--<div class="col-sm-10">--%>
+                            <%--<input type="text" class="form-control" id="doi_affiliation" name="affiliation" placeholder="" tabindex="5"--%>
+                            <%--/>--%>
+                          <%--</div>--%>
+                        <%--</div>--%>
+                        <div class="form-group">
+                          <div class="col-sm-1"></div>
+                          <div class="col-sm-10"><em>Publication Information</em></div>
+                        </div>
+                        <!-- Publication Title -->
+                        <div class="form-group">
+                          <label for="doi_title" class="col-sm-2 control-label" id="doi_title_label">Title</label>
+                          <div class="col-sm-10">
+                            <input type="text" class="form-control" id="doi_title" name="title" placeholder="title" tabindex="6"/>
+                          </div>
+                        </div>
+                        <!-- Publisher -->
+                        <div class="form-group">
+                          <label for="doi_publisher" class="col-sm-2 control-label" id="doi_publisher_label">Publisher</label>
+                          <div class="col-sm-10">
+                            <input type="text" class="form-control" id="doi_publisher" name="publisher" placeholder="publisher name or DOI" tabindex="7"/>
+                          </div>
+                        </div>
+                        <!-- Publication Date -->
+                        <div class="form-group">
+                          <label for="doi_publish_year" class="col-sm-2 control-label" id="doi_publish_year_label">Publication Year</label>
+                          <div class="col-sm-10">
+                            <input type="text" class="form-control" id="doi_publish_year" name="publicationYear" placeholder="yyyy" tabindex="8"/>
+                          </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <%--<button type="submit" class="btn btn-primary" id="add_group_update_button">Submit</button>--%>
+                        <div class="form-group">
+                          <div class="col-sm-offset-2 col-sm-10">
+                            <div class="btn-group" role="group">
+                              <button type="submit" class="btn btn-primary" id="add_group_update_button">Submit</button>
+                              <%--<input type="reset" class="btn btn-default" id="add_group_reset_button" />--%>
+                            </div>
+                          </div>
+                        </div>
+                      </form>
 
                   </div>
-
 
                   <!-- Content ends -->
 
@@ -225,29 +150,20 @@
         <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery-ui-1.11.4.min.js " />"></script>
         <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery.event.drag-2.2.min.js
           " />"></script>
-
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/slick.core.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/slick.grid.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/slick.dataview.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/slick.pager.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/slick.columnpicker.js " />"></script>
         <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery.csv-0.71.min.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/cadc.rowselectionmodel.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/cadc.votable.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/cadc.votable-reader.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/cadc.plugin.filter_default.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/cadc.votv.js " />"></script>
-        <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/cadc.votv.comparer.js " />"></script>
-        <script type="application/javascript" src="${contextPath}/js/cadc.gms.js?version=@version@"></script>
-        <script type="application/javascript" src="${contextPath}/js/cadc.gms.list.js?version=@version@"></script>
+        <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation.js" />"></script>
+
 
         <script type="application/javascript">
           $(document).ready(function() {
-            var app = new App({grid_offset: 200})
-            app.loadGroups()             
-          })
+
+            citation_js = new ca.nrc.cadc.Citation();
+            $("#doi_request_form").submit(citation_js.handleDoiRequest);
+
+          });
         </script>
 
       </body>
 
       </html>
+
