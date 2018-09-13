@@ -160,11 +160,8 @@ public abstract class DOIAction extends RestAction {
 
         // Get the submitted form data, if it exists
         // which has been put in a JDOM2 Document
-        // Set up values needed to access the xml document
-        // TODO: may move this into the PostAction doActionImpl if not used outside of that.
-        // doiDocument will be used though? (in GetAction? - not finalised however.)
         doiDocument = (Document)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-        if (doiDocument != null) {
+        if (doiDocument != null && doiDocument.getContent().size() != 0) {
             doiDocRoot = doiDocument.getRootElement();
             doiNamespace = doiDocument.getRootElement().getNamespace();
         }

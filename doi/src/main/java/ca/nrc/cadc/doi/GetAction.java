@@ -124,7 +124,7 @@ public class GetAction extends DOIAction {
         StringBuilder doiBuilder = new StringBuilder();
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header was " + docFormat);
-        if (docFormat != null && docFormat.equals("application/json"))
+        if (docFormat != null && docFormat.contains("application/json"))
         {
             // json document
             syncOutput.setHeader("Content-Type", "application/json");
@@ -159,7 +159,10 @@ public class GetAction extends DOIAction {
         public void read(InputStream in) throws IOException
         {
             try {
-                DoiXmlReader reader = new DoiXmlReader(true);
+                // TODO: turn this validation back on when doiResource (or whatever
+                // the metadata class is going to be called) is changed over, so
+                // this returns an instance of that class instead of a Document..
+                DoiXmlReader reader = new DoiXmlReader(false);
                 doiDocument = reader.read(in);
             } catch (DoiParsingException dpe) {
                 throw new IOException(dpe);

@@ -176,6 +176,28 @@ public class PostAction extends DOIAction {
 
             postDoiDocToVospace(doiFilename);
 
+            // Create HTML Landing page and push to same data node
+            String htmlFilename = nextDoiSuffix + ".html";
+            String landingFileUri = folderURI + "/" + htmlFilename;
+            String landingFilename = folderName + "/" + htmlFilename;
+            log.info("MAKING landing page: " + landingFileUri + ": " + landingFilename);
+
+            target = new VOSURI(new URI(landingFileUri));
+            Node landingFileDataNode = new DataNode(target);
+            vosClient.createNode(landingFileDataNode);
+
+            // TODO: get file with html string in it & substitute in the
+            // values that need to be put in. Then do a (ByteArrayOutputStream?)-type
+            // OutputStream wrapper to clientTransfer.run it up to the node created above...
+            // File will be in the resource directory/includes, so will be in the class path
+//            List<Protocol> protocols = new ArrayList<Protocol>();
+//            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+//            Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
+//            ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+//            DoiOutputStream outStream = new DoiOutputStream(doiDocument);
+//            clientTransfer.setOutputStreamWrapper(outStream);
+//            clientTransfer.run();
+
             // Create 'data' folder under containing folder.
             // This is where the calling user will upload their DOI data
 
@@ -185,7 +207,6 @@ public class PostAction extends DOIAction {
 
             String doiGroupName = DOI_GROUP_PREFIX + nextDoiSuffix;
             String doiGroupURI = GMS_URI_BASE + "?" + doiGroupName;
-            log.info("MAKING "+ doiGroupName  + ": " + doiGroupURI);
             GroupURI guri = new GroupURI(new URI(doiGroupURI));
 
             Group doiRWGroup = new Group(guri);
@@ -197,7 +218,7 @@ public class PostAction extends DOIAction {
             doiRWGroup.getUserAdmins().add(member);
             gmsClient.createGroup(doiRWGroup);
 
-            log.info("MAKING group uri being made for " + nextDoiSuffix + ": " + doiGroupURI);
+            log.debug("group uri being made for " + nextDoiSuffix + ": " + doiGroupURI);
 
             NodeProperty wGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE,doiGroupURI);
 
