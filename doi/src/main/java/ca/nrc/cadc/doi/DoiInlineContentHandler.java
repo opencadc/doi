@@ -106,8 +106,9 @@ public class DoiInlineContentHandler implements InlineContentHandler {
                 // TODO: trap validation errors
                 DoiXmlReader reader = new DoiXmlReader(false);
                 userInput = reader.read(inputStream);
-            } catch (Exception e) {
-                log.debug(e);
+            } catch (DoiParsingException dpe) {
+                log.debug(dpe);
+                throw new InlineContentException(dpe.getMessage());
             }
         }
         else if (contentType.toLowerCase().equals("application/json")) {
@@ -115,8 +116,10 @@ public class DoiInlineContentHandler implements InlineContentHandler {
                 // read json file
                 DoiJsonReader reader = new DoiJsonReader();
                 userInput = reader.read(IOUtils.toString(inputStream, "UTF-8"));
-            } catch (Exception e) {
-                log.debug(e);
+            } catch (DoiParsingException dpe) {
+                log.debug(dpe);
+                // todo: this isn't wrapping the exception well, right?
+                throw new InlineContentException(dpe.getMessage());
             }
         }
 

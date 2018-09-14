@@ -82,7 +82,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
 
 /**
  *
@@ -124,7 +123,7 @@ public class GetAction extends DOIAction {
         StringBuilder doiBuilder = new StringBuilder();
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header was " + docFormat);
-        if (docFormat != null && docFormat.equals("application/json"))
+        if (docFormat != null && docFormat.contains("application/json"))
         {
             // json document
             syncOutput.setHeader("Content-Type", "application/json");
@@ -152,8 +151,6 @@ public class GetAction extends DOIAction {
 
     private class DoiInputStream implements InputStreamWrapper
     {
-        private Document xmlDoc;
-
         public DoiInputStream() { }
 
         public void read(InputStream in) throws IOException
