@@ -1,6 +1,5 @@
 /*
  ************************************************************************
-
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
@@ -73,7 +72,6 @@ package ca.nrc.cadc.doi;
 import static org.junit.Assert.fail;
 
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.util.List;
 
 import org.apache.log4j.Level;
@@ -89,25 +87,32 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ca.nrc.cadc.doi.datacite.Creator;
+import ca.nrc.cadc.doi.datacite.CreatorName;
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.NameIdentifier;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**
- * Test read-write of a JSON document containing doi metadata using the 
- * DoiJsonReader and DoiJsonWriter. Every test here performs a round trip: 
- * read with json document, write document in json format and compare 
- * to original document.
+ * Test read-write of an XML document containing doi metadata using the 
+ * DoiXmlReader and DoiXmlWriter. Every test here performs a round trip: 
+ * read with xml schema validation enabled, write document in xml format
+ * and compare to original document.
  * 
  * @author yeunga
  */
-public class DoiJsonReaderWriterTest
+public class DoiReaderWriterTest
 {
-    private static Logger log = Logger.getLogger(DoiJsonReaderWriterTest.class);
+    private static Logger log = Logger.getLogger(DoiReaderWriterTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.vos", Level.INFO);
     }
 
-    public DoiJsonReaderWriterTest()
+    public DoiReaderWriterTest()
     {
     }
 
@@ -131,37 +136,12 @@ public class DoiJsonReaderWriterTest
     {
     }
 
-    private void compareNamespace(Namespace ns1, Namespace ns2)
+    private void compareAttributes(Attribute attribute1, Attribute attribute2, String key, String value, String tag)
     {
-        Assert.assertTrue("Namespace is different", ns1.equals(ns2));
-        Assert.assertTrue("Namespace prefix is incorrect", ns1.getPrefix().isEmpty());
-        Assert.assertTrue("Namespace prefixes are different", ns1.getPrefix().equals(ns2.getPrefix()));
-        Assert.assertTrue("Namespace URI is incorrect", ns1.getURI().equals(DoiXmlReader.DOI_NS_41));
-        Assert.assertTrue("Namespace URIs are different", ns1.getURI().equals(ns2.getURI()));
-    }
-    
-    private void compareAttributes(List<Attribute> attributes1, List<Attribute> attributes2, String key, String value, String tag)
-    {
-        boolean foundKey = false;
-        boolean sameKeys = false;
-        for (Attribute a1 : attributes1)
-        {
-            if (a1.getName().equals(key))
-            {
-                foundKey = true;
-                Assert.assertTrue(tag + " " + key + " attribute value is incorrect", a1.getValue().equals(value));
-                for (Attribute a2 : attributes2)
-                {
-                    if (a1.getName().equals(a2.getName()))
-                    {
-                        sameKeys = true;
-                        Assert.assertTrue(tag + " " + key + " attribute values are different", a1.getValue().equals(a2.getValue()));
-                    }
-                }
-            }
-        }
-        Assert.assertTrue(tag + " " + key + " attribute name is incorrect", foundKey);
-        Assert.assertTrue(tag + " " + key + " attribute names are different", sameKeys);
+        Assert.assertTrue(tag + " " + key + " attribute name is incorrect", attribute1.getName().equals(key));
+        Assert.assertEquals(tag + " " + key + " attribute names are different", attribute1.getName(), attribute2.getName());
+        Assert.assertTrue(tag + " " + key + " attribute value is incorrect", attribute1.getValue().equals(value));
+        Assert.assertEquals(tag + " " + key + " attribute values are different", attribute1.getValue(), attribute2.getValue());
     }
 
     private void compareCreators(Element creator1, Element creator2, Namespace ns)
@@ -171,7 +151,9 @@ public class DoiJsonReaderWriterTest
         List<Attribute> attributes2 = creator2.getChild("creatorName", ns).getAttributes();
         Assert.assertTrue("Incorrect number of creatorName attributes", attributes1.size() == 1);
         Assert.assertEquals("Number of creatorName attributes are different", attributes1.size(), attributes2.size());
-        compareAttributes(attributes1, attributes2, "nameType", "Personal", "CreatorName");
+        Attribute attribute1 = attributes1.get(0);
+        Attribute attribute2 = attributes2.get(0);
+        compareAttributes(attribute1, attribute2, "nameType", "Personal", "CreatorName");
 
         // compare creator name
         String creatorName1 = creator1.getChildText("creatorName", ns);
@@ -196,8 +178,12 @@ public class DoiJsonReaderWriterTest
         attributes2 = creator2.getChild("nameIdentifier", ns).getAttributes();
         Assert.assertTrue("Incorrect number of attributes", attributes1.size() == 2);
         Assert.assertEquals("Number of nameIdentifier attributes are different", attributes1.size(), attributes2.size());
-        compareAttributes(attributes1, attributes2, "schemeURI", "http://orcid.org/", "Creator");
-        compareAttributes(attributes1, attributes2, "nameIdentifierScheme", "ORCID", "Creator");
+        attribute1 = attributes1.get(0);
+        attribute2 = attributes2.get(0);
+        compareAttributes(attribute1, attribute2, "schemeURI", "http://orcid.org/", "Creator");
+        attribute1 = attributes1.get(1);
+        attribute2 = attributes2.get(1);
+        compareAttributes(attribute1, attribute2, "nameIdentifierScheme", "ORCID", "Creator");
         String nameIdentifier1 = creator1.getChildText("nameIdentifier", ns);
         String nameIdentifier2 = creator2.getChildText("nameIdentifier", ns);
         Assert.assertTrue("Incorrect creator affiliation", nameIdentifier1.equals("0000-0001-5000-0007"));
@@ -225,7 +211,9 @@ public class DoiJsonReaderWriterTest
         List<Attribute> attributes2 = title2.getAttributes();
         Assert.assertTrue("Incorrect number of title attributes", attributes1.size() == 1);
         Assert.assertEquals("Number of title attributes are different", attributes1.size(), attributes2.size());
-        compareAttributes(attributes1, attributes2, "lang", "en-US", "Title");
+        Attribute attribute1 = attributes1.get(0);
+        Attribute attribute2 = attributes2.get(0);
+        compareAttributes(attribute1, attribute2, "lang", "en-US", "Title");
         String title1Text = title1.getText();
         String title2Text = title2.getText();
         Assert.assertTrue("Incorrect title", title1Text.equals("Full DataCite XML Example"));
@@ -238,8 +226,12 @@ public class DoiJsonReaderWriterTest
         attributes2 = title2.getAttributes();
         Assert.assertTrue("Incorrect number of title attributes", attributes1.size() == 2);
         Assert.assertEquals("Number of title attributes are different", attributes1.size(), attributes2.size());
-        compareAttributes(attributes1, attributes2, "lang", "en-US", "Title");
-        compareAttributes(attributes1, attributes2, "titleType", "Subtitle", "Title");
+        attribute1 = attributes1.get(0);
+        attribute2 = attributes2.get(0);
+        compareAttributes(attribute1, attribute2, "lang", "en-US", "Title");
+        attribute1 = attributes1.get(1);
+        attribute2 = attributes2.get(1);
+        compareAttributes(attribute1, attribute2, "titleType", "Subtitle", "Title");
         title1Text = title1.getText();
         title2Text = title2.getText();
         Assert.assertTrue("Incorrect title", title1Text.equals("Demonstration of DataCite Properties."));
@@ -262,9 +254,15 @@ public class DoiJsonReaderWriterTest
         List<Attribute> attributes2 = subject2.getAttributes();
         Assert.assertTrue("Incorrect number of subject attributes", attributes1.size() == 3);
         Assert.assertEquals("Number of subject attributes are different", attributes1.size(), attributes2.size());
-        compareAttributes(attributes1, attributes2, "lang", "en-US", "Subject");
-        compareAttributes(attributes1, attributes2, "schemeURI", "http://dewey.info/", "Subject");
-        compareAttributes(attributes1, attributes2, "subjectScheme", "dewey", "Subject");
+        Attribute attribute1 = attributes1.get(0);
+        Attribute attribute2 = attributes2.get(0);
+        compareAttributes(attribute1, attribute2, "lang", "en-US", "Subject");
+        attribute1 = attributes1.get(1);
+        attribute2 = attributes2.get(1);
+        compareAttributes(attribute1, attribute2, "schemeURI", "http://dewey.info/", "Subject");
+        attribute1 = attributes1.get(2);
+        attribute2 = attributes2.get(2);
+        compareAttributes(attribute1, attribute2, "subjectScheme", "dewey", "Subject");
         String subject1Text = subject1.getText();
         String subject2Text = subject2.getText();
         Assert.assertTrue("Incorrect subject", subject1Text.equals("000 computer science"));
@@ -307,39 +305,152 @@ public class DoiJsonReaderWriterTest
         Element subjectsFromReader = rootFromReader.getChild("subjects", ns);
         Element subjectsFromWriter = rootFromWriter.getChild("subjects", ns);
         compareSubjects(subjectsFromReader, subjectsFromWriter, ns);
+    }
+    
+    private void compareNamespace(Namespace ns1, Namespace ns2)
+    {
+        Assert.assertTrue("Namespace prefixes are different", ns1.getPrefix().equals(ns2.getPrefix()));
+        Assert.assertTrue("Namespace URIs are different", ns1.getURI().equals(ns2.getURI()));
+    }
+    
+    private void compareIdentifier(Identifier id1, Identifier id2)
+    {
+        Assert.assertEquals("Identifiers are different", id1.getIdentifier(), id2.getIdentifier());
+        Assert.assertEquals("identifierTypes are different", id1.getIdentifierType(), id2.getIdentifierType());
+    }
+    
+    private void compareCreators(List<Creator> creators1, List<Creator> creators2)
+    {
+        Assert.assertEquals("Number of creators are different", creators1.size(), creators2.size() );
+        for (int i=0; i<creators1.size(); i++)
+        {
+            compareCreator(creators1.get(i), creators2.get(i));
+        }
+    }
+    
+    private void compareCreator(Creator creator1, Creator creator2)
+    {
+        compareCreatorName(creator1.getCreatorName(), creator2.getCreatorName());
+        compareNameIdentifier(creator1.nameIdentifier, creator2.nameIdentifier);
+        Assert.assertEquals("givenNames are different", creator1.givenName, creator2.givenName);
+        Assert.assertEquals("familyNames are different", creator1.familyName, creator2.familyName);
+        Assert.assertEquals("affiliations are different", creator1.affiliation, creator2.affiliation);
+    }
+    
+    private void compareCreatorName(CreatorName cn1, CreatorName cn2)
+    {
+        Assert.assertEquals("creatorNames are different", cn1.getCreatorName(), cn2.getCreatorName());
+        Assert.assertEquals("nameTypes are different", cn1.nameType, cn2.nameType);
+    }
+    
+    private void compareNameIdentifier(NameIdentifier id1, NameIdentifier id2)
+    {
+        Assert.assertEquals("nameIdentifierSchemes are different", id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme());
+        Assert.assertEquals("nameIdentifiers are different", id1.getNameIdentifier(), id2.getNameIdentifier());
+        Assert.assertTrue("schemeURIs are different", id1.schemeURI.equals(id2.schemeURI));
+    }
+    
+    private void compareTitles(List<Title> t1, List<Title> t2)
+    {
+        Assert.assertEquals("Number of titles are different", t1.size(), t2.size());
+        for (int i=0; i< t1.size(); i++)
+        {
+            compareTitle(t1.get(i), t2.get(i));
+        }
+    }
+    
+    private void compareTitle(Title t1, Title t2)
+    {
+        Assert.assertEquals("langs are different", t1.getLang(), t2.getLang());
+        Assert.assertEquals("titles are different", t1.getTitle(), t2.getTitle());
+        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
+    }
+    
+    private void comparePublisher(String p1, String p2)
+    {
+        Assert.assertEquals("publishers are different", p1, p2);
+    }
+    
+    private void comparePublicationYear(String p1, String p2)
+    {
+        Assert.assertEquals("publicationYears are different", p1, p2);
+    }
 
-
+    private void compareResourceType(ResourceType rst1, ResourceType rst2)
+    {
+        Assert.assertEquals("resourceTypeGenerals are different", rst1.getResourceTypeGeneral(), rst2.getResourceTypeGeneral());
+        Assert.assertEquals("resourceTypes are different", rst1.getResourceType(), rst2.getResourceType());
+    }
+    
+    private void compareResources(Resource r1, Resource r2)
+    {
+        compareNamespace(r1.getNamespace(), r2.getNamespace());
+        compareIdentifier(r1.getIdentifier(), r2.getIdentifier());
+        compareCreators(r1.getCreators(), r2.getCreators());
+        compareTitles(r1.getTitles(), r2.getTitles());
+        comparePublisher(r1.getPublisher(), r2.getPublisher());
+        comparePublicationYear(r1.getPublicationYear(), r2.getPublicationYear());
+        compareResourceType(r1.getResourceType(), r2.getResourceType());
     }
     
     @Test
-    public void readValidDoiMetadata()
+    public void testXmlReaderWriter()
     {
         try
         {
-            log.debug("readValidDoiMetadata");
+            log.debug("testXmlReaderWriter");
             DoiXmlReader xmlReader = new DoiXmlReader();
             
             // read test xml file
             String fileName = "src/test/data/datacite-example-full-v4.1.xml";
             FileInputStream fis = new FileInputStream(fileName);
-            Document docFromXmlReader = xmlReader.read(fis);
+            Resource resourceFromReader = xmlReader.read(fis);
             fis.close();
             
-            // write document in JSON format
-            StringBuilder jsonBuilder = new StringBuilder();
-            DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(docFromXmlReader, jsonBuilder);
-
-            // reader document generated by writer
-            DoiJsonReader jsonReader = new DoiJsonReader();
-            Document docFromJsonWriter = jsonReader.read(jsonBuilder.toString());
+            // write Resource instance in XMl format
+            StringBuilder builder = new StringBuilder();
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(resourceFromReader, builder);
             
-            StringBuilder xmlBuilder = new StringBuilder();
-            DoiXmlWriter xmlWriter = new DoiXmlWriter();
-            xmlWriter.write(docFromJsonWriter, xmlBuilder);
+            // read document generated by writer
+            Resource resourceFromWriter = xmlReader.read(builder.toString());
+            
+            // compare Resource instance generated by reader to Resource instance generated by writer
+            compareResources(resourceFromReader, resourceFromWriter);
+        }
+        catch (Exception ex)
+        {
+            log.error(ex);
+            fail(ex.getMessage());
+        }
+        
+    }
 
-            // compare document generated by reader to document generated by writer
-            compareDocs(docFromXmlReader, docFromJsonWriter);
+    @Test
+    public void testJsonReaderWriter()
+    {
+        try
+        {
+            log.debug("testJsonReaderWriter");
+            DoiXmlReader xmlReader = new DoiXmlReader();
+            
+            // read test xml file
+            String fileName = "src/test/data/datacite-example-full-v4.1.xml";
+            FileInputStream fis = new FileInputStream(fileName);
+            Resource resourceFromReader = xmlReader.read(fis);
+            fis.close();
+            
+            // write Resource instance in JSON format
+            StringBuilder builder = new StringBuilder();
+            DoiJsonWriter writer = new DoiJsonWriter();
+            writer.write(resourceFromReader, builder);
+
+            // read document generated by writer
+            DoiJsonReader jsonReader = new DoiJsonReader();
+            Resource resourceFromWriter = jsonReader.read(builder.toString());
+
+            // compare Resource instance generated by reader to Resource instance generated by writer
+            compareResources(resourceFromReader, resourceFromWriter);
         }
         catch (Exception ex)
         {

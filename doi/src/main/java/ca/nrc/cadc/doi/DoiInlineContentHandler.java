@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 
@@ -96,7 +97,7 @@ public class DoiInlineContentHandler implements InlineContentHandler {
             throw new IOException("The InputStream is closed");
         }
 
-        Document userInput = new Document();
+        Resource userInput = null;
         InlineContentHandler.Content content = new InlineContentHandler.Content();
         if (contentType.toLowerCase().equals("text/xml")) {
 

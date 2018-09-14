@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.xml.XmlUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,7 +91,7 @@ import org.jdom2.Namespace;
  *
  * @author yeunga
  */
-public class DoiXmlReader
+public class DoiXmlReader extends DoiReader
 {
     private static final Logger log = Logger.getLogger(DoiXmlReader.class);
     
@@ -128,17 +129,19 @@ public class DoiXmlReader
             log.debug("schema validation enabled");
         }
         else
+        {
             log.debug("schema validation disabled");
+        }
     }
 
     /**
      *  Construct a DOM document from an XML String source.
      *
      * @param xml String of the XML.
-     * @return Document DOM document.
+     * @return Resource object containing all doi metadata.
      * @throws DoiParsingException if there is an error parsing the XML.
      */
-    public Document read(String xml) throws DoiParsingException
+    public Resource read(String xml) throws DoiParsingException
     {
         if (xml == null)
             throw new IllegalArgumentException("XML must not be null");
@@ -157,10 +160,10 @@ public class DoiXmlReader
      * Construct a DOM document from a InputStream.
      *
      * @param in InputStream.
-     * @return Document DOM document.
+     * @return Resource object containing all doi metadata.
      * @throws DoiParsingException if there is an error parsing the XML.
      */
-    public Document read(InputStream in) throws IOException, DoiParsingException
+    public Resource read(InputStream in) throws IOException, DoiParsingException
     {
         if (in == null)
             throw new IOException("stream closed");
@@ -178,10 +181,10 @@ public class DoiXmlReader
      *  Construct a DOM document from a Reader.
      *
      * @param reader Reader.
-     * @return Node Node.
+     * @return Resource object containing all doi metadata.
      * @throws NodeParsingException if there is an error parsing the XML.
      */
-    public Document read(Reader reader) 
+    public Resource read(Reader reader) 
     		throws DoiParsingException, IOException
     {
         if (reader == null)
@@ -200,7 +203,7 @@ public class DoiXmlReader
             String error = "XML failed schema validation: " + jde.getMessage();
             throw new DoiParsingException(error, jde);
         }
-        
-        return document;
+       
+        return this.buildResource(document);
     }
 }

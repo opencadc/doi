@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,114 +62,59 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.net.URI;
-import java.net.URL;
-import java.security.PrivilegedExceptionAction;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
-
-import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.net.HttpPost;
-import ca.nrc.cadc.util.Log4jInit;
+import org.springframework.util.StringUtils;
 
 /**
- * Integration tests for the recursive setting of node properties.
- *
- * @author majorb
+ * The type of a resource. You may enter an additional free text description..
+ * 
+ * @author yeunga
  */
-public class CreateDocumentTest extends IntTestBase
+public class ResourceType
 {
-    private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
+    
+    private static Logger log = Logger.getLogger(ResourceType.class);
+    
+    private String resourceTypeGeneral;
+    private String resourceType;
 
-    private static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
-    static final String JSON = "application/json";
-
-    static
+    /**
+     * ResourceType constructor.
+     * @param resourceTypeGeneral type of this resource
+     * @param resourceType additional text description for this resource type
+     */
+    public ResourceType(String resourceTypeGeneral, String resourceType)
     {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        if (!StringUtils.hasText(resourceTypeGeneral) || !StringUtils.hasText(resourceType))
+        {
+            String msg = "resourceTypeGeneral and resourceType must be specified.";
+            throw new IllegalArgumentException(msg);
+        }
+        
+        this.resourceTypeGeneral = resourceTypeGeneral;
+        this.resourceType = resourceType;
     }
 
-    public CreateDocumentTest() { }
-
-    @Test
-    public void testCreateDocument() throws Throwable
+    /**
+     * @return type of this resource.
+     */
+    public String getResourceTypeGeneral()
     {
-        final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
-
-        // read test xml file
-        final DoiXmlReader reader = new DoiXmlReader(true);
-        String fileName = "src/test/data/datacite-example-full-dummy-identifier-v4.1.xml";
-        FileInputStream fis = new FileInputStream(fileName);
-        Resource resource = reader.read(fis);
-        fis.close();
-        
-        // Ensure that the test xml document does not contain an identifier
-        final String dummyIdentifier = resource.getIdentifier().getIdentifier();
-        
-        // write document generated by reader
-        final StringBuilder builder = new StringBuilder();
-        DoiXmlWriter writer = new DoiXmlWriter();
-        writer.write(resource, builder);
-
-        Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-        {
-            public Object run() throws Exception
-            {
-                // post the job
-                URL postUrl = new URL(baseURL);
-
-                log.debug("baseURL: " + baseURL);
-                log.debug("posting to: " + postUrl);
-                
-                HttpPost httpPost = new HttpPost(postUrl, builder.toString(), "text/xml", true);
-                httpPost.run();
-                
-                // Check that there was no exception thrown
-                if (httpPost.getThrowable() != null)
-                    throw new RuntimeException(httpPost.getThrowable());
-                
-                // Check that the HttpPost was sent successfully
-                Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);
-
-                // Check that the doi server processed the document and added an identifier
-                String returnedDoc = httpPost.getResponseBody();
-                Resource resource = reader.read(returnedDoc);
-                String returnedIdentifier = resource.getIdentifier().getIdentifier();
-                Assert.assertFalse("New identifier not received from doi service.", dummyIdentifier.equals(returnedIdentifier));
-
-                // Pull the suffix from the identifier
-                String[] doiNumberParts = returnedIdentifier.split("/");
-
-                // Get the document in JSON format
-                URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                HttpDownload get = new HttpDownload(docURL, bos);
-                get.setRequestProperty("Accept", JSON);
-                get.run();
-                Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
-                Assert.assertEquals(JSON, get.getContentType());
-
-                // delete containing folder using doiadmin credentials
-                deleteTestFolder(doiNumberParts[1]);
-
-                return resource;
-            }
-        });
+        return this.resourceTypeGeneral;
+    }
+    
+    /**
+     * @return additional text description of this resource type
+     */
+    public String getResourceType()
+    {
+        return this.resourceType; 
     }
 }

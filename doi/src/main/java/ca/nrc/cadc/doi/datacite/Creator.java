@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -58,11 +58,7 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
-
-            // return the node in xml format
-            NodeWriter nodeWriter = new NodeWriter();
-            return new NodeActionResult(new N
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -71,30 +67,57 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
 import org.apache.log4j.Logger;
+import org.springframework.util.StringUtils;
 
 /**
- * Abstract class defining an object within VOSpace.
- *  
- * @see ca.nrc.cadc.vos.DataNode
- * @see ca.nrc.cadc.vos.ContainerNode
+ * One of the main researchers or authors.
+ * The main researchers involved working on the data, 
+ * or the authors of the publication in priority order. 
+ * May be a corporate/institutional or personal name.
  * 
- * @author majorb
- *
+ * @author yeunga
  */
-public abstract class DoiMetadata implements Comparable<Object>
+public class Creator
 {
-    private static Logger log = Logger.getLogger(DoiMetadata.class);
-
-
-    // The name of the node
-    protected String name;
-
     
+    private static Logger log = Logger.getLogger(Creator.class);
+    
+    // Name of the creator.
+    private CreatorName creatorName;
+    
+    // Given name of the creator.
+    public String givenName;
+    
+    // Family name of the creator.
+    public String familyName;
 
-    public DoiMetadata() { }
+    // Identifier of the name.
+    public NameIdentifier nameIdentifier;
 
+    // Affiliation of the creator.
+    public String affiliation;
 
+    /**
+     * Creator constructor.
+     * @param name Name of creator
+     */
+    public Creator(CreatorName creatorName)
+    {
+        if (creatorName == null)
+        {
+            String msg = "creatorName must be specified.";
+        }
+        this.creatorName = creatorName;
+    }
+
+    /**
+     * @return creatorName of the creator.
+     */
+    public CreatorName getCreatorName()
+    {
+        return this.creatorName;
+    }
 }

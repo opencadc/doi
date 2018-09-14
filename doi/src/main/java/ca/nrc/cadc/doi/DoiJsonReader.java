@@ -69,9 +69,9 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.xml.JsonInputter;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
 
 /**
  * Constructs a DoiMetadata from a JSON source. This class is not thread safe but it is
@@ -80,7 +80,7 @@ import org.jdom2.Document;
  *
  * @author yeunga
  */
-public class DoiJsonReader
+public class DoiJsonReader extends DoiReader
 {
     private static final Logger log = Logger.getLogger(DoiJsonReader.class);
  
@@ -90,20 +90,20 @@ public class DoiJsonReader
     public DoiJsonReader() { }
 
     /**
-     *  Construct a DOM document from a JSON String source.
+     *  Construct a Resource instance from a JSON String source.
      *
      * @param xml String of the JSON.
-     * @return Document DOM document.
+     * @return Resource object containing all doi metadata.
      * @throws DoiParsingException if there is an error parsing the JSON.
      */
-    public Document read(String json) throws DoiParsingException
+    public Resource read(String json) throws DoiParsingException
     {
         if (json == null)
             throw new IllegalArgumentException("JSON string must not be null");
         try
         {
             JsonInputter inputter = new JsonInputter();
-            return inputter.input(json);
+            return this.buildResource(inputter.input(json));
         }
         catch (Exception ex)
         {

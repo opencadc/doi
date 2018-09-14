@@ -73,6 +73,8 @@ import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.util.DoiUtil;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -98,8 +100,6 @@ import java.util.Calendar;
 import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
 
 /**
  *
@@ -152,8 +152,7 @@ public class PostAction extends DOIAction {
             properties.add(doiRequestor);
 
             // Update DOI xml with DOI number
-            Element identifier = doiDocRoot.getChild("identifier", doiNamespace);
-            identifier.setText(CADC_DOI_PREFIX + "/" + nextDoiSuffix);
+            DoiUtil.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
             // Create containing folder
             String folderName = getDoiNodeUri(nextDoiSuffix);
@@ -224,7 +223,7 @@ public class PostAction extends DOIAction {
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
         Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-        DoiOutputStream outStream = new DoiOutputStream(doiDocument);
+        DoiOutputStream outStream = new DoiOutputStream(resource);
         clientTransfer.setOutputStreamWrapper(outStream);
         clientTransfer.run();
     }
@@ -297,17 +296,17 @@ public class PostAction extends DOIAction {
 
     private class DoiOutputStream implements OutputStreamWrapper
     {
-        private Document xmlDoc;
+        private Resource resource;
 
-        public DoiOutputStream(Document xmlDoc)
+        public DoiOutputStream(Resource resource)
         {
-            this.xmlDoc = xmlDoc;
+            this.resource = resource;
         }
 
         public void write(OutputStream out) throws IOException
         {
             DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(xmlDoc, out);
+            writer.write(resource, out);
         }
     }
 

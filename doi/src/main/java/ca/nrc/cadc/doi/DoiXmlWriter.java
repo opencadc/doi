@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.util.StringBuilderWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,29 +78,28 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 /**
- * Writes a Node as XML to an output.
+ * Writes a Resource instance as XML to an output.
  * 
- * @author jburke
+ * @author yeunga
  */
-public class DoiXmlWriter 
+public class DoiXmlWriter extends DoiWriter
 {
     private static Logger log = Logger.getLogger(DoiXmlWriter.class);
-        
+
     public DoiXmlWriter() { }
 
     /**
-     * Write a doi metadata DOM document to an OutputStream using UTF-8 encoding.
+     * Write a Resource instance to an OutputStream using UTF-8 encoding.
      *
-     * @param document DOM document to write.
+     * @param resource Resource instance to write.
      * @param out OutputStream to write to.
      * @throws IOException if the writer fails to write.
      */
-    public void write(Document document, OutputStream out) throws IOException
+    public void write(Resource resource, OutputStream out) throws IOException
     {
         OutputStreamWriter outWriter;
         try
@@ -110,33 +110,34 @@ public class DoiXmlWriter
         {
             throw new RuntimeException("UTF-8 encoding not supported", e);
         }
-        write(document, outWriter);
+        write(resource, outWriter);
     }
 
     /**
-     * Write a doi metadata DOM document to a StringBuilder.
-     * @param document
+     * Write a Resource instance to a StringBuilder.
+     * @param resource
      * @param builder
      * @throws IOException
      */
-    public void write(Document document, StringBuilder builder) throws IOException
+    public void write(Resource resource, StringBuilder builder) throws IOException
     {
-        write(document, new StringBuilderWriter(builder));
+        write(resource, new StringBuilderWriter(builder));
     }
 
     /**
-     * Write to root Element to a writer.
+     * Write a Resource instance to a writer.
      *
-     * @param root Root Element to write.
+     * @param resource Resource instance to write.
      * @param writer Writer to write to.
      * @throws IOException if the writer fails to write.
      */
-    protected void write(Document document, Writer writer) throws IOException
+    protected void write(Resource resource, Writer writer) throws IOException
     {
+        long start = System.currentTimeMillis();
         XMLOutputter outputter = new XMLOutputter();
         outputter.setFormat(Format.getPrettyFormat());
-        outputter.output(document, writer);
+        outputter.output(this.getRootElement(resource), writer);
+        long end = System.currentTimeMillis();
+        log.debug("Write elapsed time: " + (end - start) + "ms");
     }
-
-
 }

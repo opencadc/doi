@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,112 +54,102 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
+
+            // return the node in xml format
+            NodeWriter nodeWriter = new NodeWriter();
+            return new NodeActionResult(new N
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.util.StringBuilderWriter;
-import ca.nrc.cadc.xml.JsonOutputter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.util.List;
+
 import org.apache.log4j.Logger;
-import org.jdom2.output.Format;
+import org.jdom2.Namespace;
+import org.springframework.util.StringUtils;
 
 /**
- *
+ * Root business object for DOI metadata.
+ * 
  * @author yeunga
+ *
  */
-public class DoiJsonWriter extends DoiWriter 
+public class Resource
 {
-    private static final Logger log = Logger.getLogger(DoiJsonWriter.class);
+    private static Logger log = Logger.getLogger(Resource.class);
 
-    private boolean prettyPrint;
+    private Namespace namespace;
+    private Identifier identifier;
+    private List<Creator> creators;
+    private List<Title> titles;
+    private String publisher;
+    private String publicationYear;
+    private ResourceType resourceType;
+    
 
-    public DoiJsonWriter() {
-        this(true);
-    }
-
-    public DoiJsonWriter(boolean prettyPrint) {
-        this.prettyPrint = prettyPrint;
-    }
-
-    /**
-     * Write a Resource instance to an OutputStream using UTF-8 encoding.
-     *
-     * @param resource Resource instance to write.
-     * @param out OutputStream to write to.
-     * @throws IOException if the writer fails to write.
-     */
-    public void write(Resource resource, OutputStream out) throws IOException
-    {
-        OutputStreamWriter outWriter;
-        try
+    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles, 
+        String publisher, String publicationYear, ResourceType resourceType) 
+    { 
+        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty() || 
+            !StringUtils.hasText(publisher) || !StringUtils.hasText(publicationYear) ||
+            resourceType == null)
         {
-            outWriter = new OutputStreamWriter(out, "UTF-8");
+            String msg = "namespace, identifier, creator, title, publisher, publicationYear and resourceType must be specified.";
+            throw new IllegalArgumentException(msg);
         }
-        catch (UnsupportedEncodingException e)
-        {
-            throw new RuntimeException("UTF-8 encoding not supported", e);
-        }
-        write(resource, outWriter);
+        
+        this.namespace = namespace;
+        this.identifier = identifier;
+        this.creators = creators;
+        this.titles = titles;
+        this.publisher = publisher;
+        this.publicationYear = publicationYear;
+        this.resourceType = resourceType;
     }
 
-    /**
-     * Write a Resource instance to a StringBuilder.
-     * @param resource Resource instance to write.
-     * @param builder
-     * @throws IOException
-     */
-    public void write(Resource resource, StringBuilder builder) throws IOException
+    public Namespace getNamespace()
     {
-        write(resource, new StringBuilderWriter(builder));
+        return this.namespace;
     }
-
-    /**
-     * Write the Resource instance to a writer.
-     *
-     * @param resource Resource instance to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
-     */
-    public void write(Resource resource, Writer writer) throws IOException {
-        JsonOutputter outputter = new JsonOutputter();
-        outputter.getListElementNames().add("creators");
-        outputter.getListElementNames().add("titles");
-        outputter.getListElementNames().add("subjects");
-        outputter.getListElementNames().add("contributors");
-        outputter.getListElementNames().add("dates");
-        outputter.getListElementNames().add("alternateIdentifiers");
-        outputter.getListElementNames().add("sizes");
-        outputter.getListElementNames().add("formats");
-        outputter.getListElementNames().add("rightsList");
-        outputter.getListElementNames().add("descriptions");
-        outputter.getListElementNames().add("geoLocations");
-        outputter.getListElementNames().add("fundingReferences");
-        outputter.getListElementNames().add("relatedIdentifiers");
-        outputter.getListElementNames().add("geoLocationPolygon");
-
-        Format fmt = null;
-        if (prettyPrint) {
-            fmt = Format.getPrettyFormat();
-            fmt.setIndent("  "); // 2 spaces
-        }
-        outputter.setFormat(fmt);
-        outputter.output(this.getRootElement(resource), writer);
+    
+    public Identifier getIdentifier()
+    {
+        return this.identifier;
+    }
+    
+    public List<Creator> getCreators()
+    {
+        return this.creators;
+    }
+    
+    public List<Title> getTitles()
+    {
+        return this.titles;
+    }
+    
+    public String getPublisher()
+    {
+        return this.publisher;
+    }
+    
+    public String getPublicationYear()
+    {
+        return this.publicationYear;
+    }
+    
+    public ResourceType getResourceType()
+    {
+        return this.resourceType;
     }
 }

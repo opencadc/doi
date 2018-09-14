@@ -70,6 +70,7 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.vos.NodeProperty;
@@ -84,8 +85,6 @@ import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
 import org.jdom2.Namespace;
 
 public abstract class DOIAction extends RestAction {
@@ -119,9 +118,7 @@ public abstract class DOIAction extends RestAction {
     protected String userID;
     protected String requestType;  // from list above
     protected String DOINumInputStr; // value used
-    protected Element doiDocRoot;
-    protected Namespace doiNamespace;
-    protected Document doiDocument;
+    protected Resource resource;
     protected VOSpaceClient vosClient;
     protected VOSURI doiDataURI;
     protected List<NodeProperty> properties;
@@ -163,11 +160,7 @@ public abstract class DOIAction extends RestAction {
         // Set up values needed to access the xml document
         // TODO: may move this into the PostAction doActionImpl if not used outside of that.
         // doiDocument will be used though? (in GetAction? - not finalised however.)
-        doiDocument = (Document)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-        if (doiDocument != null) {
-            doiDocRoot = doiDocument.getRootElement();
-            doiNamespace = doiDocument.getRootElement().getNamespace();
-        }
+        resource = (Resource)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
 
         // Create VOSpace data folder using DOI_BASE_VOSPACE
         doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));

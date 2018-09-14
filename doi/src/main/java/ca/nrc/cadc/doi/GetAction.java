@@ -129,14 +129,14 @@ public class GetAction extends DOIAction {
             // json document
             syncOutput.setHeader("Content-Type", "application/json");
             DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(doiDocument, doiBuilder);
+            writer.write(resource, doiBuilder);
         }
         else
         {
             // xml document
             syncOutput.setHeader("Content-Type", "text/xml");
             DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(doiDocument,doiBuilder);
+            writer.write(resource,doiBuilder);
         }
         syncOutput.getOutputStream().write(doiBuilder.toString().getBytes());
     }
@@ -160,7 +160,7 @@ public class GetAction extends DOIAction {
         {
             try {
                 DoiXmlReader reader = new DoiXmlReader(true);
-                doiDocument = reader.read(in);
+                resource = reader.read(in);
             } catch (DoiParsingException dpe) {
                 throw new IOException(dpe);
             }
