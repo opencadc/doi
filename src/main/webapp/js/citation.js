@@ -18,9 +18,53 @@
    */
   function Citation()
   {
+    var doiDoc = new DOIDocument();
 
     function handleAjaxFail(message) {
       alert(message.responseText);
+    }
+
+    // Communicate AJAX progress and status using progress bar
+    function setProgressBar(state) {
+      var _progressBar = $(".doi-progress-bar");
+      if (state === "busy") {
+        _progressBar.addClass("progress-bar-striped");
+        _progressBar.removeClass("progress-bar-danger");
+        _progressBar.addClass("progress-bar-success");
+      }
+      if (state === "okay") {
+        _progressBar.removeClass("progress-bar-striped");
+        _progressBar.removeClass("progress-bar-danger");
+        _progressBar.addClass("progress-bar-success");
+      }
+      if (state === "error") {
+        _progressBar.removeClass("progress-bar-striped");
+        _progressBar.removeClass("progress-bar-success");
+        _progressBar.addClass("progress-bar-danger");
+      }
+    }
+
+
+    function setInfoModal(title, msg, hideThanks) {
+      $('.info-span').html(msg);
+      $('#infoModalLongTitle').html(title);
+      $('#infoModal').modal('show');
+
+      if (hideThanks === true) {
+        $('#infoThanks').addClass('hidden');
+      } else {
+        $('#infoThanks').removeClass('hidden');
+      }
+    };
+
+    // Page load function
+    function parseUrl() {
+      var query = window.location.search;
+
+      if (query !== "") {
+        // perform GET and display for form
+        handleDoiGet(query.split("=")[1]);
+      }
     }
 
     // HTTP/Ajax functions
@@ -28,10 +72,10 @@
     function handleDoiRequest(event) {
       var _formdata = $(this).serializeArray();
 
-      var doiDoc = new DOIDocument();
-      //doiDoc.initMinimalDoc();
-
       var personalInfo = {};
+      // todo: consider making this a separate function to
+      // parse form into DataCite JSON format
+
       for (var i=0; i< _formdata.length; i++) {
         var formField = _formdata[i];
         // format: formField: {name:*,value:*}
@@ -55,13 +99,17 @@
           case "doi-number":
             doiDoc.setDoiNumber(formField.value);
             break;
+          case "creatorList":
+            doiDoc.setAuthor(formField.value);
+            break;
           default:
             //alert("bad input value");
             break;
         }
       }
 
-      doiDoc.setAuthor(personalInfo);
+      setProgressBar("busy");
+      //setInfoModal("Pease wait ", "We're setting up your DOI data directory and draft metadata documents. Thank you for your patience...", true);
 
       // Submit doc using ajax
       $.ajax({
@@ -72,31 +120,108 @@
         contentType: 'application/json',
         data: JSON.stringify(doiDoc.getMinimalDoc())
       }).success(function (data) {
-
-        // will be a redirect to a get...
-        //setDoiNumber(data);
+        // POST redirects to a get.
+        // Load the data returned into the local doiDocument to be
+        // accessed.
+        //setDoidocument(data);
+        // TODO: function above needs to be made. This is all the return does for now
+        //$('#infoModal').modal('hide');
+        setProgressBar("okay");
         $("#doi_number").val(data.resource.identifier["$"]);
-        $("#doi_number").prop("readonly",true);
+
+        var doiSuffix = data.resource.identifier["$"].split("/")[1];
+        loadMetadata(doiSuffix);
+        doiDoc.populateDoc(data);
+        populateForm();
       }).fail(function (message) {
+        setProgressBar("error");
+        //$('#infoModal').modal('hide');
         handleAjaxFail(message);
       });
 
       return false;
+    };
 
+    //GET
+    function handleDoiGet(doiNumber) {
+
+      //setInfoModal("Pease wait ", "We're setting up your DOI data directory and draft metadata documents. Thank you for your patience...", true);
+
+      setProgressBar("busy");
+      // Submit doc using ajax
+      $.ajax({
+        xhrFields: { withCredentials: true },
+        url: "http://jeevesh.cadc.dao.nrc.ca/doi/instances/" + doiNumber,
+        method: "GET",
+        dataType: "json",
+        contentType: 'application/json'
+      }).success(function (data) {
+        // POST redirects to a get.
+        // Load the data returned into the local doiDocument to be
+        // accessed.
+        //setDoidocument(data);
+        // TODO: function above needs to be made. This is all the return does for now
+        //$('#infoModal').modal('hide');
+        setProgressBar("okay");
+        $("#doi_number").val(data.resource.identifier["$"]);
+
+        var doiSuffix = data.resource.identifier["$"].split("/")[1];
+        loadMetadata(doiSuffix);
+        doiDoc.populateDoc(data);
+        populateForm();
+      }).fail(function (message) {
+        //$('#infoModal').modal('hide');
+        setProgressBar("error");
+        handleAjaxFail(message);
+      });
+
+      return false;
+    };
+
+    function loadMetadata(doiName) {
+      // There will be a service call eventually, for now the front end
+      // will display info based on the doiName
+      // data directory will be vospace
+
+      $("#doi_metadata").removeClass("hidden");
+
+      // get the vospace url & put an href here in the long run
+      //http://www.canfar.phys.uvic.ca/vospace/nodes/AstroDataCitationDOI/CISTI.CANFAR/18.0001/18.0001.html?view=data
+
+      //var baseLandingPageUrl = "http://www.canfar.phys.uvic.ca/vospace/nodes/AstroDataCitationDOI/CISTI.CANFAR/";
+      var baseLandingPageUrl = "http://jeevesh.cadc.dao.nrc.ca";
+      var astrodataDir = "AstroDataCitationDOI/CISTI.CANFAR/";
+      var landingPageClose = ".html?view=data";
+      var landingPageUrl = "<a href=\"" + baseLandingPageUrl + "/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose +
+              "\">"  + baseLandingPageUrl + "/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose + "</a>";
+
+      var dataUrl = "<a href=\"" + baseLandingPageUrl + "/storage/list/" + astrodataDir + doiName + "/data" +
+          "\">"  + baseLandingPageUrl + "/storage/list/" + astrodataDir + doiName + "/data</a>";
+
+      $("#doi_data_dir").html(dataUrl);
+      $("#doi_landing_page").html(landingPageUrl);
+    };
+
+    function populateForm(){
+      $("#doi_creator_list").val(doiDoc.getAuthorFullname());
+      $("#doi_title").val(doiDoc.getTitle());
+      $("#doi_publisher").val(doiDoc.getPublisher());
+      $("#doi_publish_year").val(doiDoc.getPublicationYear());
     };
 
     $.extend(this, {
+      parseUrl: parseUrl,
       handleDoiRequest: handleDoiRequest,
-      handleAjaxFail: handleAjaxFail
+      handleDoiGet: handleDoiGet,
+      handleAjaxFail: handleAjaxFail,
+      loadMetadata: loadMetadata,
+      populateForm: populateForm
     })
   }
 
   function DOIDocument() {
-
     var _selfDoc = this
     this._minimalDoc = {}
-
-    //var _entireDoc = {}
 
     function initMinimalDoc() {
       // build minimal doc to start.
@@ -108,18 +233,7 @@
             "$": "10.11570/YY.xxxx"
           },
           "creators": {
-            "$": [
-              {
-                "creator": {
-                  "creatorName": {
-                    "@nameType": "Personal",
-                    "$": ""
-                  },
-                  "givenName": {"$": ""},
-                  "familyName": {"$": ""}
-                }
-              }
-            ]
+            "$": []
           },
           "titles": {
             "$": [
@@ -132,172 +246,114 @@
             ]
           },
           "publisher": {"$": ""},
-          "publicationYear": {"$": new Date().getFullYear()}
+          "publicationYear": {"$": new Date().getFullYear()},
+          "resourceType": {
+            "@resourceTypeGeneral": "Dataset",
+            "$": "Dataset"
+          }
         }
       }
     }
 
-      function getMinimalDoc() {
-        if (_selfDoc._minimalDoc == {}) {
-          initMinimalDoc();
-        }
-        return _selfDoc._minimalDoc;
+    function getMinimalDoc() {
+      if (_selfDoc._minimalDoc == {}) {
+        initMinimalDoc();
       }
+      return _selfDoc._minimalDoc;
+    }
 
-      function setAuthor(personalInfo) {
-        _selfDoc._minimalDoc.resource.creators["$"][0].creator.creatorName["$"] = personalInfo.familyName + ", " + personalInfo.givenName;
-        _selfDoc._minimalDoc.resource.creators["$"][0].creator.familyName["$"] = personalInfo.familyName;
-        _selfDoc._minimalDoc.resource.creators["$"][0].creator.givenName["$"] = personalInfo.givenName;
+    function populateDoc(serviceData) {
+      // parse out the badgerfish from the service data and place into _selfDoc.
+      _selfDoc._minimalDoc = serviceData;
+    }
 
-        // orcid id and affiliation can be added later
+    function makeCreatorStanza(personalInfo){
+      var nameParts = personalInfo.split(", ");
+      var creatorObject =  {
+        "creatorName": {
+          "@nameType": "Personal",
+              "$": ""
+        },
+        "givenName": {"$": ""},
+        "familyName": {"$": ""}
+      };
+      creatorObject.creatorName["$"] = personalInfo;
+      creatorObject.familyName["$"] = nameParts[0];
+      creatorObject.givenName["$"] = nameParts[1];
+
+      return {"creator": creatorObject} ;
+    }
+
+    function setAuthor(authorList) {
+      // personalInfo is a new line delimited list of last name, first name elements
+      var names = authorList.split("\\\n");
+      for (var j=0; j< names.length; j++) {
+        _selfDoc._minimalDoc.resource.creators["$"][j] = makeCreatorStanza(names[j]);
       }
+    }
 
-      function setDoiNumber(identifier) {
-        if (identifier !== "") {
-          _selfDoc._minimalDoc.resource.identifier["$"] = identifier;
-        }
+    function setDoiNumber(identifier) {
+      if (identifier !== "") {
+        _selfDoc._minimalDoc.resource.identifier["$"] = identifier;
       }
+    }
 
-      function setPublicationYear(year) {
-        _selfDoc._minimalDoc.resource.publicationYear["$"] = year;
-      }
+    function setPublicationYear(year) {
+      _selfDoc._minimalDoc.resource.publicationYear["$"] = year;
+    }
 
-      function setPublisher(identifier) {
-        _selfDoc._minimalDoc.resource.publisher["$"] = identifier;
-      }
+    function setPublisher(identifier) {
+      _selfDoc._minimalDoc.resource.publisher["$"] = identifier;
+    }
 
-      function setTitle(title) {
-        _selfDoc._minimalDoc.resource.titles["$"][0].title["$"] = title;
-      }
+    function setTitle(title) {
+      _selfDoc._minimalDoc.resource.titles["$"][0].title["$"] = title;
+    }
 
-      initMinimalDoc();
 
-      $.extend(this, {
-        initMinimalDoc: initMinimalDoc,
-        getMinimalDoc: getMinimalDoc,
-        setAuthor: setAuthor,
-        setDoiNumber: setDoiNumber,
-        setPublicationYear: setPublicationYear,
-        setPublisher: setPublisher,
-        setTitle: setTitle
-      })
+    function getAuthorFullname() {
+      return  _selfDoc._minimalDoc.resource.creators["$"][0].creator.creatorName["$"];
+    }
+
+    function getDoiNumber() {
+        return _selfDoc._minimalDoc.resource.identifier["$"];
+    }
+
+    function getPublicationYear() {
+      return _selfDoc._minimalDoc.resource.publicationYear["$"];
+    }
+
+    function getPublisher() {
+      return _selfDoc._minimalDoc.resource.publisher["$"];
+    }
+
+    function getTitle() {
+      return _selfDoc._minimalDoc.resource.titles["$"][0].title["$"];
+    }
+
+
+    initMinimalDoc();
+
+    $.extend(this, {
+      initMinimalDoc: initMinimalDoc,
+      getMinimalDoc: getMinimalDoc,
+      populateDoc: populateDoc,
+      setAuthor: setAuthor,
+      setDoiNumber: setDoiNumber,
+      setPublicationYear: setPublicationYear,
+      setPublisher: setPublisher,
+      setTitle: setTitle,
+      getAuthorFullname: getAuthorFullname,
+      getDoiNumber: getDoiNumber,
+      getPublicationYear: getPublicationYear,
+      getPublisher: getPublisher,
+      getTitle: getTitle
+    })
 
   }
-
-  //function BadgerFish() {
-  //  // General Badgerfish routines
-  //  function writeTestEl(e, value) {
-  //    return {e: {"$": value}};
-  //  };
-  //
-  //  function writeAttributeEl(e, value) {
-  //    var keyVal = "@" + e;
-  //    return {keyVal: value};
-  //  };
-  //
-  //  $.extend(this, {
-  //    writeTestEl: writeTestEl,
-  //    writeAttributeEl: writeAttributeEl
-  //  })
-  //}
 
 })(jQuery);
 
 
-
-
-//Javascript format that needs to be written - Badgerfish. Eww.
-//"creators" : {
-//  "$" : [
-//    {
-//      "creator" : {
-//        "creatorName" : {
-//          "@nameType" : "Personal",
-//          "$" : "Miller, Elizabeth"
-//        },
-//        "givenName" : {"$" : "Elizabeth"},
-//        "familyName" : {"$" : "Miller"},
-//        "nameIdentifier" : {
-//          "@schemeURI" : "http://orcid.org/",
-//          "@nameIdentifierScheme" : "ORCID",
-//          "$" : "0000-0001-5000-0007"
-//        },
-//        "affiliation" : {"$" : "DataCite"}
-//      }
-//    }
-//  ]
-//},
-//"titles" : {
-//  "$" : [
-//    {
-//      "title" : {
-//        "@xml:lang" : "en-US",
-//        "$" : "Full DataCite XML Example"
-//      }
-//    },
-//    {
-//      "title" : {
-//        "@xml:lang" : "en-US",
-//        "@titleType" : "Subtitle",
-//        "$" : "Demonstration of DataCite Properties."
-//      }
-//    }
-//  ]
-//},
-//"publisher" : {"$" : "DataCite"},
-//"publicationYear" : {"$" : 2014},
-
-
-//{
-//  "resource" : {
-//  "@xmlns" : "http://datacite.org/schema/kernel-4",
-//      "@xmlns:xsi" : "http://www.w3.org/2001/XMLSchema-instance",
-//      "@xsi:schemaLocation" : "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.1/metadata.xsd",
-//      "identifier" : {
-//    "@identifierType" : "DOI",
-//        "$" : "10.11570/18.0080"
-//  },
-//  "creators" : {
-//    "$" : [
-//      {
-//        "creator" : {
-//          "creatorName" : {
-//            "@nameType" : "Personal",
-//            "$" : "Miller, Elizabeth"
-//          },
-//          "givenName" : {"$" : "Elizabeth"},
-//          "familyName" : {"$" : "Miller"},
-//          "nameIdentifier" : {
-//            "@schemeURI" : "http://orcid.org/",
-//            "@nameIdentifierScheme" : "ORCID",
-//            "$" : "0000-0001-5000-0007"
-//          },
-//          "affiliation" : {"$" : "DataCite"}
-//        }
-//      }
-//    ]
-//  },
-//  "titles" : {
-//    "$" : [
-//      {
-//        "title" : {
-//          "@xml:lang" : "en-US",
-//          "$" : "Full DataCite XML Example"
-//        }
-//      },
-//      {
-//        "title" : {
-//          "@xml:lang" : "en-US",
-//          "@titleType" : "Subtitle",
-//          "$" : "Demonstration of DataCite Properties."
-//        }
-//      }
-//    ]
-//  },
-//  "publisher" : {"$" : "DataCite"},
-//  "publicationYear" : {"$" : 2014},
-//
-//}
-//}
 
 
