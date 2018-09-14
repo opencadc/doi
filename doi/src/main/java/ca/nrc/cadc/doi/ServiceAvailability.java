@@ -102,11 +102,6 @@ public class ServiceAvailability implements WebService
             url = reg.getServiceURL(URI.create(AC_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
             checkResource = new CheckWebService(url);
             checkResource.check();
-                        
-            // check ac service availability
-            url = reg.getServiceURL(URI.create(AC_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
-            checkResource = new CheckWebService(url);
-            checkResource.check();
             
             // check vospace service availability
             url = reg.getServiceURL(URI.create(VOS_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
