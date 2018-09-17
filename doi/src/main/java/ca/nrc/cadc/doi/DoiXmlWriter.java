@@ -78,6 +78,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
@@ -131,13 +133,26 @@ public class DoiXmlWriter extends DoiWriter
      * @param writer Writer to write to.
      * @throws IOException if the writer fails to write.
      */
-    protected void write(Resource resource, Writer writer) throws IOException
+    public void write(Resource resource, Writer writer) throws IOException
     {
         long start = System.currentTimeMillis();
-        XMLOutputter outputter = new XMLOutputter();
-        outputter.setFormat(Format.getPrettyFormat());
-        outputter.output(this.getRootElement(resource), writer);
+        Element root = this.getRootElement(resource);
+        write(root, writer);
         long end = System.currentTimeMillis();
         log.debug("Write elapsed time: " + (end - start) + "ms");
+    }
+
+    /**
+     * Write a Document instance by providing the root element to a writer.
+     *
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    protected void write(Element root, Writer writer) throws IOException
+    {
+        XMLOutputter outputter = new XMLOutputter();
+        outputter.setFormat(Format.getPrettyFormat());
+        outputter.output(new Document(root), writer);
     }
 }
