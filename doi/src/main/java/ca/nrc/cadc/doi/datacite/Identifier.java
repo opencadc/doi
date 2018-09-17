@@ -90,7 +90,7 @@ public class Identifier
     private String identifierType;
     
     // the identifier
-    private String identifier;
+    private String text;
 
     /**
      * Identifier constructor.
@@ -120,8 +120,8 @@ public class Identifier
     /**
      * @return the identifier text
      */
-    public String getIdentifier()
+    public String getText()
     {
-        return this.identifier;
+        return this.text;
     }
 }

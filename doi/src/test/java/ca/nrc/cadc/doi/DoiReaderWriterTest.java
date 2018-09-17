@@ -315,7 +315,7 @@ public class DoiReaderWriterTest
     
     private void compareIdentifier(Identifier id1, Identifier id2)
     {
-        Assert.assertEquals("Identifiers are different", id1.getIdentifier(), id2.getIdentifier());
+        Assert.assertEquals("Identifiers are different", id1.getText(), id2.getText());
         Assert.assertEquals("identifierTypes are different", id1.getIdentifierType(), id2.getIdentifierType());
     }
     
