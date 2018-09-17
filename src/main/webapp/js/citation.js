@@ -21,6 +21,10 @@
     var doiDoc = new DOIDocument();
     var _baseUrl = "";
 
+    function checkAuthenticated() {
+
+    }
+
     function handleAjaxFail(message) {
       alert(message.responseText);
     }
@@ -211,6 +215,40 @@
       $("#doi_publish_year").val(doiDoc.getPublicationYear());
     };
 
+
+    // ------------ Page State functions -------------------
+    function setPublicationYears() {
+      var yearOptions = "";
+      var curYear = new Date().getFullYear();
+      yearOptions = "<option value=\"\" selected disabled>yyyy</option>";
+
+      for (var i=0; i<3; i++) {
+        yearOptions = yearOptions + "<option>" + curYear + "</option>";
+        curYear= curYear + 1;
+      };
+      $("#doi_publish_year").html(yearOptions);
+    }
+
+    function setNotAuthenticated(errorMsg) {
+      $('.info-span').html(errorMsg);
+      $('.doi-anonymous').removeClass('hidden');
+      $('.doi-authenticated').addClass('hidden');
+    };
+
+    function setAuthenticated() {
+      $('.doi-authenticated').removeClass('hidden');
+      $('.doi-anonymous').addClass('hidden');
+
+      setPublicationYears();
+      parseUrl();
+
+      // Set handlers
+      $("#doi_form_reset_button").click(citation_js.handleFormReset);
+      $("#doi_find").click(citation_js.handleDoiGet);
+      $("#doi_request_form").submit(citation_js.handleDoiRequest);
+    };
+
+
     function setBaseUrl(baseUrl) {
       _baseUrl = baseUrl;
     }
@@ -221,12 +259,15 @@
 
     $.extend(this, {
       parseUrl: parseUrl,
+      setNotAuthenticated: setNotAuthenticated,
+      setAuthenticated: setAuthenticated,
       handleFormReset:handleFormReset,
       handleDoiRequest: handleDoiRequest,
       handleDoiGet: handleDoiGet,
       handleAjaxFail: handleAjaxFail,
       loadMetadata: loadMetadata,
       populateForm: populateForm,
+      setPublicationYears: setPublicationYears,
       setBaseUrl: setBaseUrl,
       getBaseUrl: getBaseUrl
     })

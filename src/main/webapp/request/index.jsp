@@ -56,103 +56,117 @@
                     </a>Data Citation
                   </h2>
 
-                  <div id="doi_request" class="panel panel-default doi-panel">
-                    <div class="panel-heading doi-panel-heading"><h4>DOI Request</h4>
-                    </div>
-                    <div class="progress doi-progress-bar-container">
-                      <div class="progress-bar progress-bar-success doi-progress-bar"
-                           role="progressbar" aria-valuenow="100" aria-valuemin="100" aria-valuemax="100">
+                  <div class="doi-authenticated hidden">
+                    <div id="doi_request" class="panel panel-default doi-panel">
+                      <div class="panel-heading doi-panel-heading"><h4>DOI Request</h4>
                       </div>
-                    </div>
-                    <div class="panel-body doi-panel-body">
+                      <div class="progress doi-progress-bar-container">
+                        <div class="progress-bar progress-bar-success doi-progress-bar"
+                             role="progressbar" aria-valuenow="100" aria-valuemin="100" aria-valuemax="100">
+                        </div>
+                      </div>
+                      <div class="panel-body doi-panel-body">
 
-                      <div class="doi-form-body">
-                        <form id="doi_request_form" class="form-horizontal">
-                          <!-- DOI Number -->
-                          <!-- read only for now. GET is performed via url -->
-                          <div class="form-group doi-form-group">
-                            <label for="doi_number" class="col-sm-2 control-label" id="doi_number_label">DOI Number</label>
-                            <div class="col-sm-3">
-                              <input type="text" class="form-control" id="doi_number" name="doi-number"
-                                     placeholder="YY.####" readonly
-                              />
-                            </div>
-                          </div>
-                          <!-- First Author -->
-                          <!-- TODO: consider how to add multiples of this set of info to the form for author list -->
-                          <!-- Just use a list of names for now, worry about other attributes later -->
-                          <!-- Publication Title -->
-                          <div class="form-group">
-                            <label for="doi_title" class="col-sm-2 control-label" id="doi_title_label">Title</label>
-                            <div class="col-sm-9">
-                              <input type="text" class="form-control" id="doi_title" name="title" placeholder="title" tabindex="1"/>
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label for="doi_creator_list" class="col-sm-2 control-label" id="doi_first_name_label">Author</label>
-                            <div class="col-sm-5">
-                              <textarea class="form-control" id="doi_creator_list" name="creatorList"
-                                        placeholder="last name, first name" tabindex="2" rows="4"></textarea>
-                            </div>
-                          </div>
-                          <!-- Publisher -->
-                          <div class="form-group">
-                            <label for="doi_publisher" class="col-sm-2 control-label" id="doi_publisher_label">Publisher</label>
-                            <div class="col-sm-8">
-                              <input type="text" class="form-control" id="doi_publisher" name="publisher" placeholder="publisher name or DOI" tabindex="3"/>
-                            </div>
-                          </div>
-                          <!-- Publication Date -->
-                          <div class="form-group">
-                            <label for="doi_publish_year" class="col-sm-2 control-label" id="doi_publish_year_label">Publication Year</label>
-                            <div class="col-sm-2">
-                              <input type="text" class="form-control" id="doi_publish_year" name="publicationYear" placeholder="yyyy" tabindex="4"/>
-                            </div>
-                          </div>
-
-                          <!-- Buttons -->
-                          <%--<button type="submit" class="btn btn-primary" id="add_group_update_button">Submit</button>--%>
-                          <div class="form-group">
-                            <div class="col-sm-offset-2 col-sm-10">
-                              <div class="btn-group" role="group">
-                                <button type="submit" class="btn btn-primary" id="doi_form_button">Create</button>
-                                <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button">Reset</button>
+                        <div class="doi-form-body">
+                          <form id="doi_request_form" class="form-horizontal">
+                            <!-- DOI Number -->
+                            <!-- read only for now. GET is performed via url -->
+                            <div class="form-group doi-form-group">
+                              <label for="doi_number" class="col-sm-2 control-label" id="doi_number_label">DOI Number</label>
+                              <div class="col-sm-3">
+                                <input type="text" class="form-control" id="doi_number" name="doi-number"
+                                       placeholder="YY.####" readonly
+                                />
                               </div>
                             </div>
+                            <!-- First Author -->
+                            <!-- TODO: consider how to add multiples of this set of info to the form for author list -->
+                            <!-- Just use a list of names for now, worry about other attributes later -->
+                            <!-- Publication Title -->
+                            <div class="form-group">
+                              <label for="doi_title" class="col-sm-2 control-label" id="doi_title_label">Title</label>
+                              <div class="col-sm-9">
+                                <input type="text" class="form-control" id="doi_title" name="title"
+                                       placeholder="title" tabindex="1" required/>
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="doi_creator_list" class="col-sm-2 control-label" id="doi_first_name_label">Author</label>
+                              <div class="col-sm-5">
+                                <textarea class="form-control" id="doi_creator_list" name="creatorList"
+                                          placeholder="last name, first name" tabindex="2" rows="4" required></textarea>
+                              </div>
+                            </div>
+                            <!-- Publisher -->
+                            <div class="form-group">
+                              <label for="doi_publisher" class="col-sm-2 control-label" id="doi_publisher_label">Publisher</label>
+                              <div class="col-sm-8">
+                                <input type="text" class="form-control" id="doi_publisher" name="publisher"
+                                       placeholder="publisher name or DOI" tabindex="3" required/>
+                              </div>
+                            </div>
+                            <!-- Publication Date -->
+                            <div class="form-group">
+                              <label for="doi_publish_year" class="col-sm-2 control-label" >Publication Year</label>
+                              <div class="col-sm-1">
+                                <select id="doi_publish_year" name="publicationYear" class="form-control"
+                                        tabindex="4">
+                                </select>
+                              </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="form-group">
+                              <div class="col-sm-offset-2 col-sm-10">
+                                <div class="btn-group" role="group">
+                                  <button type="submit" class="btn btn-primary" id="doi_form_button">Create</button>
+                                  <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button">Reset</button>
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- DOI Metadata panel -->
+                    <div id="doi_metadata" class="panel panel-default doi-panel hidden">
+                      <div class="panel-heading doi-panel-heading">
+                        <h4>DOI Metadata</h4>
+                      </div>
+                      <div class="panel-body doi-panel-body">
+                        <div class="row">
+                          <label for="doi_status" class="col-sm-2 control-label text-right " id="doi_status_label">Status</label>
+                          <div class="col-sm-10">
+                            <span id="doi_status">DRAFT</span>
                           </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- DOI Metadata panel -->
-                  <div id="doi_metadata" class="panel panel-default doi-panel hidden">
-                    <div class="panel-heading doi-panel-heading">
-                      <h4>DOI Metadata</h4>
-                    </div>
-                    <div class="panel-body doi-panel-body">
-                      <div class="row">
-                        <label for="doi_status" class="col-sm-2 control-label text-right " id="doi_status_label">Status</label>
-                        <div class="col-sm-10">
-                          <span id="doi_status">DRAFT</span>
                         </div>
-                      </div>
 
-                      <div class="row">
-                        <label for="doi_data_dir" class="col-sm-2 control-label text-right " id="doi_data_dir_label">Data Directory</label>
-                        <div class="col-sm-10">
-                          <span id="doi_data_dir">data dir</span>
+                        <div class="row">
+                          <label for="doi_data_dir" class="col-sm-2 control-label text-right " id="doi_data_dir_label">Data Directory</label>
+                          <div class="col-sm-10">
+                            <span id="doi_data_dir">data dir</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <%--<div class="row">--%>
-                        <%--<label for="doi_landing_page" class="col-sm-2 control-label text-right " id="doi_landing_page_label">URL</label>--%>
-                        <%--<div class="col-sm-10">--%>
-                          <%--<span id="doi_landing_page">url</span>--%>
+                        <%--<div class="row">--%>
+                          <%--<label for="doi_landing_page" class="col-sm-2 control-label text-right " id="doi_landing_page_label">URL</label>--%>
+                          <%--<div class="col-sm-10">--%>
+                            <%--<span id="doi_landing_page">url</span>--%>
+                          <%--</div>--%>
                         <%--</div>--%>
-                      <%--</div>--%>
+                      </div>
                     </div>
                   </div>
+
+                  <div class="doi-anonymous">
+                    <div class="info-panel card panel-default">
+                      <div class="card-body">
+                        <span class="info-span"></span>
+                      </div>
+                    </div>
+                  </div>
+
 
                   <!-- Info/Error Modal -->
                   <!-- Displayed when anything other than a 401 or 200 is returned -->
@@ -185,6 +199,9 @@
         <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery.event.drag-2.2.min.js
           " />"></script>
         <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery.csv-0.71.min.js " />"></script>
+        <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
+        <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
+        <script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
         <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation.js" />"></script>
 
 
@@ -193,13 +210,78 @@
             // Instantiate controller for Data Citation UI page
             citation_js = new ca.nrc.cadc.Citation();
             citation_js.setBaseUrl("<c:out value="${baseURL}"/>");
-            citation_js.parseUrl();
 
-            // Set handlers
-            $("#doi_form_reset_button").click(citation_js.handleFormReset);
-            $("#doi_find").click(citation_js.handleDoiGet);
-            $("#doi_request_form").submit(citation_js.handleDoiRequest);
+//            citation_js.setPublicationYears();
+//            citation_js.parseUrl();
+//
+//            // Set handlers
+//            $("#doi_form_reset_button").click(citation_js.handleFormReset);
+//            $("#doi_find").click(citation_js.handleDoiGet);
+//            $("#doi_request_form").submit(citation_js.handleDoiRequest);
 
+
+            function authorizationComplete() {
+              citation_js.setAuthenticated();
+            }
+            var $loginForm = $("#loginForm");
+
+            var $_logout = $('#logout');
+//            if ($_logout) {
+//              $_logout.attr('href', $_logout.attr('href') + "?target="
+//                  + encodeURI(requestURI.getURI()));
+//            }
+
+            // turn the form submission into an ajax request
+            $loginForm.submit(function () {
+              var $_form = $(this);
+              var formData = $_form.serialize();
+              if (formData.indexOf('target=') < 0) {
+                formData += "&target="
+                    +
+                    encodeURI(requestURI.getURI());
+              }
+
+              $.ajax(
+                  {
+                    url: $_form.attr('action'),
+                    method: 'POST',
+                    data: formData
+                  }).done(function (message) {
+                authorizationComplete(message);
+              }).fail(function () {
+                // clear the password field and show an error message
+                citation_js.setNotAuthenticated("You must be logged in to access Data Citation");
+                $_form.find("#login_fail").text(
+                    "The username or password you entered is incorrect.");
+
+              });
+
+              return false;
+            });
+
+            userManager = new cadc.web.UserManager();
+
+            // From cadc.user.js. Listens for when user logs in
+            userManager.subscribe(cadc.web.events.onUserLoad,
+                function (event, data)
+                {
+                  // Check to see if user is logged in or not
+                  if (typeof(data.error) != "undefined") {
+                    var errorMsg = "";
+                    if (data.errorStatus === 401) {
+                      errorMsg = "<em>" + data.errorStatus + " " + data.error + "</em>. Please log in to use Data Citation.";
+                    } else {
+                      errorMsg = "Unable to access Data Citation " + data.errorStatus + " " + data.error ;
+                    }
+                    citation_js.setNotAuthenticated(errorMsg);
+                  } else {
+                    citation_js.setAuthenticated();
+                  }
+                });
+
+            // This function is in cadc.user.js, will throw the event
+            // in the userManager.subscribe above...
+            userManager.loadCurrent();
 
           });
 
