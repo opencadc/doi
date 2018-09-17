@@ -12,16 +12,23 @@
   });
 
   /**
-   *
+   * Controller for Data Citation UI.
    *
    * @constructor
    */
   function Citation()
   {
     var doiDoc = new DOIDocument();
+    var _baseUrl = "";
 
     function handleAjaxFail(message) {
       alert(message.responseText);
+    }
+
+    function handleFormReset(message) {
+      $("#doi_metadata").addClass("hidden");
+      $("#doi_data_dir").html("");
+      $("#doi_landing_page").html("");
     }
 
     // Communicate AJAX progress and status using progress bar
@@ -45,17 +52,18 @@
     }
 
 
-    function setInfoModal(title, msg, hideThanks) {
-      $('.info-span').html(msg);
-      $('#infoModalLongTitle').html(title);
-      $('#infoModal').modal('show');
-
-      if (hideThanks === true) {
-        $('#infoThanks').addClass('hidden');
-      } else {
-        $('#infoThanks').removeClass('hidden');
-      }
-    };
+    // TODO: yank info modal most likely.. from index.jsp as well
+    //function setInfoModal(title, msg, hideThanks) {
+    //  $('.info-span').html(msg);
+    //  $('#infoModalLongTitle').html(title);
+    //  $('#infoModal').modal('show');
+    //
+    //  if (hideThanks === true) {
+    //    $('#infoThanks').addClass('hidden');
+    //  } else {
+    //    $('#infoThanks').removeClass('hidden');
+    //  }
+    //};
 
     // Page load function
     function parseUrl() {
@@ -111,10 +119,11 @@
       setProgressBar("busy");
       //setInfoModal("Pease wait ", "We're setting up your DOI data directory and draft metadata documents. Thank you for your patience...", true);
 
+      var createUrl = _baseUrl + "/doi/instances";
       // Submit doc using ajax
       $.ajax({
         xhrFields: { withCredentials: true },
-        url: "http://jeevesh.cadc.dao.nrc.ca/doi/instances",
+        url: createUrl,
         method: "POST",
         dataType: "json",
         contentType: 'application/json',
@@ -123,9 +132,6 @@
         // POST redirects to a get.
         // Load the data returned into the local doiDocument to be
         // accessed.
-        //setDoidocument(data);
-        // TODO: function above needs to be made. This is all the return does for now
-        //$('#infoModal').modal('hide');
         setProgressBar("okay");
         $("#doi_number").val(data.resource.identifier["$"]);
 
@@ -135,7 +141,6 @@
         populateForm();
       }).fail(function (message) {
         setProgressBar("error");
-        //$('#infoModal').modal('hide');
         handleAjaxFail(message);
       });
 
@@ -149,32 +154,28 @@
 
       setProgressBar("busy");
       // Submit doc using ajax
+      var getUrl = _baseUrl + "/doi/instances/" + doiNumber;
       $.ajax({
         xhrFields: { withCredentials: true },
-        url: "http://jeevesh.cadc.dao.nrc.ca/doi/instances/" + doiNumber,
+        url: getUrl,
         method: "GET",
         dataType: "json",
         contentType: 'application/json'
       }).success(function (data) {
-        // POST redirects to a get.
-        // Load the data returned into the local doiDocument to be
-        // accessed.
-        //setDoidocument(data);
-        // TODO: function above needs to be made. This is all the return does for now
-        //$('#infoModal').modal('hide');
         setProgressBar("okay");
         $("#doi_number").val(data.resource.identifier["$"]);
-
         var doiSuffix = data.resource.identifier["$"].split("/")[1];
+        // Populate lower panel on form page
         loadMetadata(doiSuffix);
+        // Populate javascript object behind form
         doiDoc.populateDoc(data);
+        // Populate form
         populateForm();
       }).fail(function (message) {
-        //$('#infoModal').modal('hide');
+        // TODO: not sure this red bar will be retained.
         setProgressBar("error");
         handleAjaxFail(message);
       });
-
       return false;
     };
 
@@ -188,8 +189,9 @@
       // get the vospace url & put an href here in the long run
       //http://www.canfar.phys.uvic.ca/vospace/nodes/AstroDataCitationDOI/CISTI.CANFAR/18.0001/18.0001.html?view=data
 
+      // TODO: for release to beta, this needs to be what??
       //var baseLandingPageUrl = "http://www.canfar.phys.uvic.ca/vospace/nodes/AstroDataCitationDOI/CISTI.CANFAR/";
-      var baseLandingPageUrl = "http://jeevesh.cadc.dao.nrc.ca";
+      var baseLandingPageUrl = _baseUrl;
       var astrodataDir = "AstroDataCitationDOI/CISTI.CANFAR/";
       var landingPageClose = ".html?view=data";
       var landingPageUrl = "<a href=\"" + baseLandingPageUrl + "/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose +
@@ -209,16 +211,31 @@
       $("#doi_publish_year").val(doiDoc.getPublicationYear());
     };
 
+    function setBaseUrl(baseUrl) {
+      _baseUrl = baseUrl;
+    }
+
+    function getBaseUrl() {
+      return _baseUrl;
+    }
+
     $.extend(this, {
       parseUrl: parseUrl,
+      handleFormReset:handleFormReset,
       handleDoiRequest: handleDoiRequest,
       handleDoiGet: handleDoiGet,
       handleAjaxFail: handleAjaxFail,
       loadMetadata: loadMetadata,
-      populateForm: populateForm
+      populateForm: populateForm,
+      setBaseUrl: setBaseUrl,
+      getBaseUrl: getBaseUrl
     })
   }
 
+  /**
+   * Class for handling DOI metadata document
+   * @constructor
+   */
   function DOIDocument() {
     var _selfDoc = this
     this._minimalDoc = {}
@@ -330,7 +347,6 @@
     function getTitle() {
       return _selfDoc._minimalDoc.resource.titles["$"][0].title["$"];
     }
-
 
     initMinimalDoc();
 

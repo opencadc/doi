@@ -115,8 +115,8 @@
                           <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
                               <div class="btn-group" role="group">
-                                <button type="submit" class="btn btn-primary" id="add_group_update_button">Submit</button>
-                                <%--<input type="reset" class="btn btn-default" id="add_group_reset_button" />--%>
+                                <button type="submit" class="btn btn-primary" id="doi_form_button">Create</button>
+                                <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button">Reset</button>
                               </div>
                             </div>
                           </div>
@@ -145,12 +145,12 @@
                         </div>
                       </div>
 
-                      <div class="row">
-                        <label for="doi_landing_page" class="col-sm-2 control-label text-right " id="doi_landing_page_label">URL</label>
-                        <div class="col-sm-10">
-                          <span id="doi_landing_page">url</span>
-                        </div>
-                      </div>
+                      <%--<div class="row">--%>
+                        <%--<label for="doi_landing_page" class="col-sm-2 control-label text-right " id="doi_landing_page_label">URL</label>--%>
+                        <%--<div class="col-sm-10">--%>
+                          <%--<span id="doi_landing_page">url</span>--%>
+                        <%--</div>--%>
+                      <%--</div>--%>
                     </div>
                   </div>
 
@@ -190,12 +190,16 @@
 
         <script type="application/javascript">
           $(document).ready(function() {
-
+            // Instantiate controller for Data Citation UI page
             citation_js = new ca.nrc.cadc.Citation();
+            citation_js.setBaseUrl("<c:out value="${baseURL}"/>");
+            citation_js.parseUrl();
+
+            // Set handlers
+            $("#doi_form_reset_button").click(citation_js.handleFormReset);
+            $("#doi_find").click(citation_js.handleDoiGet);
             $("#doi_request_form").submit(citation_js.handleDoiRequest);
 
-            $("#doi_find").click(citation_js.handleDoiGet);
-            citation_js.parseUrl();
 
           });
 
