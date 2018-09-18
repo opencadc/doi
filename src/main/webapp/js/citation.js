@@ -21,18 +21,55 @@
     var doiDoc = new DOIDocument();
     var _baseUrl = "";
 
-    function checkAuthenticated() {
+    // ------------ Page load functions
+    function parseUrl() {
+      var query = window.location.search;
 
+      if (query !== "") {
+        // perform GET and display for form
+        handleDoiGet(query.split("=")[1]);
+      }
     }
 
+    function setPublicationYears() {
+      var yearOptions = "";
+      var curYear = new Date().getFullYear();
+      yearOptions = "<option value=\"\" selected disabled>yyyy</option>";
+
+      for (var i=0; i<3; i++) {
+        yearOptions = yearOptions + "<option>" + curYear + "</option>";
+        curYear= curYear + 1;
+      };
+      $("#doi_publish_year").html(yearOptions);
+    }
+
+    function setBaseUrl(baseUrl) {
+      _baseUrl = baseUrl;
+    }
+
+    function getBaseUrl() {
+      return _baseUrl;
+    }
+
+    // ------------ Page state management functions
     function handleAjaxFail(message) {
-      alert(message.responseText);
+      $("#status_code").text(message.status);
+      $("#error_msg").text(message.responseText);
+      $(".alert-danger").removeClass("hidden");
+      setProgressBar("error");
+    }
+
+    function clearAjaxFail() {
+      $(".alert-danger").addClass("hidden");
+      setProgressBar("okay");
     }
 
     function handleFormReset(message) {
       $("#doi_metadata").addClass("hidden");
+      clearAjaxFail();
       $("#doi_data_dir").html("");
       $("#doi_landing_page").html("");
+      setProgressBar("okay");
     }
 
     // Communicate AJAX progress and status using progress bar
@@ -55,38 +92,31 @@
       }
     }
 
+    function setNotAuthenticated(errorMsg) {
+      $('.info-span').html(errorMsg);
+      $('.doi-anonymous').removeClass('hidden');
+      $('.doi-authenticated').addClass('hidden');
+    };
 
-    // TODO: yank info modal most likely.. from index.jsp as well
-    //function setInfoModal(title, msg, hideThanks) {
-    //  $('.info-span').html(msg);
-    //  $('#infoModalLongTitle').html(title);
-    //  $('#infoModal').modal('show');
-    //
-    //  if (hideThanks === true) {
-    //    $('#infoThanks').addClass('hidden');
-    //  } else {
-    //    $('#infoThanks').removeClass('hidden');
-    //  }
-    //};
+    function setAuthenticated() {
+      $('.doi-authenticated').removeClass('hidden');
+      $('.doi-anonymous').addClass('hidden');
 
-    // Page load function
-    function parseUrl() {
-      var query = window.location.search;
+      setPublicationYears();
+      // This will kick off a GET if the URL requires it.
+      parseUrl();
+      attachListeners();
+    };
 
-      if (query !== "") {
-        // perform GET and display for form
-        handleDoiGet(query.split("=")[1]);
-      }
-    }
 
-    // HTTP/Ajax functions
+    // ------------ HTTP/Ajax functions
     // POST
     function handleDoiRequest(event) {
+      // Clear any previous error bars
+      clearAjaxFail();
       var _formdata = $(this).serializeArray();
 
       var personalInfo = {};
-      // todo: consider making this a separate function to
-      // parse form into DataCite JSON format
 
       for (var i=0; i< _formdata.length; i++) {
         var formField = _formdata[i];
@@ -102,12 +132,6 @@
           case "title" :
             doiDoc.setTitle(formField.value);
             break;
-          case "givenName":
-          case "familyName":
-          case "orcidID":
-          case "affiliation":
-            personalInfo[formField.name] = formField.value;
-            break;
           case "doi-number":
             doiDoc.setDoiNumber(formField.value);
             break;
@@ -121,7 +145,6 @@
       }
 
       setProgressBar("busy");
-      //setInfoModal("Pease wait ", "We're setting up your DOI data directory and draft metadata documents. Thank you for your patience...", true);
 
       var createUrl = _baseUrl + "/doi/instances";
       // Submit doc using ajax
@@ -144,7 +167,6 @@
         doiDoc.populateDoc(data);
         populateForm();
       }).fail(function (message) {
-        setProgressBar("error");
         handleAjaxFail(message);
       });
 
@@ -153,10 +175,9 @@
 
     //GET
     function handleDoiGet(doiNumber) {
-
-      //setInfoModal("Pease wait ", "We're setting up your DOI data directory and draft metadata documents. Thank you for your patience...", true);
-
+      clearAjaxFail();
       setProgressBar("busy");
+
       // Submit doc using ajax
       var getUrl = _baseUrl + "/doi/instances/" + doiNumber;
       $.ajax({
@@ -173,7 +194,6 @@
         loadMetadata(doiSuffix);
         // Populate javascript object behind form
         doiDoc.populateDoc(data);
-        // Populate form
         populateForm();
       }).fail(function (message) {
         // TODO: not sure this red bar will be retained.
@@ -216,45 +236,10 @@
     };
 
 
-    // ------------ Page State functions -------------------
-    function setPublicationYears() {
-      var yearOptions = "";
-      var curYear = new Date().getFullYear();
-      yearOptions = "<option value=\"\" selected disabled>yyyy</option>";
-
-      for (var i=0; i<3; i++) {
-        yearOptions = yearOptions + "<option>" + curYear + "</option>";
-        curYear= curYear + 1;
-      };
-      $("#doi_publish_year").html(yearOptions);
-    }
-
-    function setNotAuthenticated(errorMsg) {
-      $('.info-span').html(errorMsg);
-      $('.doi-anonymous').removeClass('hidden');
-      $('.doi-authenticated').addClass('hidden');
-    };
-
-    function setAuthenticated() {
-      $('.doi-authenticated').removeClass('hidden');
-      $('.doi-anonymous').addClass('hidden');
-
-      setPublicationYears();
-      parseUrl();
-
-      // Set handlers
+    function attachListeners() {
       $("#doi_form_reset_button").click(citation_js.handleFormReset);
       $("#doi_find").click(citation_js.handleDoiGet);
       $("#doi_request_form").submit(citation_js.handleDoiRequest);
-    };
-
-
-    function setBaseUrl(baseUrl) {
-      _baseUrl = baseUrl;
-    }
-
-    function getBaseUrl() {
-      return _baseUrl;
     }
 
     $.extend(this, {
