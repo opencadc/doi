@@ -136,7 +136,7 @@ public class DoiWriter
     {
         Element ret = new Element("identifier", ns);
         ret.setAttribute("identifierType", identifier.getIdentifierType());
-        ret.setText(identifier.getIdentifier());
+        ret.setText(identifier.getText());
         return ret;
         
     }

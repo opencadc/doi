@@ -84,7 +84,7 @@ public class DoiUtil
     // methods to assign to private field in CaomEntity
     public static void assignIdentifier(Object ce, String identifier) {
         try {
-            Field f = Identifier.class.getDeclaredField("identifier");
+            Field f = Identifier.class.getDeclaredField("text");
             f.setAccessible(true);
             f.set(ce, identifier);
         } catch (NoSuchFieldException fex) {

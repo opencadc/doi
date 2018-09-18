@@ -85,7 +85,6 @@ import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
 
 public abstract class DOIAction extends RestAction {
     private static final Logger log = Logger.getLogger(DOIAction.class);

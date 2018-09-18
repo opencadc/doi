@@ -1,9 +1,9 @@
-/*
+/**
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2016.                            (c) 2016.
+ *  (c) 2010.                            (c) 2010.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,68 +62,75 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 5 $
- *
  ************************************************************************
  */
-
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.rest.InlineContentException;
-import ca.nrc.cadc.rest.InlineContentHandler;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.vosi.AvailabilityStatus;
+import ca.nrc.cadc.vosi.WebService;
+import ca.nrc.cadc.vosi.avail.CheckResource;
+import ca.nrc.cadc.vosi.avail.CheckWebService;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.net.URL;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+public class ServiceAvailability implements WebService
+{
+    private static String AC_AVAIL =    "ivo://cadc.nrc.ca/gms";
+    private static String DATACITE_URL = "https://www.datacite.org";
+    private static String VOS_AVAIL =    "ivo://cadc.nrc.ca/vospace";
+    private static String XML = "text/xml";
 
-public class DoiInlineContentHandler implements InlineContentHandler {
-    private static Logger log = Logger.getLogger(DoiInlineContentHandler.class);
+    public ServiceAvailability() { }
 
-    public static final String CONTENT_KEY = "doi_metadata";
-
-    public DoiInlineContentHandler() {
+    public AvailabilityStatus getStatus()
+    {
+        boolean isGood = true;
+        String note = "service is accepting requests";
+        try
+        {
+            RegistryClient reg = new RegistryClient();
+            CheckResource checkResource;
+            String url;
+            
+            // check ac service availability
+            url = reg.getServiceURL(URI.create(AC_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+            
+            // check vospace service availability
+            url = reg.getServiceURL(URI.create(VOS_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+            
+            // Check that datacite is available
+            URL docURL = new URL(DATACITE_URL);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            HttpDownload get = new HttpDownload(docURL, bos);
+            get.setRequestProperty("Accept", XML);
+            get.run();
+            int responseCode = get.getResponseCode();
+            if (responseCode != 200)
+            {
+                throw new RuntimeException("response code from " + DATACITE_URL + ": " + responseCode);
+            }
+        }
+        catch (Throwable t)
+        {
+            // the test itself failed
+            isGood = false;
+            note = "test failed, reason: " + t;
+        }
+        return new AvailabilityStatus(isGood, null, null, null, note);
     }
 
-    /**
-     * Receive data.
-     */
-    public Content accept(String name, String contentType, InputStream inputStream)
-            throws InlineContentException, IOException {
-        if (inputStream == null) {
-            throw new IOException("The InputStream is closed");
-        }
-
-        Resource userInput = null;
-        InlineContentHandler.Content content = new InlineContentHandler.Content();
-        if (contentType.toLowerCase().equals("text/xml")) {
-
-            try {
-                // read xml file
-                // TODO: trap validation errors
-                DoiXmlReader reader = new DoiXmlReader(false);
-                userInput = reader.read(inputStream);
-            } catch (DoiParsingException dpe) {
-                log.debug(dpe);
-                throw new InlineContentException(dpe.getMessage());
-            }
-        }
-        else if (contentType.toLowerCase().equals("application/json")) {
-            try {
-                // read json file
-                DoiJsonReader reader = new DoiJsonReader();
-                userInput = reader.read(IOUtils.toString(inputStream, "UTF-8"));
-            } catch (DoiParsingException dpe) {
-                log.debug(dpe);
-                // todo: this isn't wrapping the exception well, right?
-                throw new InlineContentException(dpe.getMessage());
-            }
-        }
-
-        content.name = CONTENT_KEY;
-        content.value = userInput;
-        return content;
+    public void setState(String string)
+    {
+        //no-op
     }
 }
