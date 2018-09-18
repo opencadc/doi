@@ -147,6 +147,11 @@ public class GetAction extends DOIAction {
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         clientTransfer.setInputStreamWrapper(new DoiInputStream());
         clientTransfer.run();
+
+        if (clientTransfer.getThrowable() != null) {
+            log.info(clientTransfer.getThrowable().getMessage());
+            throw new RuntimeException(clientTransfer.getThrowable().getMessage());
+        }
     }
 
     private class DoiInputStream implements InputStreamWrapper

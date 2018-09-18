@@ -175,33 +175,10 @@ public class PostAction extends DOIAction {
 
             postDoiDocToVospace(doiFilename);
 
-            // Create HTML Landing page and push to same data node
-            String htmlFilename = nextDoiSuffix + ".html";
-            String landingFileUri = folderURI + "/" + htmlFilename;
-            String landingFilename = folderName + "/" + htmlFilename;
-            log.info("MAKING landing page: " + landingFileUri + ": " + landingFilename);
-
-            target = new VOSURI(new URI(landingFileUri));
-            Node landingFileDataNode = new DataNode(target);
-            vosClient.createNode(landingFileDataNode);
-
-            // TODO: get file with html string in it & substitute in the
-            // values that need to be put in. Then do a (ByteArrayOutputStream?)-type
-            // OutputStream wrapper to clientTransfer.run it up to the node created above...
-            // File will be in the resource directory/includes, so will be in the class path
-//            List<Protocol> protocols = new ArrayList<Protocol>();
-//            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-//            Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
-//            ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-//            DoiOutputStream outStream = new DoiOutputStream(doiDocument);
-//            clientTransfer.setOutputStreamWrapper(outStream);
-//            clientTransfer.run();
-
             // Create 'data' folder under containing folder.
             // This is where the calling user will upload their DOI data
 
             // Create group first in order to apply permissions
-
             GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
 
             String doiGroupName = DOI_GROUP_PREFIX + nextDoiSuffix;
@@ -247,6 +224,11 @@ public class PostAction extends DOIAction {
         DoiOutputStream outStream = new DoiOutputStream(resource);
         clientTransfer.setOutputStreamWrapper(outStream);
         clientTransfer.run();
+
+        if (clientTransfer.getThrowable() != null) {
+            log.info(clientTransfer.getThrowable().getMessage());
+            throw new RuntimeException(clientTransfer.getThrowable().getMessage());
+        }
     }
 
     /*
