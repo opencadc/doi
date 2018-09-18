@@ -181,7 +181,7 @@ public class DoiReader
                 creator.nameIdentifier = nameIdentifier;
             }
             
-            Element givenNameElement = creatorElement.getChild("creatorName", ns);
+            Element givenNameElement = creatorElement.getChild("givenName", ns);
             String givenName = null;
             if (givenNameElement != null)
             {
@@ -189,7 +189,7 @@ public class DoiReader
                 creator.givenName = givenName;
             }
             
-            Element familyNameElement = creatorElement.getChild("creatorName", ns);
+            Element familyNameElement = creatorElement.getChild("familyName", ns);
             String familyName = null;
             if (familyNameElement != null)
             {
@@ -197,7 +197,7 @@ public class DoiReader
                 creator.familyName = familyName;
             }
             
-            Element affiliationElement = creatorElement.getChild("creatorName", ns);
+            Element affiliationElement = creatorElement.getChild("affiliation", ns);
             String affiliation = null;
             if (affiliationElement != null)
             {
