@@ -47,16 +47,22 @@
         ],
         "responses": {
           "200": {
-            "description": "DOI creation successful. Next steps found at..."
+            "description": "DOI creation successful."
           },
-          "401": {
-            "description": "Not authenticated"
+          "400": {
+            "description": "Bad DOI metadata"
           },
           "403": {
             "description": "Not authorised"
           },
-          "405": {
-            "description": "Invalid input"
+          "409": {
+            "description": "DOI already exists"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
           }
         },
         "security": [
@@ -119,7 +125,7 @@
           "instances"
         ],
         "summary": "Not Yet Implemented",
-        "description": " List all DOIs for authenticated user. Calling user must have access",
+        "description": " List all DOIs for authenticated user. Calling user must have access.",
         "operationId": "getAllDOI",
         "produces": [
           "application/xml",
@@ -173,8 +179,8 @@
         "tags": [
           "instances"
         ],
-        "summary": "Not Yet Implemented",
-        "description": "Get specified DOI for authenticated user. Calling user must have access",
+        "summary": "Get a DOI instance",
+        "description": "Get specified DOI for authenticated user. Calling user must have access.",
         "operationId": "ListDOI",
         "produces": [
           "application/xml",
@@ -199,8 +205,17 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid status value"
+          "403": {
+            "description": "Not authorised"
+          },
+          "404": {
+            "description": "DOI not found"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
           }
         },
         "security": [
@@ -216,8 +231,8 @@
         "tags": [
           "instances"
         ],
-        "summary": "Not Yet Implemented",
-        "description": "Delete specified DOI for authenticated user, including associated VOSPace data directory. Calling user must have access",
+        "summary": "Delete a DOI instance",
+        "description": "Delete specified DOI for authenticated user, including associated VOSPace data directory. Calling user must have access.",
         "operationId": "deleteDOI",
         "produces": [
           "application/xml",
@@ -242,14 +257,14 @@
               }
             }
           },
-          "400": {
-            "description": "Bad parameter"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
           "403": {
-            "description": "Unauthorised"
+            "description": "Not authorised"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
           }
         },
         "security": [
@@ -287,30 +302,110 @@
         "title"
       ],
       "properties": {
-        "author": {
-          "type": "string",
-          "example": "Fred Dooley, Phd"
+        "identifier": {
+          "type": "object",
+          "example": "10.5072/example-full",
+          "properties": {
+            "identifierType": {
+              "type": "string",
+              "example": "DOI",
+              "xml": {
+                "attribute": true
+              }
+            }
+          }
         },
-        "title": {
-          "type": "string",
-          "example": "Views of Neptune, 2018 through 2020"
+        "creators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "creator": {
+                "type": "object",
+                "properties": {
+                  "creatorName": {
+                    "type": "object",
+                    "example": "Miller, Elizabeth",
+                    "properties": {
+                      "nameType": {
+                        "type": "string",
+                        "example": "Personal",
+                        "xml": {
+                          "attribute": true
+                        }
+                      }
+                    }
+                  },
+                  "givenName": {
+                    "type": "string",
+                    "example": "Elizabeth"
+                  },
+                  "familyName": {
+                    "type": "string",
+                    "example": "Miller"
+                  },
+                  "nameIdentifier": {
+                    "type": "object",
+                    "example": "0000-0001-5000-0007",
+                    "properties": {
+                      "nameIdentifierScheme": {
+                        "type": "string",
+                        "example": "ORCID",
+                        "xml": {
+                          "attribute": true
+                        }
+                      },
+                      "schemeURI": {
+                        "type": "string",
+                        "example": "http://orcid.org/",
+                        "xml": {
+                          "attribute": true
+                        }
+                      }
+                    }
+                  },
+                  "affiliation": {
+                    "type": "string",
+                    "example": "DataCite"
+                  }
+                }
+              }
+            }
+          }
         },
-        "publicationDOI": {
-          "type": "string",
-          "example": "11.2335/90.9090"
+        "titles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "object",
+                "example": "Full DataCite XML Example",
+                "properties": {
+                  "xml:lang": {
+                    "type": "string",
+                    "example": "en-US",
+                    "xml": {
+                      "attribute": true
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
-        "status": {
+        "publisher": {
           "type": "string",
-          "description": "Where the DOI is in the creation process",
-          "enum": [
-            "inprogress",
-            "pending",
-            "minted"
-          ]
+          "example": "DataCite"
+        },
+        "publicationYear": {
+          "type": "string",
+          "example": "2014"
         }
       },
       "xml": {
-        "name": "DOIMetadata"
+        "name": "resource",
+        "namespace": "http://datacite.org/schema/kernel-4"
       }
     }
   }
