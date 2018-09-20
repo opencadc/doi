@@ -68,6 +68,7 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
@@ -83,9 +84,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-/**
- *
- */
+
 public class GetAction extends DOIAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
@@ -97,26 +96,30 @@ public class GetAction extends DOIAction {
     @Override
     public void doActionImpl() throws Exception {
 
-        if (DOINumInputStr.equals("")) {
-            // "Get All" not yet done
-            throw new UnsupportedOperationException("\"Get All\" not implemented yet.");
+        switch (requestType) {
+            case GET_ONE_REQUEST:
+                // Get DOI number from input
+                String doiSuffix = DOINumInputStr;
+
+                // Get path and filename for DOI Document stored in VOSpace
+                String doiDatafileName = getDoiNodeUri(doiSuffix) + "/" + getDoiFilename(doiSuffix);
+
+                getDoiDocFromVospace(doiDatafileName);
+
+                // Write XML to output
+                writeDoiDocToSyncOutput();
+                break;
+            case GET_ALL_REQUEST:
+                throw new UnsupportedOperationException("\"Get All\" not implemented yet.");
+            //            case GET_DOI_METADATA:
+            // check permissions for and return data directory location
+            // or possibly status, or...
+            // To be used for generating the DOI metadata displayed with a GET, or
+            // with the landing page
+            default:
+                throw new UnsupportedOperationException("Unknown request type");
         }
-        else {
-            // TODO: these request types are probably not needed
-            // consider removing from here, DOIAction and related implementations
-            requestType = GET_ONE_REQUEST;
 
-            // Get DOI number from input
-            String doiSuffix = DOINumInputStr;
-
-            // Get path and filename for DOI Document stored in VOSpace
-            String doiDatafileName = getDoiNodeUri(doiSuffix) + "/" + getDoiFilename(doiSuffix);
-
-            getDoiDocFromVospace(doiDatafileName);
-
-            // Write XML to output
-            writeDoiDocToSyncOutput();
-        }
     }
 
     private void writeDoiDocToSyncOutput () throws IOException {
@@ -140,17 +143,47 @@ public class GetAction extends DOIAction {
         syncOutput.getOutputStream().write(doiBuilder.toString().getBytes());
     }
 
-    private void getDoiDocFromVospace (String dataNodePath) throws URISyntaxException {
+    @Override
+    protected void initRequest() {
+        String path = syncInput.getPath();
+        log.debug("http request path: " + path);
+        requestType = GET_ALL_REQUEST;
+
+        if (path == null) {
+            return;
+        }
+
+        // Parse the request path to see if a DOI number has been provided
+        String[] parts = path.split("/");
+        if (parts.length > 0) {
+            requestType = GET_ONE_REQUEST;
+            DOINumInputStr = parts[0];
+        }
+        if (parts.length > 1) {
+            // Until 'status' is supported
+            throw new IllegalArgumentException("Invalid request: " + path);
+        }
+        log.debug("request type: " + requestType);
+        log.debug("DOI Number: " + DOINumInputStr);
+    }
+
+    private void getDoiDocFromVospace (String dataNodePath)
+        throws URISyntaxException, ResourceNotFoundException {
+
         List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
         Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         clientTransfer.setInputStreamWrapper(new DoiInputStream());
         clientTransfer.run();
 
         if (clientTransfer.getThrowable() != null) {
-            log.info(clientTransfer.getThrowable().getMessage());
-            throw new RuntimeException(clientTransfer.getThrowable().getMessage());
+            log.debug(clientTransfer.getThrowable().getMessage());
+            String message = clientTransfer.getThrowable().getMessage();
+            if (message.contains("NodeNotFound")) {
+                throw new ResourceNotFoundException(message);
+            }
+            throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
         }
     }
 

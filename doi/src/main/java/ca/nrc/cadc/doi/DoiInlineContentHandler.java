@@ -98,8 +98,8 @@ public class DoiInlineContentHandler implements InlineContentHandler {
 
         Resource userInput = null;
         InlineContentHandler.Content content = new InlineContentHandler.Content();
-        if (contentType.toLowerCase().equals("text/xml")) {
 
+        if (contentType.toLowerCase().equals("text/xml")) {
             try {
                 // read xml file
                 // TODO: trap validation errors

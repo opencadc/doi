@@ -99,11 +99,13 @@ public abstract class DOIAction extends RestAction {
     protected static final String DOI_GROUP_PREFIX = "DOI-";
 
     // Request types handled in the GetAction, PostAction, DeleteAction classes
-    // as of 21/8/18, only some have been implemented. All are named here because
+    // as of 20/9/18, only some have been implemented. All are named here because
     // the API has been planned out more fully than has been implemented.
+
     // GetAction
     protected static final String GET_ONE_REQUEST = "getOne";
     protected static final String GET_ALL_REQUEST = "getAll";
+//    protected static final String GET_DOI_METADATA = "getDoiMeta";
 
     // PostAction
     protected static final String CREATE_REQUEST = "create";
@@ -127,6 +129,10 @@ public abstract class DOIAction extends RestAction {
         // initialise and debug statements go here...
     }
 
+    protected abstract void doActionImpl() throws Exception;
+
+    protected abstract void initRequest() throws AccessControlException, IOException;
+
     /**
      * Parse input documents
      * @return
@@ -136,9 +142,6 @@ public abstract class DOIAction extends RestAction {
         return new DoiInlineContentHandler();
     }
 
-
-    protected abstract void doActionImpl() throws Exception;
-
     /**
      * Capture the initial request, and continue any work necessary using a new subject,
      * using doiadmin credentials
@@ -147,76 +150,55 @@ public abstract class DOIAction extends RestAction {
     @Override
     public void doAction() throws Exception {
 
+        // Store calling user information for later reference
+        setAuthorisedUser();
+
         // Discover what kind of request this is
         initRequest();
 
-        // Store the calling subject so that user principal information can be
-        // pulled out in doActionImpl however it needs to be for the action type (GET, POST, DELETE)
-        callingSubject = AuthenticationUtil.getCurrentSubject();
-
         // Get the submitted form data, if it exists
-        // which has been put in a JDOM2 Document
-        // Set up values needed to access the xml document
-        // TODO: may move this into the PostAction doActionImpl if not used outside of that.
-        // doiDocument will be used though? (in GetAction? - not finalised however.)
         resource = (Resource)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
 
-        // Create VOSpace data folder using DOI_BASE_VOSPACE
+        // Interact with VOSPACE using DOI_BASE_VOSPACE
         doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
-        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
-        // Do all subsequent work as doiadmin...
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                doActionImpl();
-                return "done";
-            }
-        } );
+
+        if (requestType == CREATE_REQUEST || requestType == DELETE_REQUEST ) {
+            // Do all subsequent work as doiadmin
+            File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+            Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+            Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                @Override
+                public String run() throws Exception {
+                    // This should be done within the Subject for the user
+                    // that will be using the client.
+                    vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+                    doActionImpl();
+                    return "done";
+                }
+            });
+        }
+        else {
+            // Continue as calling user
+            vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+            doActionImpl();
+        }
 
     }
 
-    protected void initRequest() throws AccessControlException, IOException {
-        final Subject subject = AuthenticationUtil.getCurrentSubject();
-        log.debug("Subject: " + subject);
-        
-        // authorization, for now, is simply being authenticated
-        // (grabbed from quarry service...)
-        if (subject == null || subject.getPrincipals().isEmpty()) {
+    private void setAuthorisedUser() {
+        callingSubject = AuthenticationUtil.getCurrentSubject();
+        log.debug("Subject: " + callingSubject);
+
+        // authorization, for now, is defined as having a set of principals
+        if (callingSubject == null || callingSubject.getPrincipals().isEmpty()) {
             throw new AccessControlException("Unauthorized");
         }
-        Set<HttpPrincipal> httpPrincipals = subject.getPrincipals(HttpPrincipal.class);
+        Set<HttpPrincipal> httpPrincipals = callingSubject.getPrincipals(HttpPrincipal.class);
         if (httpPrincipals.isEmpty()) {
-            throw new AccessControlException("No HTTP Principal");
+            throw new AccessControlException("No HTTP Principal found.");
         }
         userID = httpPrincipals.iterator().next().getName();
-        
-        String path = syncInput.getPath();
-        log.debug("http request path: " + path);
-        requestType = GET_ALL_REQUEST;
-        
-        if (path == null) {
-            return;
-        }
-
-        // Parse the request path to see if a DOI number has been provided
-        String[] parts = path.split("/");
-        if (parts.length > 0) {
-            requestType = CREATE_REQUEST;
-            DOINumInputStr = parts[0];
-        }
-        if (parts.length > 1) {
-            throw new IllegalArgumentException("Invalid request: " + path);
-        }
-        log.debug("request type: " + requestType);
-        log.debug("DOI Number: " + DOINumInputStr);
-    }
-
-    protected String getDOISuffix(String doiStr) {
-        String[] doiParts = doiStr.split("/");
-        return doiParts[1];
     }
 
     protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }

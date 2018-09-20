@@ -71,6 +71,7 @@ import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeProperty;
+import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.InvalidParameterException;
@@ -139,5 +140,27 @@ public class DeleteAction extends DOIAction {
             }
 
         }
+    }
+
+    @Override
+    protected void initRequest() {
+        String path = syncInput.getPath();
+        log.debug("http request path: " + path);
+
+        if (path == null) {
+            return;
+        }
+
+        // Parse the request path to see if a DOI number has been provided
+        String[] parts = path.split("/");
+        if (parts.length > 0) {
+            requestType = DELETE_REQUEST;
+            DOINumInputStr = parts[0];
+        }
+        if (parts.length > 1) {
+            throw new IllegalArgumentException("Invalid request: " + path);
+        }
+        log.debug("request type: " + requestType);
+        log.debug("DOI Number: " + DOINumInputStr);
     }
 }
