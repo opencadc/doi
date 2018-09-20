@@ -35,7 +35,6 @@
     <script type="application/javascript" src="${baseURL}/citation/js/jquery-2.2.4.min.js"></script>
     <script type="application/javascript" src="${baseURL}/citation/js/bootstrap.min.js"></script>
 
-
     <!--[if lt IE 9]>
         <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -67,10 +66,16 @@
                   </div>
                   <div class="panel-body doi-panel-body">
 
+                    <!-- Noficiation and Alert bars -->
                     <div class="alert alert-danger hidden">
-                      <strong id="status_code">444</strong>&nbsp;&nbsp;<span id="error_msg">Server error</span></a>
+                      <strong id="status_code">444</strong>&nbsp;&nbsp;<span id="error_msg">Server error</span>
                     </div>
 
+                    <div class="alert alert-success hidden">
+                      <span id="alert_msg"></span>
+                    </div>
+
+                    <!-- Form starts -->
                     <div class="doi-form-body">
                       <form id="doi_request_form" class="form-horizontal">
                         <!-- DOI Number -->
@@ -124,8 +129,9 @@
                         <div class="form-group">
                           <div class="col-sm-offset-2 col-sm-10">
                             <div class="btn-group" role="group">
-                              <button type="submit" class="btn btn-primary" id="doi_form_button">Create</button>
-                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button">Clear</button>
+                              <button type="submit" class="btn btn-primary" id="doi_form_button" tabindex="5">Create</button>
+                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Clear</button>
+                              <%--<button type="delete" class="btn btn-danger doi-button" id="doi_form_delete_button">Delete</button>--%>
                             </div>
                           </div>
                         </div>
@@ -200,21 +206,14 @@
       </div>
     </div>
 
-    <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery-ui-1.11.4.min.js " />"></script>
-    <%--<script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery.event.drag-2.2.min.js--%>
-      <%--" />"></script>--%>
-    <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcVOTV/javascript/jquery.csv-0.71.min.js " />"></script>
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/registry-client.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation.js" />"></script>
-
 
     <script type="application/javascript">
       $(document).ready(function() {
-        // Instantiate controller for Data Citation UI page
-        citation_js = new ca.nrc.cadc.Citation();
-        citation_js.setBaseUrl("<c:out value="${baseURL}"/>");
 
         userManager = new cadc.web.UserManager();
 
@@ -239,6 +238,16 @@
         // This function is in cadc.user.js, will throw the event
         // in the userManager.subscribe above...
         userManager.loadCurrent();
+
+        // Instantiate controller for Data Citation UI page
+        citation_js = new cadc.web.citation.Citation();
+        citation_js.setBaseUrl("<c:out value="${baseURL}"/>");
+
+//        citation_js.subscribe(cadc.web.citation.events.onRegistryReady,
+//            function(e, data)
+//            {
+//              citation_js.setAuthenticated();
+//            });
 
       });
 

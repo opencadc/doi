@@ -1,15 +1,20 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "ca": {
-      "nrc": {
-        "cadc": {
+    "cadc": {
+      "web": {
+        "citation": {
           "Citation": Citation,
-          "DOIDocument": DOIDocument
+          "DOIDocument": DOIDocument,
+          // Events
+          events: {
+            onRegistryReady: new jQuery.Event('citation:onRegistryReady'),
+          }
         }
       }
     }
   });
+
 
   /**
    * Controller for Data Citation UI.
@@ -20,6 +25,15 @@
   {
     var doiDoc = new DOIDocument();
     var _baseUrl = "";
+    var _selfCitation = this;
+
+    // NOTE: for production, this constructor should have no parameters.
+    // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
+    //var _registryClient = new Registy();
+    var _registryClient = new Registry({resourceCapabilitiesEndPoint:'http://jeevesh.cadc.dao.nrc.ca/reg/resource-caps'});
+
+    var _doiServiceUrl = "";
+    var _vospaceServiceUrl = "";
 
     // ------------ Page load functions
     function parseUrl() {
@@ -59,14 +73,21 @@
       setProgressBar("error");
     }
 
-    function clearAjaxFail() {
+    function clearAjaxAlert() {
       $(".alert-danger").addClass("hidden");
+      $(".alert-sucess").addClass("hidden");
+      setProgressBar("okay");
+    }
+
+    function handleAjaxSuccess(message) {
+      $("#error_msg").text(message.responseText);
+      $(".alert-sucess").removeClass("hidden");
       setProgressBar("okay");
     }
 
     function handleFormReset(message) {
       $("#doi_metadata").addClass("hidden");
-      clearAjaxFail();
+      clearAjaxAlert();
       $("#doi_data_dir").html("");
       $("#doi_landing_page").html("");
       setProgressBar("okay");
@@ -103,7 +124,7 @@
       $('.doi-anonymous').addClass('hidden');
 
       setPublicationYears();
-      // This will kick off a GET if the URL requires it.
+      // This will kick off a GET if the URL contains a request
       parseUrl();
       attachListeners();
     };
@@ -113,7 +134,7 @@
     // POST
     function handleDoiRequest(event) {
       // Clear any previous error bars
-      clearAjaxFail();
+      clearAjaxAlert();
       var _formdata = $(this).serializeArray();
 
       var personalInfo = {};
@@ -147,10 +168,11 @@
       setProgressBar("busy");
 
       var createUrl = _baseUrl + "/doi/instances";
-      // Submit doc using ajax
+
       $.ajax({
         xhrFields: { withCredentials: true },
         url: createUrl,
+        //url: _doiServiceUrl,
         method: "POST",
         dataType: "json",
         contentType: 'application/json',
@@ -161,7 +183,6 @@
         // accessed.
         setProgressBar("okay");
         $("#doi_number").val(data.resource.identifier["$"]);
-
         var doiSuffix = data.resource.identifier["$"].split("/")[1];
         loadMetadata(doiSuffix);
         doiDoc.populateDoc(data);
@@ -175,7 +196,57 @@
 
     //GET
     function handleDoiGet(doiNumber) {
-      clearAjaxFail();
+      clearAjaxAlert();
+      setProgressBar("busy");
+
+      // Submit doc using ajax
+      var getUrl = _baseUrl + "/doi/instances/" + doiNumber;
+
+      //var getUrl = _doiServiceUrl + "/" + doiNumber;
+      //
+      //_registryClient.getServiceURL(
+      //    'ivo://cadc.nrc.ca/doi',
+      //    'vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0',
+      //    'vs:ParamHTTP',
+      //    false
+      //)
+      //.then(function(serviceURL) {
+
+        //var getUrl = serviceURL + "/" + doiNumber;
+        $.ajax({
+          xhrFields: { withCredentials: true },
+          url: getUrl,
+          method: "GET",
+          dataType: "json",
+          contentType: 'application/json'
+        }).success(function (data) {
+          setProgressBar("okay");
+          $("#doi_number").val(data.resource.identifier["$"]);
+          var doiSuffix = data.resource.identifier["$"].split("/")[1];
+          // Populate lower panel on form page
+          loadMetadata(doiSuffix);
+          // Populate javascript object behind form
+          doiDoc.populateDoc(data);
+          populateForm();
+        }).fail(function (message) {
+          setProgressBar("error");
+          handleAjaxFail(message);
+        });
+
+      //}).catch(function(err) {
+      //  handleAjaxFail('Error obtaining Service URL > ' + err);
+      //})
+
+
+
+      return false;
+    };
+
+    // DELETE
+    function handleDoiDelete() {
+      // Get doi number from form...
+      var doiNumber = $("#doi_number").val().split("/")[1];
+      clearAjaxAlert();
       setProgressBar("busy");
 
       // Submit doc using ajax
@@ -183,25 +254,20 @@
       $.ajax({
         xhrFields: { withCredentials: true },
         url: getUrl,
-        method: "GET",
+        method: "DELETE",
         dataType: "json",
         contentType: 'application/json'
       }).success(function (data) {
         setProgressBar("okay");
-        $("#doi_number").val(data.resource.identifier["$"]);
-        var doiSuffix = data.resource.identifier["$"].split("/")[1];
-        // Populate lower panel on form page
-        loadMetadata(doiSuffix);
-        // Populate javascript object behind form
-        doiDoc.populateDoc(data);
-        populateForm();
+        handleFormReset();
+        handleAjaxSuccess("DOI Deleted");
       }).fail(function (message) {
-        // TODO: not sure this red bar will be retained.
         setProgressBar("error");
         handleAjaxFail(message);
       });
       return false;
     };
+
 
     function loadMetadata(doiName) {
       // There will be a service call eventually, for now the front end
@@ -222,25 +288,59 @@
               "\">"  + baseLandingPageUrl + "/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose + "</a>";
 
       var dataUrl = "<a href=\"" + baseLandingPageUrl + "/storage/list/" + astrodataDir + doiName + "/data" +
-          "\">"  + baseLandingPageUrl + "/storage/list/" + astrodataDir + doiName + "/data</a>";
+          "\" target=\"_blank\">"  + baseLandingPageUrl + "/storage/list/" + astrodataDir + doiName + "/data</a>";
 
       $("#doi_data_dir").html(dataUrl);
-      $("#doi_landing_page").html(landingPageUrl);
+      //$("#doi_landing_page").html(landingPageUrl);
     };
 
     function populateForm(){
-      $("#doi_creator_list").val(doiDoc.getAuthorFullname());
+      $("#doi_creator_list").val(doiDoc.getAuthorList());
       $("#doi_title").val(doiDoc.getTitle());
       $("#doi_publisher").val(doiDoc.getPublisher());
       $("#doi_publish_year").val(doiDoc.getPublicationYear());
     };
 
-
     function attachListeners() {
-      $("#doi_form_reset_button").click(citation_js.handleFormReset);
-      $("#doi_find").click(citation_js.handleDoiGet);
-      $("#doi_request_form").submit(citation_js.handleDoiRequest);
+      $("#doi_form_reset_button").click(handleFormReset);
+      $("#doi_form_delete_button").click(handleDoiDelete);
+      $("#doi_request_form").submit(handleDoiRequest);
     }
+
+    function initServiceUrls() {
+      //// Look up the DOI service.
+      //_registryClient.getServiceURL(
+      //    'ivo://cadc.nrc.ca/doi',
+      //    'vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0',
+      //    'vs:ParamHTTP',
+      //    true
+      //)
+      //.then(function(serviceURL) {
+      //  _doiServiceUrl = serviceURL;
+      //}).catch(function(err) {
+      //  console.error('Error obtaining Service URL > ' + err)
+      //})
+      //
+      //// Look up the VOSpace service.
+      //_registryClient.getServiceURL(
+      //    'ivo://cadc.nrc.ca/vospace',
+      //    'ivo://ivoa.net/std/VOSpace/v2.0#sync',
+      //    'vs:ParamHTTP',
+      //    false
+      //)
+      //.then(function(serviceURL) {
+      //  _vospaceServiceUrl = serviceURL;
+      //}).catch(function(err) {
+      //  console.error('Error obtaining Service URL > ' + err)
+      //})
+      //
+      //
+      //if (_vospaceServiceUrl !== "" && _doiServiceUrl !== "") {
+      //  trigger(cadc.web.gms.events.onRegistryReady, {});
+      //}
+    }
+
+
 
     $.extend(this, {
       parseUrl: parseUrl,
@@ -249,6 +349,7 @@
       handleFormReset:handleFormReset,
       handleDoiRequest: handleDoiRequest,
       handleDoiGet: handleDoiGet,
+      handleDoiDelete: handleDoiDelete,
       handleAjaxFail: handleAjaxFail,
       loadMetadata: loadMetadata,
       populateForm: populateForm,
@@ -329,7 +430,7 @@
 
     function setAuthor(authorList) {
       // personalInfo is a new line delimited list of last name, first name elements
-      var names = authorList.split("\\\n");
+      var names = authorList.split("\n");
       for (var j=0; j< names.length; j++) {
         _selfDoc._minimalDoc.resource.creators["$"][j] = makeCreatorStanza(names[j]);
       }
@@ -356,6 +457,15 @@
 
     function getAuthorFullname() {
       return  _selfDoc._minimalDoc.resource.creators["$"][0].creator.creatorName["$"];
+    }
+
+    function getAuthorList() {
+      var listSize = _selfDoc._minimalDoc.resource.creators["$"].length;
+      var authorList = "";
+      for (var ix=0; ix<listSize; ix++) {
+        authorList = authorList + _selfDoc._minimalDoc.resource.creators["$"][ix].creator.creatorName["$"] + "\n";
+      }
+      return authorList;
     }
 
     function getDoiNumber() {
@@ -386,6 +496,7 @@
       setPublisher: setPublisher,
       setTitle: setTitle,
       getAuthorFullname: getAuthorFullname,
+      getAuthorList: getAuthorList,
       getDoiNumber: getDoiNumber,
       getPublicationYear: getPublicationYear,
       getPublisher: getPublisher,
