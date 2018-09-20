@@ -89,6 +89,10 @@ import org.junit.Test;
 
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
+import ca.nrc.cadc.doi.datacite.DoiJsonReader;
+import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
+import ca.nrc.cadc.doi.datacite.DoiXmlReader;
+import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
@@ -339,7 +343,7 @@ public class DoiReaderWriterTest
     
     private void compareCreatorName(CreatorName cn1, CreatorName cn2)
     {
-        Assert.assertEquals("creatorNames are different", cn1.getCreatorName(), cn2.getCreatorName());
+        Assert.assertEquals("creatorNames are different", cn1.getText(), cn2.getText());
         Assert.assertEquals("nameTypes are different", cn1.nameType, cn2.nameType);
     }
     

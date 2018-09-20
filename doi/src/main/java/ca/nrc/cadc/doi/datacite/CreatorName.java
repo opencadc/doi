@@ -82,7 +82,7 @@ public class CreatorName
     
     private static Logger log = Logger.getLogger(CreatorName.class);
     
-    private String creatorName;
+    private String text;
     public String nameType;
 
     /**
@@ -97,14 +97,14 @@ public class CreatorName
             throw new IllegalArgumentException(msg);
         }
         
-        this.creatorName = creatorName;
+        this.text = creatorName;
     }
 
     /**
      * @return creator name.
      */
-    public String getCreatorName()
+    public String getText()
     {
-        return this.creatorName;
+        return this.text;
     }
 }

@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.xml.XmlUtil;

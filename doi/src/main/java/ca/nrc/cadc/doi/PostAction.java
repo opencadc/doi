@@ -73,8 +73,8 @@ import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.util.DoiUtil;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -175,7 +175,7 @@ public class PostAction extends DOIAction {
 
             // Go ahead and store the current DOI to the new directory
             // Update DOI xml with DOI number
-            DoiUtil.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
+            DOIAction.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
             // Create VOSpace data node to house XML doc using doi filename
             String nextDoiFilename = getDoiFilename(nextDoiSuffix);
             log.debug("next doi filename: " + nextDoiFilename);

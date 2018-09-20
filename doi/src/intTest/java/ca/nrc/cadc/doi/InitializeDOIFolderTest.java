@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.net.HttpDelete;
-import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
@@ -79,11 +77,8 @@ import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -95,19 +90,14 @@ import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.DoiXmlReader;
+import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.HttpPost;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**

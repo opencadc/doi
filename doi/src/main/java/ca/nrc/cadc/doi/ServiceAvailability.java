@@ -82,9 +82,7 @@ import java.net.URL;
 public class ServiceAvailability implements WebService
 {
     private static String AC_AVAIL =    "ivo://cadc.nrc.ca/gms";
-    private static String DATACITE_URL = "https://www.datacite.org";
     private static String VOS_AVAIL =    "ivo://cadc.nrc.ca/vospace";
-    private static String XML = "text/xml";
 
     public ServiceAvailability() { }
 
@@ -109,15 +107,14 @@ public class ServiceAvailability implements WebService
             checkResource.check();
             
             // Check that datacite is available
-            URL docURL = new URL(DATACITE_URL);
+            URL docURL = new URL(DOIAction.DATACITE_URL);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(docURL, bos);
-            get.setRequestProperty("Accept", XML);
             get.run();
             int responseCode = get.getResponseCode();
             if (responseCode != 200)
             {
-                throw new RuntimeException("response code from " + DATACITE_URL + ": " + responseCode);
+                throw new RuntimeException("response code from " + DOIAction.DATACITE_URL + ": " + responseCode);
             }
         }
         catch (Throwable t)

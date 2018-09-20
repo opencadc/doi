@@ -67,48 +67,92 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.xml.JsonInputter;
+import ca.nrc.cadc.util.StringBuilderWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 /**
- * Constructs a DoiMetadata from a JSON source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple JSON node
- * documents.
- *
+ * Writes a Resource instance as XML to an output.
+ * 
  * @author yeunga
  */
-public class DoiJsonReader extends DoiReader
+public class DoiXmlWriter extends DoiWriter
 {
-    private static final Logger log = Logger.getLogger(DoiJsonReader.class);
- 
-    /**
-     * Constructor. XML Schema validation is enabled by default.
-     */
-    public DoiJsonReader() { }
+    private static Logger log = Logger.getLogger(DoiXmlWriter.class);
+
+    public DoiXmlWriter() { }
 
     /**
-     *  Construct a Resource instance from a JSON String source.
+     * Write a Resource instance to an OutputStream using UTF-8 encoding.
      *
-     * @param xml String of the JSON.
-     * @return Resource object containing all doi metadata.
-     * @throws DoiParsingException if there is an error parsing the JSON.
+     * @param resource Resource instance to write.
+     * @param out OutputStream to write to.
+     * @throws IOException if the writer fails to write.
      */
-    public Resource read(String json) throws DoiParsingException
+    public void write(Resource resource, OutputStream out) throws IOException
     {
-        if (json == null)
-            throw new IllegalArgumentException("JSON string must not be null");
+        OutputStreamWriter outWriter;
         try
         {
-            JsonInputter inputter = new JsonInputter();
-            return this.buildResource(inputter.input(json));
+            outWriter = new OutputStreamWriter(out, "UTF-8");
         }
-        catch (Exception ex)
+        catch (UnsupportedEncodingException e)
         {
-            String error = "Error reading JSON string: " + ex.getMessage();
-            throw new DoiParsingException(error, ex);
+            throw new RuntimeException("UTF-8 encoding not supported", e);
         }
+        write(resource, outWriter);
+    }
+
+    /**
+     * Write a Resource instance to a StringBuilder.
+     * @param resource
+     * @param builder
+     * @throws IOException
+     */
+    public void write(Resource resource, StringBuilder builder) throws IOException
+    {
+        write(resource, new StringBuilderWriter(builder));
+    }
+
+    /**
+     * Write a Resource instance to a writer.
+     *
+     * @param resource Resource instance to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(Resource resource, Writer writer) throws IOException
+    {
+        long start = System.currentTimeMillis();
+        Element root = this.getRootElement(resource);
+        write(root, writer);
+        long end = System.currentTimeMillis();
+        log.debug("Write elapsed time: " + (end - start) + "ms");
+    }
+
+    /**
+     * Write a Document instance by providing the root element to a writer.
+     *
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    protected void write(Element root, Writer writer) throws IOException
+    {
+        XMLOutputter outputter = new XMLOutputter();
+        outputter.setFormat(Format.getPrettyFormat());
+        outputter.output(new Document(root), writer);
     }
 }
