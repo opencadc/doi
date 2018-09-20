@@ -83,6 +83,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.DoiXmlReader;
+import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;

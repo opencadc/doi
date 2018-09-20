@@ -62,25 +62,122 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
-public class DoiParsingException extends Exception
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.util.StringBuilderWriter;
+import ca.nrc.cadc.xml.JsonOutputter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+
+/**
+ *
+ * @author yeunga
+ */
+public class DoiJsonWriter extends DoiWriter 
 {
-    private static final long serialVersionUID = -5942924380206370808L;
+    private static final Logger log = Logger.getLogger(DoiJsonWriter.class);
 
-    public DoiParsingException(String message)
-    {
-        super(message);
+    private boolean prettyPrint;
+
+    public DoiJsonWriter() {
+        this(true);
     }
 
-    public DoiParsingException(String message, Throwable cause)
-    {
-        super(message, cause);
+    public DoiJsonWriter(boolean prettyPrint) {
+        this.prettyPrint = prettyPrint;
     }
-    
+
+    /**
+     * Write a Resource instance to an OutputStream using UTF-8 encoding.
+     *
+     * @param resource Resource instance to write.
+     * @param out OutputStream to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(Resource resource, OutputStream out) throws IOException
+    {
+        OutputStreamWriter outWriter;
+        try
+        {
+            outWriter = new OutputStreamWriter(out, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException("UTF-8 encoding not supported", e);
+        }
+        write(resource, outWriter);
+    }
+
+    /**
+     * Write a Resource instance to a StringBuilder.
+     * @param resource Resource instance to write.
+     * @param builder
+     * @throws IOException
+     */
+    public void write(Resource resource, StringBuilder builder) throws IOException
+    {
+        write(resource, new StringBuilderWriter(builder));
+    }
+
+    /**
+     * Write the Resource instance to a writer.
+     *
+     * @param resource Resource instance to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(Resource resource, Writer writer) throws IOException {
+        long start = System.currentTimeMillis();
+        Element root = this.getRootElement(resource);
+        write(root, writer);
+        long end = System.currentTimeMillis();
+        log.debug("Write elapsed time: " + (end - start) + "ms");
+    }
+
+    /**
+     * Write a Document instance by providing the root element to a writer.
+     *
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    protected void write(Element root, Writer writer) throws IOException
+    {
+        JsonOutputter outputter = new JsonOutputter();
+        outputter.getListElementNames().add("creators");
+        outputter.getListElementNames().add("titles");
+        outputter.getListElementNames().add("subjects");
+        outputter.getListElementNames().add("contributors");
+        outputter.getListElementNames().add("dates");
+        outputter.getListElementNames().add("alternateIdentifiers");
+        outputter.getListElementNames().add("sizes");
+        outputter.getListElementNames().add("formats");
+        outputter.getListElementNames().add("rightsList");
+        outputter.getListElementNames().add("descriptions");
+        outputter.getListElementNames().add("geoLocations");
+        outputter.getListElementNames().add("fundingReferences");
+        outputter.getListElementNames().add("relatedIdentifiers");
+        outputter.getListElementNames().add("geoLocationPolygon");
+
+        Format fmt = null;
+        if (prettyPrint) {
+            fmt = Format.getPrettyFormat();
+            fmt.setIndent("  "); // 2 spaces
+        }
+        outputter.setFormat(fmt);
+        outputter.output(new Document(root), writer);
+    }
 }

@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.datacite;
 
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
@@ -194,7 +194,7 @@ public class DoiWriter
     protected Element getCreatorNameElement(CreatorName creatorName, Namespace ns)
     {
         Element ret = new Element("creatorName", ns);
-        ret.setText(creatorName.getCreatorName());
+        ret.setText(creatorName.getText());
         
         if (creatorName.nameType != null)
         {

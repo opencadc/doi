@@ -67,7 +67,14 @@
 
 package ca.nrc.cadc.doi;
 
+
 import ca.nrc.cadc.doi.datacite.Resource;
+
+import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
+import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.doi.datacite.DoiXmlReader;
+import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.vos.Direction;

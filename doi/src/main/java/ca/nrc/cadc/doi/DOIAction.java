@@ -70,6 +70,7 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
@@ -78,6 +79,7 @@ import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
@@ -89,6 +91,8 @@ import org.apache.log4j.Logger;
 public abstract class DOIAction extends RestAction {
     private static final Logger log = Logger.getLogger(DOIAction.class);
 
+    public static final String DATACITE_URL = "https://www.datacite.org";
+    
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     protected static String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
@@ -103,6 +107,19 @@ public abstract class DOIAction extends RestAction {
 
     public DOIAction() {
         // initialise and debug statements go here...
+    }
+
+    // methods to assign to private field in Identity
+    public static void assignIdentifier(Object ce, String identifier) {
+        try {
+            Field f = Identifier.class.getDeclaredField("text");
+            f.setAccessible(true);
+            f.set(ce, identifier);
+        } catch (NoSuchFieldException fex) {
+            throw new RuntimeException("BUG", fex);
+        } catch (IllegalAccessException bug) {
+            throw new RuntimeException("BUG", bug);
+        }
     }
 
     /**
