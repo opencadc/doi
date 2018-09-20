@@ -129,11 +129,16 @@
                         <div class="form-group">
                           <div class="col-sm-offset-2 col-sm-10">
                             <div class="btn-group" role="group">
-                              <button type="submit" class="btn btn-primary" id="doi_form_button" tabindex="5">Create</button>
+                              <button type="submit" class="btn btn-primary" id="doi_create_button" tabindex="5">Create</button>
+                              <!-- Disabled until the edit story is completed -->
+                              <button type="button" class="doi_edit btn btn-primary hidden .disabled" disabled
+                                      id="doi_edit_button" tabindex="5">Update</button>
                               <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Clear</button>
                               <%--<button type="delete" class="btn btn-danger doi-button" id="doi_form_delete_button">Delete</button>--%>
                             </div>
+                            <div><span class="doi_edit hidden"><i>Apologies... the update function will be available soon.</i></span></div>
                           </div>
+
                         </div>
                       </form>
                     </div>
@@ -179,26 +184,6 @@
               </div>
 
 
-              <!-- Info/Error Modal -->
-              <!-- Displayed when anything other than a 401 or 200 is returned -->
-              <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="infoModalLongTitle"></h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <span class="info-span"></span>
-                    </div>
-                    <div id="infoThanks" class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Thanks</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
               <!-- Content ends -->
             </section>
           </div>

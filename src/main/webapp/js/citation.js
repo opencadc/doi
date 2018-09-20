@@ -91,6 +91,7 @@
       $("#doi_data_dir").html("");
       $("#doi_landing_page").html("");
       setProgressBar("okay");
+      setButtonState("create");
     }
 
     // Communicate AJAX progress and status using progress bar
@@ -128,6 +129,17 @@
       parseUrl();
       attachListeners();
     };
+
+    function setButtonState(mode) {
+      if (mode === "update"){
+        $(".doi_edit").removeClass("hidden");
+        $("#doi_create_button").addClass("hidden");
+      }
+      if (mode === "create") {
+        $(".doi_edit").addClass("hidden");
+        $("#doi_create_button").removeClass("hidden");
+      }
+    }
 
 
     // ------------ HTTP/Ajax functions
@@ -184,7 +196,9 @@
         setProgressBar("okay");
         $("#doi_number").val(data.resource.identifier["$"]);
         var doiSuffix = data.resource.identifier["$"].split("/")[1];
+        setButtonState("update");
         loadMetadata(doiSuffix);
+
         doiDoc.populateDoc(data);
         populateForm();
       }).fail(function (message) {
@@ -221,6 +235,7 @@
           contentType: 'application/json'
         }).success(function (data) {
           setProgressBar("okay");
+          setButtonState("update");
           $("#doi_number").val(data.resource.identifier["$"]);
           var doiSuffix = data.resource.identifier["$"].split("/")[1];
           // Populate lower panel on form page
@@ -305,6 +320,7 @@
       $("#doi_form_reset_button").click(handleFormReset);
       $("#doi_form_delete_button").click(handleDoiDelete);
       $("#doi_request_form").submit(handleDoiRequest);
+      $("#doi_edit_button").click(handleDoiUpdate);
     }
 
     function initServiceUrls() {
