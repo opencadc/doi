@@ -72,7 +72,7 @@ import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
-import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.util.DoiUtil;
 import ca.nrc.cadc.net.OutputStreamWrapper;
@@ -88,11 +88,15 @@ import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
+import ca.nrc.cadc.vos.client.VOSpaceClient;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.AccessControlException;
 import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -105,6 +109,17 @@ import org.apache.log4j.Logger;
 public class PostAction extends DOIAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
+    // PostAction
+    private static final String CREATE_REQUEST = "create";
+    //    protected static final String EDIT_REQUEST = "edit";
+    //    protected static final String MINT_REQUEST = "mint";
+
+    private String requestType;  // from list above
+    private String DOINumInputStr; // value used
+    private Resource resource;
+    private VOSpaceClient vosClient;
+    protected List<NodeProperty> properties;
+
     private VOSURI target;
 
     public PostAction() {
@@ -112,9 +127,36 @@ public class PostAction extends DOIAction {
     }
 
     @Override
-    public void doActionImpl() throws Exception {
+    public void doAction() throws Exception {
 
-        Subject subject = AuthenticationUtil.getCurrentSubject();
+        // Store calling user information for later reference
+        setAuthorisedUser();
+
+        // Discover what kind of request this is
+        initRequest();
+
+        // Get the submitted form data, if it exists
+        resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+
+        // Interact with VOSPACE using DOI_BASE_VOSPACE
+        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+
+        // Do all subsequent work as doiadmin
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                // This should be done within the Subject for the user
+                // that will be using the client.
+                vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+                doActionImpl();
+                return "done";
+            }
+        });
+    }
+
+    private void doActionImpl() throws Exception {
 
         // DOINumInputStr is parsed out in DOIAction.initRequest()
         if (DOINumInputStr == null) {
@@ -216,7 +258,7 @@ public class PostAction extends DOIAction {
         // Upload document to named data node
         // Data node has already been created
         List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
         Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiOutputStream outStream = new DoiOutputStream(resource);
@@ -232,12 +274,14 @@ public class PostAction extends DOIAction {
                 if (message.contains("NodeNotFound")) {
                     throw new ResourceNotFoundException(message);
                 }
+                if (message.contains("PermissionDenied")) {
+                    throw new AccessControlException(message);
+                }
                 throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
             }
 
         }
     }
-
 
     private String generateNextDOINumber(ContainerNode baseNode) {
         // child nodes of baseNode should have name structure YY.XXXX
@@ -269,10 +313,7 @@ public class PostAction extends DOIAction {
         return currentYear + "." + formattedDOI;
     }
 
-
-    @Override
     protected void initRequest() {
-
         String path = syncInput.getPath();
         log.debug("http request path: " + path);
 
@@ -292,7 +333,6 @@ public class PostAction extends DOIAction {
         log.debug("request type: " + requestType);
         log.debug("DOI Number: " + DOINumInputStr);
     }
-
 
     private class DoiOutputStream implements OutputStreamWrapper
     {

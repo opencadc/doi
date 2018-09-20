@@ -69,32 +69,65 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeProperty;
-import java.io.IOException;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
+import java.io.File;
 import java.net.URI;
 import java.security.AccessControlException;
-import java.security.InvalidParameterException;
+import java.security.PrivilegedExceptionAction;
+import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
-/**
- *
- */
+
 public class DeleteAction extends DOIAction {
 
     private static final Logger log = Logger.getLogger(DeleteAction.class);
+
+    private String DOINumInputStr;
+    private VOSpaceClient vosClient;
+    protected Resource resource;
+    protected List<NodeProperty> properties;
 
     public DeleteAction() {
         super();
     }
 
     @Override
-    public void doActionImpl() throws Exception {
-        requestType = DELETE_REQUEST;
+    public void doAction() throws Exception {
+        // Store calling user information for later reference
+        setAuthorisedUser();
+
+        // Discover what kind of request this is
+        initRequest();
+
+        // Interact with VOSPACE using DOI_BASE_VOSPACE
+        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+
+        // Do all subsequent work as doiadmin
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                // This should be done within the Subject for the user
+                // that will be using the client.
+                vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+                doActionImpl();
+                return "done";
+            }
+        });
+    }
+
+
+    private void doActionImpl() throws Exception {
 
         if (DOINumInputStr.equals("")) {
-            throw new InvalidParameterException("DOI number required.");
+            throw new IllegalArgumentException("DOI number required.");
         }
         else {
             // Get containing node for DOI
@@ -142,25 +175,22 @@ public class DeleteAction extends DOIAction {
         }
     }
 
-    @Override
-    protected void initRequest() {
+    private void initRequest() {
         String path = syncInput.getPath();
         log.debug("http request path: " + path);
 
         if (path == null) {
-            return;
+            throw new IllegalArgumentException("Invalid request: " + path);
         }
 
         // Parse the request path to see if a DOI number has been provided
         String[] parts = path.split("/");
         if (parts.length > 0) {
-            requestType = DELETE_REQUEST;
             DOINumInputStr = parts[0];
         }
         if (parts.length > 1) {
             throw new IllegalArgumentException("Invalid request: " + path);
         }
-        log.debug("request type: " + requestType);
         log.debug("DOI Number: " + DOINumInputStr);
     }
 }

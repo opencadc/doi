@@ -91,47 +91,19 @@ public abstract class DOIAction extends RestAction {
 
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
+    protected static String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
     protected static final String CADC_DOI_PREFIX = "10.11570";
     protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
     protected static final String DOI_REQUESTER_KEY = "doiRequester";
     protected static final String DOI_MINTED = "minted";
     protected static final String DOI_GROUP_PREFIX = "DOI-";
 
-    // Request types handled in the GetAction, PostAction, DeleteAction classes
-    // as of 20/9/18, only some have been implemented. All are named here because
-    // the API has been planned out more fully than has been implemented.
-
-    // GetAction
-    protected static final String GET_ONE_REQUEST = "getOne";
-    protected static final String GET_ALL_REQUEST = "getAll";
-//    protected static final String GET_DOI_METADATA = "getDoiMeta";
-
-    // PostAction
-    protected static final String CREATE_REQUEST = "create";
-//    protected static final String EDIT_REQUEST = "edit";
-//    protected static final String MINT_REQUEST = "mint";
-
-    // DeleteAction
-    protected static final String DELETE_REQUEST = "delete";
-
     protected Subject callingSubject;
-    protected String userID;
-    protected String requestType;  // from list above
-    protected String DOINumInputStr; // value used
-    protected Resource resource;
-    protected VOSpaceClient vosClient;
     protected VOSURI doiDataURI;
-    protected List<NodeProperty> properties;
-
 
     public DOIAction() {
         // initialise and debug statements go here...
     }
-
-    protected abstract void doActionImpl() throws Exception;
-
-    protected abstract void initRequest() throws AccessControlException, IOException;
 
     /**
      * Parse input documents
@@ -142,51 +114,7 @@ public abstract class DOIAction extends RestAction {
         return new DoiInlineContentHandler();
     }
 
-    /**
-     * Capture the initial request, and continue any work necessary using a new subject,
-     * using doiadmin credentials
-     * @throws Exception
-     */
-    @Override
-    public void doAction() throws Exception {
-
-        // Store calling user information for later reference
-        setAuthorisedUser();
-
-        // Discover what kind of request this is
-        initRequest();
-
-        // Get the submitted form data, if it exists
-        resource = (Resource)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-
-        // Interact with VOSPACE using DOI_BASE_VOSPACE
-        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
-
-
-        if (requestType == CREATE_REQUEST || requestType == DELETE_REQUEST ) {
-            // Do all subsequent work as doiadmin
-            File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-            Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-            Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-                @Override
-                public String run() throws Exception {
-                    // This should be done within the Subject for the user
-                    // that will be using the client.
-                    vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-                    doActionImpl();
-                    return "done";
-                }
-            });
-        }
-        else {
-            // Continue as calling user
-            vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-            doActionImpl();
-        }
-
-    }
-
-    private void setAuthorisedUser() {
+    protected void setAuthorisedUser() {
         callingSubject = AuthenticationUtil.getCurrentSubject();
         log.debug("Subject: " + callingSubject);
 
@@ -198,7 +126,6 @@ public abstract class DOIAction extends RestAction {
         if (httpPrincipals.isEmpty()) {
             throw new AccessControlException("No HTTP Principal found.");
         }
-        userID = httpPrincipals.iterator().next().getName();
     }
 
     protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }

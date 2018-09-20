@@ -67,18 +67,22 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,29 +93,44 @@ public class GetAction extends DOIAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
 
+    private static final String GET_ONE_REQUEST = "getOne";
+    private static final String GET_ALL_REQUEST = "getAll";
+    //    protected static final String GET_DOI_METADATA = "getDoiMeta";
+
+    private String requestType;  // from list above
+    private String DOINumInputStr; // value used
+    protected Resource resource;
+    private VOSpaceClient vosClient;
+
     public GetAction() {
         super();
     }
 
     @Override
-    public void doActionImpl() throws Exception {
+    public void doAction() throws Exception {
+
+        // Discover what kind of request this is
+        initRequest();
+
+        // Interact with VOSPACE using DOI_BASE_VOSPACE
+        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
         switch (requestType) {
             case GET_ONE_REQUEST:
-                // Get DOI number from input
-                String doiSuffix = DOINumInputStr;
-
                 // Get path and filename for DOI Document stored in VOSpace
-                String doiDatafileName = getDoiNodeUri(doiSuffix) + "/" + getDoiFilename(doiSuffix);
-
-                getDoiDocFromVospace(doiDatafileName);
-
-                // Write XML to output
+                if (DOINumInputStr.equals(""))
+                {
+                    throw new IllegalArgumentException("DOI number required.");
+                } else {
+                    String doiDatafileName = getDoiNodeUri(DOINumInputStr) + "/" + getDoiFilename(DOINumInputStr);
+                    getDoiDocFromVospace(doiDatafileName);
+                }
                 writeDoiDocToSyncOutput();
                 break;
             case GET_ALL_REQUEST:
                 throw new UnsupportedOperationException("\"Get All\" not implemented yet.");
-            //            case GET_DOI_METADATA:
+            // case GET_DOI_METADATA:
             // check permissions for and return data directory location
             // or possibly status, or...
             // To be used for generating the DOI metadata displayed with a GET, or
@@ -143,8 +162,8 @@ public class GetAction extends DOIAction {
         syncOutput.getOutputStream().write(doiBuilder.toString().getBytes());
     }
 
-    @Override
-    protected void initRequest() {
+
+    private void initRequest() {
         String path = syncInput.getPath();
         log.debug("http request path: " + path);
         requestType = GET_ALL_REQUEST;
@@ -167,6 +186,8 @@ public class GetAction extends DOIAction {
         log.debug("DOI Number: " + DOINumInputStr);
     }
 
+
+
     private void getDoiDocFromVospace (String dataNodePath)
         throws URISyntaxException, ResourceNotFoundException {
 
@@ -182,6 +203,9 @@ public class GetAction extends DOIAction {
             String message = clientTransfer.getThrowable().getMessage();
             if (message.contains("NodeNotFound")) {
                 throw new ResourceNotFoundException(message);
+            }
+            if (message.contains("PermissionDenied")) {
+                throw new AccessControlException(message);
             }
             throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
         }

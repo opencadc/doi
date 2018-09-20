@@ -31,8 +31,6 @@ war {
     }
 }
 
-String etc = System.getenv('A') + '/etc'
-
 dependencies {
     compile 'log4j:log4j:1.2.+'
     providedCompile 'javax.servlet:javax.servlet-api:3.1.+'
@@ -48,10 +46,4 @@ dependencies {
 
     testCompile 'junit:junit:[4.0,5.0)'
     intTestCompile 'org.opencadc:cadc-test-vosi:[1.0.3,)'
-}
-
-configurations {
-  runtime.exclude group: 'javax.servlet'
-  runtime.exclude group: 'net.sourceforge.jtds'
-  runtime.exclude group: 'org.postgresql'
 }
