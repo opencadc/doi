@@ -87,8 +87,7 @@ public class DoiInlineContentHandler implements InlineContentHandler {
 
     public static final String CONTENT_KEY = "doi_metadata";
 
-    public DoiInlineContentHandler() {
-    }
+    public DoiInlineContentHandler() {}
 
     /**
      * Receive data.
@@ -105,7 +104,6 @@ public class DoiInlineContentHandler implements InlineContentHandler {
         if (contentType.toLowerCase().equals("text/xml")) {
             try {
                 // read xml file
-                // TODO: trap validation errors
                 DoiXmlReader reader = new DoiXmlReader(false);
                 userInput = reader.read(inputStream);
             } catch (DoiParsingException dpe) {
@@ -120,7 +118,6 @@ public class DoiInlineContentHandler implements InlineContentHandler {
                 userInput = reader.read(IOUtils.toString(inputStream, "UTF-8"));
             } catch (DoiParsingException dpe) {
                 log.debug(dpe);
-                // todo: this isn't wrapping the exception well, right?
                 throw new InlineContentException(dpe.getMessage());
             }
         }
