@@ -189,7 +189,7 @@ public class PostAction extends DOIAction {
             // This will change to become public on minting. While in DRAFT,
             // directory is visible in AstroDataCitationDOI directory, but not readable
             // except by doiadmin and calling user's group
-            NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
+            NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "true");
             properties.add(isPublic);
 
             // Get numeric id for setting doiRequestor property

@@ -69,21 +69,12 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.HttpPrincipal;
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.security.AccessControlException;
-import java.security.PrivilegedExceptionAction;
-import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -95,7 +86,7 @@ public abstract class DOIAction extends RestAction {
     
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected static String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
+    protected static final String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
     protected static final String CADC_DOI_PREFIX = "10.11570";
     protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
     protected static final String DOI_REQUESTER_KEY = "doiRequester";
@@ -105,9 +96,7 @@ public abstract class DOIAction extends RestAction {
     protected Subject callingSubject;
     protected VOSURI doiDataURI;
 
-    public DOIAction() {
-        // initialise and debug statements go here...
-    }
+    public DOIAction() {}
 
     // methods to assign to private field in Identity
     public static void assignIdentifier(Object ce, String identifier) {
