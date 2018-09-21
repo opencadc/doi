@@ -115,12 +115,7 @@ public class PostAction extends DOIAction {
     //    protected static final String EDIT_REQUEST = "edit";
     //    protected static final String MINT_REQUEST = "mint";
 
-    private String requestType;  // from list above
-    private String DOINumInputStr; // value used
-    private Resource resource;
     private VOSpaceClient vosClient;
-    protected List<NodeProperty> properties;
-
     private VOSURI target;
 
     public PostAction() {
@@ -129,18 +124,8 @@ public class PostAction extends DOIAction {
 
     @Override
     public void doAction() throws Exception {
-
-        // Store calling user information for later reference
-        setAuthorisedUser();
-
-        // Discover what kind of request this is
+        authorizeUser();
         initRequest();
-
-        // Get the submitted form data, if it exists
-        resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-
-        // Interact with VOSPACE using DOI_BASE_VOSPACE
-        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
 
         // Do all subsequent work as doiadmin
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
@@ -148,9 +133,6 @@ public class PostAction extends DOIAction {
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
-                // This should be done within the Subject for the user
-                // that will be using the client.
-                vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
                 doActionImpl();
                 return "done";
             }
@@ -158,9 +140,14 @@ public class PostAction extends DOIAction {
     }
 
     private void doActionImpl() throws Exception {
+        // Get the submitted form data, if it exists
+        Resource resource = (Resource)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
 
-        // DOINumInputStr is parsed out in DOIAction.initRequest()
-        if (DOINumInputStr == null) {
+        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+
+        // DOISuffix is parsed out in initRequest()
+        if (DOISuffix == null) {
             // Determine next DOI number
             Node baseNode = vosClient.getNode(doiDataURI.getPath());
             String nextDoiSuffix = generateNextDOINumber((ContainerNode)baseNode);
@@ -184,12 +171,12 @@ public class PostAction extends DOIAction {
 
             log.debug("group uri made for " + nextDoiSuffix + ": " + doiGroupURI);
 
-            properties = new ArrayList<>();
+            List<NodeProperty> properties = new ArrayList<>();
 
             // This will change to become public on minting. While in DRAFT,
             // directory is visible in AstroDataCitationDOI directory, but not readable
             // except by doiadmin and calling user's group
-            NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "true");
+            NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
             properties.add(isPublic);
 
             // Get numeric id for setting doiRequestor property
@@ -208,9 +195,10 @@ public class PostAction extends DOIAction {
             properties.add(rGroup);
 
 
+            String nodeURI = doiDataURI.getURI() + "/" + nextDoiSuffix;
             // Create DOI containing folder using properties just set
-            String folderName = getDoiNodeUri(nextDoiSuffix);
-            String folderURI = getDoiNodeUri(nextDoiSuffix);
+            String folderName = nodeURI;
+            String folderURI = nodeURI;
             target = new VOSURI(new URI(folderURI));
             Node newFolder = new ContainerNode(target, properties);
             vosClient.createNode(newFolder);
@@ -230,7 +218,7 @@ public class PostAction extends DOIAction {
             Node doiFileDataNode = new DataNode(target);
             vosClient.createNode(doiFileDataNode);
 
-            postDoiDocToVospace(doiFilename);
+            postDoiDocToVospace(doiFilename, resource);
 
 
             // Create 'data' folder under containing folder.
@@ -254,7 +242,7 @@ public class PostAction extends DOIAction {
         }
     }
 
-    private void postDoiDocToVospace (String dataNodeName)
+    private void postDoiDocToVospace (String dataNodeName, Resource resource)
         throws URISyntaxException, ResourceNotFoundException {
         // Upload document to named data node
         // Data node has already been created
@@ -316,24 +304,10 @@ public class PostAction extends DOIAction {
     }
 
     protected void initRequest() {
-        String path = syncInput.getPath();
-        log.debug("http request path: " + path);
-
-        if (path == null) {
-            return;
+        String[] pathParts = parsePath();
+        if (pathParts.length > 1) {
+            throw new IllegalArgumentException("Invalid request: " + syncInput.getPath());
         }
-
-        // Parse the request path to see if a DOI number has been provided
-        String[] parts = path.split("/");
-        if (parts.length > 0) {
-            requestType = CREATE_REQUEST;
-            DOINumInputStr = parts[0];
-        }
-        if (parts.length > 1) {
-            throw new IllegalArgumentException("Invalid request: " + path);
-        }
-        log.debug("request type: " + requestType);
-        log.debug("DOI Number: " + DOINumInputStr);
     }
 
     private class DoiOutputStream implements OutputStreamWrapper

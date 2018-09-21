@@ -88,7 +88,6 @@ public class DeleteAction extends DOIAction {
 
     private static final Logger log = Logger.getLogger(DeleteAction.class);
 
-    private String DOINumInputStr;
     private VOSpaceClient vosClient;
     protected Resource resource;
     protected List<NodeProperty> properties;
@@ -99,14 +98,8 @@ public class DeleteAction extends DOIAction {
 
     @Override
     public void doAction() throws Exception {
-        // Store calling user information for later reference
-        setAuthorisedUser();
-
-        // Discover what kind of request this is
+        authorizeUser();
         initRequest();
-
-        // Interact with VOSPACE using DOI_BASE_VOSPACE
-        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
 
         // Do all subsequent work as doiadmin
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
@@ -114,9 +107,6 @@ public class DeleteAction extends DOIAction {
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
-                // This should be done within the Subject for the user
-                // that will be using the client.
-                vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
                 doActionImpl();
                 return "done";
             }
@@ -126,12 +116,15 @@ public class DeleteAction extends DOIAction {
 
     private void doActionImpl() throws Exception {
 
-        if (DOINumInputStr.equals("")) {
+        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+        // DOISuffix is parsed out in initRequest()
+        if (DOISuffix.equals("")) {
             throw new IllegalArgumentException("DOI number required.");
         }
         else {
             // Get containing node for DOI
-            String doiParentPath = getDoiParentPath(DOINumInputStr);
+            String doiParentPath = doiDataURI.getPath() + "/" + DOISuffix;
             Node doiContainer = vosClient.getNode(doiParentPath);
 
             properties = doiContainer.getProperties();
@@ -140,7 +133,7 @@ public class DeleteAction extends DOIAction {
                 // Check if is already minted (attribute on containing node will be "true"
                 if (np.getPropertyURI().equals(DOI_MINTED)) {
                     if (np.getPropertyValue().equals("true")) {
-                        throw new AccessControlException("Unable to delete " + DOINumInputStr + "DOI already minted.\n");
+                        throw new AccessControlException("Unable to delete " + DOISuffix + "DOI already minted.\n");
                     }
                 }
                 // Check if user has permission: ensure principals set is same for doiRequester
@@ -154,7 +147,7 @@ public class DeleteAction extends DOIAction {
                         hasPermission = true;
                         break;
                     } else {
-                        throw new AccessControlException("User not authorised to delete " + DOINumInputStr + "\n");
+                        throw new AccessControlException("User not authorised to delete " + DOISuffix + "\n");
                     }
                 }
             }
@@ -162,35 +155,26 @@ public class DeleteAction extends DOIAction {
             if (hasPermission == true) {
                 // Delete group created. Will be format DOI-<DOINumInputStr>
                 GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
-                String doiGroupURI = GMS_URI_BASE + "#" + DOI_GROUP_PREFIX + DOINumInputStr;
+                String doiGroupURI = GMS_URI_BASE + "#" + DOI_GROUP_PREFIX + DOISuffix;
                 log.debug("deleting this group: " + doiGroupURI);
-                gmsClient.deleteGroup(DOI_GROUP_PREFIX + DOINumInputStr);
+                gmsClient.deleteGroup(DOI_GROUP_PREFIX + DOISuffix);
 
                 log.debug("deleting this node: " + doiParentPath);
                 vosClient.deleteNode(doiParentPath);
             } else {
                 throw new RuntimeException(DOI_REQUESTER_KEY + " not found on main DOI folder. Unable to determine permissions.\n");
             }
-
         }
     }
 
     private void initRequest() {
-        String path = syncInput.getPath();
-        log.debug("http request path: " + path);
-
-        if (path == null) {
-            throw new IllegalArgumentException("Invalid request: " + path);
+        String[] pathParts = parsePath();
+        if (DOISuffix == null) {
+            throw new IllegalArgumentException("DOI number required for DELETE.");
         }
-
-        // Parse the request path to see if a DOI number has been provided
-        String[] parts = path.split("/");
-        if (parts.length > 0) {
-            DOINumInputStr = parts[0];
+        if (pathParts.length > 1) {
+            throw new IllegalArgumentException("Invalid request: " + syncInput.getPath());
         }
-        if (parts.length > 1) {
-            throw new IllegalArgumentException("Invalid request: " + path);
-        }
-        log.debug("DOI Number: " + DOINumInputStr);
     }
+
 }

@@ -108,8 +108,6 @@ public class GetAction extends DOIAction {
     //    protected static final String GET_DOI_METADATA = "getDoiMeta";
 
     private String requestType;  // from list above
-    private String DOINumInputStr; // value used
-    protected Resource resource;
     private VOSpaceClient vosClient;
 
     public GetAction() {
@@ -118,27 +116,21 @@ public class GetAction extends DOIAction {
 
     @Override
     public void doAction() throws Exception {
-
-        // Discover what kind of request this is
         initRequest();
         
         log.debug("Current subject: " + AuthenticationUtil.getCurrentSubject());
 
         // Interact with VOSPACE using DOI_BASE_VOSPACE
-        doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
         vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
         switch (requestType) {
             case GET_ONE_REQUEST:
                 // Get path and filename for DOI Document stored in VOSpace
-                if (DOINumInputStr.equals(""))
-                {
-                    throw new IllegalArgumentException("DOI number required.");
-                } else {
-                    String doiDatafileName = getDoiNodeUri(DOINumInputStr) + "/" + getDoiFilename(DOINumInputStr);
-                    getDoiDocFromVospace(doiDatafileName);
-                }
-                writeDoiDocToSyncOutput();
+                // DOISuffix is parsed out in initRequest()
+                String doiDatafileName = doiDataURI.getURI() + "/" + DOISuffix + "/" + getDoiFilename(DOISuffix);
+                Resource r = getDoiDocFromVospace(doiDatafileName);
+                writeDoiDocToSyncOutput(r);
                 break;
             case GET_ALL_REQUEST:
                 throw new UnsupportedOperationException("\"Get All\" not implemented yet.");
@@ -153,7 +145,7 @@ public class GetAction extends DOIAction {
 
     }
 
-    private void writeDoiDocToSyncOutput () throws IOException {
+    private void writeDoiDocToSyncOutput (Resource resource) throws IOException {
         StringBuilder doiBuilder = new StringBuilder();
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header was " + docFormat);
@@ -162,45 +154,31 @@ public class GetAction extends DOIAction {
             // json document
             syncOutput.setHeader("Content-Type", "application/json");
             DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(resource, doiBuilder);
+            writer.write(resource, syncOutput.getOutputStream());
         }
         else
         {
             // xml document
             syncOutput.setHeader("Content-Type", "text/xml");
             DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(resource,doiBuilder);
+            writer.write(resource, syncOutput.getOutputStream());
         }
-        syncOutput.getOutputStream().write(doiBuilder.toString().getBytes());
     }
-
 
     private void initRequest() {
-        String path = syncInput.getPath();
-        log.debug("http request path: " + path);
+        String[] pathParts = parsePath();
         requestType = GET_ALL_REQUEST;
 
-        if (path == null) {
-            return;
+        // This will grow when doi status service is implemented
+        if (pathParts.length > 1) {
+            throw new IllegalArgumentException("Invalid request: " + syncInput.getPath());
         }
-
-        // Parse the request path to see if a DOI number has been provided
-        String[] parts = path.split("/");
-        if (parts.length > 0) {
+        if (DOISuffix != "") {
             requestType = GET_ONE_REQUEST;
-            DOINumInputStr = parts[0];
         }
-        if (parts.length > 1) {
-            // Until 'status' is supported
-            throw new IllegalArgumentException("Invalid request: " + path);
-        }
-        log.debug("request type: " + requestType);
-        log.debug("DOI Number: " + DOINumInputStr);
     }
 
-
-
-    private void getDoiDocFromVospace (String dataNodePath)
+    private Resource getDoiDocFromVospace (String dataNodePath)
         throws Exception {
 
         List<Protocol> protocols = new ArrayList<Protocol>();
@@ -209,7 +187,8 @@ public class GetAction extends DOIAction {
         Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
         CredUtil.checkCredentials();
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-        clientTransfer.setInputStreamWrapper(new DoiInputStream());
+        DoiInputStream doiStream = new DoiInputStream();
+        clientTransfer.setInputStreamWrapper(doiStream);
         clientTransfer.run();
 
         if (clientTransfer.getThrowable() != null) {
@@ -223,10 +202,14 @@ public class GetAction extends DOIAction {
             }
             throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
         }
+
+        return doiStream.getResource();
     }
 
     private class DoiInputStream implements InputStreamWrapper
     {
+        private Resource resource;
+
         public DoiInputStream() { }
 
         public void read(InputStream in) throws IOException
@@ -237,6 +220,10 @@ public class GetAction extends DOIAction {
             } catch (DoiParsingException dpe) {
                 throw new IOException(dpe);
             }
+        }
+
+        public Resource getResource() {
+            return resource;
         }
     }
 }

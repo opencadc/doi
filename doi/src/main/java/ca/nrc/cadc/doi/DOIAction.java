@@ -72,7 +72,6 @@ import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.vos.VOSURI;
 import java.lang.reflect.Field;
 import java.security.AccessControlException;
 import java.util.Set;
@@ -94,9 +93,9 @@ public abstract class DOIAction extends RestAction {
     protected static final String DOI_GROUP_PREFIX = "DOI-";
 
     protected Subject callingSubject;
-    protected VOSURI doiDataURI;
+    protected String DOISuffix;
 
-    public DOIAction() {}
+    public DOIAction() { }
 
     // methods to assign to private field in Identity
     public static void assignIdentifier(Object ce, String identifier) {
@@ -120,9 +119,10 @@ public abstract class DOIAction extends RestAction {
         return new DoiInlineContentHandler();
     }
 
-    protected void setAuthorisedUser() {
+    protected void authorizeUser() {
+        // Capture this so it can be used within the doiadmin Subject.doAs
         callingSubject = AuthenticationUtil.getCurrentSubject();
-        log.debug("Subject: " + callingSubject);
+        log.debug("DOI Admin calling subject: " + callingSubject);
 
         // authorization, for now, is defined as having a set of principals
         if (callingSubject == null || callingSubject.getPrincipals().isEmpty()) {
@@ -134,10 +134,22 @@ public abstract class DOIAction extends RestAction {
         }
     }
 
+    protected String[] parsePath() {
+        String path = syncInput.getPath();
+        log.debug("http request path: " + path);
+
+        String[] retval = new String[0];
+        if (path != null) {
+            // Parse the request path to see if a DOI suffix has been provided
+            // A full DOI number for CANFAR will be: 10.11570/<DOISuffix>
+            retval = path.split("/");
+            if (retval.length > 0) {
+                DOISuffix = retval[0];
+                log.debug("DOI Number: " + DOISuffix);
+            }
+        }
+        return retval;
+    }
+
     protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }
-
-    protected String getDoiParentPath(String suffix) { return  doiDataURI.getPath() + "/" + suffix; }
-
-    protected String getDoiNodeUri(String suffix) { return doiDataURI.getURI() + "/" + suffix; }
-
 }
