@@ -99,12 +99,12 @@ public class CreateDocumentTest extends IntTestBase
 {
     private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
 
-    private static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
     static final String JSON = "application/json";
 
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
     }
 
     public CreateDocumentTest() { }

@@ -13,11 +13,15 @@
         <servlet-class>ca.nrc.cadc.log.LogControlServlet</servlet-class>
         <init-param>
             <param-name>logLevel</param-name>
-            <param-value>debug</param-value>
+            <param-value>info</param-value>
         </init-param>
         <init-param>
             <param-name>logLevelPackages</param-name>
             <param-value>
+                org.opencadc
+                ca.nrc.cadc.rest
+                ca.nrc.cadc.auth
+                ca.nrc.cadc.net
                 ca.nrc.cadc.doi
                 ca.nrc.cadc.vos
                 ca.nrc.cadc.ac
@@ -101,34 +105,31 @@
         <url-pattern>/logControl</url-pattern>
     </servlet-mapping>
 
-    <!--&lt;!&ndash; security constraints &ndash;&gt;-->
-    <!--<security-role>-->
-        <!--<description>Public security role</description>-->
-        <!--<role-name>public</role-name>-->
-    <!--</security-role>-->
+    <security-role>
+        <description>Public security role</description>
+        <role-name>public</role-name>
+    </security-role>
 
-    <!--<security-constraint>-->
-        <!--<web-resource-collection>-->
-            <!--<web-resource-name>auth</web-resource-name>-->
-            <!--<description/>-->
-            <!--<url-pattern>/logControl/*</url-pattern>-->
-            <!--<url-pattern>/auth-instances/*</url-pattern>-->
-            <!--&lt;!&ndash; ALL?-->
-            <!--<http-method>GET</http-method>-->
-            <!--<http-method>POST</http-method>-->
-            <!--<http-method>HEAD</http-method>-->
-            <!--<http-method>PUT</http-method>-->
-            <!--<http-method>OPTIONS</http-method>-->
-            <!--<http-method>TRACE</http-method>-->
-            <!--<http-method>DELETE</http-method>-->
-            <!--&ndash;&gt;-->
-        <!--</web-resource-collection>-->
-        <!--<auth-constraint>-->
-            <!--<description>force authentication for all requests</description>-->
-            <!--<role-name>public</role-name>-->
-        <!--</auth-constraint>-->
-    <!--</security-constraint>-->
-
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>auth</web-resource-name>
+            <description/>
+            <url-pattern>/logControl/*</url-pattern>
+            <url-pattern>/auth-instances/*</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
+            <http-method>HEAD</http-method>
+            <http-method>PUT</http-method>
+            <http-method>OPTIONS</http-method>
+            <http-method>TRACE</http-method>
+            <http-method>DELETE</http-method>
+        </web-resource-collection>
+        <auth-constraint>
+            <description>force authentication for all requests</description>
+            <role-name>public</role-name>
+        </auth-constraint>
+    </security-constraint>
+    
     <login-config>
         <auth-method>BASIC</auth-method>
         <realm-name>Canadian Astronomy Data Centre</realm-name>

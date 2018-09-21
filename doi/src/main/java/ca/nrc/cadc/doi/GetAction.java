@@ -69,7 +69,8 @@ package ca.nrc.cadc.doi;
 
 
 import ca.nrc.cadc.doi.datacite.Resource;
-
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
@@ -90,6 +91,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,6 +121,8 @@ public class GetAction extends DOIAction {
 
         // Discover what kind of request this is
         initRequest();
+        
+        log.debug("Current subject: " + AuthenticationUtil.getCurrentSubject());
 
         // Interact with VOSPACE using DOI_BASE_VOSPACE
         doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
@@ -196,11 +201,13 @@ public class GetAction extends DOIAction {
 
 
     private void getDoiDocFromVospace (String dataNodePath)
-        throws URISyntaxException, ResourceNotFoundException {
+        throws Exception {
 
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
         Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
+        CredUtil.checkCredentials();
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         clientTransfer.setInputStreamWrapper(new DoiInputStream());
         clientTransfer.run();
