@@ -260,6 +260,7 @@ public class PostAction extends DOIAction {
         // Data node has already been created
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
         Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiOutputStream outStream = new DoiOutputStream(resource);

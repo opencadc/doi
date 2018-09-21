@@ -200,6 +200,7 @@ public class GetAction extends DOIAction {
 
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
         Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         clientTransfer.setInputStreamWrapper(new DoiInputStream());
