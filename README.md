@@ -1,4 +1,4 @@
-# CANFAR Data-citation
+# data-citation
 ### V 1.0
 
 UI for creating and displaying Digital Object Identifiers (DOIs) for research datasets archived with CANFAR. 
