@@ -194,7 +194,7 @@
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
-    <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/registry-client.js" />"></script>
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcJS/javascript/cadc.registry-client.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation.js" />"></script>
 
     <script type="application/javascript">
@@ -226,13 +226,6 @@
 
         // Instantiate controller for Data Citation UI page
         citation_js = new cadc.web.citation.Citation();
-        citation_js.setBaseUrl("<c:out value="${baseURL}"/>");
-
-//        citation_js.subscribe(cadc.web.citation.events.onRegistryReady,
-//            function(e, data)
-//            {
-//              citation_js.setAuthenticated();
-//            });
 
       });
 
