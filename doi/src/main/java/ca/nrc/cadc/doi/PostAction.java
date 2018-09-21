@@ -116,7 +116,6 @@ public class PostAction extends DOIAction {
     //    protected static final String MINT_REQUEST = "mint";
 
     private VOSpaceClient vosClient;
-    private VOSURI target;
 
     public PostAction() {
         super();
@@ -199,7 +198,8 @@ public class PostAction extends DOIAction {
             // Create DOI containing folder using properties just set
             String folderName = nodeURI;
             String folderURI = nodeURI;
-            target = new VOSURI(new URI(folderURI));
+
+            VOSURI target = new VOSURI(new URI(folderURI));
             Node newFolder = new ContainerNode(target, properties);
             vosClient.createNode(newFolder);
 
@@ -312,17 +312,17 @@ public class PostAction extends DOIAction {
 
     private class DoiOutputStream implements OutputStreamWrapper
     {
-        private Resource resource;
+        private Resource streamResource;
 
-        public DoiOutputStream(Resource resource)
+        public DoiOutputStream(Resource streamRes)
         {
-            this.resource = resource;
+            this.streamResource = streamRes;
         }
 
         public void write(OutputStream out) throws IOException
         {
             DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(resource, out);
+            writer.write(streamResource, out);
         }
     }
 

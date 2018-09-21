@@ -70,7 +70,6 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.VOSURI;
@@ -87,10 +86,6 @@ import org.apache.log4j.Logger;
 public class DeleteAction extends DOIAction {
 
     private static final Logger log = Logger.getLogger(DeleteAction.class);
-
-    private VOSpaceClient vosClient;
-    protected Resource resource;
-    protected List<NodeProperty> properties;
 
     public DeleteAction() {
         super();
@@ -118,6 +113,7 @@ public class DeleteAction extends DOIAction {
 
         VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
         VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+
         // DOISuffix is parsed out in initRequest()
         if (DOISuffix.equals("")) {
             throw new IllegalArgumentException("DOI number required.");
@@ -127,7 +123,7 @@ public class DeleteAction extends DOIAction {
             String doiParentPath = doiDataURI.getPath() + "/" + DOISuffix;
             Node doiContainer = vosClient.getNode(doiParentPath);
 
-            properties = doiContainer.getProperties();
+            List<NodeProperty> properties = doiContainer.getProperties();
             boolean hasPermission = false;
             for (NodeProperty np: properties) {
                 // Check if is already minted (attribute on containing node will be "true"
