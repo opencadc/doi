@@ -13,7 +13,7 @@
 </c:if>
 
 <%-- Set this by configuration in the future. --%>
-<c:set var="resourceCapabilitiesEndPoint" value="http://jenkinsd.cadc.dao.nrc.ca/reg/resource-caps" />
+<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
