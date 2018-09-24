@@ -12,6 +12,8 @@
   <c:set var="baseURL" value="${fn:substring(url, 0, fn:length(url) - fn:length(uri))}" />
 </c:if>
 
+<%-- Set this by configuration in the future. --%>
+<c:set var="resourceCapabilitiesEndPoint" value="http://jenkinsd.cadc.dao.nrc.ca/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -32,8 +34,8 @@
     />
 
     <!-- Located in ROOT.war -->
-    <script type="application/javascript" src="${baseURL}/citation/js/jquery-2.2.4.min.js"></script>
-    <script type="application/javascript" src="${baseURL}/citation/js/bootstrap.min.js"></script>
+    <script type="application/javascript" src="${baseURL}/canfar/javascript/jquery-2.2.4.min.js"></script>
+    <script type="application/javascript" src="${baseURL}/canfar/javascript/bootstrap.min.js"></script>
 
     <!--[if lt IE 9]>
         <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -80,44 +82,43 @@
                       <form id="doi_request_form" class="form-horizontal">
                         <!-- DOI Number -->
                         <div class="form-group doi-form-group">
-                          <label for="doi_number" class="col-sm-2 control-label" id="doi_number_label">DOI Number</label>
+                          <label for="doi_number" class="col-sm-3 control-label" id="doi_number_label">DOI Number</label>
                           <div class="col-sm-3">
                             <input type="text" class="form-control" id="doi_number" name="doi-number"
-                                   placeholder="YY.####" readonly
-                            />
+                                   placeholder="YY.####" disabled="disabled" readonly />
                           </div>
                         </div>
 
                         <!-- Publication Title -->
                         <div class="form-group">
-                          <label for="doi_title" class="col-sm-2 control-label" id="doi_title_label">Title</label>
-                          <div class="col-sm-9">
+                          <label for="doi_title" class="col-sm-3 control-label" id="doi_title_label">Title</label>
+                          <div class="col-sm-6">
                             <input type="text" class="form-control" id="doi_title" name="title"
-                                   placeholder="title" tabindex="1" required/>
+                                   placeholder="Title" tabindex="1" required/>
                           </div>
                         </div>
 
                         <!-- Author List -->
                         <div class="form-group">
-                          <label for="doi_creator_list" class="col-sm-2 control-label" id="doi_first_name_label">Author List</label>
-                          <div class="col-sm-5">
+                          <label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Author List</label>
+                          <div class="col-sm-4">
                             <textarea class="form-control" id="doi_creator_list" name="creatorList"
-                                      placeholder="last name, first name" tabindex="2" rows="4" required></textarea>
+                                      placeholder="Last name, first names..." tabindex="2" rows="4" required></textarea>
                           </div>
                         </div>
 
                         <!-- Publisher -->
                         <div class="form-group">
-                          <label for="doi_publisher" class="col-sm-2 control-label" id="doi_publisher_label">Publisher</label>
-                          <div class="col-sm-8">
+                          <label for="doi_publisher" class="col-sm-3 control-label" id="doi_publisher_label">Publisher</label>
+                          <div class="col-sm-6">
                             <input type="text" class="form-control" id="doi_publisher" name="publisher"
-                                   placeholder="publisher name or DOI" tabindex="3" required/>
+                                   placeholder="Publisher name or DOI" tabindex="3" required/>
                           </div>
                         </div>
 
                         <!-- Publication Date -->
                         <div class="form-group">
-                          <label for="doi_publish_year" class="col-sm-2 control-label" >Publication Year</label>
+                          <label for="doi_publish_year" class="col-sm-3 control-label" >Publication Year</label>
                           <div class="col-sm-1">
                             <select id="doi_publish_year" name="publicationYear" class="form-control"
                                     tabindex="4">
@@ -127,8 +128,8 @@
 
                         <!-- Buttons -->
                         <div class="form-group">
-                          <div class="col-sm-offset-2 col-sm-10">
-                            <div class="btn-group" role="group">
+                          <div class="col-sm-offset-3 col-sm-10">
+                            <div class="button-group" role="group">
                               <button type="submit" class="btn btn-primary" id="doi_create_button" tabindex="5">Create</button>
                               <!-- Disabled until the edit story is completed -->
                               <button type="button" class="doi_edit btn btn-primary hidden .disabled" disabled
@@ -225,7 +226,7 @@
         userManager.loadCurrent();
 
         // Instantiate controller for Data Citation UI page
-        citation_js = new cadc.web.citation.Citation();
+        citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
 
       });
 
