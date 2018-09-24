@@ -90,7 +90,7 @@ idea {
             logger.info('Running browser tests on ' + project.intTest_selenium_server_url)
         }
         else {
-            systemProperty 'selenium.server.url', 'http://cadcint2.cadc.dao.nrc.ca:4444'
+            systemProperty 'selenium.server.url', 'http://cadcint2.cadc.dao.nrc.ca:3444'
         }
 
         if (project.hasProperty('intTest_web_app_url')) {
