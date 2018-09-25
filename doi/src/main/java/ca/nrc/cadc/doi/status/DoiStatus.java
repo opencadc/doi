@@ -78,7 +78,6 @@ import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.util.StringUtil;
 
 import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
 
 /**
  * Doi status business object.
@@ -93,18 +92,18 @@ public class DoiStatus
     private Identifier identifier;
     private Title title;
     private String publicationYear;
-    private String status;
+    private Status status;
     
 
-    public DoiStatus(Identifier identifier, Title title, String publicationYear, String status) 
+    public DoiStatus(Identifier identifier, Title title, String publicationYear, Status status) 
     { 
         if (identifier == null || title == null || !StringUtil.hasText(publicationYear) || 
-            !StringUtils.hasText(status))
+            status == null)
         {
             String msg = "identifier, title, publicationYear and status must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+                
         this.identifier = identifier;
         this.title = title;
         this.publicationYear = publicationYear;
@@ -126,7 +125,7 @@ public class DoiStatus
         return this.publicationYear;
     }
     
-    public String getStatus()
+    public Status getStatus()
     {
         return this.status;
     }

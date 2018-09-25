@@ -74,6 +74,7 @@ import ca.nrc.cadc.doi.datacite.Title;
 
 import org.apache.log4j.Logger;
 import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 /**
  * Writes a DoiStatus instance to an output.
@@ -109,7 +110,7 @@ public class DoiStatusWriter
         ret.addContent(publicationYearElement);
         
         // add status element
-        Element resourceTypeElement = getStatusElement(doiStatus.getStatus());
+        Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
         ret.addContent(resourceTypeElement);
         
         return ret;
@@ -127,7 +128,7 @@ public class DoiStatusWriter
     protected Element getTitleElement(Title title)
     {
         Element ret = new Element("title");
-        ret.setAttribute("lang", title.getLang());
+        ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
         ret.setText(title.getTitle());
         
         if (title.titleType != null)

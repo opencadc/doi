@@ -72,14 +72,9 @@ package ca.nrc.cadc.doi.status;
 import static org.junit.Assert.fail;
 
 import java.io.FileInputStream;
-import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.jdom2.Attribute;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -87,16 +82,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ca.nrc.cadc.doi.datacite.Creator;
-import ca.nrc.cadc.doi.datacite.CreatorName;
-import ca.nrc.cadc.doi.datacite.DoiJsonReader;
-import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
-import ca.nrc.cadc.doi.datacite.DoiXmlReader;
-import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.NameIdentifier;
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -168,7 +154,7 @@ public class DoiStatusReaderWriterTest
         compareIdentifier(s1.getIdentifier(), s2.getIdentifier());
         compareTitle(s1.getTitle(), s2.getTitle());
         comparePublicationYear(s1.getPublicationYear(), s2.getPublicationYear());
-        compareStatus(s1.getStatus(), s2.getStatus());
+        compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
     }
     
     @Test

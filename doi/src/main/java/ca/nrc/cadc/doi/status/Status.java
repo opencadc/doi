@@ -58,7 +58,11 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
+
+            // return the node in xml format
+            NodeWriter nodeWriter = new NodeWriter();
+            return new NodeActionResult(new N
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -69,98 +73,40 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiReader;
-import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.Title;
-import java.util.List;
-import org.apache.log4j.Logger;
-import org.jdom2.Attribute;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
-
 /**
- * Constructs a DoiStatus instance from a Document instance.
- *
+ * Enums for doi status.
+ * 
  * @author yeunga
+ *
  */
-public class DoiStatusReader
+public enum Status
 {
-    private static final Logger log = Logger.getLogger(DoiStatusReader.class);
+    DRAFT("Draft"),
+    MINTED("Minted");
+    
+    private final String value;
+    
+    private Status(String value)
+    {
+        this.value = value;
+    }
+    
+    public static Status toValue(String s)
+    {
+        for (Status status : values())
+            if (status.value.equals(s))
+                return status;
+        throw new IllegalArgumentException("invalid value: " + s);
+    }
 
-    /**
-     * Constructor.
-     */
-    public DoiStatusReader() { }
-    
-    protected DoiStatus buildStatus(Document doc) throws DoiParsingException
+    public String getValue()
     {
-        Element root = doc.getRootElement();
-        
-        Identifier id = buildIdentifier(root);
-        Title title = buildTitle(root);
-        
-        if (root.getChild("publicationYear") == null)
-        {
-            String msg = "publicationYear not found in doi status element.";
-            throw new DoiParsingException(msg);
-        }
-        
-        String publicationYear = root.getChild("publicationYear").getText();
-        
-        if (root.getChild("status") == null)
-        {
-            String msg = "status not found in doi status element.";
-            throw new DoiParsingException(msg);
-        }
-        
-        Status status = Status.toValue(root.getChild("status").getText());
-        
-        return new DoiStatus(id, title, publicationYear, status);
+        return value;
     }
-    
-    protected Identifier buildIdentifier(Element root)
+
+    @Override
+    public String toString()
     {
-        Namespace ns = root.getNamespace();
-        Element identifierElement = root.getChild("identifier", ns);
-        String text = identifierElement.getText();
-        String identifierType = identifierElement.getAttributeValue("identifierType");
-        Identifier id = new Identifier(identifierType);
-        DoiReader.assignIdentifier(id, text);
-        return id;
-    }
-    
-    protected Title buildTitle(Element root) throws DoiParsingException
-    {
-        Element titleElement = root.getChild("title");
-        // get the title text
-        String text = titleElement.getText();
-        String lang = null;
-        String titleType = null;
-        
-        // get the attributes and build a title instance
-        List<Attribute> attributes = titleElement.getAttributes();
-        for (Attribute attr : attributes)
-        {
-            String key = attr.getName();
-            if ("lang".equals(key))
-            {
-                lang = attr.getValue();
-            }
-            else
-            {
-                titleType = attr.getValue();
-            }
-        }
-        
-        // the titleType attribute is optional
-        Title title = new Title(lang, text);
-        if (titleType != null)
-        {
-            title.titleType = titleType;
-        }
-        
-        return title;
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }
