@@ -78,37 +78,31 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
-public abstract class DOIAction extends RestAction {
-    private static final Logger log = Logger.getLogger(DOIAction.class);
+public abstract class DoiAction extends RestAction {
+    private static final Logger log = Logger.getLogger(DoiAction.class);
 
     public static final String DATACITE_URL = "https://www.datacite.org";
     
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected static final String GMS_URI_BASE = "ivo://cadc.nrc.ca/gms";
+    protected static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
     protected static final String CADC_DOI_PREFIX = "10.11570";
     protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
-    protected static final String DOI_REQUESTER_KEY = "doiRequester";
-    protected static final String DOI_MINTED = "minted";
+    
+    protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
+    protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
+    protected static final String DOI_VOS_STATUS_DRAFT = "draft";
+    protected static final String DOI_VOS_STATUS_MINTED = "minted";
+    
+    
     protected static final String DOI_GROUP_PREFIX = "DOI-";
 
     protected Subject callingSubject;
-    protected String DOISuffix;
+    
+    protected String doiSuffix;
+    protected String doiAction;
 
-    public DOIAction() { }
-
-    // methods to assign to private field in Identity
-    public static void assignIdentifier(Object ce, String identifier) {
-        try {
-            Field f = Identifier.class.getDeclaredField("text");
-            f.setAccessible(true);
-            f.set(ce, identifier);
-        } catch (NoSuchFieldException fex) {
-            throw new RuntimeException("BUG", fex);
-        } catch (IllegalAccessException bug) {
-            throw new RuntimeException("BUG", bug);
-        }
-    }
+    public DoiAction() { }
 
     /**
      * Parse input documents
@@ -118,38 +112,45 @@ public abstract class DOIAction extends RestAction {
     protected InlineContentHandler getInlineContentHandler() {
         return new DoiInlineContentHandler();
     }
-
-    protected void authorizeUser() {
-        // Capture this so it can be used within the doiadmin Subject.doAs
+    
+    protected void init(boolean authorize) {
         callingSubject = AuthenticationUtil.getCurrentSubject();
-        log.debug("DOI Admin calling subject: " + callingSubject);
-
-        // authorization, for now, is defined as having a set of principals
-        if (callingSubject == null || callingSubject.getPrincipals().isEmpty()) {
-            throw new AccessControlException("Unauthorized");
+        log.debug("subject: " + callingSubject);
+        if (authorize) {
+            authorizeUser(callingSubject);
         }
-        Set<HttpPrincipal> httpPrincipals = callingSubject.getPrincipals(HttpPrincipal.class);
-        if (httpPrincipals.isEmpty()) {
-            throw new AccessControlException("No HTTP Principal found.");
+        parsePath();
+    }
+
+    private void authorizeUser(Subject s) {
+        // authorization, for now, is defined as having a set of principals
+        if (s == null || s.getPrincipals().isEmpty()) {
+            throw new AccessControlException("Unauthorized");
         }
     }
 
-    protected String[] parsePath() {
+    private void parsePath() {
         String path = syncInput.getPath();
         log.debug("http request path: " + path);
 
-        String[] retval = new String[0];
         if (path != null) {
+            String[] parts = path.split("/");
             // Parse the request path to see if a DOI suffix has been provided
             // A full DOI number for CANFAR will be: 10.11570/<DOISuffix>
-            retval = path.split("/");
-            if (retval.length > 0) {
-                DOISuffix = retval[0];
-                log.debug("DOI Number: " + DOISuffix);
+            if (parts.length > 0) {
+                doiSuffix = parts[0];
+                log.debug("DOI Number: " + doiSuffix);
+                if (parts.length > 1) {
+                    doiAction = parts[1];
+                    if (parts.length > 2) {
+                        throw new IllegalArgumentException("Bad request: " + path);
+                    }
+                }
             }
         }
-        return retval;
     }
 
-    protected String getDoiFilename(String suffix) { return CADC_CISTI_PREFIX + suffix + ".xml"; }
+    protected String getDoiFilename(String suffix) {
+        return CADC_CISTI_PREFIX + suffix + ".xml";
+    }
 }

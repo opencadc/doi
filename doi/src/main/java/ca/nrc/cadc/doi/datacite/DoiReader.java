@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import ca.nrc.cadc.doi.DOIAction;
+import ca.nrc.cadc.doi.DoiAction;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Identifier;
@@ -77,6 +77,8 @@ import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Title;
+
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +101,19 @@ public class DoiReader
      * Constructor.
      */
     public DoiReader() { }
+    
+    // methods to assign to private field in Identity
+    public static void assignIdentifier(Object ce, String identifier) {
+        try {
+            Field f = Identifier.class.getDeclaredField("text");
+            f.setAccessible(true);
+            f.set(ce, identifier);
+        } catch (NoSuchFieldException fex) {
+            throw new RuntimeException("BUG", fex);
+        } catch (IllegalAccessException bug) {
+            throw new RuntimeException("BUG", bug);
+        }
+    }
     
     protected Resource buildResource(Document doc) throws DoiParsingException
     {
@@ -139,7 +154,7 @@ public class DoiReader
         String text = identifierElement.getText();
         String identifierType = identifierElement.getAttributeValue("identifierType");
         Identifier id = new Identifier(identifierType);
-        DOIAction.assignIdentifier(id, text);
+        assignIdentifier(id, text);
         return id;
     }
     

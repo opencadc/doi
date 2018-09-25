@@ -72,8 +72,9 @@ import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
-
+import ca.nrc.cadc.auth.NumericPrincipal;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.DoiReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.OutputStreamWrapper;
@@ -107,7 +108,7 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 
-public class PostAction extends DOIAction {
+public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
     // PostAction
@@ -115,141 +116,140 @@ public class PostAction extends DOIAction {
     //    protected static final String EDIT_REQUEST = "edit";
     //    protected static final String MINT_REQUEST = "mint";
 
-    private VOSpaceClient vosClient;
-
     public PostAction() {
         super();
     }
 
     @Override
     public void doAction() throws Exception {
-        authorizeUser();
-        initRequest();
+        super.init(true);
+        
+        if (doiAction != null) {
+            throw new IllegalArgumentException("Invalid request.");
+        }
 
-        // Do all subsequent work as doiadmin
+        // Do DOI creation work as doiadmin
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
         Subject doiadminSubject = SSLUtil.createSubject(pemFile);
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
-                doActionImpl();
-                return "done";
+                if (doiSuffix == null) {
+                    createDOI();
+                } else {
+                    updateDOI();
+                }
+                return null;
             }
         });
     }
-
-    private void doActionImpl() throws Exception {
+    
+    private void updateDOI() throws Exception {
+        throw new UnsupportedOperationException("DOI updating not yet implementated.");
+    }
+    
+    private void createDOI() throws Exception {
+        
         // Get the submitted form data, if it exists
-        Resource resource = (Resource)syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        if (resource == null) {
+            throw new IllegalArgumentException("No content");
+        }
 
         VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
-        // DOISuffix is parsed out in initRequest()
-        if (DOISuffix == null) {
-            // Determine next DOI number
-            Node baseNode = vosClient.getNode(doiDataURI.getPath());
-            String nextDoiSuffix = generateNextDOINumber((ContainerNode)baseNode);
-            log.debug("Next DOI suffix: " + nextDoiSuffix);
+        // Determine next DOI number        
+        String nextDoiSuffix = generateNextDOINumber(vosClient, doiDataURI);
+        log.debug("Next DOI suffix: " + nextDoiSuffix);
+        DoiReader.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
-            // Create group to use for applying permissions
-            GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
+        // Create the group that is able to administer the DOI process
+        GroupURI guri = createDoiGroup(nextDoiSuffix);
+        
+        // Create the VOSpace area for DOI work
+        ContainerNode doiFolder = this.createDOIDirectory(vosClient, guri, nextDoiSuffix);
+        
+        // Upload the document
+        String docName = super.getDoiFilename(nextDoiSuffix);
+        DataNode doiDocNode = new DataNode(new VOSURI(doiFolder.getUri().toString() + "/" + docName));
+        this.uploadDOIDocument(vosClient, resource, doiDocNode);
+        
+        // Create the DOI data folder
+        VOSURI dataDir = new VOSURI(doiFolder.getUri().toString() + "/data");
+        ContainerNode newDataFolder = new ContainerNode(dataDir);
+        NodeProperty writeGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE, guri.toString());
+        newDataFolder.getProperties().add(writeGroup);
+        vosClient.createNode(newDataFolder);
 
-            String doiGroupName = DOI_GROUP_PREFIX + nextDoiSuffix;
-            String doiGroupURI = GMS_URI_BASE + "?" + doiGroupName;
-            GroupURI guri = new GroupURI(new URI(doiGroupURI));
+        // Done, send redirect to GET for the XML file just made
+        String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
+        syncOutput.setHeader("Location", redirectUrl);
+        syncOutput.setCode(303);
 
-            Group doiRWGroup = new Group(guri);
-            User member = new User();
-            for (Principal p : callingSubject.getPrincipals()) {
-                member.getIdentities().add(p);
-            }
-            doiRWGroup.getUserMembers().add(member);
-            doiRWGroup.getUserAdmins().add(member);
-            gmsClient.createGroup(doiRWGroup);
-
-            log.debug("group uri made for " + nextDoiSuffix + ": " + doiGroupURI);
-
-            List<NodeProperty> properties = new ArrayList<>();
-
-            // This will change to become public on minting. While in DRAFT,
-            // directory is visible in AstroDataCitationDOI directory, but not readable
-            // except by doiadmin and calling user's group
-            NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
-            properties.add(isPublic);
-
-            // Get numeric id for setting doiRequestor property
-            ACIdentityManager acIdentMgr = new ACIdentityManager();
-            Integer userNumericID = (Integer)acIdentMgr.toOwner(callingSubject);
-            int n = (int)acIdentMgr.toOwner(callingSubject);
-
-            // numeric id isn't parsing out correctly. getting only first digit?
-            log.debug ("user numeric id on post POSTFOUND: " + userNumericID + " string version: " + userNumericID.toString());
-            NodeProperty doiRequestor = new NodeProperty(DOI_REQUESTER_KEY, userNumericID.toString());
-            log.debug("doi requester property value: " + doiRequestor.getPropertyValue());
-            properties.add(doiRequestor);
-
-            // All folders will be only readable by requester
-            NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD, doiGroupURI);
-            properties.add(rGroup);
-
-
-            String nodeURI = doiDataURI.getURI() + "/" + nextDoiSuffix;
-            // Create DOI containing folder using properties just set
-            String folderName = nodeURI;
-            String folderURI = nodeURI;
-
-            VOSURI target = new VOSURI(new URI(folderURI));
-            Node newFolder = new ContainerNode(target, properties);
-            vosClient.createNode(newFolder);
-
-
-            // Go ahead and store the current DOI to the new directory
-            // Update DOI xml with DOI number
-            DOIAction.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
-            // Create VOSpace data node to house XML doc using doi filename
-            String nextDoiFilename = getDoiFilename(nextDoiSuffix);
-            log.debug("next doi filename: " + nextDoiFilename);
-
-            String doiFileUri = folderURI + "/" + nextDoiFilename;
-            String doiFilename = folderName + "/" + nextDoiFilename;
-
-            target = new VOSURI(new URI(doiFileUri));
-            Node doiFileDataNode = new DataNode(target);
-            vosClient.createNode(doiFileDataNode);
-
-            postDoiDocToVospace(doiFilename, resource);
-
-
-            // Create 'data' folder under containing folder.
-            // This is where the calling user will upload their DOI data
-            // Will be writable by same group created before
-            NodeProperty wGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE,doiGroupURI);
-            properties.add(wGroup);
-
-            String dataFolderName = folderName + "/data";
-            target = new VOSURI(new URI(dataFolderName));
-            Node newDataFolder = new ContainerNode(target, properties);
-            vosClient.createNode(newDataFolder);
-
-            // Done, send redirect to GET for the XML file just made
-            String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
-            syncOutput.setHeader("Location", redirectUrl);
-            syncOutput.setCode(303);
-        }
-        else {
-            throw new UnsupportedOperationException("Editing DOI Metadata not yet implemented.");
-        }
     }
+    
+    private GroupURI createDoiGroup(String groupName) throws Exception {
+        // Create group to use for applying permissions
+        GMSClient gmsClient = new GMSClient(new URI(GMS_RESOURCE_ID));
+        String doiGroupName = DOI_GROUP_PREFIX + groupName;
+        String doiGroupURI = GMS_RESOURCE_ID + "?" + doiGroupName;
+        GroupURI guri = new GroupURI(new URI(doiGroupURI));
+        log.debug("creating group: " + guri);
 
-    private void postDoiDocToVospace (String dataNodeName, Resource resource)
-        throws URISyntaxException, ResourceNotFoundException {
-        // Upload document to named data node
-        // Data node has already been created
+        Group doiRWGroup = new Group(guri);
+        User member = new User();
+        member.getIdentities().addAll(callingSubject.getPrincipals());
+        doiRWGroup.getUserMembers().add(member);
+        doiRWGroup.getUserAdmins().add(member);
+        gmsClient.createGroup(doiRWGroup);
+        log.debug("doi group created: " + guri);
+        return guri;
+    }
+    
+    private ContainerNode createDOIDirectory(VOSpaceClient vosClient, GroupURI guri, String folderName)
+        throws Exception {
+        
+        List<NodeProperty> properties = new ArrayList<>();
+
+        // This will change to become public on minting. While in DRAFT,
+        // directory is visible in AstroDataCitationDOI directory, but not readable
+        // except by doiadmin and calling user's group
+        NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
+        properties.add(isPublic);
+
+        // Get numeric id for setting doiRequestor property
+        ACIdentityManager acIdentMgr = new ACIdentityManager();
+        Integer userNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
+
+        NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, userNumericID.toString());
+        properties.add(doiRequestor);
+        
+        NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, DOI_VOS_STATUS_DRAFT);
+        properties.add(doiStatus);
+
+        // All folders will be only readable by requester
+        NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD, guri.toString());
+        properties.add(rGroup);
+
+        String dataDirURI = DOI_BASE_VOSPACE + "/" + folderName;
+
+        VOSURI target = new VOSURI(new URI(dataDirURI));
+        ContainerNode newFolder = new ContainerNode(target, properties);
+        vosClient.createNode(newFolder);
+        return newFolder;
+    }
+    
+    private void uploadDOIDocument(VOSpaceClient vosClient, Resource resource, DataNode docNode)
+        throws ResourceNotFoundException {
+        
+        // Create VOSpace data node to house XML doc using doi filename
+        vosClient.createNode(docNode);
+        
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        Transfer transfer = new Transfer(new URI(dataNodeName), Direction.pushToVoSpace, protocols);
+        Transfer transfer = new Transfer(docNode.getUri().getURI(), Direction.pushToVoSpace, protocols);
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiOutputStream outStream = new DoiOutputStream(resource);
         clientTransfer.setOutputStreamWrapper(outStream);
@@ -261,6 +261,9 @@ public class PostAction extends DOIAction {
             if (clientTransfer.getThrowable() != null) {
                 log.debug(clientTransfer.getThrowable().getMessage());
                 String message = clientTransfer.getThrowable().getMessage();
+                
+                // Note: proper exception handling in ClientTransfer would eliminate
+                // the need for message parsing.
                 if (message.contains("NodeNotFound")) {
                     throw new ResourceNotFoundException(message);
                 }
@@ -273,13 +276,17 @@ public class PostAction extends DOIAction {
         }
     }
 
-    private String generateNextDOINumber(ContainerNode baseNode) {
+    private String generateNextDOINumber(VOSpaceClient vosClient, VOSURI baseDoiURI)
+        throws Exception {
+        
         // child nodes of baseNode should have name structure YY.XXXX
         // go through list of child nodes
         // extract XXXX
         // track largest
         // add 1
         // reconstruct YY.XXXX structure and return
+        
+        ContainerNode baseNode = (ContainerNode) vosClient.getNode(baseDoiURI.getPath());
 
         // Look into the node list for folders from current year only
         DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
@@ -301,13 +308,6 @@ public class PostAction extends DOIAction {
         maxDoi++;
         String formattedDOI = String.format("%04d", maxDoi);
         return currentYear + "." + formattedDOI;
-    }
-
-    protected void initRequest() {
-        String[] pathParts = parsePath();
-        if (pathParts.length > 1) {
-            throw new IllegalArgumentException("Invalid request: " + syncInput.getPath());
-        }
     }
 
     private class DoiOutputStream implements OutputStreamWrapper

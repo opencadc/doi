@@ -79,9 +79,9 @@ import org.apache.log4j.Logger;
  *
  * @author jeevesh
  */
-public class DOIIntTest
+public class DoiIntTest
 {
-    private static final Logger log = Logger.getLogger(DOIIntTest.class);
+    private static final Logger log = Logger.getLogger(DoiIntTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
@@ -89,7 +89,7 @@ public class DOIIntTest
 
     public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
 
-    public DOIIntTest()
+    public DoiIntTest()
     {
         // TODO: leaving this here as it might be necessary to have some sort of parent class that
         // handles certificates, etc. later on.

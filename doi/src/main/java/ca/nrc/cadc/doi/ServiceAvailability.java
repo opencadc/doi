@@ -107,14 +107,14 @@ public class ServiceAvailability implements WebService
             checkResource.check();
             
             // Check that datacite is available
-            URL docURL = new URL(DOIAction.DATACITE_URL);
+            URL docURL = new URL(DoiAction.DATACITE_URL);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(docURL, bos);
             get.run();
             int responseCode = get.getResponseCode();
             if (responseCode != 200)
             {
-                throw new RuntimeException("response code from " + DOIAction.DATACITE_URL + ": " + responseCode);
+                throw new RuntimeException("response code from " + DoiAction.DATACITE_URL + ": " + responseCode);
             }
         }
         catch (Throwable t)

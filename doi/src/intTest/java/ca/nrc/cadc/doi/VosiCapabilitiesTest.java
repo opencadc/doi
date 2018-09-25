@@ -92,7 +92,7 @@ public class VosiCapabilitiesTest extends CapabilitiesTest
     
     public VosiCapabilitiesTest()
     { 
-        super(DOIIntTest.RESOURCE_ID);
+        super(DoiIntTest.RESOURCE_ID);
     }
 
     @Override

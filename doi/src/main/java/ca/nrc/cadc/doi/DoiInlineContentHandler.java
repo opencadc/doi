@@ -85,7 +85,7 @@ import org.apache.log4j.Logger;
 public class DoiInlineContentHandler implements InlineContentHandler {
     private static Logger log = Logger.getLogger(DoiInlineContentHandler.class);
 
-    public static final String CONTENT_KEY = "doi_metadata";
+    public static final String CONTENT_KEY = "DOImetadata";
 
     public DoiInlineContentHandler() {}
 

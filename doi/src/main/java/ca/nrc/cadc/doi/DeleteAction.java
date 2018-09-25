@@ -70,6 +70,7 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.VOSURI;
@@ -83,7 +84,7 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 
-public class DeleteAction extends DOIAction {
+public class DeleteAction extends DoiAction {
 
     private static final Logger log = Logger.getLogger(DeleteAction.class);
 
@@ -93,8 +94,7 @@ public class DeleteAction extends DOIAction {
 
     @Override
     public void doAction() throws Exception {
-        authorizeUser();
-        initRequest();
+        super.init(true);
 
         // Do all subsequent work as doiadmin
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
@@ -103,7 +103,7 @@ public class DeleteAction extends DOIAction {
             @Override
             public String run() throws Exception {
                 doActionImpl();
-                return "done";
+                return null;
             }
         });
     }
@@ -114,63 +114,43 @@ public class DeleteAction extends DOIAction {
         VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
         VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
-        // DOISuffix is parsed out in initRequest()
-        if (DOISuffix.equals("")) {
+        if (doiSuffix == null) {
             throw new IllegalArgumentException("DOI number required.");
         }
-        else {
-            // Get containing node for DOI
-            String doiParentPath = doiDataURI.getPath() + "/" + DOISuffix;
-            Node doiContainer = vosClient.getNode(doiParentPath);
-
-            List<NodeProperty> properties = doiContainer.getProperties();
-            boolean hasPermission = false;
-            for (NodeProperty np: properties) {
-                // Check if is already minted (attribute on containing node will be "true"
-                if (np.getPropertyURI().equals(DOI_MINTED)) {
-                    if (np.getPropertyValue().equals("true")) {
-                        throw new AccessControlException("Unable to delete " + DOISuffix + "DOI already minted.\n");
-                    }
-                }
-                // Check if user has permission: ensure principals set is same for doiRequester
-                // numeric id stored as node attribute as for calling user...
-                if (np.getPropertyURI().equals(DOI_REQUESTER_KEY)) {
-                    ACIdentityManager acIdentMgr = new ACIdentityManager();
-                    // change the numeric id back into a subject and compare to calling subject
-                    Subject doiRequesterSubject = acIdentMgr.toSubject(Integer.parseInt(np.getPropertyValue()));
-
-                    if (callingSubject.getPrincipals().equals(doiRequesterSubject.getPrincipals())) {
-                        hasPermission = true;
-                        break;
-                    } else {
-                        throw new AccessControlException("User not authorised to delete " + DOISuffix + "\n");
-                    }
-                }
-            }
-
-            if (hasPermission == true) {
-                // Delete group created. Will be format DOI-<DOINumInputStr>
-                GMSClient gmsClient = new GMSClient(new URI(GMS_URI_BASE));
-                String doiGroupURI = GMS_URI_BASE + "#" + DOI_GROUP_PREFIX + DOISuffix;
-                log.debug("deleting this group: " + doiGroupURI);
-                gmsClient.deleteGroup(DOI_GROUP_PREFIX + DOISuffix);
-
-                log.debug("deleting this node: " + doiParentPath);
-                vosClient.deleteNode(doiParentPath);
-            } else {
-                throw new RuntimeException(DOI_REQUESTER_KEY + " not found on main DOI folder. Unable to determine permissions.\n");
-            }
+        if (doiAction != null) {
+            throw new IllegalArgumentException("Bad request.");
         }
-    }
+        
+        // Get container node for DOI
+        String doiParentPath = doiDataURI.getPath() + "/" + doiSuffix;
+        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(doiParentPath);
+        
+        // check to see if this user has permission
+        String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
+        if (doiRequester == null) {
+            throw new IllegalStateException("No requester associated with DOI.");
+        }
+        ACIdentityManager acIdentMgr = new ACIdentityManager();
+        Integer numericID = Integer.parseInt(doiRequester);
+        Subject reqestorSubject = acIdentMgr.toSubject(numericID);
+        if (!callingSubject.getPrincipals().equals(reqestorSubject.getPrincipals())) {
+            throw new AccessControlException("Not permitted to delete DOI");
+        }
+        
+        // check the state of the doi
+        String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
+        if (doiStatus != null && doiStatus.equals(DOI_VOS_STATUS_MINTED)) {
+            throw new AccessControlException("Unable to delete " + doiSuffix + "DOI already minted.\n");
+        }
+        
+        // Delete the DOI group. Will be format DOI-<DOINumInputStr>
+        GMSClient gmsClient = new GMSClient(new URI(GMS_RESOURCE_ID));
+        String groupToDelete = DOI_GROUP_PREFIX + doiSuffix;
+        log.debug("deleting this group: " + groupToDelete);
+        gmsClient.deleteGroup(groupToDelete);
 
-    private void initRequest() {
-        String[] pathParts = parsePath();
-        if (DOISuffix == null) {
-            throw new IllegalArgumentException("DOI number required for DELETE.");
-        }
-        if (pathParts.length > 1) {
-            throw new IllegalArgumentException("Invalid request: " + syncInput.getPath());
-        }
+        log.debug("deleting this node: " + doiParentPath);
+        vosClient.deleteNode(doiParentPath);
     }
 
 }

@@ -99,16 +99,9 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 
-public class GetAction extends DOIAction {
+public class GetAction extends DoiAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
-
-    private static final String GET_ONE_REQUEST = "getOne";
-    private static final String GET_ALL_REQUEST = "getAll";
-    //    protected static final String GET_DOI_METADATA = "getDoiMeta";
-
-    private String requestType;  // from list above
-    private VOSpaceClient vosClient;
 
     public GetAction() {
         super();
@@ -116,39 +109,34 @@ public class GetAction extends DOIAction {
 
     @Override
     public void doAction() throws Exception {
-        initRequest();
+        super.init(false);
         
-        log.debug("Current subject: " + AuthenticationUtil.getCurrentSubject());
-
-        // Interact with VOSPACE using DOI_BASE_VOSPACE
-        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
-        vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-
-        switch (requestType) {
-            case GET_ONE_REQUEST:
-                // Get path and filename for DOI Document stored in VOSpace
-                // DOISuffix is parsed out in initRequest()
-                String doiDatafileName = doiDataURI.getURI() + "/" + DOISuffix + "/" + getDoiFilename(DOISuffix);
-                Resource r = getDoiDocFromVospace(doiDatafileName);
-                writeDoiDocToSyncOutput(r);
-                break;
-            case GET_ALL_REQUEST:
-                throw new UnsupportedOperationException("\"Get All\" not implemented yet.");
-            // case GET_DOI_METADATA:
-            // check permissions for and return data directory location
-            // or possibly status, or...
-            // To be used for generating the DOI metadata displayed with a GET, or
-            // with the landing page
-            default:
-                throw new UnsupportedOperationException("Unknown request type");
+        if (super.doiSuffix == null) {
+            // list all the DOIs for the calling user
+            listDois();
         }
-
+        if (super.doiAction != null) {
+            // perform the action on the DOI
+            performDoiAction();
+        }
+        getDoi();
     }
-
-    private void writeDoiDocToSyncOutput (Resource resource) throws IOException {
-        StringBuilder doiBuilder = new StringBuilder();
+    
+    private void listDois() throws Exception {
+        throw new UnsupportedOperationException("List not yet supported.");
+    }
+    
+    private void getDoi() throws Exception {
+        
+        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+        
+        VOSURI docDataNode = new VOSURI(
+            baseDataURI.toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
+        
+        Resource resource = getDoiDocFromVOSpace(vosClient, docDataNode);
         String docFormat = this.syncInput.getHeader("Accept");
-        log.debug("'Accept' value in header was " + docFormat);
+        log.debug("'Accept' value in header is " + docFormat);
         if (docFormat != null && docFormat.contains("application/json"))
         {
             // json document
@@ -164,27 +152,18 @@ public class GetAction extends DOIAction {
             writer.write(resource, syncOutput.getOutputStream());
         }
     }
-
-    private void initRequest() {
-        String[] pathParts = parsePath();
-        requestType = GET_ALL_REQUEST;
-
-        // This will grow when doi status service is implemented
-        if (pathParts.length > 1) {
-            throw new IllegalArgumentException("Invalid request: " + syncInput.getPath());
-        }
-        if (DOISuffix != "") {
-            requestType = GET_ONE_REQUEST;
-        }
+    
+    private void performDoiAction() throws Exception {
+        throw new UnsupportedOperationException("No DOI actions implemented.");
     }
 
-    private Resource getDoiDocFromVospace (String dataNodePath)
+    private Resource getDoiDocFromVOSpace(VOSpaceClient vosClient, VOSURI dataNode)
         throws Exception {
-
+        
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-        Transfer transfer = new Transfer(new URI(dataNodePath), Direction.pullFromVoSpace, protocols);
+        Transfer transfer = new Transfer(dataNode.getURI(), Direction.pullFromVoSpace, protocols);
         CredUtil.checkCredentials();
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiInputStream doiStream = new DoiInputStream();

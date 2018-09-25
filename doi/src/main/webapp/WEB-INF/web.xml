@@ -21,7 +21,6 @@
                 org.opencadc
                 ca.nrc.cadc.rest
                 ca.nrc.cadc.auth
-                ca.nrc.cadc.auth
                 ca.nrc.cadc.doi
                 ca.nrc.cadc.vos
                 ca.nrc.cadc.ac
@@ -39,7 +38,7 @@
     </servlet>
 
     <servlet>
-        <servlet-name>DOIServlet</servlet-name>
+        <servlet-name>DoiServlet</servlet-name>
         <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
             <param-name>get</param-name>
@@ -53,9 +52,12 @@
             <param-name>delete</param-name>
             <param-value>ca.nrc.cadc.doi.DeleteAction</param-value>
         </init-param>
+        <init-param>
+            <param-name>ca.nrc.cadc.uws.web.InlineContentHandler</param-name>
+            <param-value>ca.nrc.cadc.doi.DoiInlineContentHandler</param-value>
+         </init-param>
         <load-on-startup>2</load-on-startup>
     </servlet>
-
 
     <!-- Servlet that checks the availability status of doi -->
     <servlet>
@@ -80,12 +82,12 @@
 
 
     <servlet-mapping>
-        <servlet-name>DOIServlet</servlet-name>
+        <servlet-name>DoiServlet</servlet-name>
         <url-pattern>/instances/*</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
-        <servlet-name>DOIServlet</servlet-name>
+        <servlet-name>DoiServlet</servlet-name>
         <url-pattern>/auth-instances/*</url-pattern>
     </servlet-mapping>
 
