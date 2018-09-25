@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import ca.nrc.cadc.doi.DoiAction;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Identifier;

@@ -77,7 +77,7 @@ import org.springframework.util.StringUtils;
  *      * 
  * To prevent the identifier from being accidentally created,
  * there is no method provided to set the identifier. 
- * The identifier field is set by DoiUtil.assignIdentifier() via reflection.
+ * The identifier field is set by DoiReader.assignIdentifier() via reflection.
  * 
  * @author yeunga
  */
