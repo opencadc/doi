@@ -3,5 +3,5 @@
   <identifier identifierType="DOI">10.5072/example-id</identifier>
   <title xml:lang="en-US">Example1 title</title>
   <publicationYear>2014</publicationYear>
-  <status>Minted</status>
+  <status>minted</status>
 </doistatus>

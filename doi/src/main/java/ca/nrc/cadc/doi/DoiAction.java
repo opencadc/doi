@@ -68,13 +68,10 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.HttpPrincipal;
-import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import java.lang.reflect.Field;
 import java.security.AccessControlException;
-import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -91,8 +88,8 @@ public abstract class DoiAction extends RestAction {
     
     protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
     protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-    protected static final String DOI_VOS_STATUS_DRAFT = "draft";
-    protected static final String DOI_VOS_STATUS_MINTED = "minted";
+    protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
+    protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
     
     
     protected static final String DOI_GROUP_PREFIX = "DOI-";

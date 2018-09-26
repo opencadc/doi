@@ -129,7 +129,7 @@ public class DoiStatusWriter
     {
         Element ret = new Element("title");
         ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
-        ret.setText(title.getTitle());
+        ret.setText(title.getText());
         
         if (title.titleType != null)
         {

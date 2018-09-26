@@ -69,7 +69,11 @@ package ca.nrc.cadc.doi;
 
 
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.doi.status.DoiStatus;
+import ca.nrc.cadc.doi.status.DoiStatusJsonWriter;
+import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
+import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
@@ -78,6 +82,7 @@ import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
@@ -89,10 +94,7 @@ import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,6 +128,61 @@ public class GetAction extends DoiAction {
         throw new UnsupportedOperationException("List not yet supported.");
     }
     
+    private Title getTitle(Resource resource)
+    {
+        Title title = null;
+        List<Title> titles = resource.getTitles();
+        for (Title t : titles)
+        {
+            if (t.titleType == null)
+            {
+                title = t;
+                break;
+            }
+        }
+        
+        return title;
+    }
+    
+    private void getStatus() throws Exception {
+        
+        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+        
+        // get the specified doi resource
+        VOSURI docDataNode = new VOSURI(
+            baseDataURI.toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
+        Resource resource = getDoiDocFromVOSpace(vosClient, docDataNode);
+        Title title = getTitle(resource);
+
+        String dpcContainerNodePath = baseDataURI.toString() + "/" + doiSuffix;
+        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(dpcContainerNodePath);
+        
+        // check to see if this user has permission
+        String status = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
+
+        // return the DOI status
+        DoiStatus doiStatus = new DoiStatus(resource.getIdentifier(), title,
+            resource.getPublicationYear(), Status.toValue(status));
+        
+        String docFormat = this.syncInput.getHeader("Accept");
+        log.debug("'Accept' value in header is " + docFormat);
+        if (docFormat != null && docFormat.contains("application/json"))
+        {
+            // json document
+            syncOutput.setHeader("Content-Type", "application/json");
+            DoiStatusJsonWriter writer = new DoiStatusJsonWriter();
+            writer.write(doiStatus, syncOutput.getOutputStream());
+        }
+        else
+        {
+            // xml document
+            syncOutput.setHeader("Content-Type", "text/xml");
+            DoiStatusXmlWriter writer = new DoiStatusXmlWriter();
+            writer.write(doiStatus, syncOutput.getOutputStream());
+        }
+    }
+    
     private void getDoi() throws Exception {
         
         VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
@@ -154,7 +211,14 @@ public class GetAction extends DoiAction {
     }
     
     private void performDoiAction() throws Exception {
-        throw new UnsupportedOperationException("No DOI actions implemented.");
+        if (doiAction.equals("status"))
+        {
+            getStatus();
+        }
+        else
+        {
+            throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
+        }
     }
 
     private Resource getDoiDocFromVOSpace(VOSpaceClient vosClient, VOSURI dataNode)

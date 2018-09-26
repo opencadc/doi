@@ -257,7 +257,7 @@ public class DoiWriter
     {
         Element ret = new Element("title", ns);
         ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
-        ret.setText(title.getTitle());
+        ret.setText(title.getText());
         
         if (title.titleType != null)
         {

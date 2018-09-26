@@ -85,7 +85,7 @@ public class Title
     // lang uses the xml namespace
     private String lang;
     public String titleType;
-    private String title;
+    private String text;
 
     /**
      * Title constructor.
@@ -102,7 +102,7 @@ public class Title
         }
         
         this.lang = lang;
-        this.title = title;
+        this.text = title;
     }
 
     /**
@@ -116,8 +116,8 @@ public class Title
     /**
      * @return title text
      */
-    public String getTitle()
+    public String getText()
     {
-        return this.title; 
+        return this.text; 
     }
 }

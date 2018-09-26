@@ -71,6 +71,7 @@ package ca.nrc.cadc.doi;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 
@@ -84,7 +85,12 @@ import org.junit.Test;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.doi.status.DoiStatus;
+import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
+import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
@@ -109,7 +115,7 @@ public class CreateDocumentTest extends IntTestBase
     public CreateDocumentTest() { }
 
     @Test
-    public void testCreateDocument() throws Throwable
+    public void testCreateDocumentAndStatus() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
@@ -154,6 +160,10 @@ public class CreateDocumentTest extends IntTestBase
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", dummyIdentifier.equals(returnedIdentifier));
 
+                // For DOI status test below
+                Title expectedTitle = resource.getTitles().get(0);
+                String expectedPublicationYear = resource.getPublicationYear();
+                
                 // Pull the suffix from the identifier
                 String[] doiNumberParts = returnedIdentifier.split("/");
 
@@ -166,6 +176,19 @@ public class CreateDocumentTest extends IntTestBase
                 Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
                 Assert.assertEquals(JSON, get.getContentType());
 
+                // Get the DOI status
+                URL statusURL = new URL(docURL + "/status");
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                HttpDownload getStatus = new HttpDownload(statusURL, baos);
+                get.run();
+                Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", get.getThrowable());
+                DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
+                DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
+                Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
+                Assert.assertEquals("publicationYear from DOI status is different", expectedPublicationYear, doiStatus.getPublicationYear());
+                Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
+                Assert.assertEquals("status is incorrect", Status.MINTED, doiStatus.getStatus());
+                
                 // delete containing folder using doiadmin credentials
                 deleteTestFolder(doiNumberParts[1]);
 

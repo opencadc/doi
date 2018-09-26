@@ -135,7 +135,7 @@ public class DoiStatusReaderWriterTest
     private void compareTitle(Title t1, Title t2)
     {
         Assert.assertEquals("langs are different", t1.getLang(), t2.getLang());
-        Assert.assertEquals("titles are different", t1.getTitle(), t2.getTitle());
+        Assert.assertEquals("titles are different", t1.getText(), t2.getText());
         Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
     }
     
