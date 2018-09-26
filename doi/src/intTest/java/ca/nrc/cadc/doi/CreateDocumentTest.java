@@ -71,7 +71,6 @@ package ca.nrc.cadc.doi;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 
