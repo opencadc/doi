@@ -180,14 +180,14 @@ public class CreateDocumentTest extends IntTestBase
                 URL statusURL = new URL(docURL + "/status");
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 HttpDownload getStatus = new HttpDownload(statusURL, baos);
-                get.run();
-                Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", get.getThrowable());
+                getStatus.run();
+                Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
                 DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
                 DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
                 Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
                 Assert.assertEquals("publicationYear from DOI status is different", expectedPublicationYear, doiStatus.getPublicationYear());
                 Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
-                Assert.assertEquals("status is incorrect", Status.MINTED, doiStatus.getStatus());
+                Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                 
                 // delete containing folder using doiadmin credentials
                 deleteTestFolder(doiNumberParts[1]);

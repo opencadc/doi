@@ -117,11 +117,14 @@ public class GetAction extends DoiAction {
             // list all the DOIs for the calling user
             listDois();
         }
-        if (super.doiAction != null) {
+        else if (super.doiAction != null) {
             // perform the action on the DOI
             performDoiAction();
         }
-        getDoi();
+        else
+        {
+            getDoi();
+        }
     }
     
     private void listDois() throws Exception {
@@ -155,7 +158,7 @@ public class GetAction extends DoiAction {
         Resource resource = getDoiDocFromVOSpace(vosClient, docDataNode);
         Title title = getTitle(resource);
 
-        String dpcContainerNodePath = baseDataURI.toString() + "/" + doiSuffix;
+        String dpcContainerNodePath = baseDataURI.getPath() + "/" + doiSuffix;
         ContainerNode doiContainer = (ContainerNode) vosClient.getNode(dpcContainerNodePath);
         
         // check to see if this user has permission
