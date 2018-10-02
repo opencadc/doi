@@ -153,7 +153,7 @@ public class DoiStatusReaderWriterTest
     {
         compareIdentifier(s1.getIdentifier(), s2.getIdentifier());
         compareTitle(s1.getTitle(), s2.getTitle());
-        comparePublicationYear(s1.getPublicationYear(), s2.getPublicationYear());
+        comparePublicationYear(s1.getDataDirectory(), s2.getDataDirectory());
         compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
     }
     

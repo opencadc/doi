@@ -181,15 +181,27 @@ public class GetAction extends DoiAction {
         Resource resource = getDoiDocFromVOSpace(vosClient, docDataNode);
         Title title = getTitle(resource);
 
-        String dpcContainerNodePath = baseDataURI.getPath() + "/" + doiSuffix;
-        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(dpcContainerNodePath);
+        String doiContainerNodePath = baseDataURI.getPath() + "/" + doiSuffix;
+        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(doiContainerNodePath);
+        
+        // get the data directory
+        String dataDirectory = null;
+        List<Node> doiContainedNodes = doiContainer.getNodes();
+        for (Node node : doiContainedNodes)
+        {
+            if (node.getName().equals("data"))
+            {
+                dataDirectory = node.getUri().getPath();
+                break;
+            }
+        }
         
         // check to see if this user has permission
         String status = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
 
         // return the DOI status
         DoiStatus doiStatus = new DoiStatus(resource.getIdentifier(), title,
-            resource.getPublicationYear(), Status.toValue(status));
+            dataDirectory, Status.toValue(status));
         
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header is " + docFormat);

@@ -106,8 +106,8 @@ public class DoiStatusWriter
         ret.addContent(titlesElement);
         
         // add publication year element
-        Element publicationYearElement = getPublicationYearElement(doiStatus.getPublicationYear());
-        ret.addContent(publicationYearElement);
+        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
+        ret.addContent(dataDirectoryElement);
         
         // add status element
         Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
@@ -140,10 +140,10 @@ public class DoiStatusWriter
         return ret;
     }
     
-    protected Element getPublicationYearElement(String publicationYear)
+    protected Element getDataDirectoryElement(String dataDirectory)
     {
-        Element ret = new Element("publicationYear");
-        ret.setText(publicationYear);
+        Element ret = new Element("dataDirectory");
+        ret.setText(dataDirectory);
         return ret;
     }
     

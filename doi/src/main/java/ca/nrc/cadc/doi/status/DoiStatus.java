@@ -91,22 +91,22 @@ public class DoiStatus
 
     private Identifier identifier;
     private Title title;
-    private String publicationYear;
+    private String dataDirectory;
     private Status status;
     
 
-    public DoiStatus(Identifier identifier, Title title, String publicationYear, Status status) 
+    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) 
     { 
-        if (identifier == null || title == null || !StringUtil.hasText(publicationYear) || 
+        if (identifier == null || title == null || !StringUtil.hasText(dataDirectory) || 
             status == null)
         {
-            String msg = "identifier, title, publicationYear and status must be specified.";
+            String msg = "identifier, title, dataDirectory and status must be specified.";
             throw new IllegalArgumentException(msg);
         }
                 
         this.identifier = identifier;
         this.title = title;
-        this.publicationYear = publicationYear;
+        this.dataDirectory = dataDirectory;
         this.status = status;
     }
     
@@ -120,9 +120,9 @@ public class DoiStatus
         return this.title;
     }
     
-    public String getPublicationYear()
+    public String getDataDirectory()
     {
-        return this.publicationYear;
+        return this.dataDirectory;
     }
     
     public Status getStatus()

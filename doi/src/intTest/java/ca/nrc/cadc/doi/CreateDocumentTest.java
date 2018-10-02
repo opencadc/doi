@@ -224,10 +224,6 @@ public class CreateDocumentTest extends IntTestBase
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
-
-                // For DOI status test below
-                Title expectedTitle = resource.getTitles().get(0);
-                String expectedPublicationYear = resource.getPublicationYear();
                 
                 // Pull the suffix from the identifier
                 String[] doiNumberParts = returnedIdentifier.split("/");
@@ -242,6 +238,10 @@ public class CreateDocumentTest extends IntTestBase
                     get.run();
                     Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
                     Assert.assertEquals(JSON, get.getContentType());
+
+                    // For DOI status test below
+                    Title expectedTitle = resource.getTitles().get(0);
+                    String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
     
                     // Get the DOI status
                     URL statusURL = new URL(docURL + "/status");
@@ -252,7 +252,7 @@ public class CreateDocumentTest extends IntTestBase
                     DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
                     DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("publicationYear from DOI status is different", expectedPublicationYear, doiStatus.getPublicationYear());
+                    Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                 }

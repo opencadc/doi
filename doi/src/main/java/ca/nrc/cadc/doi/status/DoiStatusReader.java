@@ -101,13 +101,13 @@ public class DoiStatusReader
         Identifier id = buildIdentifier(root);
         Title title = buildTitle(root);
         
-        if (root.getChild("publicationYear") == null)
+        if (root.getChild("dataDirectory") == null)
         {
-            String msg = "publicationYear not found in doi status element.";
+            String msg = "dataDirectory not found in doi status element.";
             throw new DoiParsingException(msg);
         }
         
-        String publicationYear = root.getChild("publicationYear").getText();
+        String dataDirectory = root.getChild("dataDirectory").getText();
         
         if (root.getChild("status") == null)
         {
@@ -117,7 +117,7 @@ public class DoiStatusReader
         
         Status status = Status.toValue(root.getChild("status").getText());
         
-        return new DoiStatus(id, title, publicationYear, status);
+        return new DoiStatus(id, title, dataDirectory, status);
     }
     
     protected Identifier buildIdentifier(Element root)
