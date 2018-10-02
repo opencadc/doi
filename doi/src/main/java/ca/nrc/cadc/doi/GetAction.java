@@ -84,6 +84,7 @@ import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
@@ -93,6 +94,8 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.util.ArrayList;
@@ -113,6 +116,10 @@ public class GetAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(false);
         
+        // need the following statement because the VOSClient is not initializing 
+        // the credentials properly
+        CredUtil.checkCredentials();
+        
         if (super.doiSuffix == null) {
             // list all the DOIs for the calling user
             listDois();
@@ -128,7 +135,23 @@ public class GetAction extends DoiAction {
     }
     
     private void listDois() throws Exception {
-        throw new UnsupportedOperationException("List not yet supported.");
+        // VOspace is expected to filter the list of DOIs by user in the future.
+        // Currently all DOIs are returned.
+        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(baseDataURI.getPath());
+        List<Node> doiNodes = doiContainer.getNodes();
+        StringBuilder sb = new StringBuilder();
+        for (Node n : doiNodes)
+        {
+            sb.append(n.getName());
+            sb.append("\n");
+        }
+        
+        OutputStreamWriter outWriter = new OutputStreamWriter(syncOutput.getOutputStream(), "UTF-8");
+        PrintWriter pw = new PrintWriter(outWriter);
+        pw.print(sb.toString());
+        pw.flush();
     }
     
     private Title getTitle(Resource resource)
@@ -231,7 +254,6 @@ public class GetAction extends DoiAction {
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
         Transfer transfer = new Transfer(dataNode.getURI(), Direction.pullFromVoSpace, protocols);
-        CredUtil.checkCredentials();
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiInputStream doiStream = new DoiInputStream();
         clientTransfer.setInputStreamWrapper(doiStream);

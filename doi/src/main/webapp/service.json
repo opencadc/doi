@@ -124,31 +124,11 @@
         "tags": [
           "instances"
         ],
-        "summary": "Not Yet Implemented",
-        "description": " List all DOIs for authenticated user. Calling user must have access.",
+        "summary": "Get a list of DOIs",
+        "description": "List all DOIs. Return a list of DOI suffixes delimited by carriage return.",
         "operationId": "getAllDOI",
         "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "description": "Status values that need to be considered for filter",
-            "required": true,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "available",
-                "pending",
-                "sold"
-              ],
-              "default": "available"
-            },
-            "collectionFormat": "multi"
-          }
+          "text/plain"
         ],
         "responses": {
           "200": {
@@ -156,12 +136,19 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/DOIMeta"
+                "example": 
+                  "18.0100, 18.0101, 18.0102"
               }
             }
           },
-          "400": {
-            "description": "Invalid status value"
+          "403": {
+            "description": "Not authorised"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
           }
         },
         "security": [
@@ -181,7 +168,7 @@
         ],
         "summary": "Get a DOI instance",
         "description": "Get specified DOI for authenticated user. Calling user must have access.",
-        "operationId": "ListDOI",
+        "operationId": "getDOI",
         "produces": [
           "application/xml",
           "application/json"
@@ -276,6 +263,60 @@
           }
         ]
       }
+    },
+    "/instances/{DOINum}/status": {
+      "get": {
+        "tags": [
+          "instances"
+        ],
+        "summary": "Get the status of a DOI instance",
+        "description": "Get the status of the specified DOI for authenticated user. Calling user must have access.",
+        "operationId": "getDOIStatus",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "DOINum",
+            "in": "path",
+            "description": "Digital Object Identifier number to retrieve status",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DOIStatus"
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorised"
+          },
+          "404": {
+            "description": "DOI not found"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
+          }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
+      }
     }
   },
   "securityDefinitions": {
@@ -295,11 +336,62 @@
     }
   },
   "definitions": {
+    "DOIStatus": {
+      "type": "object",
+      "required": [
+        "identifier",
+        "title",
+        "publicationYear",
+        "status"
+      ],
+      "properties": {
+        "identifier": {
+          "type": "object",
+          "example": "10.5072/example-full",
+          "properties": {
+            "identifierType": {
+              "type": "string",
+              "example": "DOI",
+              "xml": {
+                "attribute": true
+              }
+            }
+          }
+        },
+        "title": {
+          "type": "object",
+          "example": "Full DataCite XML Example",
+          "properties": {
+            "xml:lang": {
+              "type": "string",
+              "example": "en-US",
+              "xml": {
+                "attribute": true
+              }
+            }
+          }
+        },
+        "publicationYear": {
+          "type": "string",
+          "example": "2014"
+        },
+        "status": {
+          "type": "string",
+          "example": "draft"
+        }
+      },
+      "xml": {
+        "name": "doistatus"
+      }
+    },
     "DOIMeta": {
       "type": "object",
       "required": [
-        "author",
-        "title"
+        "identifier",
+        "creators",
+        "titles",
+        "publisher",
+        "publicationYear"
       ],
       "properties": {
         "identifier": {
