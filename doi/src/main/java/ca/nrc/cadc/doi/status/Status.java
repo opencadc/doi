@@ -81,7 +81,7 @@ package ca.nrc.cadc.doi.status;
  */
 public enum Status
 {
-    DRAFT("draft"),
+    DRAFT("in progress"),
     MINTED("minted");
     
     private final String value;
