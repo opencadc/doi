@@ -371,9 +371,9 @@
             }
           }
         },
-        "publicationYear": {
+        "dataDirectory": {
           "type": "string",
-          "example": "2014"
+          "example": "/AstroDataCitationDOI/CISTI.CANFAR/18.0100/data"
         },
         "status": {
           "type": "string",
