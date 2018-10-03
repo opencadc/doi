@@ -13,7 +13,8 @@
 </c:if>
 
 <%-- Set this by configuration in the future. --%>
-<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />
+<%--<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />--%>
+<c:set var="resourceCapabilitiesEndPoint" value="http://jeevesh.cadc.dao.nrc.ca/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -196,7 +197,8 @@
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcJS/javascript/cadc.registry-client.js" />"></script>
-    <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation.js" />"></script>
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_request.js" />"></script>
 
     <script type="application/javascript">
       $(document).ready(function() {
@@ -215,9 +217,9 @@
                 } else {
                   errorMsg = "Unable to access Data Citation " + data.errorStatus + " " + data.error ;
                 }
-                citation_js.setNotAuthenticated(errorMsg);
+                request_js.setNotAuthenticated(errorMsg);
               } else {
-                citation_js.setAuthenticated();
+                request_js.setAuthenticated();
               }
             });
 
@@ -225,8 +227,8 @@
         // in the userManager.subscribe above...
         userManager.loadCurrent();
 
-        // Instantiate controller for Data Citation UI page
-        citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
+        // Instantiate controller for Data Citation Request page
+        request_js = new cadc.web.citation.CitationRequest({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
 
       });
 
