@@ -38,7 +38,7 @@ import org.openqa.selenium.By;
 
 
 public class DataCitationRequestPageTest extends AbstractDataCitationIntegrationTest {
-    private static final By ONE_CLICK_DOWNLOAD_LINK_ROW_3_ID_BY = By.id("_one-click_vov_3");
+//    private static final By ONE_CLICK_DOWNLOAD_LINK_ROW_3_ID_BY = By.id("_one-click_vov_3");
 
 
     public DataCitationRequestPageTest() throws Exception {
@@ -49,6 +49,8 @@ public class DataCitationRequestPageTest extends AbstractDataCitationIntegration
     @Test
     public void requestDoi() throws Exception {
         DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
+
+        requestPage.login();
 
         requestPage.setDoiTitle("DOI PUBLICATION TITLE");
         requestPage.setDoiAuthorList("Flintstone, Fred");

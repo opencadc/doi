@@ -9,8 +9,9 @@ import org.openqa.selenium.support.PageFactory;
 
 
 
-class DataCitationRequestPage extends AbstractTestWebPage {
+public class DataCitationRequestPage extends AbstractTestWebPage {
     private static final By FORM_RESET_BUTTON_BY = By.xpath("//*[@id=\"doi_form_reset_button\"]/div[1]/button[@type=\"reset\"]");
+    private static final By DOI_TITLE_BY = By.id("doi_title");
 
     @FindBy(xpath = "//*[@id=\"doi_create_button\"]/div[1]/button[@type=\"submit\"]")
     WebElement submitButton;
@@ -36,23 +37,23 @@ class DataCitationRequestPage extends AbstractTestWebPage {
     @FindBy(id = "doi_metadata")
     WebElement metadataPanel;
 
+    @FindBy(className = "login-form")
+    WebElement loginForm;
 
-    DataCitationRequestPage(final WebDriver driver) throws Exception {
+    @FindBy(id = "username")
+    WebElement usernameInput;
+
+    @FindBy(id = "password")
+    WebElement passwordInput;
+
+    @FindBy(id = "submitLogin")
+    WebElement submitLogin;
+
+
+    public DataCitationRequestPage(WebDriver driver) throws Exception {
         super(driver);
-
-//        waitForElementPresent(TOP_RESET_BUTTON_BY);
-//        waitForElementVisible(TOP_RESET_BUTTON_BY);
         PageFactory.initElements(driver, this);
     }
-
-//    DataCitationRequestPage(WebDriver driver, int timeoutInSeconds) throws Exception {
-//        super(driver, timeoutInSeconds);
-//
-////        waitForElementPresent(TOP_RESET_BUTTON_BY);
-////        waitForElementVisible(TOP_RESET_BUTTON_BY);
-//        PageFactory.initElements(driver, this);
-//    }
-
 
     public String getDoiNumber() {
         return doiNumberInput.getText();
@@ -93,20 +94,14 @@ class DataCitationRequestPage extends AbstractTestWebPage {
     }
 
 
-
-
-    // Functions to change page state
-    void submitSuccess() throws Exception {
-        click(submitButton);
+    public void login() throws Exception {
+        click(loginForm);
+        waitForElementClickable(usernameInput);
+        sendKeys(usernameInput,"CADCtest");
+        sendKeys(passwordInput, "sywymUL4");
+        click(submitLogin);
+        waitForElementPresent(DOI_TITLE_BY);
     }
-
-    void reset() throws Exception {
-        click(FORM_RESET_BUTTON_BY);
-
-        // wait for form to clear?
-    }
-
-
 
     // State verification functions
 

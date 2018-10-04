@@ -27,7 +27,7 @@ dependencies {
 
 
     testCompile 'ca.nrc.cadc:web-test:[2.0, )'
-    testCompile 'org.seleniumhq.selenium:selenium-java:2.53.+'
+    testCompile 'org.seleniumhq.selenium:selenium-java:3.+'
 }
 
 sourceCompatibility = '1.7'
@@ -94,7 +94,7 @@ idea {
             logger.info('Running browser tests on ' + project.intTest_selenium_server_url)
         }
         else {
-            systemProperty 'selenium.server.url', 'http://cadcint2.cadc.dao.nrc.ca:3444'
+            systemProperty 'selenium.server.url', 'http://cadcint2.cadc.dao.nrc.ca:4444'
         }
 
         if (project.hasProperty('intTest_web_app_url')) {

@@ -4,7 +4,11 @@
     cadc: {
       web: {
         citation: {
-          Citation: Citation
+          Citation: Citation,
+          // Events
+          events: {
+            onDoiListLoaded: new jQuery.Event('doi:onDoiListLoaded')
+          }
         }
       }
     }
@@ -19,6 +23,7 @@
    */
   function Citation(inputs) {
 
+    var _selfGroupManager = this
     var doiTable;
     var doiTableSource =[];
     //    {
@@ -99,7 +104,11 @@
 
     function attachListeners() {
       $('.doi_delete').click(handleDOIDelete)
-      $('.doi_request').click(handleDOIRequest)
+      //$('.doi_request').click(handleDOIRequest)
+
+      subscribe(cadc.web.citation.events.onDoiListLoaded, function(e, data) {
+        setTableContent(data.doiList)
+      })
     }
 
     function setNotAuthenticated(errorMsg) {
@@ -117,6 +126,37 @@
     }
 
     // ------------ Page state management functions ------------
+
+
+    function subscribe(event, eHandler) {
+      $(_selfGroupManager).on(event.type, eHandler)
+    }
+
+    function unsubscribe(event) {
+      $(_selfGroupManager).unbind(event.type)
+    }
+
+    function trigger(event, eventData) {
+      $(_selfGroupManager).trigger(event, eventData)
+    }
+
+    function setTableContent(stringdata) {
+      var doiSuffixes = stringdata.split("\n");
+      // Initial table load
+      for (var j=doiSuffixes.length-1; j>=0; j--) {
+        var tmpRow = {
+          "doi_name" : mkNameLink(doiSuffixes[j]),
+          "status" : "-",
+          "title" : "-",
+          "data_dir": "-",
+          "action": ""
+        }
+        addRow(tmpRow);
+        getDoiStatus(doiSuffixes[j])
+      }
+      page.setProgressBar('okay')
+    }
+
 
 
     function setTableState(mode) {
@@ -170,20 +210,23 @@
           page.setProgressBar('busy')
           //setTableProgress('busy')
 
-          var doiSuffixes = stringdata.split("\n");
-          // Initial table load
-          for (var j=0; j<doiSuffixes.length; j++) {
-            var tmpRow = {
-              "doi_name" : mkNameLink(doiSuffixes[j]),
-              "status" : "-",
-              "title" : "-",
-              "data_dir": "-",
-              "action": ""
-            }
-            addRow(tmpRow);
-            getDoiStatus(doiSuffixes[j])
-          }
-          page.setProgressBar('okay')
+          trigger(cadc.web.citation.events.onDoiListLoaded, {
+            doiList: stringdata,
+          })
+          //var doiSuffixes = stringdata.split("\n");
+          //// Initial table load
+          //for (var j=doiSuffixes.length-1; j>=0; j--) {
+          //  var tmpRow = {
+          //    "doi_name" : mkNameLink(doiSuffixes[j]),
+          //    "status" : "-",
+          //    "title" : "-",
+          //    "data_dir": "-",
+          //    "action": ""
+          //  }
+          //  addRow(tmpRow);
+          //  getDoiStatus(doiSuffixes[j])
+          //}
+          //page.setProgressBar('okay')
 
         })
         .fail(function(message) {
@@ -197,39 +240,39 @@
 
 
     // TODO: how to track when doi list is finished?
-    function getDoiStatus(doiNum) {
+    function getDoiStatus(doiName) {
       page.prepareCall().then(function(serviceURL) {
-        var statusUrl = serviceURL + '/' + doiNumber + "/status"
+        var statusUrl = serviceURL + '/' + doiName + "/status"
         $.ajax({
           xhrFields: { withCredentials: true },
           url: statusUrl,
           method: 'GET',
-          dataType: 'json',
-          contentType: 'application/json'
+          contentType: 'text/xml'
         })
             .success(function(data) {
               page.setProgressBar('okay')
               displayDoiStatus(data)
             })
             .fail(function(message) {
-              page.setProgressBar('error')
+              // skip this one
+              // remove this entry from the table data source
+              //page.setProgressBar('error')
               //setTableProgress('okay')
-              page.setAjaxFail(message)
+              //page.setAjaxFail(message)
             })
       })
       return false
     }
 
     function displayDoiStatus(data) {
-      var statusXml = (new DOMParser()).parseFromString(data, "text/xml");
+      var newStatus = rowTemplate
+      var doiName = data.getElementsByTagName("identifier")[0].textContent.split("/")[1]
+      newStatus.doi_name = mkNameLink(doiName)
+      newStatus.status = data.getElementsByTagName("status")[0].textContent
+      newStatus.data_dir = data.getElementsByTagName("dataDirectory")[0].textContent
+      newStatus.title = data.getElementsByTagName("title")[0].textContent
 
-      var newStatus = rowTemplate;
-      newStatus.doi_name = statusXml.getElementsByTagName("identifier")[0].nodeValue();
-      newStatus.status = statusXml.getElementsByTagName("status")[0].nodeValue();
-      newStatus.data_dir = statusXml.getElementsByTagName("dataDirectory")[0].nodeValue();
-      newStatus.title = statusXml.getElementsByTagName("title")[0].nodeValue();
-
-
+      updateRow(getRowNum(newStatus.doi_name), newStatus);
     }
 
     // ------------ Table update functions ------------
@@ -253,7 +296,7 @@
           .draw()
     }
 
-    function refreshRow(rowNum, data) {
+    function refreshRow(rowNum) {
       // Invalidate and redraw
       doiTable
           .row( rowNum )
