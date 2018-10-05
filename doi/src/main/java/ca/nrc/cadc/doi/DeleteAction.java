@@ -67,19 +67,18 @@
 
 package ca.nrc.cadc.doi;
 
+
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.ACIdentityManager;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
-import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -133,7 +132,12 @@ public class DeleteAction extends DoiAction {
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         Integer numericID = Integer.parseInt(doiRequester);
         Subject reqestorSubject = acIdentMgr.toSubject(numericID);
-        if (!callingSubject.getPrincipals().equals(reqestorSubject.getPrincipals())) {
+
+        Subject doiSubject = AuthenticationUtil.getCurrentSubject();
+
+        // if doiadmin is the calling user, it has permission to delete any of the DOIs as well
+        if (!callingSubject.getPrincipals().equals(reqestorSubject.getPrincipals()) &&
+            !AuthenticationUtil.getX500Principal(doiSubject).toString().toLowerCase().equals(AuthenticationUtil.getX500Principal(callingSubject).toString().toLowerCase())) {
             throw new AccessControlException("Not permitted to delete DOI");
         }
         
