@@ -124,11 +124,16 @@
         "tags": [
           "instances"
         ],
-        "summary": "Get a list of DOIs",
-        "description": "List all DOIs. Return a list of DOI suffixes delimited by carriage return.",
+        "summary": "Get a list of DOI statuses",
+        "description": "List the statuses of all DOIs created by the user.",
         "operationId": "getAllDOI",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
         "produces": [
-          "text/plain"
+          "application/xml",
+          "application/json"
         ],
         "responses": {
           "200": {
@@ -136,8 +141,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "example": 
-                  "18.0100'\n'18.0101'\n'18.0102'\n'"
+                "$ref": "#/definitions/DOIStatusList"
               }
             }
           },
@@ -263,60 +267,6 @@
           }
         ]
       }
-    },
-    "/instances/{DOINum}/status": {
-      "get": {
-        "tags": [
-          "instances"
-        ],
-        "summary": "Get the status of a DOI instance",
-        "description": "Get the status of the specified DOI for authenticated user. Calling user must have access.",
-        "operationId": "getDOIStatus",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "DOINum",
-            "in": "path",
-            "description": "Digital Object Identifier number to retrieve status",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "successful operation",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/DOIStatus"
-              }
-            }
-          },
-          "403": {
-            "description": "Not authorised"
-          },
-          "404": {
-            "description": "DOI not found"
-          },
-          "500": {
-            "description": "Unexpected server error"
-          },
-          "503": {
-            "description": "Temporarily unavailable"
-          }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
-      }
     }
   },
   "securityDefinitions": {
@@ -336,52 +286,54 @@
     }
   },
   "definitions": {
-    "DOIStatus": {
+    "DOIStatusList": {
       "type": "object",
       "required": [
-        "identifier",
-        "title",
-        "publicationYear",
-        "status"
+        "doistatus"
       ],
       "properties": {
-        "identifier": {
+        "doistatus": {
           "type": "object",
-          "example": "10.5072/example-full",
           "properties": {
-            "identifierType": {
-              "type": "string",
-              "example": "DOI",
-              "xml": {
-                "attribute": true
+            "identifier": {
+              "type": "object",
+              "example": "10.5072/example-full",
+              "properties": {
+                "identifierType": {
+                  "type": "string",
+                  "example": "DOI",
+                  "xml": {
+                    "attribute": true
+                  }
+                }
               }
+            },
+            "title": {
+              "type": "object",
+              "example": "Full DataCite XML Example",
+              "properties": {
+                "xml:lang": {
+                  "type": "string",
+                  "example": "en-US",
+                  "xml": {
+                    "attribute": true
+                  }
+                }
+              }
+            },
+            "dataDirectory": {
+              "type": "string",
+              "example": "/AstroDataCitationDOI/CISTI.CANFAR/18.0100/data"
+            },
+            "status": {
+              "type": "string",
+              "example": "in progress"
             }
           }
-        },
-        "title": {
-          "type": "object",
-          "example": "Full DataCite XML Example",
-          "properties": {
-            "xml:lang": {
-              "type": "string",
-              "example": "en-US",
-              "xml": {
-                "attribute": true
-              }
-            }
-          }
-        },
-        "dataDirectory": {
-          "type": "string",
-          "example": "/AstroDataCitationDOI/CISTI.CANFAR/18.0100/data"
-        },
-        "status": {
-          "type": "string",
-          "example": "draft"
         }
       },
       "xml": {
-        "name": "doistatus"
+        "name": "doiStatuses"
       }
     },
     "DOIMeta": {
