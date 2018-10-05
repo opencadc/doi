@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,98 +62,112 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 4 $
+*
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.auth.ACIdentityManager;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.doi.status.Status;
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import java.security.AccessControlException;
-import javax.security.auth.Subject;
+import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.xml.XmlUtil;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.JDOMException;
 
-public abstract class DoiAction extends RestAction {
-    private static final Logger log = Logger.getLogger(DoiAction.class);
-
-    public static final String DATACITE_URL = "https://www.datacite.org";
-    
-    protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
-    protected static final String CADC_DOI_PREFIX = "10.11570";
-    protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
-    
-    protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
-    protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-    protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
-    protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
-    
-    
-    protected static final String DOI_GROUP_PREFIX = "DOI-";
-
-    protected Subject callingSubject;
-    protected Integer callingSubjectNumericID;
-    
-    protected String doiSuffix;
-    protected String doiAction;
-
-    public DoiAction() { }
+/**
+ * Constructs a list of DOI instance statuses from an XML source. This class is not thread safe but it is
+ * re-usable  so it can safely be used to sequentially parse multiple XML node
+ * documents.
+ *
+ * @author yeunga
+ */
+public class DoiStatusListXmlReader extends DoiStatusListReader
+{
+    private static final Logger log = Logger.getLogger(DoiStatusListXmlReader.class);
 
     /**
-     * Parse input documents
-     * @return
+     * Default constructor.
      */
-    @Override
-    protected InlineContentHandler getInlineContentHandler() {
-        return new DoiInlineContentHandler();
-    }
-    
-    protected void init(boolean authorize) {
-        callingSubject = AuthenticationUtil.getCurrentSubject();
-        log.debug("subject: " + callingSubject);
-        if (authorize) {
-            authorizeUser(callingSubject);
+    public DoiStatusListXmlReader() { }
+
+    /**
+     *  Construct a list of DoiStatus from an XML String source.
+     *
+     * @param xml String of the XML.
+     * @return List of DoiStatus object .
+     * @throws DoiParsingException if there is an error parsing the XML.
+     */
+    public List<DoiStatus> read(String xml) throws DoiParsingException
+    {
+        if (xml == null)
+            throw new IllegalArgumentException("XML must not be null");
+        try
+        {
+            return read(new StringReader(xml));
         }
-        
-        ACIdentityManager acIdentMgr = new ACIdentityManager();
-        this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
-
-        parsePath();
-    }
-
-    private void authorizeUser(Subject s) {
-        // authorization, for now, is defined as having a set of principals
-        if (s == null || s.getPrincipals().isEmpty()) {
-            throw new AccessControlException("Unauthorized");
-        }
-    }
-
-    private void parsePath() {
-        String path = syncInput.getPath();
-        log.debug("http request path: " + path);
-
-        if (path != null) {
-            String[] parts = path.split("/");
-            // Parse the request path to see if a DOI suffix has been provided
-            // A full DOI number for CANFAR will be: 10.11570/<DOISuffix>
-            if (parts.length > 0) {
-                doiSuffix = parts[0];
-                log.debug("DOI Number: " + doiSuffix);
-                if (parts.length > 1) {
-                    doiAction = parts[1];
-                    if (parts.length > 2) {
-                        throw new IllegalArgumentException("Bad request: " + path);
-                    }
-                }
-            }
+        catch (IOException ioe)
+        {
+            String error = "Error reading XML: " + ioe.getMessage();
+            throw new DoiParsingException(error, ioe);
         }
     }
 
-    protected String getDoiFilename(String suffix) {
-        return CADC_CISTI_PREFIX + suffix + ".xml";
+    /**
+     * Construct a list of DoiStatus from a InputStream.
+     *
+     * @param in InputStream.
+     * @return List of DoiStatus object .
+     * @throws DoiParsingException if there is an error parsing the XML.
+     */
+    public List<DoiStatus> read(InputStream in) throws IOException, DoiParsingException
+    {
+        if (in == null)
+            throw new IOException("stream closed");
+        try
+        {
+            return read(new InputStreamReader(in, "UTF-8"));
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException("UTF-8 encoding not supported");
+        }
+    }
+
+    /**
+     *  Construct a list of DoiStatus from a Reader.
+     *
+     * @param reader Reader.
+     * @return List of DoiStatus object containing the status of the specified DOI.
+     * @throws NodeParsingException if there is an error parsing the XML.
+     */
+    public List<DoiStatus> read(Reader reader) 
+    		throws DoiParsingException, IOException
+    {
+        if (reader == null)
+            throw new IllegalArgumentException("reader must not be null");
+
+        // Create a JDOM Document from the XML
+        Document document;
+        try
+        {
+            document = XmlUtil.buildDocument(reader, null);
+        }
+        catch (JDOMException jde)
+        {
+            String error = "XML failed schema validation: " + jde.getMessage();
+            throw new DoiParsingException(error, jde);
+        }
+       
+        // build a list of DoiStatus from the document
+        return this.buildStatusList(document);
     }
 }

@@ -71,7 +71,6 @@ import ca.nrc.cadc.ac.Group;
 import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
-import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.DoiReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
@@ -216,10 +215,7 @@ public class PostAction extends DoiAction {
         properties.add(isPublic);
 
         // Get numeric id for setting doiRequestor property
-        ACIdentityManager acIdentMgr = new ACIdentityManager();
-        Integer userNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
-
-        NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, userNumericID.toString());
+        NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callingSubjectNumericID.toString());
         properties.add(doiRequestor);
         
         NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, DOI_VOS_STATUS_DRAFT);

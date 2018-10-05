@@ -69,46 +69,95 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.xml.JsonInputter;
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.Title;
+
+import java.util.List;
+
 import org.apache.log4j.Logger;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 /**
- * Constructs a DoiStatus instance from a JSON source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple JSON node
- * documents.
- *
+ * Writes a DoiStatus instance to an output.
+ * 
  * @author yeunga
  */
-public class DoiStatusJsonReader extends DoiStatusReader
+public class DoiStatusListWriter 
 {
-    private static final Logger log = Logger.getLogger(DoiStatusJsonReader.class);
- 
-    /**
-     * Constructor. XML Schema validation is enabled by default.
-     */
-    public DoiStatusJsonReader() { }
+    private static Logger log = Logger.getLogger(DoiStatusListWriter.class);
 
-    /**
-     *  Construct a DoiStatus instance from a JSON String source.
-     *
-     * @param xml String of the JSON.
-     * @return DoiStatus object containing the status of the specified DOI instance.
-     * @throws DoiParsingException if there is an error parsing the JSON.
-     */
-    public DoiStatus read(String json) throws DoiParsingException
+    public DoiStatusListWriter() { }
+
+    protected Element getRootElement(List<DoiStatus> doiStatusList)
     {
-        if (json == null)
-            throw new IllegalArgumentException("JSON string must not be null");
-        try
+        Element root = new Element("doiStatuses");
+        for (DoiStatus doiStatus : doiStatusList)
         {
-            JsonInputter inputter = new JsonInputter();
-            return this.buildStatus(inputter.input(json));
+            Element statusElement = getDoiStatusElement(doiStatus);
+            root.addContent(statusElement);
         }
-        catch (Exception ex)
+        return root;
+    }
+    
+    protected Element getDoiStatusElement(DoiStatus doiStatus)
+    {
+        Element ret = new Element("doistatus");
+
+        // add identifier element
+        Element identifierElement = getIdentifierElement(doiStatus.getIdentifier());
+        ret.addContent(identifierElement);
+        
+        // add title element
+        Element titlesElement = getTitleElement(doiStatus.getTitle());
+        ret.addContent(titlesElement);
+        
+        // add publication year element
+        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
+        ret.addContent(dataDirectoryElement);
+        
+        // add status element
+        Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
+        ret.addContent(resourceTypeElement);
+        
+        return ret;
+    }
+    
+    protected Element getIdentifierElement(Identifier identifier)
+    {
+        Element ret = new Element("identifier");
+        ret.setAttribute("identifierType", identifier.getIdentifierType());
+        ret.setText(identifier.getText());
+        return ret;
+        
+    }
+    
+    protected Element getTitleElement(Title title)
+    {
+        Element ret = new Element("title");
+        ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
+        ret.setText(title.getText());
+        
+        if (title.titleType != null)
         {
-            String error = "Error reading JSON string: " + ex.getMessage();
-            throw new DoiParsingException(error, ex);
+            // set title type attribute
+            ret.setAttribute("titleType", title.titleType);
         }
+        
+        return ret;
+    }
+    
+    protected Element getDataDirectoryElement(String dataDirectory)
+    {
+        Element ret = new Element("dataDirectory");
+        ret.setText(dataDirectory);
+        return ret;
+    }
+    
+    protected Element getStatusElement(String status)
+    {
+        Element ret = new Element("status");
+        ret.setText(status);
+        return ret;
     }
 }

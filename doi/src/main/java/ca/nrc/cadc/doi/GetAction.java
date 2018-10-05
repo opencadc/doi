@@ -71,8 +71,8 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
-import ca.nrc.cadc.doi.status.DoiStatusJsonWriter;
-import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
+import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
+import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
@@ -82,9 +82,11 @@ import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
@@ -94,9 +96,8 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,8 +122,8 @@ public class GetAction extends DoiAction {
         CredUtil.checkCredentials();
         
         if (super.doiSuffix == null) {
-            // list all the DOIs for the calling user
-            listDois();
+            // get the DoiStatus of all DOI instances for the calling user
+            getStatusList();
         }
         else if (super.doiAction != null) {
             // perform the action on the DOI
@@ -134,28 +135,7 @@ public class GetAction extends DoiAction {
         }
     }
     
-    private void listDois() throws Exception {
-        // VOspace is expected to filter the list of DOIs by user in the future.
-        // Currently all DOIs are returned.
-        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
-        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(baseDataURI.getPath());
-        List<Node> doiNodes = doiContainer.getNodes();
-        StringBuilder sb = new StringBuilder();
-        for (Node n : doiNodes)
-        {
-            sb.append(n.getName());
-            sb.append("\n");
-        }
-        
-        OutputStreamWriter outWriter = new OutputStreamWriter(syncOutput.getOutputStream(), "UTF-8");
-        PrintWriter pw = new PrintWriter(outWriter);
-        pw.print(sb.toString());
-        pw.flush();
-    }
-    
-    private Title getTitle(Resource resource)
-    {
+    private Title getTitle(Resource resource) {
         Title title = null;
         List<Title> titles = resource.getTitles();
         for (Title t : titles)
@@ -170,66 +150,120 @@ public class GetAction extends DoiAction {
         return title;
     }
     
-    private void getStatus() throws Exception {
+    private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException
+    {
+        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+        String nodePath = baseDataURI.getPath();
+        if (StringUtil.hasText(path))
+        {
+            nodePath = nodePath + "/" + path;
+        }
         
+        return (ContainerNode) vosClient.getNode(nodePath);
+    }
+    
+    private Resource getResource(String doiSuffixString) throws Exception
+    {
         VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
         VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
         
-        // get the specified doi resource
         VOSURI docDataNode = new VOSURI(
-            baseDataURI.toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
-        Resource resource = getDoiDocFromVOSpace(vosClient, docDataNode);
-        Title title = getTitle(resource);
-
-        String doiContainerNodePath = baseDataURI.getPath() + "/" + doiSuffix;
-        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(doiContainerNodePath);
+            baseDataURI.toString() + "/" + doiSuffixString + "/" + getDoiFilename(doiSuffixString));
         
-        // get the data directory
-        String dataDirectory = null;
-        List<Node> doiContainedNodes = doiContainer.getNodes();
-        for (Node node : doiContainedNodes)
+        return getDoiDocFromVOSpace(vosClient, docDataNode);
+        
+    }
+    
+    private boolean isRequesterNode(Node node)
+    {
+        boolean isRequesterNode = false;
+        String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
+        log.info("requester: " + requester);
+        if (StringUtil.hasText(requester))
         {
-            if (node.getName().equals("data"))
+            isRequesterNode = requester.equals(this.callingSubjectNumericID.toString());
+        }
+        return isRequesterNode;
+    }
+    
+    private DoiStatus getDoiStatus(String doiSuffixString) throws Exception {
+        DoiStatus doiStatus = null;
+        ContainerNode doiContainerNode = getContainerNode(doiSuffixString);
+        if (isRequesterNode(doiContainerNode))
+        {
+            String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
+            log.info("node: " + doiContainerNode.getName() + ", status: " + status);
+            if (StringUtil.hasText(status))
             {
-                dataDirectory = node.getUri().getPath();
-                break;
+                Resource resource = getResource(doiSuffixString);
+                Title title = getTitle(resource);
+                
+                // get the data directory
+                String dataDirectory = null;
+                List<Node> doiContainedNodes = doiContainerNode.getNodes();
+                for (Node node : doiContainedNodes)
+                {
+                    if (node.getName().equals("data"))
+                    {
+                        dataDirectory = node.getUri().getPath();
+                        break;
+                    }
+                }
+                
+                // construct the DOI status
+                doiStatus = new DoiStatus(resource.getIdentifier(), title,
+                        dataDirectory, Status.toValue(status));
             }
         }
-        
-        // check to see if this user has permission
-        String status = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
 
-        // return the DOI status
-        DoiStatus doiStatus = new DoiStatus(resource.getIdentifier(), title,
-            dataDirectory, Status.toValue(status));
-        
+        return doiStatus;
+    }
+    
+    private List<Node> getNodeList() throws Exception {
+        // VOspace is expected to filter the list of DOIs by user in the future.
+        // Currently all DOIs are returned.
+        List<Node> containedNodes = new ArrayList<Node>();
+        ContainerNode doiContainer = getContainerNode("");
+        if (doiContainer != null)
+        {
+            containedNodes = doiContainer.getNodes();
+        }
+        return containedNodes;
+    }
+
+    private void getStatusList() throws Exception {
+        List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>();
+        List<Node> nodes = getNodeList();
+        for (Node node : nodes)
+        {
+            DoiStatus doiStatus = getDoiStatus(node.getName());
+            if (doiStatus != null)
+            {
+                doiStatusList.add(doiStatus);
+            }
+        }
+
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header is " + docFormat);
         if (docFormat != null && docFormat.contains("application/json"))
         {
             // json document
             syncOutput.setHeader("Content-Type", "application/json");
-            DoiStatusJsonWriter writer = new DoiStatusJsonWriter();
-            writer.write(doiStatus, syncOutput.getOutputStream());
+            DoiStatusListJsonWriter writer = new DoiStatusListJsonWriter();
+            writer.write(doiStatusList, syncOutput.getOutputStream());
         }
         else
         {
             // xml document
             syncOutput.setHeader("Content-Type", "text/xml");
-            DoiStatusXmlWriter writer = new DoiStatusXmlWriter();
-            writer.write(doiStatus, syncOutput.getOutputStream());
+            DoiStatusListXmlWriter writer = new DoiStatusListXmlWriter();
+            writer.write(doiStatusList, syncOutput.getOutputStream());
         }
     }
     
     private void getDoi() throws Exception {
-        
-        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
-        
-        VOSURI docDataNode = new VOSURI(
-            baseDataURI.toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
-        
-        Resource resource = getDoiDocFromVOSpace(vosClient, docDataNode);
+        Resource resource = getResource(doiSuffix);
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header is " + docFormat);
         if (docFormat != null && docFormat.contains("application/json"))
@@ -249,14 +283,7 @@ public class GetAction extends DoiAction {
     }
     
     private void performDoiAction() throws Exception {
-        if (doiAction.equals("status"))
-        {
-            getStatus();
-        }
-        else
-        {
-            throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
-        }
+        throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
     }
 
     private Resource getDoiDocFromVOSpace(VOSpaceClient vosClient, VOSURI dataNode)

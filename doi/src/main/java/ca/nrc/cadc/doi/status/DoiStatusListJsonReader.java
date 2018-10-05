@@ -70,101 +70,48 @@
 package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.xml.XmlUtil;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import ca.nrc.cadc.xml.JsonInputter;
+
+import java.util.List;
+
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.JDOMException;
 
 /**
- * Constructs DOI instances status from an XML source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple XML node
+ * Constructs a list of DoiStatus instances from a JSON source. This class is not thread safe but it is
+ * re-usable  so it can safely be used to sequentially parse multiple JSON node
  * documents.
  *
  * @author yeunga
  */
-public class DoiStatusXmlReader extends DoiStatusReader
+public class DoiStatusListJsonReader extends DoiStatusListReader
 {
-    private static final Logger log = Logger.getLogger(DoiStatusXmlReader.class);
-
+    private static final Logger log = Logger.getLogger(DoiStatusListJsonReader.class);
+ 
     /**
-     * Default constructor.
+     * Constructor. XML Schema validation is enabled by default.
      */
-    public DoiStatusXmlReader() { }
+    public DoiStatusListJsonReader() { }
 
     /**
-     *  Construct a DOM document from an XML String source.
+     *  Construct a list of DoiStatus instances from a JSON String source.
      *
-     * @param xml String of the XML.
-     * @return DoiStatus object containing the status of the specified DOI.
-     * @throws DoiParsingException if there is an error parsing the XML.
+     * @param xml String of the JSON.
+     * @return List of DoiStatus objects containing the status of each DOI instance.
+     * @throws DoiParsingException if there is an error parsing the JSON.
      */
-    public DoiStatus read(String xml) throws DoiParsingException
+    public List<DoiStatus> read(String json) throws DoiParsingException
     {
-        if (xml == null)
-            throw new IllegalArgumentException("XML must not be null");
+        if (json == null)
+            throw new IllegalArgumentException("JSON string must not be null");
         try
         {
-            return read(new StringReader(xml));
+            JsonInputter inputter = new JsonInputter();
+            return this.buildStatusList(inputter.input(json));
         }
-        catch (IOException ioe)
+        catch (Exception ex)
         {
-            String error = "Error reading XML: " + ioe.getMessage();
-            throw new DoiParsingException(error, ioe);
+            String error = "Error reading JSON string: " + ex.getMessage();
+            throw new DoiParsingException(error, ex);
         }
-    }
-
-    /**
-     * Construct a DOM document from a InputStream.
-     *
-     * @param in InputStream.
-     * @return DoiStatus object containing the status of the specified DOI.
-     * @throws DoiParsingException if there is an error parsing the XML.
-     */
-    public DoiStatus read(InputStream in) throws IOException, DoiParsingException
-    {
-        if (in == null)
-            throw new IOException("stream closed");
-        try
-        {
-            return read(new InputStreamReader(in, "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            throw new RuntimeException("UTF-8 encoding not supported");
-        }
-    }
-
-    /**
-     *  Construct a DOM document from a Reader.
-     *
-     * @param reader Reader.
-     * @return DoiStatus object containing the status of the specified DOI.
-     * @throws NodeParsingException if there is an error parsing the XML.
-     */
-    public DoiStatus read(Reader reader) 
-    		throws DoiParsingException, IOException
-    {
-        if (reader == null)
-            throw new IllegalArgumentException("reader must not be null");
-
-        // Create a JDOM Document from the XML
-        Document document;
-        try
-        {
-            document = XmlUtil.buildDocument(reader, null);
-        }
-        catch (JDOMException jde)
-        {
-            String error = "XML failed schema validation: " + jde.getMessage();
-            throw new DoiParsingException(error, jde);
-        }
-       
-        return this.buildStatus(document);
     }
 }

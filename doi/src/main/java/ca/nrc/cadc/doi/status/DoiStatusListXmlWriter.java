@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,7 +62,7 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
@@ -70,43 +70,38 @@
 package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.util.StringBuilderWriter;
-import ca.nrc.cadc.xml.JsonOutputter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 /**
- *
+ * Writes a DoiStatus instance as XML to an output.
+ * 
  * @author yeunga
  */
-public class DoiStatusJsonWriter extends DoiStatusWriter 
+public class DoiStatusListXmlWriter extends DoiStatusListWriter
 {
-    private static final Logger log = Logger.getLogger(DoiStatusJsonWriter.class);
+    private static Logger log = Logger.getLogger(DoiStatusListXmlWriter.class);
 
-    private boolean prettyPrint;
-
-    public DoiStatusJsonWriter() {
-        this(true);
-    }
-
-    public DoiStatusJsonWriter(boolean prettyPrint) {
-        this.prettyPrint = prettyPrint;
-    }
+    public DoiStatusListXmlWriter() { }
 
     /**
-     * Write a Resource instance to an OutputStream using UTF-8 encoding.
+     * Write a list of DoiStatus instance to an OutputStream using UTF-8 encoding.
      *
-     * @param doiStatus DoiStatus instance to write.
+     * @param doiStatusList List of DoiStatus instances to write.
      * @param out OutputStream to write to.
      * @throws IOException if the writer fails to write.
      */
-    public void write(DoiStatus doiStatus, OutputStream out) throws IOException
+    public void write(List<DoiStatus> doiStatusList, OutputStream out) throws IOException
     {
         OutputStreamWriter outWriter;
         try
@@ -117,30 +112,31 @@ public class DoiStatusJsonWriter extends DoiStatusWriter
         {
             throw new RuntimeException("UTF-8 encoding not supported", e);
         }
-        write(doiStatus, outWriter);
+        write(doiStatusList, outWriter);
     }
 
     /**
-     * Write a DoiStatus instance to a StringBuilder.
-     * @param doiStatus DoiStatus instance to write.
+     * Write a list of DoiStatus instances to a StringBuilder.
+     * @param doiStatusList List of DoiStatus instances to write.
      * @param builder
      * @throws IOException
      */
-    public void write(DoiStatus doiStatus, StringBuilder builder) throws IOException
+    public void write(List<DoiStatus> doiStatusList, StringBuilder builder) throws IOException
     {
-        write(doiStatus, new StringBuilderWriter(builder));
+        write(doiStatusList, new StringBuilderWriter(builder));
     }
 
     /**
-     * Write the DoiStatus instance to a writer.
+     * Write a list of DoiStatus instances to a writer.
      *
-     * @param doiStatus DoiStatus instance to write.
+     * @param doiStatusList List of DoiStatus instances to write.
      * @param writer Writer to write to.
      * @throws IOException if the writer fails to write.
      */
-    public void write(DoiStatus doiStatus, Writer writer) throws IOException {
+    public void write(List<DoiStatus> doiStatusList, Writer writer) throws IOException
+    {
         long start = System.currentTimeMillis();
-        Element root = this.getRootElement(doiStatus);
+        Element root = this.getRootElement(doiStatusList);
         write(root, writer);
         long end = System.currentTimeMillis();
         log.debug("Write elapsed time: " + (end - start) + "ms");
@@ -155,14 +151,8 @@ public class DoiStatusJsonWriter extends DoiStatusWriter
      */
     protected void write(Element root, Writer writer) throws IOException
     {
-        JsonOutputter outputter = new JsonOutputter();
-
-        Format fmt = null;
-        if (prettyPrint) {
-            fmt = Format.getPrettyFormat();
-            fmt.setIndent("  "); // 2 spaces
-        }
-        outputter.setFormat(fmt);
+        XMLOutputter outputter = new XMLOutputter();
+        outputter.setFormat(Format.getPrettyFormat());
         outputter.output(new Document(root), writer);
     }
 }

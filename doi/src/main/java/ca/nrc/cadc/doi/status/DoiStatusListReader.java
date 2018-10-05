@@ -69,89 +69,112 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.util.StringBuilderWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.doi.datacite.DoiReader;
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.Title;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
+import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import org.jdom2.Namespace;
 
 /**
- * Writes a DoiStatus instance as XML to an output.
- * 
+ * Builds a list of DoiStatus instances from a Document instance.
+ *
  * @author yeunga
  */
-public class DoiStatusXmlWriter extends DoiStatusWriter
+public class DoiStatusListReader
 {
-    private static Logger log = Logger.getLogger(DoiStatusXmlWriter.class);
-
-    public DoiStatusXmlWriter() { }
+    private static final Logger log = Logger.getLogger(DoiStatusListReader.class);
 
     /**
-     * Write a DoiStatus instance to an OutputStream using UTF-8 encoding.
-     *
-     * @param doiStatus DoiStatus instance to write.
-     * @param out OutputStream to write to.
-     * @throws IOException if the writer fails to write.
+     * Constructor.
      */
-    public void write(DoiStatus doiStatus, OutputStream out) throws IOException
+    public DoiStatusListReader() { }
+    
+    protected List<DoiStatus> buildStatusList(Document doc) throws DoiParsingException
     {
-        OutputStreamWriter outWriter;
-        try
+        List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>(); 
+        Element root = doc.getRootElement();
+        List<Element> childrenElements = root.getChildren();
+        for (Element childElement : childrenElements)
         {
-            outWriter = new OutputStreamWriter(out, "UTF-8");
+            DoiStatus doiStatus = buildStatus(childElement);
+            doiStatusList.add(doiStatus);
         }
-        catch (UnsupportedEncodingException e)
+        
+        return doiStatusList;
+    }
+    
+    protected DoiStatus buildStatus(Element statusElementRoot) throws DoiParsingException
+    {
+        Identifier id = buildIdentifier(statusElementRoot);
+        Title title = buildTitle(statusElementRoot);
+        
+        if (statusElementRoot.getChild("dataDirectory") == null)
         {
-            throw new RuntimeException("UTF-8 encoding not supported", e);
+            String msg = "dataDirectory not found in doi status element.";
+            throw new DoiParsingException(msg);
         }
-        write(doiStatus, outWriter);
+        
+        String dataDirectory = statusElementRoot.getChild("dataDirectory").getText();
+        
+        if (statusElementRoot.getChild("status") == null)
+        {
+            String msg = "status not found in doi status element.";
+            throw new DoiParsingException(msg);
+        }
+        
+        Status status = Status.toValue(statusElementRoot.getChild("status").getText());
+        
+        return new DoiStatus(id, title, dataDirectory, status);
     }
-
-    /**
-     * Write a DoiStatus instance to a StringBuilder.
-     * @param doiStatus DoiStatus instance to write.
-     * @param builder
-     * @throws IOException
-     */
-    public void write(DoiStatus doiStatus, StringBuilder builder) throws IOException
+    
+    protected Identifier buildIdentifier(Element root)
     {
-        write(doiStatus, new StringBuilderWriter(builder));
+        Namespace ns = root.getNamespace();
+        Element identifierElement = root.getChild("identifier", ns);
+        String text = identifierElement.getText();
+        String identifierType = identifierElement.getAttributeValue("identifierType");
+        Identifier id = new Identifier(identifierType);
+        DoiReader.assignIdentifier(id, text);
+        return id;
     }
-
-    /**
-     * Write a DoiStatus instance to a writer.
-     *
-     * @param doiStatus DoiStatus instance to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
-     */
-    public void write(DoiStatus doiStatus, Writer writer) throws IOException
+    
+    protected Title buildTitle(Element root) throws DoiParsingException
     {
-        long start = System.currentTimeMillis();
-        Element root = this.getRootElement(doiStatus);
-        write(root, writer);
-        long end = System.currentTimeMillis();
-        log.debug("Write elapsed time: " + (end - start) + "ms");
-    }
-
-    /**
-     * Write a Document instance by providing the root element to a writer.
-     *
-     * @param root Root element to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
-     */
-    protected void write(Element root, Writer writer) throws IOException
-    {
-        XMLOutputter outputter = new XMLOutputter();
-        outputter.setFormat(Format.getPrettyFormat());
-        outputter.output(new Document(root), writer);
+        Element titleElement = root.getChild("title");
+        // get the title text
+        String text = titleElement.getText();
+        String lang = null;
+        String titleType = null;
+        
+        // get the attributes and build a title instance
+        List<Attribute> attributes = titleElement.getAttributes();
+        for (Attribute attr : attributes)
+        {
+            String key = attr.getName();
+            if ("lang".equals(key))
+            {
+                lang = attr.getValue();
+            }
+            else
+            {
+                titleType = attr.getValue();
+            }
+        }
+        
+        // the titleType attribute is optional
+        Title title = new Title(lang, text);
+        if (titleType != null)
+        {
+            title.titleType = titleType;
+        }
+        
+        return title;
     }
 }

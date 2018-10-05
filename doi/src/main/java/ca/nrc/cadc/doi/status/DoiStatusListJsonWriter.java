@@ -62,98 +62,110 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi;
+package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.auth.ACIdentityManager;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.doi.status.Status;
-import ca.nrc.cadc.rest.InlineContentHandler;
-import ca.nrc.cadc.rest.RestAction;
-import java.security.AccessControlException;
-import javax.security.auth.Subject;
+import ca.nrc.cadc.util.StringBuilderWriter;
+import ca.nrc.cadc.xml.JsonOutputter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.util.List;
+
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
 
-public abstract class DoiAction extends RestAction {
-    private static final Logger log = Logger.getLogger(DoiAction.class);
+/**
+ *
+ * @author yeunga
+ */
+public class DoiStatusListJsonWriter extends DoiStatusListWriter 
+{
+    private static final Logger log = Logger.getLogger(DoiStatusListJsonWriter.class);
 
-    public static final String DATACITE_URL = "https://www.datacite.org";
-    
-    protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
-    protected static final String CADC_DOI_PREFIX = "10.11570";
-    protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
-    
-    protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
-    protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-    protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
-    protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
-    
-    
-    protected static final String DOI_GROUP_PREFIX = "DOI-";
+    private boolean prettyPrint;
 
-    protected Subject callingSubject;
-    protected Integer callingSubjectNumericID;
-    
-    protected String doiSuffix;
-    protected String doiAction;
+    public DoiStatusListJsonWriter() {
+        this(true);
+    }
 
-    public DoiAction() { }
+    public DoiStatusListJsonWriter(boolean prettyPrint) {
+        this.prettyPrint = prettyPrint;
+    }
 
     /**
-     * Parse input documents
-     * @return
+     * Write a list of DoiStatus instances to an OutputStream using UTF-8 encoding.
+     *
+     * @param doiStatusList List of DoiStatus instances to write.
+     * @param out OutputStream to write to.
+     * @throws IOException if the writer fails to write.
      */
-    @Override
-    protected InlineContentHandler getInlineContentHandler() {
-        return new DoiInlineContentHandler();
-    }
-    
-    protected void init(boolean authorize) {
-        callingSubject = AuthenticationUtil.getCurrentSubject();
-        log.debug("subject: " + callingSubject);
-        if (authorize) {
-            authorizeUser(callingSubject);
+    public void write(List<DoiStatus> doiStatusList, OutputStream out) throws IOException
+    {
+        OutputStreamWriter outWriter;
+        try
+        {
+            outWriter = new OutputStreamWriter(out, "UTF-8");
         }
-        
-        ACIdentityManager acIdentMgr = new ACIdentityManager();
-        this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
-
-        parsePath();
-    }
-
-    private void authorizeUser(Subject s) {
-        // authorization, for now, is defined as having a set of principals
-        if (s == null || s.getPrincipals().isEmpty()) {
-            throw new AccessControlException("Unauthorized");
+        catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException("UTF-8 encoding not supported", e);
         }
+        write(doiStatusList, outWriter);
     }
 
-    private void parsePath() {
-        String path = syncInput.getPath();
-        log.debug("http request path: " + path);
+    /**
+     * Write a list of DoiStatus instances to a StringBuilder.
+     * @param doiStatusList List of DoiStatus instances to write.
+     * @param builder
+     * @throws IOException
+     */
+    public void write(List<DoiStatus> doiStatusList, StringBuilder builder) throws IOException
+    {
+        write(doiStatusList, new StringBuilderWriter(builder));
+    }
 
-        if (path != null) {
-            String[] parts = path.split("/");
-            // Parse the request path to see if a DOI suffix has been provided
-            // A full DOI number for CANFAR will be: 10.11570/<DOISuffix>
-            if (parts.length > 0) {
-                doiSuffix = parts[0];
-                log.debug("DOI Number: " + doiSuffix);
-                if (parts.length > 1) {
-                    doiAction = parts[1];
-                    if (parts.length > 2) {
-                        throw new IllegalArgumentException("Bad request: " + path);
-                    }
-                }
-            }
+    /**
+     * Write the list of DoiStatus instances to a writer.
+     *
+     * @param doiStatusList List of DoiStatus instances to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(List<DoiStatus> doiStatusList, Writer writer) throws IOException {
+        long start = System.currentTimeMillis();
+        Element root = this.getRootElement(doiStatusList);
+        write(root, writer);
+        long end = System.currentTimeMillis();
+        log.debug("Write elapsed time: " + (end - start) + "ms");
+    }
+
+    /**
+     * Write a Document instance by providing the root element to a writer.
+     *
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    protected void write(Element root, Writer writer) throws IOException
+    {
+        JsonOutputter outputter = new JsonOutputter();
+        outputter.getListElementNames().add("doiStatuses");
+
+        Format fmt = null;
+        if (prettyPrint) {
+            fmt = Format.getPrettyFormat();
+            fmt.setIndent("  "); // 2 spaces
         }
-    }
-
-    protected String getDoiFilename(String suffix) {
-        return CADC_CISTI_PREFIX + suffix + ".xml";
+        outputter.setFormat(fmt);
+        outputter.output(new Document(root), writer);
     }
 }

@@ -76,6 +76,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.List;
 
 import javax.security.auth.Subject;
 
@@ -89,9 +90,8 @@ import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
-import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
+import ca.nrc.cadc.doi.status.DoiStatusListXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
@@ -136,6 +136,22 @@ public class CreateDocumentTest extends IntTestBase
         initialDocument = builder.toString();
     }
     
+    private String postDocument(URL postUrl, String document)
+    {
+        HttpPost httpPost = new HttpPost(postUrl, document, "text/xml", true);
+        httpPost.run();
+        
+        // Check that there was no exception thrown
+        if (httpPost.getThrowable() != null)
+            throw new RuntimeException(httpPost.getThrowable());
+        
+        // Check that the HttpPost was sent successfully
+        Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);
+
+        // Check that the doi server processed the document and added an identifier
+        return httpPost.getResponseBody();
+    }
+    
     private String createADocument(Subject s) throws Throwable
     {
         s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
@@ -150,18 +166,8 @@ public class CreateDocumentTest extends IntTestBase
                 log.debug("baseURL: " + baseURL);
                 log.debug("posting to: " + postUrl);
                 
-                HttpPost httpPost = new HttpPost(postUrl, initialDocument, "text/xml", true);
-                httpPost.run();
-                
-                // Check that there was no exception thrown
-                if (httpPost.getThrowable() != null)
-                    throw new RuntimeException(httpPost.getThrowable());
-                
-                // Check that the HttpPost was sent successfully
-                Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);
-
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = httpPost.getResponseBody();
+                String returnedDoc = postDocument(postUrl, initialDocument);
                 Resource resource = xmlReader.read(returnedDoc);
                 String  returnedIdentifier = resource.getIdentifier().getText();
                 
@@ -174,26 +180,27 @@ public class CreateDocumentTest extends IntTestBase
         return doiSuffix;
     }
 
-    private String[] listDois(Subject s) throws PrivilegedActionException
+    private List<DoiStatus> getDoiStatusList(Subject s) throws PrivilegedActionException
     {
-        String doiString = (String) Subject.doAs(s, new PrivilegedExceptionAction<Object>()
+        List<DoiStatus> doiStatusList = (List<DoiStatus>) Subject.doAs(s, new PrivilegedExceptionAction<List<DoiStatus>>()
         {
-            public Object run() throws Exception
+            public List<DoiStatus> run() throws Exception
             {
                 URL docURL = new URL(baseURL);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 HttpDownload get = new HttpDownload(docURL, baos);
                 get.setRequestProperty("Accept", "text/xml");
                 get.run();
-                return new String(baos.toByteArray());
+                DoiStatusListXmlReader statusReader = new DoiStatusListXmlReader();
+                return (List<DoiStatus>) statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
             }
         });
         
-        return doiString.split("\n");
+        return doiStatusList;
     }
     
     @Test
-    public void testCreateDocumentAndStatus() throws Throwable
+    public void testDocumentCreate() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
@@ -207,20 +214,9 @@ public class CreateDocumentTest extends IntTestBase
 
                 log.debug("baseURL: " + baseURL);
                 log.debug("posting to: " + postUrl);
-                log.info("baseURL: " + baseURL);
                 
-                HttpPost httpPost = new HttpPost(postUrl, initialDocument, "text/xml", true);
-                httpPost.run();
-                
-                // Check that there was no exception thrown
-                if (httpPost.getThrowable() != null)
-                    throw new RuntimeException(httpPost.getThrowable());
-                
-                // Check that the HttpPost was sent successfully
-                Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);
-
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = httpPost.getResponseBody();
+                String returnedDoc = postDocument(postUrl, initialDocument);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
@@ -238,23 +234,6 @@ public class CreateDocumentTest extends IntTestBase
                     get.run();
                     Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
                     Assert.assertEquals(JSON, get.getContentType());
-
-                    // For DOI status test below
-                    Title expectedTitle = resource.getTitles().get(0);
-                    String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
-    
-                    // Get the DOI status
-                    URL statusURL = new URL(docURL + "/status");
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    HttpDownload getStatus = new HttpDownload(statusURL, baos);
-                    getStatus.run();
-                    Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
-                    DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
-                    DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
-                    Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
-                    Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                 }
                 finally
                 {
@@ -267,7 +246,7 @@ public class CreateDocumentTest extends IntTestBase
     }
     
     @Test
-    public void testListDoi() throws Throwable
+    public void testGetStatusList() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
         final String[] newDois = new String[3];
@@ -279,19 +258,32 @@ public class CreateDocumentTest extends IntTestBase
         }
         
         // invoke the doi list service 
-        String [] returnedDois = listDois(s);
+        List<DoiStatus> doiStatusList = getDoiStatusList(s);
+        DoiStatus[] doiStatusArray = doiStatusList.toArray(new DoiStatus[doiStatusList.size()]);
 
         // verify that the returned list contains the dois of the documents just created above
-        Assert.assertTrue("Some created DOIs are missing from the DOI list", returnedDois.length >= newDois.length);
+        Assert.assertTrue("Some created DOIs are missing from the DOI list", doiStatusList.size() >= newDois.length);
         try
         {
             int matchCount = 0;
-            for (int i = 0; i < returnedDois.length; i++)
+            for (int i = 0; i < doiStatusArray.length; i++)
             {
                 for (int j = 0; j < newDois.length; j++)
                 {
-                    if (returnedDois[i].equals(newDois[j]))
+                    DoiStatus doiStatus = doiStatusArray[j];
+                    String[] doiParts = doiStatus.getIdentifier().getText().split("/");
+                    // verify doi
+                    if (doiParts[1].equals(newDois[j]))
                     {
+                        // verify status
+                        Status status = doiStatus.getStatus();
+                        Assert.assertEquals("Status of DOI " + doiParts[1] + " is incorrect", Status.DRAFT, status);
+                        
+                        // verify data directory
+                        String actualDataDirectory = doiStatus.getDataDirectory();
+                        String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + newDois[j] + "/data";
+                        Assert.assertEquals("Data directories are different", expectedDataDirectory, actualDataDirectory);
+                        
                         matchCount++;
                         break;
                     }
