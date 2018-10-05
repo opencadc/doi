@@ -78,7 +78,10 @@ import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.net.URI;
 import java.security.AccessControlException;
+import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
+import java.util.Iterator;
+import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -131,16 +134,18 @@ public class DeleteAction extends DoiAction {
         }
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         Integer numericID = Integer.parseInt(doiRequester);
-        Subject reqestorSubject = acIdentMgr.toSubject(numericID);
+        Subject requestorSubject = acIdentMgr.toSubject(numericID);
 
-        Subject doiSubject = AuthenticationUtil.getCurrentSubject();
+        Subject doiAdminSubject = AuthenticationUtil.getCurrentSubject();
 
-        // if doiadmin is the calling user, it has permission to delete any of the DOIs as well
-        if (!callingSubject.getPrincipals().equals(reqestorSubject.getPrincipals()) &&
-            !AuthenticationUtil.getX500Principal(doiSubject).toString().toLowerCase().equals(AuthenticationUtil.getX500Principal(callingSubject).toString().toLowerCase())) {
-            throw new AccessControlException("Not permitted to delete DOI");
+
+        if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
+            // if doiadmin is the calling user, it has permission to delete any of the DOIs as well
+            if (!checkSubjectsMatch(callingSubject, doiAdminSubject)) {
+                throw new AccessControlException("Not permitted to delete DOI");
+            }
         }
-        
+
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
         if (doiStatus != null && doiStatus.equals(DOI_VOS_STATUS_MINTED)) {
@@ -155,6 +160,22 @@ public class DeleteAction extends DoiAction {
 
         log.debug("deleting this node: " + doiParentPath);
         vosClient.deleteNode(doiParentPath);
+    }
+
+    private boolean checkSubjectsMatch(Subject subA, Subject subB) {
+        Set<Principal> subAPrincipals = subA.getPrincipals();
+        Set<Principal> subBPrincipals = subB.getPrincipals();
+        Iterator iter = subAPrincipals.iterator();
+
+        while (iter.hasNext()) {
+            if (subBPrincipals.contains(iter.next())) {
+                // Return if one of the principals matches
+                return true;
+            }
+        }
+
+        return false;
+
     }
 
 }
