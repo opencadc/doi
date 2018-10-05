@@ -37,11 +37,11 @@ import org.junit.Test;
 import org.openqa.selenium.By;
 
 
-public class DataCitationRequestPageTest extends AbstractDataCitationIntegrationTest {
+public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 //    private static final By ONE_CLICK_DOWNLOAD_LINK_ROW_3_ID_BY = By.id("_one-click_vov_3");
 
 
-    public DataCitationRequestPageTest() throws Exception {
+    public DataCitationTest() throws Exception {
         super();
     }
 
@@ -57,9 +57,25 @@ public class DataCitationRequestPageTest extends AbstractDataCitationIntegration
         requestPage.setPublishYear("2019");
         requestPage.setPublisher("Steady Hand Printing");
 
+        // TODO: add a new DOI, verify a valid number and metadata is displayed
+        // ...after a delete is completed in the UI otherwise the test won't
+        // be able to clean up sufficiently.
+
         Assert.assertTrue(requestPage.isStateOkay());
 
         System.out.println("requestDoi test complete.");
+    }
 
+    @Test
+    public void testLandingPage() throws Exception {
+        DataCitationPage citationPage = goTo("/citation", null, DataCitationPage.class);
+
+        citationPage.login();
+
+        // TODO: do something one the UI has stabilised
+
+        Assert.assertTrue(citationPage.isStateOkay());
+
+        System.out.println("testLandingPage test complete.");
     }
 }

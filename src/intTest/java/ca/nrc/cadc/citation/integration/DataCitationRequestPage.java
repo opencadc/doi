@@ -10,7 +10,6 @@ import org.openqa.selenium.support.PageFactory;
 
 
 public class DataCitationRequestPage extends AbstractTestWebPage {
-    private static final By FORM_RESET_BUTTON_BY = By.xpath("//*[@id=\"doi_form_reset_button\"]/div[1]/button[@type=\"reset\"]");
     private static final By DOI_TITLE_BY = By.id("doi_title");
 
     @FindBy(xpath = "//*[@id=\"doi_create_button\"]/div[1]/button[@type=\"submit\"]")
