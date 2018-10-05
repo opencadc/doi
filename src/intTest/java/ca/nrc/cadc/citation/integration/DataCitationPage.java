@@ -10,6 +10,7 @@ import org.openqa.selenium.support.PageFactory;
 
 public class DataCitationPage extends AbstractTestWebPage {
     private static final By DOI_TABLE_BY = By.id("doi_table");
+    private static final By DOI_LOGOUT_BY = By.id("logout");
 
 //    @FindBy(xpath = "//*[@id=\"doi_create_button\"]/div[1]/button[@type=\"submit\"]")
 //    WebElement submitButton;
@@ -29,6 +30,12 @@ public class DataCitationPage extends AbstractTestWebPage {
     @FindBy(id = "submitLogin")
     WebElement submitLogin;
 
+    @FindBy(id = "logout")
+    WebElement logout;
+
+    @FindBy(className = "user-actions")
+    WebElement userActionDropdown;
+
 
     public DataCitationPage(WebDriver driver) throws Exception {
         super(driver);
@@ -43,6 +50,12 @@ public class DataCitationPage extends AbstractTestWebPage {
         sendKeys(passwordInput, "sywymUL4");
         click(submitLogin);
         waitForElementPresent(DOI_TABLE_BY);
+    }
+
+    public void logout() throws Exception {
+        click(userActionDropdown);
+        waitForElementPresent(DOI_LOGOUT_BY);
+        click(logout);
     }
 
     // State verification functions

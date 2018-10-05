@@ -57,14 +57,40 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         requestPage.setPublishYear("2019");
         requestPage.setPublisher("Steady Hand Printing");
 
-        // TODO: add a new DOI, verify a valid number and metadata is displayed
-        // ...after a delete is completed in the UI otherwise the test won't
-        // be able to clean up sufficiently.
+        requestPage.resetForm();
 
+        Assert.assertTrue(requestPage.getDoiTitle().equals(""));
+
+        requestPage.setDoiTitle("Real publication title");
+        requestPage.setDoiAuthorList("Warbler, Yellow");
+        requestPage.setPublishYear("2019");
+        requestPage.setPublisher("Birds of a Feather Press");
+
+        requestPage.submitForm();
+
+        Assert.assertTrue(requestPage.isStateOkay());
+
+        // Delete DOI just created
+        requestPage.deleteDoi();
         Assert.assertTrue(requestPage.isStateOkay());
 
         System.out.println("requestDoi test complete.");
     }
+
+
+    @Test
+    public void getInvalidDoi() throws Exception {
+        DataCitationRequestPage requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
+
+        requestPage.login();
+        waitForElementVisible(requestPage.DOI_INFO_PANEL);
+        Assert.assertFalse(requestPage.isStateOkay());
+
+        requestPage.logout();
+
+        System.out.println("getInvalidDoi test complete.");
+    }
+
 
     @Test
     public void testLandingPage() throws Exception {
@@ -73,6 +99,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         citationPage.login();
 
         // TODO: do something one the UI has stabilised
+        // This test is a bit flaky, though
 
         Assert.assertTrue(citationPage.isStateOkay());
 

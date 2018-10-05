@@ -11,6 +11,11 @@ import org.openqa.selenium.support.PageFactory;
 
 public class DataCitationRequestPage extends AbstractTestWebPage {
     private static final By DOI_TITLE_BY = By.id("doi_title");
+    private static final By DOI_LOGOUT_BY = By.id("logout");
+    public static final By DOI_INFO_PANEL = By.className("alert-danger");
+    private static final By DOI_DATA_DIR_BY = By.id("doi_data_dir");
+    private static final By DOI_DELETE_BY = By.id("doi_form_delete_button");
+    private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_create_button");
 
     @FindBy(xpath = "//*[@id=\"doi_create_button\"]/div[1]/button[@type=\"submit\"]")
     WebElement submitButton;
@@ -47,6 +52,15 @@ public class DataCitationRequestPage extends AbstractTestWebPage {
 
     @FindBy(id = "submitLogin")
     WebElement submitLogin;
+
+    @FindBy(id = "logout")
+    WebElement logout;
+
+    @FindBy(className = "user-actions")
+    WebElement userActionDropdown;
+
+    @FindBy(className = "doi_create_button")
+    WebElement createButton;
 
 
     public DataCitationRequestPage(WebDriver driver) throws Exception {
@@ -100,6 +114,26 @@ public class DataCitationRequestPage extends AbstractTestWebPage {
         sendKeys(passwordInput, "sywymUL4");
         click(submitLogin);
         waitForElementPresent(DOI_TITLE_BY);
+    }
+
+    public void logout() throws Exception {
+        click(userActionDropdown);
+        waitForElementPresent(DOI_LOGOUT_BY);
+        click(logout);
+    }
+
+    public void submitForm() throws Exception {
+        WebElement cb = find(DOI_REQUEST_SUBMIT_BY);
+        click(cb);
+        // If this has a problem, this element will not become visible
+        waitForElementClickable(DOI_REQUEST_SUBMIT_BY);
+    }
+
+    public void deleteDoi() throws Exception {
+        WebElement db = find(DOI_DELETE_BY);
+        click(db);
+        // If this has a problem, this element will not become visible
+        waitForElementClickable(DOI_REQUEST_SUBMIT_BY);
     }
 
     // State verification functions
