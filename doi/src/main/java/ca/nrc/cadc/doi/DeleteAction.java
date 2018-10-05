@@ -127,13 +127,7 @@ public class DeleteAction extends DoiAction {
         // check to see if this user has permission
         String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
         if (doiRequester == null) {
-//            doiRequester = doiContainer.getPropertyValue("doiRequester");
-//            if (doiRequester == null) {
-//                doiRequester = doiContainer.getPropertyValue("doiRequestor");
-//            }
-//            if (doiRequester == null){
-                throw new IllegalStateException("No requester associated with DOI.");
-//            }
+            throw new IllegalStateException("No requester associated with DOI.");
         }
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         Integer numericID = Integer.parseInt(doiRequester);
