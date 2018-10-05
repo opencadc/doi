@@ -136,7 +136,7 @@
                               <button type="button" class="doi_edit btn btn-primary hidden .disabled" disabled
                                       id="doi_edit_button" tabindex="5">Update</button>
                               <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Clear</button>
-                              <%--<button type="delete" class="btn btn-danger doi-button" id="doi_form_delete_button">Delete</button>--%>
+                              <button type="delete" class="btn btn-danger doi-button hidden" id="doi_form_delete_button">Delete</button>
                             </div>
                             <div><span class="doi_edit hidden"><i>Apologies... the update function will be available soon.</i></span></div>
                           </div>

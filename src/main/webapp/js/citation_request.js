@@ -68,22 +68,31 @@
 
     // ------------ Page state management functions ------------
 
-    function handleFormReset(message) {
+    function handleFormReset(callFormReset) {
       $('#doi_metadata').addClass('hidden')
-      clearAjaxAlert()
+      page.clearAjaxAlert()
       $('#doi_data_dir').html('')
       $('#doi_landing_page').html('')
-      setProgressBar('okay')
+      page.setProgressBar('okay')
       setButtonState('create')
+
+      // Do this only if explicitly asked
+      // If this comes in from clicking the 'Clear' button, the data will be
+      // the event itself.
+      if (callFormReset === true) {
+        $("#doi_form_reset_button").click()
+      }
     }
 
     function setButtonState(mode) {
       if (mode === 'update') {
         $('.doi_edit').removeClass('hidden')
         $('#doi_create_button').addClass('hidden')
+        $('#doi_form_delete_button').removeClass('hidden')
       } else if (mode === 'create') {
         $('.doi_edit').addClass('hidden')
         $('#doi_create_button').removeClass('hidden')
+        $('#doi_form_delete_button').addClass('hidden')
       }
     }
 
@@ -208,14 +217,12 @@
         $.ajax({
           xhrFields: { withCredentials: true },
           url: getUrl,
-          method: 'DELETE',
-          dataType: 'json',
-          contentType: 'application/json'
+          method: 'DELETE'
         })
           .success(function(data) {
             page.setProgressBar('okay')
-            handleFormReset()
-            setAjaxSuccess('DOI Deleted')
+            handleFormReset(true)
+            page.setAjaxSuccess('DOI Deleted')
           })
           .fail(function(message) {
             page.setProgressBar('error')
