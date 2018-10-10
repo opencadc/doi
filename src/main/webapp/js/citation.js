@@ -56,6 +56,7 @@
         ],
         columnDefs: [
           { width: 20, targets: 0 },
+          { width: 50, targets: 1 },
           { orderable: false, targets: [-1] }
         ],
         order: [],
