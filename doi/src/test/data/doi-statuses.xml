@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doiStatuses>
+  <doistatus>
+    <identifier identifierType="DOI">10.5072/18.1001</identifier>
+    <title xml:lang="en-US">Title 1</title>
+    <dataDirectory>AstroDataCitationDOI/CISTI.CANFAR/18.1001/data</dataDirectory>
+    <status>minted</status>
+  </doistatus>
+  <doistatus>
+    <identifier identifierType="DOI">10.5072/18.1002</identifier>
+    <title xml:lang="en-US">Title 2</title>
+    <dataDirectory>AstroDataCitationDOI/CISTI.CANFAR/18.1002/data</dataDirectory>
+    <status>minted</status>
+  </doistatus>
+  <doistatus>
+    <identifier identifierType="DOI">10.5072/18.1003</identifier>
+    <title xml:lang="en-US">Title 3</title>
+    <dataDirectory>AstroDataCitationDOI/CISTI.CANFAR/18.1003/data</dataDirectory>
+    <status>minted</status>
+  </doistatus>
+</doiStatuses>

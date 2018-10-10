@@ -93,7 +93,7 @@ public class DoiStatusWriter
         return root;
     }
     
-    protected Element getDoiStatusElement(DoiStatus doiStatus)
+    public Element getDoiStatusElement(DoiStatus doiStatus)
     {
         Element ret = new Element("doistatus");
 
@@ -105,7 +105,7 @@ public class DoiStatusWriter
         Element titlesElement = getTitleElement(doiStatus.getTitle());
         ret.addContent(titlesElement);
         
-        // add publication year element
+        // add data directory element
         Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
         ret.addContent(dataDirectoryElement);
         

@@ -70,17 +70,12 @@
 package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiReader;
-import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.Title;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.Namespace;
 
 /**
  * Builds a list of DoiStatus instances from a Document instance.
@@ -98,83 +93,16 @@ public class DoiStatusListReader
     
     protected List<DoiStatus> buildStatusList(Document doc) throws DoiParsingException
     {
+        DoiStatusReader doiStatusReader = new DoiStatusReader();
         List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>(); 
         Element root = doc.getRootElement();
         List<Element> childrenElements = root.getChildren();
         for (Element childElement : childrenElements)
         {
-            DoiStatus doiStatus = buildStatus(childElement);
+            DoiStatus doiStatus = doiStatusReader.buildStatus(childElement);
             doiStatusList.add(doiStatus);
         }
         
         return doiStatusList;
-    }
-    
-    protected DoiStatus buildStatus(Element statusElementRoot) throws DoiParsingException
-    {
-        Identifier id = buildIdentifier(statusElementRoot);
-        Title title = buildTitle(statusElementRoot);
-        
-        if (statusElementRoot.getChild("dataDirectory") == null)
-        {
-            String msg = "dataDirectory not found in doi status element.";
-            throw new DoiParsingException(msg);
-        }
-        
-        String dataDirectory = statusElementRoot.getChild("dataDirectory").getText();
-        
-        if (statusElementRoot.getChild("status") == null)
-        {
-            String msg = "status not found in doi status element.";
-            throw new DoiParsingException(msg);
-        }
-        
-        Status status = Status.toValue(statusElementRoot.getChild("status").getText());
-        
-        return new DoiStatus(id, title, dataDirectory, status);
-    }
-    
-    protected Identifier buildIdentifier(Element root)
-    {
-        Namespace ns = root.getNamespace();
-        Element identifierElement = root.getChild("identifier", ns);
-        String text = identifierElement.getText();
-        String identifierType = identifierElement.getAttributeValue("identifierType");
-        Identifier id = new Identifier(identifierType);
-        DoiReader.assignIdentifier(id, text);
-        return id;
-    }
-    
-    protected Title buildTitle(Element root) throws DoiParsingException
-    {
-        Element titleElement = root.getChild("title");
-        // get the title text
-        String text = titleElement.getText();
-        String lang = null;
-        String titleType = null;
-        
-        // get the attributes and build a title instance
-        List<Attribute> attributes = titleElement.getAttributes();
-        for (Attribute attr : attributes)
-        {
-            String key = attr.getName();
-            if ("lang".equals(key))
-            {
-                lang = attr.getValue();
-            }
-            else
-            {
-                titleType = attr.getValue();
-            }
-        }
-        
-        // the titleType attribute is optional
-        Title title = new Title(lang, text);
-        if (titleType != null)
-        {
-            title.titleType = titleType;
-        }
-        
-        return title;
     }
 }

@@ -71,8 +71,10 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
+import ca.nrc.cadc.doi.status.DoiStatusJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
+import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
@@ -159,7 +161,7 @@ public class GetAction extends DoiAction {
         {
             nodePath = nodePath + "/" + path;
         }
-        
+
         return (ContainerNode) vosClient.getNode(nodePath);
     }
     
@@ -190,6 +192,7 @@ public class GetAction extends DoiAction {
     private DoiStatus getDoiStatus(String doiSuffixString) throws Exception {
         DoiStatus doiStatus = null;
         ContainerNode doiContainerNode = getContainerNode(doiSuffixString);
+
         if (isRequesterNode(doiContainerNode))
         {
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
@@ -231,16 +234,23 @@ public class GetAction extends DoiAction {
         }
         return containedNodes;
     }
-
+    
     private void getStatusList() throws Exception {
         List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>();
         List<Node> nodes = getNodeList();
         for (Node node : nodes)
         {
-            DoiStatus doiStatus = getDoiStatus(node.getName());
-            if (doiStatus != null)
+            try
             {
-                doiStatusList.add(doiStatus);
+                DoiStatus doiStatus = getDoiStatus(node.getName());
+                if (doiStatus != null)
+                {
+                    doiStatusList.add(doiStatus);
+                }
+            } 
+            catch (AccessControlException ex)
+            {
+                log.debug("No access to DOI " + node.getName());
             }
         }
 
@@ -283,7 +293,31 @@ public class GetAction extends DoiAction {
     }
     
     private void performDoiAction() throws Exception {
-        throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
+        if (doiAction.equals("status"))
+        {
+            DoiStatus doiStatus = getDoiStatus(doiSuffix);
+
+            String docFormat = this.syncInput.getHeader("Accept");
+            log.debug("'Accept' value in header is " + docFormat);
+            if (docFormat != null && docFormat.contains("application/json"))
+            {
+                // json document
+                syncOutput.setHeader("Content-Type", "application/json");
+                DoiStatusJsonWriter writer = new DoiStatusJsonWriter();
+                writer.write(doiStatus, syncOutput.getOutputStream());
+            }
+            else
+            {
+                // xml document
+                syncOutput.setHeader("Content-Type", "text/xml");
+                DoiStatusXmlWriter writer = new DoiStatusXmlWriter();
+                writer.write(doiStatus, syncOutput.getOutputStream());
+            }
+        }
+        else
+        {
+            throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
+        }
     }
 
     private Resource getDoiDocFromVOSpace(VOSpaceClient vosClient, VOSURI dataNode)

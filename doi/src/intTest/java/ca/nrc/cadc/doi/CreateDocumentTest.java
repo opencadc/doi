@@ -90,8 +90,10 @@ import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlReader;
+import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
@@ -200,7 +202,7 @@ public class CreateDocumentTest extends IntTestBase
     }
     
     @Test
-    public void testDocumentCreate() throws Throwable
+    public void testCreateDocumentAndStatus() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
@@ -234,6 +236,23 @@ public class CreateDocumentTest extends IntTestBase
                     get.run();
                     Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
                     Assert.assertEquals(JSON, get.getContentType());
+                    
+                    // For DOI status test below
+                    Title expectedTitle = resource.getTitles().get(0);
+                    String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
+    
+                    // Get the DOI status
+                    URL statusURL = new URL(docURL + "/status");
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    HttpDownload getStatus = new HttpDownload(statusURL, baos);
+                    getStatus.run();
+                    Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
+                    DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
+                    DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
+                    Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
+                    Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
+                    Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                 }
                 finally
                 {
@@ -270,8 +289,9 @@ public class CreateDocumentTest extends IntTestBase
             {
                 for (int j = 0; j < newDois.length; j++)
                 {
-                    DoiStatus doiStatus = doiStatusArray[j];
+                    DoiStatus doiStatus = doiStatusArray[i];
                     String[] doiParts = doiStatus.getIdentifier().getText().split("/");
+
                     // verify doi
                     if (doiParts[1].equals(newDois[j]))
                     {

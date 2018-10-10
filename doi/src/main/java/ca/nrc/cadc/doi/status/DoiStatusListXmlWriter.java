@@ -84,7 +84,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 /**
- * Writes a DoiStatus instance as XML to an output.
+ * Writes a list of DoiStatus instances as XML to an output.
  * 
  * @author yeunga
  */
@@ -95,7 +95,7 @@ public class DoiStatusListXmlWriter extends DoiStatusListWriter
     public DoiStatusListXmlWriter() { }
 
     /**
-     * Write a list of DoiStatus instance to an OutputStream using UTF-8 encoding.
+     * Write a list of DoiStatus instances to an OutputStream using UTF-8 encoding.
      *
      * @param doiStatusList List of DoiStatus instances to write.
      * @param out OutputStream to write to.

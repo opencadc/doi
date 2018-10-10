@@ -69,14 +69,11 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.Title;
 
 import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.jdom2.Element;
-import org.jdom2.Namespace;
 
 /**
  * Writes a DoiStatus instance to an output.
@@ -91,73 +88,13 @@ public class DoiStatusListWriter
 
     protected Element getRootElement(List<DoiStatus> doiStatusList)
     {
+        DoiStatusWriter doiStatusWriter = new DoiStatusWriter();
         Element root = new Element("doiStatuses");
         for (DoiStatus doiStatus : doiStatusList)
         {
-            Element statusElement = getDoiStatusElement(doiStatus);
+            Element statusElement = doiStatusWriter.getDoiStatusElement(doiStatus);
             root.addContent(statusElement);
         }
         return root;
-    }
-    
-    protected Element getDoiStatusElement(DoiStatus doiStatus)
-    {
-        Element ret = new Element("doistatus");
-
-        // add identifier element
-        Element identifierElement = getIdentifierElement(doiStatus.getIdentifier());
-        ret.addContent(identifierElement);
-        
-        // add title element
-        Element titlesElement = getTitleElement(doiStatus.getTitle());
-        ret.addContent(titlesElement);
-        
-        // add publication year element
-        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
-        ret.addContent(dataDirectoryElement);
-        
-        // add status element
-        Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
-        ret.addContent(resourceTypeElement);
-        
-        return ret;
-    }
-    
-    protected Element getIdentifierElement(Identifier identifier)
-    {
-        Element ret = new Element("identifier");
-        ret.setAttribute("identifierType", identifier.getIdentifierType());
-        ret.setText(identifier.getText());
-        return ret;
-        
-    }
-    
-    protected Element getTitleElement(Title title)
-    {
-        Element ret = new Element("title");
-        ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
-        ret.setText(title.getText());
-        
-        if (title.titleType != null)
-        {
-            // set title type attribute
-            ret.setAttribute("titleType", title.titleType);
-        }
-        
-        return ret;
-    }
-    
-    protected Element getDataDirectoryElement(String dataDirectory)
-    {
-        Element ret = new Element("dataDirectory");
-        ret.setText(dataDirectory);
-        return ret;
-    }
-    
-    protected Element getStatusElement(String status)
-    {
-        Element ret = new Element("status");
-        ret.setText(status);
-        return ret;
     }
 }

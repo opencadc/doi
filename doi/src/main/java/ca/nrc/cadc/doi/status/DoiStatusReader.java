@@ -97,7 +97,11 @@ public class DoiStatusReader
     protected DoiStatus buildStatus(Document doc) throws DoiParsingException
     {
         Element root = doc.getRootElement();
-        
+        return buildStatus(root);
+    }
+    
+    public DoiStatus buildStatus(Element root) throws DoiParsingException
+    {
         Identifier id = buildIdentifier(root);
         Title title = buildTitle(root);
         
