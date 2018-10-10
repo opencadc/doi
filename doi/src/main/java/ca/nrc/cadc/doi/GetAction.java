@@ -219,6 +219,11 @@ public class GetAction extends DoiAction {
                         dataDirectory, Status.toValue(status));
             }
         }
+        else
+        {
+            String msg = "No access to " + doiSuffixString + " which was created by someone else.";
+            throw new AccessControlException(msg);
+        }
 
         return doiStatus;
     }
@@ -250,7 +255,8 @@ public class GetAction extends DoiAction {
             } 
             catch (AccessControlException ex)
             {
-                log.debug("No access to DOI " + node.getName());
+                // skip
+                log.debug(ex);
             }
         }
 
