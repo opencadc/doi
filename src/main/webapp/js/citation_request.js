@@ -232,6 +232,34 @@
       return false
     }
 
+    // TODO: hook this in as a secondary call after the initial GET
+    // returns successfully...
+    //function getDoiStatus(doiName) {
+    //  page.prepareCall().then(function(serviceURL) {
+    //    var statusUrl = serviceURL + '/' + doiName + "/status"
+    //    $.ajax({
+    //      xhrFields: { withCredentials: true },
+    //      url: statusUrl,
+    //      method: 'GET',
+    //      contentType: 'text/xml'
+    //    })
+    //        .success(function(data) {
+    //          page.setProgressBar('okay')
+    //          displayDoiStatus(data)
+    //        })
+    //        .fail(function(message) {
+    //          // skip this one
+    //          // remove this entry from the table data source
+    //          //page.setProgressBar('error')
+    //          //setTableProgress('okay')
+    //          //page.setAjaxFail(message)
+    //        })
+    //  })
+    //  return false
+    //}
+    //
+
+
     function loadMetadata(doiName) {
       // Performed after a successful GET
       // There will be a service call eventually to get this  data, but for now the front end

@@ -7,7 +7,8 @@
           Citation: Citation,
           // Events
           events: {
-            onDoiListLoaded: new jQuery.Event('doi:onDoiListLoaded')
+            onDoiListLoaded: new jQuery.Event('doi:onDoiListLoaded'),
+            onDoiDeleted: new jQuery.Event('doi:onDoiDeleted')
           }
         }
       }
@@ -26,29 +27,7 @@
     var _selfGroupManager = this
     var doiTable;
     var doiTableSource =[];
-    //    {
-    //  "doi_name" : "10.11570/----",
-    //  "status" : "-",
-    //  "title" : "-",
-    //  "data_dir": "-",
-    //  "action": ""
-    //},
-    //{
-    //  "doi_name" : "10.11570/abcd",
-    //  "status" : "-",
-    //  "title" : "-",
-    //  "data_dir": "-",
-    //  "action": ""
-    //}];
-    //
-    //var newRow = {
-    //  "doi_name" : "10.11570/newRow",
-    //  "status" : "-",
-    //  "title" : "-",
-    //  "data_dir": "-",
-    //  "action": ""
-    //}
-    //
+
     var rowTemplate = {
       "doi_name" : "",
       "status" : "",
@@ -58,18 +37,6 @@
     }
 
     var page = new cadc.web.citation.CitationPage(inputs)
-
-    //var resourceCapabilitiesEndPoint =
-    //  inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
-    //    ? inputs.resourceCapabilitiesEndPoint
-    //    : 'http://apps.canfar.net/reg/resource-caps'
-    //
-    //// NOTE: for deployment to production, this constructor should have no parameters.
-    //// for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
-    ////var _registryClient = new Registy();
-    //var _registryClient = new Registry({
-    //  resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
-    //})
 
     // ------------ Page load functions ------------
 
@@ -100,14 +67,17 @@
       loadDoiList();
     }
 
-
-
     function attachListeners() {
-      $('.doi_delete').click(handleDOIDelete)
-      //$('.doi_request').click(handleDOIRequest)
+      $('.doi_refresh').click(loadDoiList)
 
       subscribe(cadc.web.citation.events.onDoiListLoaded, function(e, data) {
         setTableContent(data.doiList)
+      })
+
+      subscribe(cadc.web.citation.events.onDoiDeleted, function(e, data) {
+        //       TODO: ideally removeRow would be called but there's a bug in it
+        //removeRow(data.doiSuffix)
+        loadDoiList()
       })
     }
 
@@ -140,21 +110,20 @@
       $(_selfGroupManager).trigger(event, eventData)
     }
 
-    function setTableContent(stringdata) {
-      var doiSuffixes = stringdata.split("\n");
-      // Initial table load
-      for (var j=doiSuffixes.length-1; j>=0; j--) {
-        var tmpRow = {
-          "doi_name" : mkNameLink(doiSuffixes[j]),
-          "status" : "-",
-          "title" : "-",
-          "data_dir": "-",
-          "action": ""
-        }
-        addRow(tmpRow);
-        getDoiStatus(doiSuffixes[j])
+    function setTableContent(jsonData) {
+      // payload from ajax call to /doi/instances is an array of
+      // of status objects the calling user has permission to view
+      var doiStatusList = jsonData.doiStatuses['$'];
+
+      // Table load
+      for (var j=doiStatusList.length-1; j>=0; j--) {
+        var doiEntry = doiStatusList[j]
+        displayDoiStatus(doiEntry.doistatus)
       }
       page.setProgressBar('okay')
+
+      // attach listeners to delete icons.
+      $('.doi_delete').click(handleDOIDelete)
     }
 
 
@@ -168,68 +137,58 @@
     // ------------ HTTP/Ajax functions ------------
 
     // DELETE
-    function handleDOIDelete() {
+    function handleDOIDelete(event) {
       // Get doi number from link...
-      var doiNumber = $('#doi_num')  // for the row
-        .val()
-        .split('/')[1]
-      clearAjaxAlert()
-      setProgressBar('busy')
+      var doiSuffix = event.currentTarget.dataset.doinum
+      page.clearAjaxAlert()
+      page.setProgressBar('busy')
 
       page.prepareCall().then(function(serviceURL) {
-        var getUrl = serviceURL + '/' + doiNumber
+        var getUrl = serviceURL + '/' + doiSuffix
         $.ajax({
           xhrFields: { withCredentials: true },
           url: getUrl,
-          method: 'DELETE',
-          dataType: 'json',
-          contentType: 'application/json'
+          method: 'DELETE'
         })
           .success(function(data) {
-            setProgressBar('okay')
-            handleFormReset()
-            setAjaxSuccess('DOI Deleted')
+            trigger(cadc.web.citation.events.onDoiDeleted, {
+              doiSuffix: doiSuffix,
+            })
+            page.setProgressBar('okay')
+            page.setAjaxSuccess('DOI ' + doiSuffix + ' Deleted')
           })
           .fail(function(message) {
-            setProgressBar('error')
-            setAjaxFail(message)
+            page.setProgressBar('error')
+            page.setAjaxFail(message)
           })
       })
       return false
     }
 
+    function setTableStatus(displayText) {
+      $(".dataTables_empty").html(displayText)
+    }
 
     function loadDoiList() {
+      clearTable()
+      page.setProgressBar('busy')
+      setTableStatus("Loading...")
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
           xhrFields: { withCredentials: true },
           url: serviceURL,
-          method: 'GET'
+          method: 'GET',
+          dataType: 'json',
+          contentType: 'application/json'
         })
         .success(function(stringdata) {
-          page.setProgressBar('busy')
-          //setTableProgress('busy')
-
+          setTableStatus("Loading......")
           trigger(cadc.web.citation.events.onDoiListLoaded, {
             doiList: stringdata,
           })
-          //var doiSuffixes = stringdata.split("\n");
-          //// Initial table load
-          //for (var j=doiSuffixes.length-1; j>=0; j--) {
-          //  var tmpRow = {
-          //    "doi_name" : mkNameLink(doiSuffixes[j]),
-          //    "status" : "-",
-          //    "title" : "-",
-          //    "data_dir": "-",
-          //    "action": ""
-          //  }
-          //  addRow(tmpRow);
-          //  getDoiStatus(doiSuffixes[j])
-          //}
-          //page.setProgressBar('okay')
-
         })
         .fail(function(message) {
+          setTableStatus("No data")
           page.setProgressBar('error')
           page.setAjaxFail(message)
         })
@@ -237,50 +196,32 @@
       return false
     }
 
-
-
-    // TODO: how to track when doi list is finished?
-    function getDoiStatus(doiName) {
-      page.prepareCall().then(function(serviceURL) {
-        var statusUrl = serviceURL + '/' + doiName + "/status"
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: statusUrl,
-          method: 'GET',
-          contentType: 'text/xml'
-        })
-            .success(function(data) {
-              page.setProgressBar('okay')
-              displayDoiStatus(data)
-            })
-            .fail(function(message) {
-              // skip this one
-              // remove this entry from the table data source
-              //page.setProgressBar('error')
-              //setTableProgress('okay')
-              //page.setAjaxFail(message)
-            })
-      })
-      return false
-    }
-
-    function displayDoiStatus(data) {
+    function displayDoiStatus(doi) {
+      // The JSON output from /doi/instances uses Badgerfish,
+      // which is why pulling the values out of it probably looks
+      // strange here...
+      // Assuming this is a 'doistatus' object
       var newStatus = rowTemplate
-      var doiName = data.getElementsByTagName("identifier")[0].textContent.split("/")[1]
+      var doiName = doi.identifier['$']
       newStatus.doi_name = mkNameLink(doiName)
-      newStatus.status = data.getElementsByTagName("status")[0].textContent
-      newStatus.data_dir = data.getElementsByTagName("dataDirectory")[0].textContent
-      newStatus.title = data.getElementsByTagName("title")[0].textContent
+      newStatus.status = doi.status['$']
+      newStatus.data_dir = mkDataDirLink(doi.dataDirectory['$'])
+      newStatus.title = mkTitleLink(doi.title['$'], doiName)
+      newStatus.action = mkDeleteLink(doiName)
 
-      updateRow(getRowNum(newStatus.doi_name), newStatus);
+      addRow(newStatus);
     }
 
     // ------------ Table update functions ------------
 
+    function clearTable() {
+      // Invalidate and redraw
+      doiTable
+          .clear()
+          .draw()
+    }
 
     function updateRow(rowNum, data) {
-
-      // TODO: these will be updated with the HTML-generating link functions below...
       doiTableSource[rowNum].doi_name =  data.doi_name
       doiTableSource[rowNum].status =  data.status
       doiTableSource[rowNum].title =  data.title
@@ -289,7 +230,7 @@
     }
 
     function addRow(newRowData) {
-      // Invalidate and redraw
+      // Add and redraw
       doiTable
           .row
           .add(newRowData)
@@ -304,41 +245,105 @@
           .draw()
     }
 
-    function getRowNum(doi_name) {
-      for (i=0; i<doiTableSource.length; i++) {
-        if (doiTableSource[i].doi_name === doi_name) {
-          return i;
-        }
-      }
+    function removeRow(rowNum) {
 
-      // not found
-      return -1;
+      doiTable.rows().nodes().each(function(a,b) {
+        if($(a).children().eq(0).text() == rowNum){
+          doiTable.rows(a).remove();
+        }
+      } );
+
+
+      // TODO: bug here - last row of table is duplicated for
+      // total number of remaining rows on draw() ??
+      doiTable.rows().invalidate();
+      doiTable.draw();
+
+    }
+
+    //function getRowNum(doi_name) {
+    //  for (i=0; i<doiTableSource.length; i++) {
+    //    if (doiTableSource[i].doi_name === doi_name) {
+    //      return i;
+    //    }
+    //  }
+    //
+    //  // not found
+    //  return -1;
+    //}
+
+
+    // ------------ Display/rendering functions ------------
+
+    function parseDoiSuffix(doiName) {
+      var doiSuffix = "";
+      if (doiName.match("/")) {
+        doiSuffix = doiName.split("/")[1];
+      }
+      else {
+        doiSuffix = doiName;
+      }
+      return doiSuffix;
     }
 
     function mkNameLink(doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
       return '<a href="/citation/request?doi=' +
-      doiName +
+      doiSuffix +
       '" target="_blank">' +
-      doiName +
+      doiSuffix +
       '</a>'
     }
 
-    function mkTitleLink(title) {
-
+    function mkTitleLink(title, doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      return '<a href="/citation/request?doi=' +
+          doiSuffix +
+          '" target="_blank">' +
+          title +
+          '</a>'
     }
 
     function mkDataDirLink(dataDir) {
+      return'<a href="/storage/list' +
+              dataDir +
+              '" target="_blank">/storage/list' +
+              dataDir +
+              '</a>'
+    }
 
+    function mkDeleteLink(doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      return '<span class="doi_delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
     }
 
 
+//databench button ideas & uses
+  //<nav class="navbar navbar-expand-sm" id="navbar-functions">
+  //      <ul class="nav navbar-nav">
+  //      <li class="nav-item dataTables_filter">
+  //      <form class="session-add form-inline">
+  //      <div class="form-group mx-sm-3 mb-2">
+  //      Create new session:
+  //<label for="sessionName" class="sr-only">Session Name</label>
+  //  <input class="form-control session-add-control" id="sessionName" name="name" placeholder="Session Name">
+  //      </div>
+  //      <button type="submit" class="fa fa-plus btn btn-primary mb-2"></button>
+  //      <div class="form-group" id="errorDiv"><span class="error-span"></span></div>
+  //      </form>
+  //      </li>
+  //      <li class="nav-item">
+  //      <button type="submit" class="fa fa-sync table-refresh btn btn-light"></button>
+  //      </li>
+  //      </ul>
+  //      </nav>
 
     $.extend(this, {
       setNotAuthenticated: setNotAuthenticated,
       setAuthenticated: setAuthenticated,
-      handleDOIDelete: handleDOIDelete,
-      getDoiStatus: getDoiStatus
+      handleDOIDelete: handleDOIDelete
     })
   }
+
 
 })(jQuery)
