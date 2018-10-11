@@ -58,7 +58,7 @@
                 </a>Data Citation
               </h2>
 
-              <div class="doi-authenticated hidden">
+              <div class="doi-authenticated">
                 <div id="doi_request" class="panel panel-default doi-panel">
                   <div class="panel-heading doi-panel-heading"><h4>DOI Request</h4>
                   </div>
@@ -78,8 +78,11 @@
                       <span id="alert_msg"></span>
                     </div>
 
+                    <div class="doi_not_authenticated"><button type="submit" class="btn btn-primary" id="doi_login_button">
+                      <i>Login Required...</i></button>
+                    </div>
                     <!-- Form starts -->
-                    <div class="doi-form-body">
+                    <div class="doi-form-body hidden">
                       <form id="doi_request_form" class="form-horizontal">
                         <!-- DOI Number -->
                         <div class="form-group doi-form-group">
@@ -173,14 +176,6 @@
                         <%--<span id="doi_landing_page">url</span>--%>
                       <%--</div>--%>
                     <%--</div>--%>
-                  </div>
-                </div>
-              </div>
-
-              <div class="doi-anonymous">
-                <div class="info-panel card panel-default">
-                  <div class="card-body">
-                    <span class="info-span"></span>
                   </div>
                 </div>
               </div>

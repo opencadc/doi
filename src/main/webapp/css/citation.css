@@ -66,3 +66,7 @@
   margin-left: 15px;
   margin-right: 15px;
 }
+
+.doi_delete {
+  cursor: pointer;
+}

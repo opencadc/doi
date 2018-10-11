@@ -55,12 +55,12 @@
           {"data" : "action"}
         ],
         columnDefs: [
-          { width: 20, targets: 0 },
-          { width: 50, targets: 1 },
-          { width: 20, targets: 4 }
+          { "width": 20, "targets": 0 },
+          { "width": 75, "targets": 1 },
+          { "width": 20, "targets": 4 }
         ],
-        order: [],
-        paging: true,
+        ordering: false,
+        paging: false,
         searching: true
       });
 
@@ -81,18 +81,29 @@
         //removeRow(data.doiSuffix)
         loadDoiList()
       })
+
+      // From delete modal
+      $('#delete_ok').click(function () {
+        loadDoiList($('#doi_delete_num').text());
+        // Leave panel up until ajax call returns
+        false;
+      });
     }
 
     function setNotAuthenticated(errorMsg) {
-      $('.info-span').html(errorMsg)
-      $('.doi-anonymous').removeClass('hidden')
-      $('.doi-authenticated').addClass('hidden')
+      // modal is in _application_header.shtml, code found in canfar-root repository (ROOT.war)
+      $("#auth_modal").modal('show');
+      $(".doi-not-authenticated").removeClass('hidden')
+      $(".doi-authenticated").addClass('hidden')
+
+      $('.doi-not-authenticated').click(function() {
+        $("#auth_modal").modal('show')}
+      )
     }
 
     function setAuthenticated() {
-      $('.doi-authenticated').removeClass('hidden')
-      $('.doi-anonymous').addClass('hidden')
-
+      $(".doi_authenticated").removeClass('hidden')
+      $(".doi-not-authenticated").addClass('hidden')
       initializeDoiTable()
       attachListeners()
     }
@@ -118,32 +129,61 @@
       var doiStatusList = jsonData.doiStatuses['$'];
 
       // Table load
-      for (var j=doiStatusList.length-1; j>=0; j--) {
-        var doiEntry = doiStatusList[j]
-        displayDoiStatus(doiEntry.doistatus)
+      if (doiStatusList.length == 0) {
+        setTableStatus("No data found")
       }
+      else {
+        for (var j = doiStatusList.length - 1; j >= 0; j--) {
+          var doiEntry = doiStatusList[j]
+          displayDoiStatus(doiEntry.doistatus)
+        }
+      }
+
       page.setProgressBar('okay')
+      $('#info_modal').modal('hide');
 
       // attach listeners to delete icons.
-      $('.doi_delete').click(handleDOIDelete)
+      $('.doi_delete').click(confirmDOIDelete)
     }
 
     function setTableStatus(displayText) {
       $(".dataTables_empty").html(displayText)
     }
 
-    function setTableState(mode) {
-      // TODO: something in here that will show that the table is still loading information
-    }
+    function setDeleteModal(doiName) {
+      $('#delete_modal').modal('show');
+      $('#doi_delete_num').html(doiName);
+    };
 
+    function clearDeleteModal() {
+      $('#delete_modal').modal('hide');
+      $('#doi_delete_num').html("");
+    };
+
+    function setInfoModal(title, msg, hideThanks) {
+      $('.info-span').html(msg);
+      $('#infoModalLongTitle').html(title);
+      $('#info_modal').modal('show');
+
+      if (hideThanks === true) {
+        $('#infoThanks').addClass('d-none');
+      } else {
+        $('#infoThanks').removeClass('d-none');
+      }
+    };
 
     // ------------ HTTP/Ajax functions ------------
 
-    // DELETE
-    function handleDOIDelete(event) {
+    function confirmDOIDelete(event) {
       var doiSuffix = event.currentTarget.dataset.doinum
+      setDeleteModal(doiSuffix);
+
+    }
+    // DELETE
+    function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
+      setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -153,6 +193,7 @@
           method: 'DELETE'
         })
           .success(function(data) {
+            $('#info_modal').modal('hide');
             trigger(cadc.web.citation.events.onDoiDeleted, {
               doiSuffix: doiSuffix,
             })
@@ -160,6 +201,7 @@
             page.setAjaxSuccess('DOI ' + doiSuffix + ' Deleted')
           })
           .fail(function(message) {
+            $('#info_modal').modal('hide');
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -172,6 +214,8 @@
       clearTable()
       page.setProgressBar('busy')
       setTableStatus("Loading...")
+      setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
           xhrFields: { withCredentials: true },
@@ -187,6 +231,7 @@
           })
         })
         .fail(function(message) {
+          $('#infoModal').modal('hide');
           setTableStatus("No data")
           page.setProgressBar('error')
           page.setAjaxFail(message)
@@ -233,27 +278,11 @@
           .draw()
     }
 
-    function updateRow(rowNum, data) {
-      doiTableSource[rowNum].doi_name =  data.doi_name
-      doiTableSource[rowNum].status =  data.status
-      doiTableSource[rowNum].title =  data.title
-      doiTableSource[rowNum].data_dir =  data.data_dir
-      refreshRow(rowNum)
-    }
-
     function addRow(newRowData) {
       // Add and redraw
       doiTable
           .row
           .add(newRowData)
-          .draw()
-    }
-
-    function refreshRow(rowNum) {
-      // Invalidate and redraw
-      doiTable
-          .row( rowNum )
-          .invalidate()
           .draw()
     }
 
@@ -270,18 +299,6 @@
       doiTable.draw();
 
     }
-
-    //function getRowNum(doi_name) {
-    //  for (i=0; i<doiTableSource.length; i++) {
-    //    if (doiTableSource[i].doi_name === doi_name) {
-    //      return i;
-    //    }
-    //  }
-    //
-    //  // not found
-    //  return -1;
-    //}
-
 
     // ------------ Display/rendering functions ------------
 

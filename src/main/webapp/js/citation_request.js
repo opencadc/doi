@@ -51,14 +51,18 @@
     }
 
     function setNotAuthenticated(errorMsg) {
-      $('.info-span').html(errorMsg)
-      $('.doi-anonymous').removeClass('hidden')
-      $('.doi-authenticated').addClass('hidden')
+      $('#auth_modal').modal('show')
+      $('.doi-form-body').addClass('hidden')
+      $('.doi_not_authenticated').removeClass('hidden')
+
+      $('.doi_not_authenticated').click(function() {
+        $('#auth_modal').modal('show')}
+      )
     }
 
     function setAuthenticated() {
-      $('.doi-authenticated').removeClass('hidden')
-      $('.doi-anonymous').addClass('hidden')
+      $('.doi-form-body').removeClass('hidden')
+      $('.doi_not_authenticated').addClass('hidden')
 
       setPublicationYears()
       // This will kick off a GET if the URL contains a request
@@ -80,7 +84,7 @@
       // If this comes in from clicking the 'Clear' button, the data will be
       // the event itself.
       if (callFormReset === true) {
-        $("#doi_form_reset_button").click()
+        $('#doi_form_reset_button').click()
       }
     }
 

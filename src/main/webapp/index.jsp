@@ -61,17 +61,19 @@
                 </a>Data Citation
               </h2>
 
-              <div class="doi-authenticated hidden">
+
+
+              <div >
                 <div class="panel panel-default doi-panel">
                   <div class="panel-heading doi-panel-heading">
 
                     <nav class="navbar navbar-expand-sm doi-header-navbar" id="navbar-functions">
                       <ul class="nav navbar-nav doi-header-navbar">
                         <li class="nav-item"><h4>DOI Listing</h4></li>
-                        <li class="nav-item pull-right">
-                          <button class="btn btn-light doi_refresh doi-listpage-header btn-sm">Refresh list</button>
+                        <li class="nav-item pull-right doi-authenticated">
+                          <button class="btn btn-default doi_refresh doi-listpage-header btn-sm">Refresh list</button>
                         </li>
-                        <li class="nav-item pull-right">
+                        <li class="nav-item pull-right doi-authenticated">
                           <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New DOI</button>
                         </li>
                       </ul>
@@ -82,46 +84,87 @@
                          role="progressbar" aria-valuenow="100" aria-valuemin="100" aria-valuemax="100">
                     </div>
                   </div>
+
                   <div class="panel-body doi-panel-body">
 
-                    <!-- Noficiation and Alert bars -->
-                    <div class="alert alert-danger hidden">
-                      <strong id="status_code">444</strong>&nbsp;&nbsp;<span id="error_msg">Server error</span>
+                    <div class="doi-not-authenticated hidden"><button type="submit" class="btn btn-primary" id="doi_login_button">
+                      <i>Login Required...</i></button>
                     </div>
 
-                    <div class="alert alert-success hidden">
-                      <span id="alert_msg"></span>
+                    <div class="doi-authenticated">
+                      <!-- Noficiation and Alert bars -->
+                      <div class="alert alert-danger hidden">
+                        <strong id="status_code">444</strong>&nbsp;&nbsp;<span id="error_msg">Server error</span>
+                      </div>
+
+                      <div class="alert alert-success hidden">
+                        <span id="alert_msg"></span>
+                      </div>
+
+                      <!-- Table starts -->
+
+                      <table id="doi_table" class="table table-sm table-hover table-responsive-md dataTable">
+                        <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Status</th>
+                          <th>Title</th>
+                          <th>Data Directory</th>
+                          <th class="no-sort">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                      </table>
+
                     </div>
-
-                    <!-- Table starts -->
-
-                    <table id="doi_table" class="table table-sm table-hover table-responsive-md dataTable">
-                      <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <td>Title</td>
-                        <th>Data Directory</th>
-                        <th>Actions</th>
-                      </tr>
-                      </thead>
-                      <tbody>
-                      </tbody>
-                    </table>
-
                   </div>
                 </div>
 
 
               </div>
 
-              <div class="doi-anonymous">
-                <div class="info-panel card panel-default">
-                  <div class="card-body">
-                    <span class="info-span"></span>
+              <div id="delete_modal" class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Confirm Delete</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      Do you want to delete DOI <span id="doi_delete_num"></span> ?
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" id="delete_ok" class="btn btn-primary">OK</button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <!-- Info/Error Modal -->
+              <!-- Displayed when anything other than a 401 or 200 is returned -->
+              <div class="modal fade" id="info_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="infoModalLongTitle"></h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <span class="info-span"></span>
+                    </div>
+                    <div id="infoThanks" class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Thanks</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
 
 
               <!-- Content ends -->
