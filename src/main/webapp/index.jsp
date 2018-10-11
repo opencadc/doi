@@ -62,18 +62,17 @@
               </h2>
 
               <div class="doi-authenticated hidden">
-                <div id="doi_request" class="panel panel-default doi-panel">
+                <div class="panel panel-default doi-panel">
                   <div class="panel-heading doi-panel-heading">
 
-                    <nav class="navbar navbar-expand-sm" id="navbar-functions">
-                      <ul class="nav navbar-nav">
+                    <nav class="navbar navbar-expand-sm doi-header-navbar" id="navbar-functions">
+                      <ul class="nav navbar-nav doi-header-navbar">
                         <li class="nav-item"><h4>DOI Listing</h4></li>
-                        <li class="nav-item dataTables_filter">
-                          <%--<button type="submit" class="fa fa-plus btn btn-primary mb-2 doi_request">Request New DOI</button>--%>
-                          <a href="/citation/request" target="_blank" class="btn btn-primary mb-2 " role="button">Request New DOI</a>
+                        <li class="nav-item pull-right">
+                          <button class="btn btn-light doi_refresh doi-listpage-header btn-sm">Refresh list</button>
                         </li>
-                        <li class="nav-item">
-                          <button type="submit" class="fa fa-sync table-refresh btn btn-light doi_refresh">Refresh list</button>
+                        <li class="nav-item pull-right">
+                          <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New DOI</button>
                         </li>
                       </ul>
                     </nav>

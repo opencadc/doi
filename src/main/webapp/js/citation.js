@@ -57,11 +57,11 @@
         columnDefs: [
           { width: 20, targets: 0 },
           { width: 50, targets: 1 },
-          { orderable: false, targets: [-1] }
+          { width: 20, targets: 4 }
         ],
         order: [],
         paging: true,
-        searching: false
+        searching: true
       });
 
       // Do the initial ajax call to get the DOI list
@@ -70,6 +70,7 @@
 
     function attachListeners() {
       $('.doi_refresh').click(loadDoiList)
+      $('#doi_request').click(handleDOIRequest)
 
       subscribe(cadc.web.citation.events.onDoiListLoaded, function(e, data) {
         setTableContent(data.doiList)
@@ -127,11 +128,12 @@
       $('.doi_delete').click(handleDOIDelete)
     }
 
-
+    function setTableStatus(displayText) {
+      $(".dataTables_empty").html(displayText)
+    }
 
     function setTableState(mode) {
       // TODO: something in here that will show that the table is still loading information
-
     }
 
 
@@ -139,7 +141,6 @@
 
     // DELETE
     function handleDOIDelete(event) {
-      // Get doi number from link...
       var doiSuffix = event.currentTarget.dataset.doinum
       page.clearAjaxAlert()
       page.setProgressBar('busy')
@@ -166,10 +167,7 @@
       return false
     }
 
-    function setTableStatus(displayText) {
-      $(".dataTables_empty").html(displayText)
-    }
-
+    // GET
     function loadDoiList() {
       clearTable()
       page.setProgressBar('busy')
@@ -197,6 +195,7 @@
       return false
     }
 
+    // Used on return from GET
     function displayDoiStatus(doi) {
       // The JSON output from /doi/instances uses Badgerfish,
       // which is why pulling the values out of it probably looks
@@ -213,8 +212,20 @@
       addRow(newStatus);
     }
 
-    // ------------ Table update functions ------------
+    // New DOI button click handler
+    function handleDOIRequest(event) {
+      var win = window.open('/citation/request', '_blank');
+      if (win) {
+        //Browser has allowed it to be opened
+        win.focus();
+      } else {
+        //Browser has blocked it
+        alert('Please allow popups for this website');
+      }
+    }
 
+
+    // ------------ Table update functions ------------
     function clearTable() {
       // Invalidate and redraw
       doiTable
@@ -247,13 +258,11 @@
     }
 
     function removeRow(rowNum) {
-
       doiTable.rows().nodes().each(function(a,b) {
         if($(a).children().eq(0).text() == rowNum){
           doiTable.rows(a).remove();
         }
       } );
-
 
       // TODO: bug here - last row of table is duplicated for
       // total number of remaining rows on draw() ??
@@ -290,19 +299,19 @@
     function mkNameLink(doiName) {
       var doiSuffix = parseDoiSuffix(doiName)
       return '<a href="/citation/request?doi=' +
-      doiSuffix +
-      '" target="_blank">' +
-      doiSuffix +
-      '</a>'
+              doiSuffix +
+              '" target="_blank">' +
+              doiSuffix +
+              '</a>'
     }
 
     function mkTitleLink(title, doiName) {
       var doiSuffix = parseDoiSuffix(doiName)
       return '<a href="/citation/request?doi=' +
-          doiSuffix +
-          '" target="_blank">' +
-          title +
-          '</a>'
+              doiSuffix +
+              '" target="_blank">' +
+              title +
+              '</a>'
     }
 
     function mkDataDirLink(dataDir) {
@@ -318,33 +327,12 @@
       return '<span class="doi_delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
     }
 
-
-//databench button ideas & uses
-  //<nav class="navbar navbar-expand-sm" id="navbar-functions">
-  //      <ul class="nav navbar-nav">
-  //      <li class="nav-item dataTables_filter">
-  //      <form class="session-add form-inline">
-  //      <div class="form-group mx-sm-3 mb-2">
-  //      Create new session:
-  //<label for="sessionName" class="sr-only">Session Name</label>
-  //  <input class="form-control session-add-control" id="sessionName" name="name" placeholder="Session Name">
-  //      </div>
-  //      <button type="submit" class="fa fa-plus btn btn-primary mb-2"></button>
-  //      <div class="form-group" id="errorDiv"><span class="error-span"></span></div>
-  //      </form>
-  //      </li>
-  //      <li class="nav-item">
-  //      <button type="submit" class="fa fa-sync table-refresh btn btn-light"></button>
-  //      </li>
-  //      </ul>
-  //      </nav>
-
     $.extend(this, {
       setNotAuthenticated: setNotAuthenticated,
       setAuthenticated: setAuthenticated,
-      handleDOIDelete: handleDOIDelete
+      handleDOIDelete: handleDOIDelete,
+      handleDOIRequest: handleDOIRequest
     })
   }
-
 
 })(jQuery)
