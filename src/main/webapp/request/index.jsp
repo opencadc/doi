@@ -78,7 +78,7 @@
                       <span id="alert_msg"></span>
                     </div>
 
-                    <div class="doi_not_authenticated"><button type="submit" class="btn btn-primary" id="doi_login_button">
+                    <div class="doi_not_authenticated hidden"><button type="submit" class="btn btn-primary" id="doi_login_button">
                       <i>Login Required...</i></button>
                     </div>
                     <!-- Form starts -->
@@ -159,7 +159,7 @@
                     <div class="row">
                       <label for="doi_status" class="col-sm-2 control-label text-right " id="doi_status_label">Status</label>
                       <div class="col-sm-10">
-                        <span id="doi_status">DRAFT</span>
+                        <span id="doi_status"></span>
                       </div>
                     </div>
 
@@ -180,6 +180,25 @@
                 </div>
               </div>
 
+              <!-- Info/Error Modal -->
+              <div class="modal fade" id="info_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="infoModalLongTitle"></h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <span class="info-span"></span>
+                    </div>
+                    <div id="infoThanks" class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Thanks</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <!-- Content ends -->
             </section>

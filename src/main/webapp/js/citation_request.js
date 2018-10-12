@@ -176,6 +176,7 @@
     function handleDOIGet(doiNumber) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
+      page.setInfoModal("Pease wait ", "Processing request...", true)
 
       // Submit doc using ajax
       page.prepareCall().then(function(serviceURL) {
@@ -188,17 +189,19 @@
           contentType: 'application/json'
         })
           .success(function(data) {
-            page.setProgressBar('okay')
+            //page.setProgressBar('okay')
             setButtonState('update')
             $('#doi_number').val(data.resource.identifier['$'])
             var doiSuffix = data.resource.identifier['$'].split('/')[1]
-            // Populate lower panel on form page
-            loadMetadata(doiSuffix)
             // Populate javascript object behind form
             doiDoc.populateDoc(data)
             populateForm()
+
+            // Kick off status call
+            getDoiStatus(doiSuffix);
           })
           .fail(function(message) {
+            page.hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -215,6 +218,7 @@
         .split('/')[1]
       page.clearAjaxAlert()
       page.setProgressBar('busy')
+      page.setInfoModal("Pease wait ", "Processing request...", true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiNumber
@@ -224,11 +228,13 @@
           method: 'DELETE'
         })
           .success(function(data) {
+            page.hideInfoModal()
             page.setProgressBar('okay')
             handleFormReset(true)
             page.setAjaxSuccess('DOI Deleted')
           })
           .fail(function(message) {
+            page.hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -236,58 +242,47 @@
       return false
     }
 
-    // TODO: hook this in as a secondary call after the initial GET
-    // returns successfully...
-    //function getDoiStatus(doiName) {
-    //  page.prepareCall().then(function(serviceURL) {
-    //    var statusUrl = serviceURL + '/' + doiName + "/status"
-    //    $.ajax({
-    //      xhrFields: { withCredentials: true },
-    //      url: statusUrl,
-    //      method: 'GET',
-    //      contentType: 'text/xml'
-    //    })
-    //        .success(function(data) {
-    //          page.setProgressBar('okay')
-    //          displayDoiStatus(data)
-    //        })
-    //        .fail(function(message) {
-    //          // skip this one
-    //          // remove this entry from the table data source
-    //          //page.setProgressBar('error')
-    //          //setTableProgress('okay')
-    //          //page.setAjaxFail(message)
-    //        })
-    //  })
-    //  return false
-    //}
-    //
+    // GET
+   function getDoiStatus(doiName) {
+     page.setProgressBar('busy')
 
+     page.prepareCall().then(function(serviceURL) {
+      var statusUrl = serviceURL + '/' + doiName + "/status"
+      $.ajax({
+        xhrFields: { withCredentials: true },
+        url: statusUrl,
+        method: 'GET',
+        dataType: 'json',
+        contentType: 'application/json'
+      })
+          .success(function(data) {
+            page.hideInfoModal()
+            page.setProgressBar('okay')
+            loadMetadata(data)
+          })
+          .fail(function(message) {
+            page.hideInfoModal()
+            page.setProgressBar('error')
+            page.setAjaxFail(message)
+          })
+    })
+    return false
+  }
 
-    function loadMetadata(doiName) {
-      // Performed after a successful GET
-      // There will be a service call eventually to get this  data, but for now the front end
-      // will display info based on the doiName data directory will be vospace
+    function loadMetadata(statusData) {
+      // Performed after a successful GET for status
+      var doiName = statusData.doistatus.identifier['$']
+      var dataDir = statusData.doistatus.dataDirectory['$']
+      var dataDir = '<a href="/storage/list' +
+            dataDir +
+            '" target="_blank">/storage/list' +
+            dataDir +
+            '</a>'
 
+      // Once the Mint function is completed, landing page will also be displayed
       $('#doi_metadata').removeClass('hidden')
-
-      var astrodataDir = 'AstroDataCitationDOI/CISTI.CANFAR/'
-      var dataUrl =
-        '<a href="/storage/list/' +
-        astrodataDir +
-        doiName +
-        '/data' +
-        '" target="_blank">/storage/list/' +
-        astrodataDir +
-        doiName +
-        '/data</a>'
-      $('#doi_data_dir').html(dataUrl)
-
-      // Once the Mint function is completed, this will be displayed
-      //var landingPageClose = ".html?view=data";
-      //var landingPageUrl = "<a href=\"/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose +
-      //"\">/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose + "</a>";
-      //$("#doi_landing_page").html(landingPageUrl);
+      $('#doi_status').html(statusData.doistatus.status['$'])
+      $('#doi_data_dir').html(dataDir)
     }
 
     function populateForm() {

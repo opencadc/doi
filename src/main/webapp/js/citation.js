@@ -24,7 +24,7 @@
    */
   function Citation(inputs) {
 
-    var _selfGroupManager = this
+    var _selfCitationController = this
     var doiTable;
     var doiTableSource =[];
 
@@ -110,17 +110,16 @@
 
     // ------------ Page state management functions ------------
 
-
     function subscribe(event, eHandler) {
-      $(_selfGroupManager).on(event.type, eHandler)
+      $(_selfCitationController).on(event.type, eHandler)
     }
 
     function unsubscribe(event) {
-      $(_selfGroupManager).unbind(event.type)
+      $(_selfCitationController).unbind(event.type)
     }
 
     function trigger(event, eventData) {
-      $(_selfGroupManager).trigger(event, eventData)
+      $(_selfCitationController).trigger(event, eventData)
     }
 
     function setTableContent(jsonData) {
@@ -140,7 +139,7 @@
       }
 
       page.setProgressBar('okay')
-      $('#info_modal').modal('hide');
+      page.hideInfoModal()
 
       // attach listeners to delete icons.
       $('.doi_delete').click(confirmDOIDelete)
@@ -155,35 +154,19 @@
       $('#doi_delete_num').html(doiName);
     };
 
-    function clearDeleteModal() {
-      $('#delete_modal').modal('hide');
-      $('#doi_delete_num').html("");
-    };
-
-    function setInfoModal(title, msg, hideThanks) {
-      $('.info-span').html(msg);
-      $('#infoModalLongTitle').html(title);
-      $('#info_modal').modal('show');
-
-      if (hideThanks === true) {
-        $('#infoThanks').addClass('d-none');
-      } else {
-        $('#infoThanks').removeClass('d-none');
-      }
-    };
 
     // ------------ HTTP/Ajax functions ------------
 
     function confirmDOIDelete(event) {
       var doiSuffix = event.currentTarget.dataset.doinum
       setDeleteModal(doiSuffix);
-
     }
+
     // DELETE
     function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -193,7 +176,7 @@
           method: 'DELETE'
         })
           .success(function(data) {
-            $('#info_modal').modal('hide');
+            page.hideInfoModal()
             trigger(cadc.web.citation.events.onDoiDeleted, {
               doiSuffix: doiSuffix,
             })
@@ -201,7 +184,7 @@
             page.setAjaxSuccess('DOI ' + doiSuffix + ' Deleted')
           })
           .fail(function(message) {
-            $('#info_modal').modal('hide');
+            page.hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -214,7 +197,7 @@
       clearTable()
       page.setProgressBar('busy')
       setTableStatus("Loading...")
-      setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
 
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
@@ -231,7 +214,7 @@
           })
         })
         .fail(function(message) {
-          $('#infoModal').modal('hide');
+          page.hideInfoModal()
           setTableStatus("No data")
           page.setProgressBar('error')
           page.setAjaxFail(message)

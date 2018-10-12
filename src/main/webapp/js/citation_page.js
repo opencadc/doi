@@ -97,13 +97,35 @@
         })
     }
 
+    function setInfoModal(title, msg, hideThanks) {
+      $('.info-span').html(msg);
+      $('#infoModalLongTitle').html(title);
+      $('#info_modal').modal('show');
+
+      if (hideThanks === true) {
+        $('#infoThanks').addClass('d-none');
+      } else {
+        $('#infoThanks').removeClass('d-none');
+      }
+    };
+
+    function hideInfoModal() {
+      $('#info_modal').modal('hide');
+    }
+
     $.extend(this, {
       prepareCall: prepareCall,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
       setProgressBar: setProgressBar,
-      clearAjaxAlert: clearAjaxAlert
+      clearAjaxAlert: clearAjaxAlert,
+      setInfoModal: setInfoModal,
+      hideInfoModal: hideInfoModal
     })
   }
+
+  // ------------ Modal control, messaging, common metadata display ------------
+
+
 
 })(jQuery)
