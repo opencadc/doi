@@ -34,23 +34,19 @@ package ca.nrc.cadc.citation.integration;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.openqa.selenium.By;
 
 
 public class DataCitationTest extends AbstractDataCitationIntegrationTest {
-//    private static final By ONE_CLICK_DOWNLOAD_LINK_ROW_3_ID_BY = By.id("_one-click_vov_3");
-
 
     public DataCitationTest() throws Exception {
         super();
     }
 
-
     @Test
     public void requestDoi() throws Exception {
         DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
 
-        requestPage.login();
+        requestPage.pageLoadLogin();
 
         requestPage.setDoiTitle("DOI PUBLICATION TITLE");
         requestPage.setDoiAuthorList("Flintstone, Fred");
@@ -82,7 +78,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     public void getInvalidDoi() throws Exception {
         DataCitationRequestPage requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
 
-        requestPage.login();
+        requestPage.pageLoadLogin();
         waitForElementVisible(requestPage.DOI_INFO_PANEL);
         Assert.assertFalse(requestPage.isStateOkay());
 
@@ -96,10 +92,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     public void testLandingPage() throws Exception {
         DataCitationPage citationPage = goTo("/citation", null, DataCitationPage.class);
 
-        citationPage.login();
-
-        // TODO: do something one the UI has stabilised
-        // This test is a bit flaky, though
+        citationPage.pageLoadLogin();
 
         Assert.assertTrue(citationPage.isStateOkay());
 
