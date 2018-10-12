@@ -5,490 +5,334 @@
       web: {
         citation: {
           Citation: Citation,
-          DOIDocument: DOIDocument
+          // Events
+          events: {
+            onDoiListLoaded: new jQuery.Event('doi:onDoiListLoaded'),
+            onDoiDeleted: new jQuery.Event('doi:onDoiDeleted')
+          }
         }
       }
     }
   })
 
   /**
-   * Controller for Data Citation UI.
+   * Controller for Data Citation Management/Listing UI.
    *
    * @constructor
    * @param {{}} inputs   Input configuration.
    * @param {String} [inputs.resourceCapabilitiesEndPoint='http://apps.canfar.net/reg/resource-caps'] URL of the resource capability document.
    */
   function Citation(inputs) {
-    var doiDoc = new DOIDocument()
 
-    var resourceCapabilitiesEndPoint =
-      inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
-        ? inputs.resourceCapabilitiesEndPoint
-        : 'http://apps.canfar.net/reg/resource-caps'
+    var _selfCitationController = this
+    var doiTable;
+    var doiTableSource =[];
 
-    // NOTE: for deployment to production, this constructor should have no parameters.
-    // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
-    //var _registryClient = new Registy();
-    var _registryClient = new Registry({
-      resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
-    })
+    var rowTemplate = {
+      "doi_name" : "",
+      "status" : "",
+      "title" : "",
+      "data_dir": "",
+      "action": ""
+    }
+
+    var page = new cadc.web.citation.CitationPage(inputs)
 
     // ------------ Page load functions ------------
 
-    function parseUrl() {
-      var query = window.location.search
+    function initializeDoiTable() {
 
-      if (query !== '') {
-        // perform GET and display for form
-        handleDOIGet(query.split('=')[1])
-      }
-    }
+      // should be able to have the doi list function in this table
+      // may want a refresh button however, to re-load the table if the page is stale?
 
-    function setPublicationYears() {
-      var curYear = new Date().getFullYear()
-      var $yearSelect = $('#doi_publish_year')
-      for (var i = 0; i < 3; i++) {
-        $yearSelect.append(
-          '<option value="' + curYear + '">' + curYear + '</option>'
-        )
-        curYear++
-      }
+      doiTable = $("#doi_table").DataTable({
+        data: doiTableSource,
+        columns: [
+          {"data" : "doi_name"},
+          {"data" : "status"},
+          {"data" : "title"},
+          {"data" : "data_dir"},
+          {"data" : "action"}
+        ],
+        columnDefs: [
+          { "width": 20, "targets": 0 },
+          { "width": 75, "targets": 1 },
+          { "width": 20, "targets": 4 }
+        ],
+        ordering: false,
+        paging: false,
+        searching: true
+      });
+
+      // Do the initial ajax call to get the DOI list
+      loadDoiList();
     }
 
     function attachListeners() {
-      $('#doi_form_reset_button').click(handleFormReset)
-      $('#doi_form_delete_button').click(handleDOIDelete)
-      $('#doi_request_form').submit(handleDOIRequest)
+      $('.doi_refresh').click(loadDoiList)
+      $('#doi_request').click(handleDOIRequest)
+
+      subscribe(cadc.web.citation.events.onDoiListLoaded, function(e, data) {
+        setTableContent(data.doiList)
+      })
+
+      subscribe(cadc.web.citation.events.onDoiDeleted, function(e, data) {
+        //       TODO: ideally removeRow would be called but there's a bug in it
+        //removeRow(data.doiSuffix)
+        loadDoiList()
+      })
+
+      // From delete modal
+      $('#delete_ok').click(function () {
+        loadDoiList($('#doi_delete_num').text());
+        // Leave panel up until ajax call returns
+        false;
+      });
     }
 
     function setNotAuthenticated(errorMsg) {
-      $('.info-span').html(errorMsg)
-      $('.doi-anonymous').removeClass('hidden')
-      $('.doi-authenticated').addClass('hidden')
+      // modal is in _application_header.shtml, code found in canfar-root repository (ROOT.war)
+      $("#auth_modal").modal('show');
+      $(".doi-not-authenticated").removeClass('hidden')
+      $(".doi-authenticated").addClass('hidden')
+
+      $('.doi-not-authenticated').click(function() {
+        $("#auth_modal").modal('show')}
+      )
     }
 
     function setAuthenticated() {
-      $('.doi-authenticated').removeClass('hidden')
-      $('.doi-anonymous').addClass('hidden')
-
-      setPublicationYears()
-      // This will kick off a GET if the URL contains a request
-      parseUrl()
+      $(".doi_authenticated").removeClass('hidden')
+      $(".doi-not-authenticated").addClass('hidden')
+      initializeDoiTable()
       attachListeners()
     }
 
     // ------------ Page state management functions ------------
 
-    function clearAjaxAlert() {
-      $('.alert-danger').addClass('hidden')
-      $('.alert-sucess').addClass('hidden')
-      setProgressBar('okay')
+    function subscribe(event, eHandler) {
+      $(_selfCitationController).on(event.type, eHandler)
     }
 
-    function handleFormReset(message) {
-      $('#doi_metadata').addClass('hidden')
-      clearAjaxAlert()
-      $('#doi_data_dir').html('')
-      $('#doi_landing_page').html('')
-      setProgressBar('okay')
-      setButtonState('create')
+    function unsubscribe(event) {
+      $(_selfCitationController).unbind(event.type)
     }
 
-    // Communicate AJAX progress and status using progress bar
-    function setProgressBar(state) {
-      var _progressBar = $('.doi-progress-bar')
-      switch (state) {
-        case 'busy': {
-          _progressBar.addClass('progress-bar-striped')
-          _progressBar.removeClass('progress-bar-danger')
-          _progressBar.addClass('progress-bar-success')
-          break
-        }
-        case 'okay': {
-          _progressBar.removeClass('progress-bar-striped')
-          _progressBar.removeClass('progress-bar-danger')
-          _progressBar.addClass('progress-bar-success')
-          break
-        }
-        case 'error': {
-          _progressBar.removeClass('progress-bar-striped')
-          _progressBar.removeClass('progress-bar-success')
-          _progressBar.addClass('progress-bar-danger')
-          break
-        }
-        default: {
-          // Nothing
-          break
+    function trigger(event, eventData) {
+      $(_selfCitationController).trigger(event, eventData)
+    }
+
+    function setTableContent(jsonData) {
+      // payload from ajax call to /doi/instances is an array of
+      // of status objects the calling user has permission to view
+      var doiStatusList = jsonData.doiStatuses['$'];
+
+      // Table load
+      if (doiStatusList.length == 0) {
+        setTableStatus("No data found")
+      }
+      else {
+        for (var j = doiStatusList.length - 1; j >= 0; j--) {
+          var doiEntry = doiStatusList[j]
+          displayDoiStatus(doiEntry.doistatus)
         }
       }
+
+      page.setProgressBar('okay')
+      page.hideInfoModal()
+
+      // attach listeners to delete icons.
+      $('.doi_delete').click(confirmDOIDelete)
     }
 
-    function setButtonState(mode) {
-      if (mode === 'update') {
-        $('.doi_edit').removeClass('hidden')
-        $('#doi_create_button').addClass('hidden')
-      } else if (mode === 'create') {
-        $('.doi_edit').addClass('hidden')
-        $('#doi_create_button').removeClass('hidden')
-      }
+    function setTableStatus(displayText) {
+      $(".dataTables_empty").html(displayText)
     }
 
-    function setAjaxFail(message) {
-      $('#status_code').text(message.status)
-      $('#error_msg').text(message.responseText)
-      $('.alert-danger').removeClass('hidden')
-      setProgressBar('error')
-    }
+    function setDeleteModal(doiName) {
+      $('#delete_modal').modal('show');
+      $('#doi_delete_num').html(doiName);
+    };
 
-    function setAjaxSuccess(message) {
-      $('#error_msg').text(message.responseText)
-      $('.alert-sucess').removeClass('hidden')
-      setProgressBar('okay')
-    }
 
     // ------------ HTTP/Ajax functions ------------
 
-    function _prepareCall() {
-      return _registryClient
-        .getServiceURL(
-          'ivo://cadc.nrc.ca/doi',
-          'vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0',
-          'vs:ParamHTTP',
-          'cookie'
-        )
-        .catch(function(err) {
-          setAjaxFail('Error obtaining Service URL > ' + err)
-        })
+    function confirmDOIDelete(event) {
+      var doiSuffix = event.currentTarget.dataset.doinum
+      setDeleteModal(doiSuffix);
     }
 
-    // POST
-    function handleDOIRequest(event) {
-      // Clear any previous error bars
-      clearAjaxAlert()
-      var _formdata = $(this).serializeArray()
-      var personalInfo = {}
+    // DELETE
+    function handleDOIDelete(doiSuffix) {
+      page.clearAjaxAlert()
+      page.setProgressBar('busy')
+      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
 
-      for (var i = 0, fdl = _formdata.length; i < fdl; i++) {
-        var formField = _formdata[i]
-        // format: formField: {name:*,value:*}
-
-        switch (formField.name) {
-          case 'publisher': {
-            doiDoc.setPublisher(formField.value)
-            break
-          }
-          case 'publicationYear': {
-            doiDoc.setPublicationYear(formField.value)
-            break
-          }
-          case 'title': {
-            doiDoc.setTitle(formField.value)
-            break
-          }
-          case 'doi-number': {
-            doiDoc.setDOINumber(formField.value)
-            break
-          }
-          case 'creatorList': {
-            doiDoc.setAuthor(formField.value)
-            break
-          }
-          default: {
-            break
-          }
-        }
-      }
-
-      setProgressBar('busy')
-
-      _prepareCall().then(function(serviceURL) {
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: serviceURL,
-          method: 'POST',
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(doiDoc.getMinimalDoc())
-        })
-          .success(function(data) {
-            // POST redirects to a get.
-            // Load the data returned into the local doiDocument to be
-            // accessed.
-            setProgressBar('okay')
-            $('#doi_number').val(data.resource.identifier['$'])
-            var doiSuffix = data.resource.identifier['$'].split('/')[1]
-            setButtonState('update')
-            loadMetadata(doiSuffix)
-
-            doiDoc.populateDoc(data)
-            populateForm()
-          })
-          .fail(function(message) {
-            setAjaxFail(message)
-          })
-      })
-
-      return false
-    }
-
-    //GET
-    function handleDOIGet(doiNumber) {
-      clearAjaxAlert()
-      setProgressBar('busy')
-
-      // Submit doc using ajax
-      _prepareCall().then(function(serviceURL) {
-        var getUrl = serviceURL + '/' + doiNumber
+      page.prepareCall().then(function(serviceURL) {
+        var getUrl = serviceURL + '/' + doiSuffix
         $.ajax({
           xhrFields: { withCredentials: true },
           url: getUrl,
+          method: 'DELETE'
+        })
+          .success(function(data) {
+            page.hideInfoModal()
+            trigger(cadc.web.citation.events.onDoiDeleted, {
+              doiSuffix: doiSuffix,
+            })
+            page.setProgressBar('okay')
+            page.setAjaxSuccess('DOI ' + doiSuffix + ' Deleted')
+          })
+          .fail(function(message) {
+            page.hideInfoModal()
+            page.setProgressBar('error')
+            page.setAjaxFail(message)
+          })
+      })
+      return false
+    }
+
+    // GET
+    function loadDoiList() {
+      clearTable()
+      page.setProgressBar('busy')
+      setTableStatus("Loading...")
+      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+
+      page.prepareCall().then(function(serviceURL) {
+        $.ajax({
+          xhrFields: { withCredentials: true },
+          url: serviceURL,
           method: 'GET',
           dataType: 'json',
           contentType: 'application/json'
         })
-          .success(function(data) {
-            setProgressBar('okay')
-            setButtonState('update')
-            $('#doi_number').val(data.resource.identifier['$'])
-            var doiSuffix = data.resource.identifier['$'].split('/')[1]
-            // Populate lower panel on form page
-            loadMetadata(doiSuffix)
-            // Populate javascript object behind form
-            doiDoc.populateDoc(data)
-            populateForm()
+        .success(function(stringdata) {
+          setTableStatus("Loading......")
+          trigger(cadc.web.citation.events.onDoiListLoaded, {
+            doiList: stringdata,
           })
-          .fail(function(message) {
-            setProgressBar('error')
-            setAjaxFail(message)
-          })
-      })
-
-      return false
-    }
-
-    // DELETE
-    function handleDOIDelete() {
-      // Get doi number from form...
-      var doiNumber = $('#doi_number')
-        .val()
-        .split('/')[1]
-      clearAjaxAlert()
-      setProgressBar('busy')
-
-      _prepareCall().then(function(serviceURL) {
-        var getUrl = serviceURL + '/' + doiNumber
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: getUrl,
-          method: 'DELETE',
-          dataType: 'json',
-          contentType: 'application/json'
         })
-          .success(function(data) {
-            setProgressBar('okay')
-            handleFormReset()
-            setAjaxSuccess('DOI Deleted')
-          })
-          .fail(function(message) {
-            setProgressBar('error')
-            setAjaxFail(message)
-          })
+        .fail(function(message) {
+          page.hideInfoModal()
+          setTableStatus("No data")
+          page.setProgressBar('error')
+          page.setAjaxFail(message)
+        })
       })
       return false
     }
 
-    function loadMetadata(doiName) {
-      // Performed after a successful GET
-      // There will be a service call eventually to get this  data, but for now the front end
-      // will display info based on the doiName data directory will be vospace
+    // Used on return from GET
+    function displayDoiStatus(doi) {
+      // The JSON output from /doi/instances uses Badgerfish,
+      // which is why pulling the values out of it probably looks
+      // strange here...
+      // Assuming this is a 'doistatus' object
+      var newStatus = rowTemplate
+      var doiName = doi.identifier['$']
+      newStatus.doi_name = mkNameLink(doiName)
+      newStatus.status = doi.status['$']
+      newStatus.data_dir = mkDataDirLink(doi.dataDirectory['$'])
+      newStatus.title = mkTitleLink(doi.title['$'], doiName)
+      newStatus.action = mkDeleteLink(doiName)
 
-      $('#doi_metadata').removeClass('hidden')
-
-      var astrodataDir = 'AstroDataCitationDOI/CISTI.CANFAR/'
-      var dataUrl =
-        '<a href="/storage/list/' +
-        astrodataDir +
-        doiName +
-        '/data' +
-        '" target="_blank">/storage/list/' +
-        astrodataDir +
-        doiName +
-        '/data</a>'
-      $('#doi_data_dir').html(dataUrl)
-
-      // Once the Mint function is completed, this will be displayed
-      //var landingPageClose = ".html?view=data";
-      //var landingPageUrl = "<a href=\"/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose +
-      //"\">/vospace/nodes/" + astrodataDir + doiName + "/" + doiName + landingPageClose + "</a>";
-      //$("#doi_landing_page").html(landingPageUrl);
+      addRow(newStatus);
     }
 
-    function populateForm() {
-      $('#doi_creator_list').val(doiDoc.getAuthorList())
-      $('#doi_title').val(doiDoc.getTitle())
-      $('#doi_publisher').val(doiDoc.getPublisher())
-      $('#doi_publish_year').val(doiDoc.getPublicationYear())
+    // New DOI button click handler
+    function handleDOIRequest(event) {
+      var win = window.open('/citation/request', '_blank');
+      if (win) {
+        //Browser has allowed it to be opened
+        win.focus();
+      } else {
+        //Browser has blocked it
+        alert('Please allow popups for this website');
+      }
+    }
+
+
+    // ------------ Table update functions ------------
+    function clearTable() {
+      // Invalidate and redraw
+      doiTable
+          .clear()
+          .draw()
+    }
+
+    function addRow(newRowData) {
+      // Add and redraw
+      doiTable
+          .row
+          .add(newRowData)
+          .draw()
+    }
+
+    function removeRow(rowNum) {
+      doiTable.rows().nodes().each(function(a,b) {
+        if($(a).children().eq(0).text() == rowNum){
+          doiTable.rows(a).remove();
+        }
+      } );
+
+      // TODO: bug here - last row of table is duplicated for
+      // total number of remaining rows on draw() ??
+      doiTable.rows().invalidate();
+      doiTable.draw();
+
+    }
+
+    // ------------ Display/rendering functions ------------
+
+    function parseDoiSuffix(doiName) {
+      var doiSuffix = "";
+      if (doiName.match("/")) {
+        doiSuffix = doiName.split("/")[1];
+      }
+      else {
+        doiSuffix = doiName;
+      }
+      return doiSuffix;
+    }
+
+    function mkNameLink(doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      return '<a href="/citation/request?doi=' +
+              doiSuffix +
+              '" target="_blank">' +
+              doiSuffix +
+              '</a>'
+    }
+
+    function mkTitleLink(title, doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      return '<a href="/citation/request?doi=' +
+              doiSuffix +
+              '" target="_blank">' +
+              title +
+              '</a>'
+    }
+
+    function mkDataDirLink(dataDir) {
+      return'<a href="/storage/list' +
+              dataDir +
+              '" target="_blank">/storage/list' +
+              dataDir +
+              '</a>'
+    }
+
+    function mkDeleteLink(doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      return '<span class="doi_delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
     }
 
     $.extend(this, {
       setNotAuthenticated: setNotAuthenticated,
       setAuthenticated: setAuthenticated,
-      handleFormReset: handleFormReset,
-      handleDOIRequest: handleDOIRequest,
-      handleDOIGet: handleDOIGet,
-      handleDOIDelete: handleDOIDelete
+      handleDOIDelete: handleDOIDelete,
+      handleDOIRequest: handleDOIRequest
     })
   }
 
-  /**
-   * Class for handling DOI metadata document
-   * @constructor
-   */
-  function DOIDocument() {
-    var _selfDoc = this
-    this._minimalDoc = {}
-
-    function initMinimalDoc() {
-      // build minimal doc to start.
-      _selfDoc._minimalDoc = {
-        resource: {
-          '@xmlns': 'http://datacite.org/schema/kernel-4',
-          identifier: {
-            '@identifierType': 'DOI',
-            $: '10.11570/YY.xxxx'
-          },
-          creators: {
-            $: []
-          },
-          titles: {
-            $: [
-              {
-                title: {
-                  '@xml:lang': 'en-US',
-                  $: ''
-                }
-              }
-            ]
-          },
-          publisher: { $: '' },
-          publicationYear: { $: new Date().getFullYear() },
-          resourceType: {
-            '@resourceTypeGeneral': 'Dataset',
-            $: 'Dataset'
-          }
-        }
-      }
-    }
-
-    function getMinimalDoc() {
-      if (_selfDoc._minimalDoc === {}) {
-        initMinimalDoc()
-      }
-      return _selfDoc._minimalDoc
-    }
-
-    function populateDoc(serviceData) {
-      _selfDoc._minimalDoc = serviceData
-    }
-
-    function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(', ')
-      var creatorObject = {
-        creatorName: {
-          '@nameType': 'Personal',
-          $: ''
-        },
-        givenName: { $: '' },
-        familyName: { $: '' }
-      }
-      creatorObject.creatorName['$'] = personalInfo
-      creatorObject.familyName['$'] = nameParts[0]
-      creatorObject.givenName['$'] = nameParts[1]
-
-      return { creator: creatorObject }
-    }
-
-    function setAuthor(authorList) {
-      // personalInfo is a new line delimited list of last name, first name elements
-      var names = authorList.split('\n')
-      for (var j = 0; j < names.length; j++) {
-        _selfDoc._minimalDoc.resource.creators['$'][j] = makeCreatorStanza(
-          names[j]
-        )
-      }
-    }
-
-    function setDOINumber(identifier) {
-      if (identifier !== '') {
-        _selfDoc._minimalDoc.resource.identifier['$'] = identifier
-      }
-    }
-
-    function setPublicationYear(year) {
-      _selfDoc._minimalDoc.resource.publicationYear['$'] = year
-    }
-
-    function setPublisher(identifier) {
-      _selfDoc._minimalDoc.resource.publisher['$'] = identifier
-    }
-
-    function setTitle(title) {
-      _selfDoc._minimalDoc.resource.titles['$'][0].title['$'] = title
-    }
-
-    function getAuthorFullname() {
-      return _selfDoc._minimalDoc.resource.creators['$'][0].creator.creatorName[
-        '$'
-      ]
-    }
-
-    function getAuthorList() {
-      var listSize = _selfDoc._minimalDoc.resource.creators['$'].length
-      var authorList = ''
-      for (var ix = 0; ix < listSize; ix++) {
-        authorList =
-          authorList +
-          _selfDoc._minimalDoc.resource.creators['$'][ix].creator.creatorName[
-            '$'
-          ] +
-          '\n'
-      }
-      return authorList
-    }
-
-    function getDOINumber() {
-      return _selfDoc._minimalDoc.resource.identifier['$']
-    }
-
-    function getPublicationYear() {
-      return _selfDoc._minimalDoc.resource.publicationYear['$']
-    }
-
-    function getPublisher() {
-      return _selfDoc._minimalDoc.resource.publisher['$']
-    }
-
-    function getTitle() {
-      return _selfDoc._minimalDoc.resource.titles['$'][0].title['$']
-    }
-
-    initMinimalDoc()
-
-    $.extend(this, {
-      initMinimalDoc: initMinimalDoc,
-      getMinimalDoc: getMinimalDoc,
-      populateDoc: populateDoc,
-      setAuthor: setAuthor,
-      setDOINumber: setDOINumber,
-      setPublicationYear: setPublicationYear,
-      setPublisher: setPublisher,
-      setTitle: setTitle,
-      getAuthorFullname: getAuthorFullname,
-      getAuthorList: getAuthorList,
-      getDOINumber: getDOINumber,
-      getPublicationYear: getPublicationYear,
-      getPublisher: getPublisher,
-      getTitle: getTitle
-    })
-  }
 })(jQuery)
