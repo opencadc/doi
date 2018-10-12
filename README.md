@@ -4,6 +4,10 @@
 UI for creating and displaying Digital Object Identifiers (DOIs) for research datasets archived with CANFAR. 
 
 ## Location
+DOI List page:
+http://apps.canfar.net/citation
+
+DOI Request page:
 http://apps.canfar.net/citation/request
 
 ## Description
@@ -13,6 +17,7 @@ register datasets associated with a publications.
 Currently the service will:
 - take a minimal amount of information in to create a draft DOI document that can then be later submitted to DataCite
 - generate a VOSpace directory for the dataset to be housed and later archived when the DOI is minted
+- allow owners to view their current set of DOIs
 
 
 ## CANFAR Digital Object Identifier (DOI) Workflow
@@ -49,10 +54,15 @@ At this point, the service will:
 - submit the DOI metadata and landing page URL information to Data Cite
  
 ## Viewing a CANFAR DOI
-Once a DOI has been created, it can be displayed in the DOI Request form. Example URL:
+Once a DOI has been created, it can be accessed using the DOI List page:
+
+http://apps.canfar.net/citation
+
+Authorised users will have access to their DOIs, and can click through to the request page where they can view
+the DOI, and continue with the workflow. Example URL:
 
 http://apps.canfar.net/citation/request?doi=18.0001
-  
+
   
 ### DOI States
 A DOI managed through the CANFAR services has 2 states:
