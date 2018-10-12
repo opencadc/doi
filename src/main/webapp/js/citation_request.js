@@ -359,7 +359,7 @@
     }
 
     function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(', ')
+      var nameParts = personalInfo.split(/s*[s,]s*/).filter(Boolean)
       var creatorObject = {
         creatorName: {
           '@nameType': 'Personal',
@@ -368,9 +368,15 @@
         givenName: { $: '' },
         familyName: { $: '' }
       }
-      creatorObject.creatorName['$'] = personalInfo
-      creatorObject.familyName['$'] = nameParts[0]
-      creatorObject.givenName['$'] = nameParts[1]
+
+      // clean up the ", " format that might not have been done
+      // in the input box, so that output is consistent and format
+      // in the XML file is consistent
+      var givenName = nameParts[1].trim()
+      var familyName = nameParts[0].trim()
+      creatorObject.creatorName['$'] = givenName + ", " + familyName
+      creatorObject.familyName['$'] = familyName
+      creatorObject.givenName['$'] = givenName
 
       return { creator: creatorObject }
     }
