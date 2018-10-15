@@ -84,9 +84,10 @@
 
       // From delete modal
       $('#delete_ok').click(function () {
-        loadDoiList($('#doi_delete_num').text());
-        // Leave panel up until ajax call returns
-        false;
+        $('#delete_modal').modal('hide');
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+        handleDOIDelete($('#doi_delete_num').text());
       });
     }
 
@@ -139,7 +140,7 @@
       }
 
       page.setProgressBar('okay')
-      page.hideInfoModal()
+      hideInfoModal()
 
       // attach listeners to delete icons.
       $('.doi_delete').click(confirmDOIDelete)
@@ -150,9 +151,15 @@
     }
 
     function setDeleteModal(doiName) {
-      $('#delete_modal').modal('show');
       $('#doi_delete_num').html(doiName);
+      $('#delete_modal').modal('show');
     };
+
+    function hideInfoModal() {
+      $('#info_modal').modal('hide');
+      $('body').removeClass('modal-open');
+      $('.modal-backdrop').remove();
+    }
 
 
     // ------------ HTTP/Ajax functions ------------
@@ -166,7 +173,7 @@
     function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+      page.setInfoModal("Pease wait ", "Deleting DOI " + doiSuffix, true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -176,15 +183,14 @@
           method: 'DELETE'
         })
           .success(function(data) {
-            page.hideInfoModal()
+            //hideInfoModal()
+            page.setProgressBar('okay')
             trigger(cadc.web.citation.events.onDoiDeleted, {
               doiSuffix: doiSuffix,
             })
-            page.setProgressBar('okay')
-            page.setAjaxSuccess('DOI ' + doiSuffix + ' Deleted')
           })
           .fail(function(message) {
-            page.hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -214,7 +220,7 @@
           })
         })
         .fail(function(message) {
-          page.hideInfoModal()
+          hideInfoModal()
           setTableStatus("No data")
           page.setProgressBar('error')
           page.setAjaxFail(message)

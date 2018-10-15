@@ -176,7 +176,7 @@
     function handleDOIGet(doiNumber) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Pease wait ", "Processing request...", true)
+      page.setInfoModal("Please wait ", "Processing request...", true)
 
       // Submit doc using ajax
       page.prepareCall().then(function(serviceURL) {
@@ -201,7 +201,7 @@
             getDoiStatus(doiSuffix);
           })
           .fail(function(message) {
-            page.hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -218,7 +218,7 @@
         .split('/')[1]
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Pease wait ", "Processing request...", true)
+      page.setInfoModal("Please wait ", "Processing request...", true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiNumber
@@ -228,13 +228,13 @@
           method: 'DELETE'
         })
           .success(function(data) {
-            page.hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('okay')
             handleFormReset(true)
             page.setAjaxSuccess('DOI Deleted')
           })
           .fail(function(message) {
-            page.hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -256,12 +256,12 @@
         contentType: 'application/json'
       })
           .success(function(data) {
-            page.hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('okay')
             loadMetadata(data)
           })
           .fail(function(message) {
-            page.hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('error')
             page.setAjaxFail(message)
           })
@@ -290,6 +290,12 @@
       $('#doi_title').val(doiDoc.getTitle())
       $('#doi_publisher').val(doiDoc.getPublisher())
       $('#doi_publish_year').val(doiDoc.getPublicationYear())
+    }
+
+    function hideInfoModal() {
+      $('#info_modal').modal('hide');
+      $('body').removeClass('modal-open');
+      $('.modal-backdrop').remove();
     }
 
     $.extend(this, {

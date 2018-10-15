@@ -13,7 +13,8 @@
 </c:if>
 
 <%-- Set this by configuration in the future. --%>
-<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />
+<%--<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />--%>
+<c:set var="resourceCapabilitiesEndPoint" value="http://jeevesh.cadc.dao.nrc.ca/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -123,7 +124,7 @@
 
               </div>
 
-              <div id="delete_modal" class="modal" tabindex="-1" role="dialog">
+              <div id="delete_modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
