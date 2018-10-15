@@ -223,7 +223,7 @@
           "instances"
         ],
         "summary": "Delete a DOI instance",
-        "description": "Delete specified DOI for authenticated user, including associated VOSPace data directory. Calling user must have access.",
+        "description": "Delete specified DOI for authenticated user, including associated VOSpace data directory. Calling user must have access.",
         "operationId": "deleteDOI",
         "produces": [
           "application/xml",
@@ -240,13 +240,7 @@
         ],
         "responses": {
           "200": {
-            "description": "successful operation",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/DOIMeta"
-              }
-            }
+            "description": "successful operation"
           },
           "403": {
             "description": "Not authorised"
