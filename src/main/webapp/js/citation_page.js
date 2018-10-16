@@ -98,20 +98,22 @@
     }
 
     function setInfoModal(title, msg, hideThanks) {
-      $('.info-span').html(msg);
-      $('#infoModalLongTitle').html(title);
-      $('#info_modal').modal('show');
+      $('.info-span').html(msg)
+      $('#infoModalLongTitle').html(title)
+
+      // Check if modal is already open
+      if ($('#info_modal').data("bs.modal") === undefined ||
+          $('#info_modal').data("bs.modal").isShown === false) {
+        $('#info_modal').modal('show')
+      }
 
       if (hideThanks === true) {
-        $('#infoThanks').addClass('d-none');
+        $('#infoThanks').addClass('d-none')
       } else {
-        $('#infoThanks').removeClass('d-none');
+        $('#infoThanks').removeClass('d-none')
       }
-    };
 
-    function hideInfoModal() {
-      $('#info_modal').modal('hide');
-    }
+    };
 
     $.extend(this, {
       prepareCall: prepareCall,
@@ -119,8 +121,7 @@
       setAjaxFail: setAjaxFail,
       setProgressBar: setProgressBar,
       clearAjaxAlert: clearAjaxAlert,
-      setInfoModal: setInfoModal,
-      hideInfoModal: hideInfoModal
+      setInfoModal: setInfoModal
     })
   }
 
