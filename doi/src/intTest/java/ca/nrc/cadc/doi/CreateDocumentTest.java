@@ -110,6 +110,7 @@ public class CreateDocumentTest extends IntTestBase
     private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
 
     static final String JSON = "application/json";
+    static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
 
     static
     {
@@ -147,7 +148,7 @@ public class CreateDocumentTest extends IntTestBase
         fc = new FileContent(document);
         fc.setContentType("text/xml");
         params.put("doimeta", fc);
-        params.put("journalref", "2018, Journal ref. ApJ 1000,100");
+        params.put("journalref", TEST_JOURNAL_REF);
         log.info("url: " + postUrl.getPath());
 
         HttpPost httpPost = new HttpPost(postUrl, params, true);
@@ -264,6 +265,7 @@ public class CreateDocumentTest extends IntTestBase
                     Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
+                    Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.getJournalRef());
                 }
                 finally
                 {

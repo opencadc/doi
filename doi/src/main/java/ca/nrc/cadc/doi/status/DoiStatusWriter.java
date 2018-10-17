@@ -112,6 +112,10 @@ public class DoiStatusWriter
         // add status element
         Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
         ret.addContent(resourceTypeElement);
+
+        // add journalRef element
+        Element journalRefElement = getJournalRefElement(doiStatus.getJournalRef());
+        ret.addContent(journalRefElement);
         
         return ret;
     }
@@ -151,6 +155,13 @@ public class DoiStatusWriter
     {
         Element ret = new Element("status");
         ret.setText(status);
+        return ret;
+    }
+
+    protected Element getJournalRefElement(String journalRef)
+    {
+        Element ret = new Element("journalRef");
+        ret.setText(journalRef);
         return ret;
     }
 }

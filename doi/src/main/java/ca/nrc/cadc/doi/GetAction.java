@@ -199,6 +199,8 @@ public class GetAction extends DoiAction {
             log.info("node: " + doiContainerNode.getName() + ", status: " + status);
             if (StringUtil.hasText(status))
             {
+                String journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+
                 Resource resource = getResource(doiSuffixString);
                 Title title = getTitle(resource);
                 
@@ -216,7 +218,7 @@ public class GetAction extends DoiAction {
                 
                 // construct the DOI status
                 doiStatus = new DoiStatus(resource.getIdentifier(), title,
-                        dataDirectory, Status.toValue(status));
+                        dataDirectory, Status.toValue(status), journalRef);
             }
         }
         else

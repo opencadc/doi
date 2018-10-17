@@ -118,10 +118,13 @@ public class DoiStatusReader
             String msg = "status not found in doi status element.";
             throw new DoiParsingException(msg);
         }
-        
+
+        // optional element
+        String journalReference = root.getChild("journalRef").getText();
+
         Status status = Status.toValue(root.getChild("status").getText());
         
-        return new DoiStatus(id, title, dataDirectory, status);
+        return new DoiStatus(id, title, dataDirectory, status, journalReference);
     }
     
     protected Identifier buildIdentifier(Element root)

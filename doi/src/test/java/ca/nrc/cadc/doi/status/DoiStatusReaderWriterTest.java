@@ -140,9 +140,9 @@ public class DoiStatusReaderWriterTest
         Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
     }
     
-    private void comparePublicationYear(String p1, String p2)
+    private void compareJournalRef(String p1, String p2)
     {
-        Assert.assertEquals("publicationYears are different", p1, p2);
+        Assert.assertEquals("journalRefs are different", p1, p2);
     }
     
     private void compareStatus(String s1, String s2)
@@ -150,12 +150,18 @@ public class DoiStatusReaderWriterTest
         Assert.assertEquals("statuses are different", s1, s2);
     }
 
+    private void compareDataDir(String s1, String s2)
+    {
+        Assert.assertEquals("data directories are different", s1, s2);
+    }
+
     private void compareDoiStatus(DoiStatus s1, DoiStatus s2)
     {
         compareIdentifier(s1.getIdentifier(), s2.getIdentifier());
         compareTitle(s1.getTitle(), s2.getTitle());
-        comparePublicationYear(s1.getDataDirectory(), s2.getDataDirectory());
+        compareDataDir(s1.getDataDirectory(), s2.getDataDirectory());
         compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
+        compareJournalRef(s1.getJournalRef(), s2.getJournalRef());
     }
     
     private void compareDoiStatusList(List<DoiStatus> l1, List<DoiStatus> l2)

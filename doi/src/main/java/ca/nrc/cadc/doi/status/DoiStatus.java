@@ -93,9 +93,10 @@ public class DoiStatus
     private Title title;
     private String dataDirectory;
     private Status status;
+    private String journalRef;
     
 
-    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) 
+    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status, String journalRef)
     { 
         if (identifier == null || title == null || !StringUtil.hasText(dataDirectory) || 
             status == null)
@@ -108,6 +109,7 @@ public class DoiStatus
         this.title = title;
         this.dataDirectory = dataDirectory;
         this.status = status;
+        this.journalRef = journalRef;
     }
     
     public Identifier getIdentifier()
@@ -129,4 +131,9 @@ public class DoiStatus
     {
         return this.status;
     }
+
+    public String getJournalRef() {
+        return this.journalRef;
+    }
+
 }
