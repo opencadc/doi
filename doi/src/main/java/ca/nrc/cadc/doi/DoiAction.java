@@ -86,9 +86,11 @@ public abstract class DoiAction extends RestAction {
     protected static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
     protected static final String CADC_DOI_PREFIX = "10.11570";
     protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
+    protected static final String JOURNALREF_PARAM = "journalref";
     
     protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
     protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
+    protected static final String DOI_VOS_JOURNAL_PROP = "ivo://cadc.nrc.ca/vospace/doi#journalref";
     protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
     protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
     
@@ -146,7 +148,8 @@ public abstract class DoiAction extends RestAction {
                 if (parts.length > 1) {
                     doiAction = parts[1];
                     if (parts.length > 2) {
-                        throw new IllegalArgumentException("Bad request: " + path);
+                        log.info("DOI ACTION BAD REQUEST: " + path);
+                        throw new IllegalArgumentException("Bad smelly request: " + path);
                     }
                 }
             }

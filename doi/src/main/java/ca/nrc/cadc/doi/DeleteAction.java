@@ -120,7 +120,7 @@ public class DeleteAction extends DoiAction {
             throw new IllegalArgumentException("DOI number required.");
         }
         if (doiAction != null) {
-            throw new IllegalArgumentException("Bad request.");
+            throw new IllegalArgumentException("Cannot Delete: Bad request.");
         }
         
         // Get container node for DOI

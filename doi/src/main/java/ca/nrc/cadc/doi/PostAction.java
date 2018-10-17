@@ -108,9 +108,9 @@ public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
     // PostAction
-    private static final String CREATE_REQUEST = "create";
-    //    protected static final String EDIT_REQUEST = "edit";
-    //    protected static final String MINT_REQUEST = "mint";
+//    private static final String CREATE_REQUEST = "create";
+//    //    protected static final String EDIT_REQUEST = "edit";
+//    //    protected static final String MINT_REQUEST = "mint";
 
     public PostAction() {
         super();
@@ -220,6 +220,10 @@ public class PostAction extends DoiAction {
         
         NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, DOI_VOS_STATUS_DRAFT);
         properties.add(doiStatus);
+
+        // Should have come in as a parameter with the POST
+        NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
+        properties.add(journalRef);
 
         // All folders will be only readable by requester
         NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD, guri.toString());

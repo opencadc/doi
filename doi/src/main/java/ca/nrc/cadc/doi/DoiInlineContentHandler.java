@@ -101,7 +101,8 @@ public class DoiInlineContentHandler implements InlineContentHandler {
         Resource userInput = null;
         InlineContentHandler.Content content = new InlineContentHandler.Content();
 
-        if (contentType.toLowerCase().equals("text/xml")) {
+        log.info("DOIINLINE");
+        if (contentType.toLowerCase().contains("text/xml")) {
             try {
                 // read xml file
                 DoiXmlReader reader = new DoiXmlReader(false);
@@ -111,7 +112,7 @@ public class DoiInlineContentHandler implements InlineContentHandler {
                 throw new InlineContentException(dpe.getMessage());
             }
         }
-        else if (contentType.toLowerCase().equals("application/json")) {
+        else if (contentType.toLowerCase().contains("application/json")) {
             try {
                 // read json file
                 DoiJsonReader reader = new DoiJsonReader();

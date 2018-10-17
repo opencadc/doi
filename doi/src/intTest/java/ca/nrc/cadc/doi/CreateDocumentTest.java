@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.RunnableAction;
+import ca.nrc.cadc.net.FileContent;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -76,8 +78,10 @@ import java.io.StringReader;
 import java.net.URL;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
 import java.util.List;
 
+import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
@@ -100,9 +104,6 @@ import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**
- * Integration tests for the recursive setting of node properties.
- *
- * @author majorb
  */
 public class CreateDocumentTest extends IntTestBase
 {
@@ -114,6 +115,7 @@ public class CreateDocumentTest extends IntTestBase
     {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
     private Resource initialResource;
@@ -137,10 +139,19 @@ public class CreateDocumentTest extends IntTestBase
         writer.write(initialResource, builder);
         initialDocument = builder.toString();
     }
-    
+
     private String postDocument(URL postUrl, String document)
     {
-        HttpPost httpPost = new HttpPost(postUrl, document, "text/xml", true);
+        Map<String, Object> params = new HashMap<String,Object>();
+        FileContent fc;
+        fc = new FileContent(document);
+        fc.setContentType("text/xml");
+        params.put("doimeta", fc);
+        params.put("journalref", "2018, Journal ref. ApJ 1000,100");
+        log.info("url: " + postUrl.getPath());
+
+        HttpPost httpPost = new HttpPost(postUrl, params, true);
+
         httpPost.run();
         
         // Check that there was no exception thrown
@@ -264,7 +275,7 @@ public class CreateDocumentTest extends IntTestBase
         });
     }
     
-    @Test
+//    @Test
     public void testGetStatusList() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);

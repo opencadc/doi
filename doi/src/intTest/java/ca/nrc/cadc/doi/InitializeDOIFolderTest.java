@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
@@ -85,7 +86,9 @@ import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
@@ -101,9 +104,6 @@ import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**
- * Integration tests for the recursive setting of node properties.
- *
- * @author majorb
  */
 public class InitializeDOIFolderTest extends IntTestBase
 {
@@ -148,8 +148,18 @@ public class InitializeDOIFolderTest extends IntTestBase
 
                 log.debug("baseURL: " + baseURL);
                 log.debug("posting to: " + postUrl);
-                
-                HttpPost httpPost = new HttpPost(postUrl, builder.toString(), "text/xml", false);
+
+                Map<String, Object> params = new HashMap<String,Object>();
+                FileContent fc;
+                fc = new FileContent(builder.toString());
+                fc.setContentType("text/xml");
+                params.put("doimeta", fc);
+                params.put("journalref", "2018, Journal ref. ApJ 1000,100");
+                log.info("url: " + postUrl.getPath());
+
+                HttpPost httpPost = new HttpPost(postUrl, params, false);
+
+//                HttpPost httpPost = new HttpPost(postUrl, builder.toString(), "text/xml", false);
                 httpPost.run();
                 
                 // Check that there was no exception thrown

@@ -20,7 +20,7 @@ sourceCompatibility = 1.7
 
 group = 'ca.nrc.cadc'
 
-version = '1001'
+version = '1002'
 
 war {
     archiveName = project.name + '##' + project.version + '.war'
@@ -35,7 +35,7 @@ dependencies {
     compile 'log4j:log4j:1.2.+'
     providedCompile 'javax.servlet:javax.servlet-api:3.1.+'
     
-    compile 'org.opencadc:cadc-util:[1.2,)'
+    compile 'org.opencadc:cadc-util:[1.2.5,)'
     runtime 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-rest:[1.1.1,)'
     compile 'org.opencadc:cadc-access-control-identity:1.+'
