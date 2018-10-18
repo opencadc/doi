@@ -11,13 +11,12 @@
   })
 
   function CitationLanding(inputs) {
-    var _selfCitationLanding = this
     var doiDoc = new cadc.web.citation.DOIDocument()
     var page = new cadc.web.citation.CitationPage(inputs)
     var _ajaxCallCount = 2
 
     function init(inputs) {
-      // Listen for the onAuthenticated call
+      // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
       page.checkAuthentication()
     }
@@ -47,11 +46,9 @@
       })
     }
 
-
-
     // ------------ HTTP/Ajax functions ------------
 
-    //GET
+    //GET DOI Metadata
     function handleDOIGet(doiNumber) {
       page.clearAjaxAlert()
       page.setInfoModal("Please wait ", "Processing request...", true)
@@ -66,21 +63,20 @@
           dataType: 'json',
           contentType: 'application/json'
         })
-            .success(function(data) {
-              hideInfoModal()
-              doiDoc.populateDoc(data)
-              displayMetadata()
-            })
-            .fail(function(message) {
-              page.setAjaxFail(message)
-            })
+        .success(function(data) {
+          hideInfoModal()
+          doiDoc.populateDoc(data)
+          displayMetadata()
+        })
+        .fail(function(message) {
+          page.setAjaxFail(message)
+        })
       })
 
       return false
     }
 
-
-    // GET
+    // GET Status
     function getDoiStatus(doiName) {
       page.prepareCall().then(function(serviceURL) {
         var statusUrl = serviceURL + '/' + doiName + "/status"
@@ -91,13 +87,13 @@
           dataType: 'json',
           contentType: 'application/json'
         })
-            .success(function(data) {
-              hideInfoModal()
-              displayDoiStatus(data)
-            })
-            .fail(function(message) {
-              page.setAjaxFail(message)
-            })
+        .success(function(data) {
+          hideInfoModal()
+          displayDoiStatus(data)
+        })
+        .fail(function(message) {
+          page.setAjaxFail(message)
+        })
       })
       return false
     }
@@ -121,9 +117,9 @@
     function hideInfoModal() {
       _ajaxCallCount--
       if (_ajaxCallCount == 0) {
-        $('#info_modal').modal('hide');
-        $('body').removeClass('modal-open');
-        $('.modal-backdrop').remove();
+        $('#info_modal').modal('hide')
+        $('body').removeClass('modal-open')
+        $('.modal-backdrop').remove()
       }
     }
 
