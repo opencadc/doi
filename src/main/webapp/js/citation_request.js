@@ -4,8 +4,7 @@
     cadc: {
       web: {
         citation: {
-          CitationRequest: CitationRequest,
-          DOIDocument: DOIDocument
+          CitationRequest: CitationRequest
         }
       }
     }
@@ -19,7 +18,7 @@
    * @param {String} [inputs.resourceCapabilitiesEndPoint='http://apps.canfar.net/reg/resource-caps'] URL of the resource capability document.
    */
   function CitationRequest(inputs) {
-    var doiDoc = new DOIDocument()
+    var doiDoc = new cadc.web.citation.DOIDocument()
     var page = new cadc.web.citation.CitationPage(inputs)
 
 
@@ -206,7 +205,7 @@
           .success(function(data) {
             //page.setProgressBar('okay')
             setButtonState('update')
-            $('#doi_number').val(data.resource.identifier['$'])
+
             var doiSuffix = data.resource.identifier['$'].split('/')[1]
             // Populate javascript object behind form
             doiDoc.populateDoc(data)
@@ -274,7 +273,6 @@
             hideInfoModal()
             page.setProgressBar('okay')
             loadMetadata(data)
-
           })
           .fail(function(message) {
             hideInfoModal()
@@ -288,24 +286,28 @@
     function loadMetadata(statusData) {
       // Performed after a successful GET for status
       var doiName = statusData.doistatus.identifier['$']
-      var dataDir = statusData.doistatus.dataDirectory['$']
-      var dataDir = '<a href="/storage/list' +
-            dataDir +
-            '" target="_blank">/storage/list' +
-            dataDir +
-            '</a>'
+      //var dataDir = statusData.doistatus.dataDirectory['$']
+      //var dataDir = '<a href="/storage/list' +
+      //      dataDir +
+      //      '" target="_blank">/storage/list' +
+      //      dataDir +
+      //      '</a>'
 
+      var dataDir = page.mkDataDirLink(statusData.doistatus.dataDirectory['$'])
       // Once the Mint function is completed, landing page will also be displayed
+
+      // These happens to be an input element, so 'val' is preferred
+
+      $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
       $('#doi_metadata').removeClass('hidden')
       $('#doi_status').html(statusData.doistatus.status['$'])
       $('#doi_data_dir').html(dataDir)
-      $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
     }
 
     function populateForm() {
       $('#doi_creator_list').val(doiDoc.getAuthorList())
       $('#doi_title').val(doiDoc.getTitle())
-      //$('#doi_journal_ref').val(doiDoc.getJournalRef())
+      $('#doi_number').val(doiDoc.getDOINumber())
     }
 
     function hideInfoModal() {
@@ -324,161 +326,4 @@
     })
   }
 
-  /**
-   * Class for handling DOI metadata document
-   * @constructor
-   */
-  function DOIDocument() {
-    var _selfDoc = this
-    this._minimalDoc = {}
-
-    function initMinimalDoc() {
-      // build minimal doc to start.
-      _selfDoc._minimalDoc = {
-        resource: {
-          '@xmlns': 'http://datacite.org/schema/kernel-4',
-          identifier: {
-            '@identifierType': 'DOI',
-            $: '10.11570/YY.xxxx'
-          },
-          creators: {
-            $: []
-          },
-          titles: {
-            $: [
-              {
-                title: {
-                  '@xml:lang': 'en-US',
-                  $: ''
-                }
-              }
-            ]
-          },
-          publisher: { $: 'Canadian Astronomy Data Centre (CADC)' },
-          publicationYear: { $: new Date().getFullYear() },
-          resourceType: {
-            '@resourceTypeGeneral': 'Dataset',
-            $: 'Dataset'
-          }
-        }
-      }
-    }
-
-    function getMinimalDoc() {
-      if (_selfDoc._minimalDoc === {}) {
-        initMinimalDoc()
-      }
-      return _selfDoc._minimalDoc
-    }
-
-    function populateDoc(serviceData) {
-      _selfDoc._minimalDoc = serviceData
-    }
-
-    function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(/s*[s,]s*/).filter(Boolean)
-      var creatorObject = {
-        creatorName: {
-          '@nameType': 'Personal',
-          $: ''
-        },
-        givenName: { $: '' },
-        familyName: { $: '' }
-      }
-
-      // clean up the ", " format that might not have been done
-      // in the input box, so that output is consistent and format
-      // in the XML file is consistent
-      var givenName = nameParts[1].trim()
-      var familyName = nameParts[0].trim()
-      creatorObject.creatorName['$'] = givenName + ", " + familyName
-      creatorObject.familyName['$'] = familyName
-      creatorObject.givenName['$'] = givenName
-
-      return { creator: creatorObject }
-    }
-
-    function setAuthor(authorList) {
-      // personalInfo is a new line delimited list of last name, first name elements
-      var names = authorList.split('\n')
-      for (var j = 0; j < names.length; j++) {
-        _selfDoc._minimalDoc.resource.creators['$'][j] = makeCreatorStanza(
-          names[j]
-        )
-      }
-    }
-
-    function setDOINumber(identifier) {
-      if (identifier !== '') {
-        _selfDoc._minimalDoc.resource.identifier['$'] = identifier
-      }
-    }
-
-    function setPublicationYear(year) {
-      _selfDoc._minimalDoc.resource.publicationYear['$'] = year
-    }
-
-    function setPublisher(identifier) {
-      _selfDoc._minimalDoc.resource.publisher['$'] = identifier
-    }
-
-    function setTitle(title) {
-      _selfDoc._minimalDoc.resource.titles['$'][0].title['$'] = title
-    }
-
-    function getAuthorFullname() {
-      return _selfDoc._minimalDoc.resource.creators['$'][0].creator.creatorName[
-        '$'
-      ]
-    }
-
-    function getAuthorList() {
-      var listSize = _selfDoc._minimalDoc.resource.creators['$'].length
-      var authorList = ''
-      for (var ix = 0; ix < listSize; ix++) {
-        authorList =
-          authorList +
-          _selfDoc._minimalDoc.resource.creators['$'][ix].creator.creatorName[
-            '$'
-          ] +
-          '\n'
-      }
-      return authorList
-    }
-
-    function getDOINumber() {
-      return _selfDoc._minimalDoc.resource.identifier['$']
-    }
-
-    function getPublicationYear() {
-      return _selfDoc._minimalDoc.resource.publicationYear['$']
-    }
-
-    function getPublisher() {
-      return _selfDoc._minimalDoc.resource.publisher['$']
-    }
-
-    function getTitle() {
-      return _selfDoc._minimalDoc.resource.titles['$'][0].title['$']
-    }
-
-    initMinimalDoc()
-
-    $.extend(this, {
-      initMinimalDoc: initMinimalDoc,
-      getMinimalDoc: getMinimalDoc,
-      populateDoc: populateDoc,
-      setAuthor: setAuthor,
-      setDOINumber: setDOINumber,
-      setPublicationYear: setPublicationYear,
-      setPublisher: setPublisher,
-      setTitle: setTitle,
-      getAuthorFullname: getAuthorFullname,
-      getAuthorList: getAuthorList,
-      getDOINumber: getDOINumber,
-      getPublicationYear: getPublicationYear,
-      getPublisher: getPublisher,
-      getTitle: getTitle
-    })
-  }
 })(jQuery)

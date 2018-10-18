@@ -12,9 +12,7 @@
   <c:set var="baseURL" value="${fn:substring(url, 0, fn:length(url) - fn:length(uri))}" />
 </c:if>
 
-<%-- Set this by configuration in the future. --%>
-<%--<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />--%>
-<c:set var="resourceCapabilitiesEndPoint" value="http://jeevesh.cadc.dao.nrc.ca/reg/resource-caps" />
+<c:set var="resourceCapabilitiesEndPoint" value="${baseURL}/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -113,7 +111,7 @@
 
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
-                          <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Reference</label>
+                          <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control" id="doi_journal_ref" name="journalRef"
                                    placeholder="Journal Reference" tabindex="3" required/>
