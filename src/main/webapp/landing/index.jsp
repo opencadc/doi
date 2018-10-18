@@ -179,8 +179,8 @@
 <script type="application/javascript">
   $(document).ready(function() {
 
-    // Instantiate controller for Data Citation List page
-    landing_page = new cadc.web.citation.CitationLanding({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
+    // Set up  controller for Data Citation List page
+    landing_page = new cadc.web.citation.CitationLanding({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
     landing_page.init()
 
   });

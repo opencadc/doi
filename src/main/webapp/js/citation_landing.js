@@ -15,7 +15,7 @@
     var page = new cadc.web.citation.CitationPage(inputs)
     var _ajaxCallCount = 2
 
-    function init(inputs) {
+    function init() {
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
       page.checkAuthentication()

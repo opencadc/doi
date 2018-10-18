@@ -23,6 +23,13 @@
 
 
     // ------------ Page load functions ------------
+
+    function init() {
+      // Listen for the (CitationPage) onAuthenticated call
+      attachListeners()
+      page.checkAuthentication()
+    }
+
     function parseUrl() {
       var query = window.location.search
 
@@ -32,42 +39,16 @@
       }
     }
 
-    function setPublicationYears() {
-      var curYear = new Date().getFullYear()
-      var $yearSelect = $('#doi_publish_year')
-      for (var i = 0; i < 3; i++) {
-        $yearSelect.append(
-          '<option value="' + curYear + '">' + curYear + '</option>'
-        )
-        curYear++
-      }
-    }
-
     function attachListeners() {
       $('#doi_form_reset_button').click(handleFormReset)
       $('#doi_form_delete_button').click(handleDOIDelete)
       $('#doi_request_form').submit(handleDOIRequest)
+
+      page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
+        parseUrl()
+      })
     }
 
-    function setNotAuthenticated(errorMsg) {
-      $('#auth_modal').modal('show')
-      $('.doi-form-body').addClass('hidden')
-      $('.doi_not_authenticated').removeClass('hidden')
-
-      $('.doi_not_authenticated').click(function() {
-        $('#auth_modal').modal('show')}
-      )
-    }
-
-    function setAuthenticated() {
-      $('.doi-form-body').removeClass('hidden')
-      $('.doi_not_authenticated').addClass('hidden')
-
-      setPublicationYears()
-      // This will kick off a GET if the URL contains a request
-      parseUrl()
-      attachListeners()
-    }
 
     // ------------ Page state management functions ------------
 
@@ -106,8 +87,7 @@
       // Clear any previous error bars
       page.clearAjaxAlert()
       var _formdata = $(this).serializeArray()
-      var personalInfo = {}
-      var journalRef = "";
+      var journalRef = ""
 
       for (var i = 0, fdl = _formdata.length; i < fdl; i++) {
         var formField = _formdata[i]
@@ -149,7 +129,6 @@
         type: "application/json"
       }));
 
-
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
           xhrFields: { withCredentials: true },
@@ -163,24 +142,24 @@
           contentType: false
           //data: JSON.stringify(doiDoc.getMinimalDoc())
         })
-          .success(function(data) {
-            // POST redirects to a get.
-            // Load the data returned into the local doiDocument to be
-            // accessed.
-            page.setProgressBar('okay')
-            $('#doi_number').val(data.resource.identifier['$'])
-            var doiSuffix = data.resource.identifier['$'].split('/')[1]
-            setButtonState('update')
+        .success(function(data) {
+          // POST redirects to a get.
+          // Load the data returned into the local doiDocument to be
+          // accessed.
+          page.setProgressBar('okay')
+          $('#doi_number').val(data.resource.identifier['$'])
+          var doiSuffix = data.resource.identifier['$'].split('/')[1]
+          setButtonState('update')
 
-            doiDoc.populateDoc(data)
-            populateForm()
+          doiDoc.populateDoc(data)
+          populateForm()
 
-            // Kick off status call
-            getDoiStatus(doiSuffix);
-          })
-          .fail(function(message) {
-            page.setAjaxFail(message)
-          })
+          // Kick off status call
+          getDoiStatus(doiSuffix);
+        })
+        .fail(function(message) {
+          page.setAjaxFail(message)
+        })
       })
 
       return false
@@ -202,23 +181,23 @@
           dataType: 'json',
           contentType: 'application/json'
         })
-          .success(function(data) {
-            //page.setProgressBar('okay')
-            setButtonState('update')
+        .success(function(data) {
+          //page.setProgressBar('okay')
+          setButtonState('update')
 
-            var doiSuffix = data.resource.identifier['$'].split('/')[1]
-            // Populate javascript object behind form
-            doiDoc.populateDoc(data)
-            populateForm()
+          var doiSuffix = data.resource.identifier['$'].split('/')[1]
+          // Populate javascript object behind form
+          doiDoc.populateDoc(data)
+          populateForm()
 
-            // Kick off status call
-            getDoiStatus(doiSuffix);
-          })
-          .fail(function(message) {
-            hideInfoModal()
-            page.setProgressBar('error')
-            page.setAjaxFail(message)
-          })
+          // Kick off status call
+          getDoiStatus(doiSuffix);
+        })
+        .fail(function(message) {
+          hideInfoModal()
+          page.setProgressBar('error')
+          page.setAjaxFail(message)
+        })
       })
 
       return false
@@ -241,17 +220,17 @@
           url: getUrl,
           method: 'DELETE'
         })
-          .success(function(data) {
-            hideInfoModal()
-            page.setProgressBar('okay')
-            handleFormReset(true)
-            page.setAjaxSuccess('DOI Deleted')
-          })
-          .fail(function(message) {
-            hideInfoModal()
-            page.setProgressBar('error')
-            page.setAjaxFail(message)
-          })
+        .success(function(data) {
+          hideInfoModal()
+          page.setProgressBar('okay')
+          handleFormReset(true)
+          page.setAjaxSuccess('DOI Deleted')
+        })
+        .fail(function(message) {
+          hideInfoModal()
+          page.setProgressBar('error')
+          page.setAjaxFail(message)
+        })
       })
       return false
     }
@@ -269,39 +248,30 @@
         dataType: 'json',
         contentType: 'application/json'
       })
-          .success(function(data) {
-            hideInfoModal()
-            page.setProgressBar('okay')
-            loadMetadata(data)
-          })
-          .fail(function(message) {
-            hideInfoModal()
-            page.setProgressBar('error')
-            page.setAjaxFail(message)
-          })
+      .success(function(data) {
+        hideInfoModal()
+        page.setProgressBar('okay')
+        loadMetadata(data)
+      })
+      .fail(function(message) {
+        hideInfoModal()
+        page.setProgressBar('error')
+        page.setAjaxFail(message)
+      })
     })
     return false
   }
 
     function loadMetadata(statusData) {
       // Performed after a successful GET for status
-      var doiName = statusData.doistatus.identifier['$']
-      //var dataDir = statusData.doistatus.dataDirectory['$']
-      //var dataDir = '<a href="/storage/list' +
-      //      dataDir +
-      //      '" target="_blank">/storage/list' +
-      //      dataDir +
-      //      '</a>'
-
       var dataDir = page.mkDataDirLink(statusData.doistatus.dataDirectory['$'])
       // Once the Mint function is completed, landing page will also be displayed
-
-      // These happens to be an input element, so 'val' is preferred
-
-      $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
       $('#doi_metadata').removeClass('hidden')
       $('#doi_status').html(statusData.doistatus.status['$'])
       $('#doi_data_dir').html(dataDir)
+
+      // This happens to be an input element in the form, so 'val' is preferred
+      $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
     }
 
     function populateForm() {
@@ -317,12 +287,7 @@
     }
 
     $.extend(this, {
-      setNotAuthenticated: setNotAuthenticated,
-      setAuthenticated: setAuthenticated,
-      handleFormReset: handleFormReset,
-      handleDOIRequest: handleDOIRequest,
-      handleDOIGet: handleDOIGet,
-      handleDOIDelete: handleDOIDelete
+      init: init
     })
   }
 

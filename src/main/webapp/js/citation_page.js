@@ -130,6 +130,17 @@
           })
     }
 
+
+    // ------------ Rendering & display functions ------------
+
+    function mkDataDirLink(dataDir) {
+      return '<a href="/storage/list' +
+          dataDir +
+          '" target="_blank">/storage/list' +
+          dataDir +
+          '</a>'
+    }
+
     function setInfoModal(title, msg, hideThanks) {
       $('.info-span').html(msg)
       $('#infoModalLongTitle').html(title)
@@ -146,15 +157,6 @@
         $('#infoThanks').removeClass('d-none')
       }
 
-    };
-
-
-    function mkDataDirLink(dataDir) {
-      return '<a href="/storage/list' +
-          dataDir +
-          '" target="_blank">/storage/list' +
-          dataDir +
-          '</a>'
     }
 
 
@@ -212,10 +214,9 @@
       checkAuthentication: checkAuthentication,
       setCapabilitiesEndpoint: setCapabilitiesEndpoint,
       subscribe: subscribe,
+      trigger: trigger,
       hideModals: hideModals
     })
-
-
 
   }
 
