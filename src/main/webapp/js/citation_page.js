@@ -20,9 +20,9 @@
   function CitationPage(inputs) {
 
     var resourceCapabilitiesEndPoint =
-      inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
-        ? inputs.resourceCapabilitiesEndPoint
-        : 'http://apps.canfar.net/reg/resource-caps'
+            inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
+                ? inputs.resourceCapabilitiesEndPoint
+                : 'http://apps.canfar.net/reg/resource-caps'
 
     // NOTE: for deployment to production, this constructor should have no parameters.
     // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
@@ -86,15 +86,15 @@
 
     function prepareCall() {
       return _registryClient
-        .getServiceURL(
-          'ivo://cadc.nrc.ca/doi',
-          'vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0',
-          'vs:ParamHTTP',
-          'cookie'
-        )
-        .catch(function(err) {
-          setAjaxFail('Error obtaining Service URL > ' + err)
-        })
+          .getServiceURL(
+              'ivo://cadc.nrc.ca/doi',
+              'vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0',
+              'vs:ParamHTTP',
+              'cookie'
+          )
+          .catch(function (err) {
+            setAjaxFail('Error obtaining Service URL > ' + err)
+          })
     }
 
     function setInfoModal(title, msg, hideThanks) {
@@ -115,18 +115,53 @@
 
     };
 
+
+    function mkDataDirLink(dataDir) {
+      return '<a href="/storage/list' +
+          dataDir +
+          '" target="_blank">/storage/list' +
+          dataDir +
+          '</a>'
+    }
+
+
+    //function checkAuthentication() {
+    //  userManager = new cadc.web.UserManager();
+    //
+    //  // From cadc.user.js. Listens for when user logs in
+    //  userManager.subscribe(cadc.web.events.onUserLoad,
+    //      function (event, data) {
+    //        // Check to see if user is logged in or not
+    //        if (typeof(data.error) != "undefined") {
+    //          citation_js.setNotAuthenticated(errorMsg);
+    //        } else {
+    //          citation_js.setAuthenticated();
+    //        }
+    //      });
+    //
+    //  // This function is in cadc.user.js, will throw the event
+    //  // in the userManager.subscribe above...
+    //  userManager.loadCurrent();
+    //
+    //  // Instantiate controller for Data Citation List page
+    //  //citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
+    //
+    //}// end body onReady function
+
     $.extend(this, {
       prepareCall: prepareCall,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
       setProgressBar: setProgressBar,
       clearAjaxAlert: clearAjaxAlert,
-      setInfoModal: setInfoModal
+      setInfoModal: setInfoModal,
+      mkDataDirLink: mkDataDirLink
+      //checkAuthentication: checkAuthentication
     })
+
+
+
   }
-
-  // ------------ Modal control, messaging, common metadata display ------------
-
 
 
 })(jQuery)

@@ -108,30 +108,27 @@
       page.clearAjaxAlert()
       var _formdata = $(this).serializeArray()
       var personalInfo = {}
+      var journalRef = "";
 
       for (var i = 0, fdl = _formdata.length; i < fdl; i++) {
         var formField = _formdata[i]
         // format: formField: {name:*,value:*}
 
         switch (formField.name) {
-          case 'publisher': {
-            doiDoc.setPublisher(formField.value)
-            break
-          }
-          case 'publicationYear': {
-            doiDoc.setPublicationYear(formField.value)
-            break
-          }
           case 'title': {
             doiDoc.setTitle(formField.value)
             break
           }
-          case 'doi-number': {
+          case 'doiNumber': {
             doiDoc.setDOINumber(formField.value)
             break
           }
           case 'creatorList': {
             doiDoc.setAuthor(formField.value)
+            break
+          }
+          case 'journalRef' : {
+            journalRef = formField.value
             break
           }
           default: {
@@ -142,14 +139,30 @@
 
       page.setProgressBar('busy')
 
+      // Set up the multi part data to be submitted to the
+      // doi web service
+      var multiPartData = new FormData();
+      multiPartData.append( "journalRef", journalRef)
+
+      // 'Blob' type is requred to have the 'filename="blob" parameter added
+      // to the multipart section, and have the Content-type header added
+      multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getMinimalDoc())], {
+        type: "application/json"
+      }));
+
+
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
           xhrFields: { withCredentials: true },
           url: serviceURL,
           method: 'POST',
           dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(doiDoc.getMinimalDoc())
+          cache: false,
+          //contentType: 'application/json',
+          data: multiPartData,
+          processData: false,
+          contentType: false
+          //data: JSON.stringify(doiDoc.getMinimalDoc())
         })
           .success(function(data) {
             // POST redirects to a get.
@@ -159,10 +172,12 @@
             $('#doi_number').val(data.resource.identifier['$'])
             var doiSuffix = data.resource.identifier['$'].split('/')[1]
             setButtonState('update')
-            loadMetadata(doiSuffix)
 
             doiDoc.populateDoc(data)
             populateForm()
+
+            // Kick off status call
+            getDoiStatus(doiSuffix);
           })
           .fail(function(message) {
             page.setAjaxFail(message)
@@ -259,6 +274,7 @@
             hideInfoModal()
             page.setProgressBar('okay')
             loadMetadata(data)
+
           })
           .fail(function(message) {
             hideInfoModal()
@@ -283,13 +299,13 @@
       $('#doi_metadata').removeClass('hidden')
       $('#doi_status').html(statusData.doistatus.status['$'])
       $('#doi_data_dir').html(dataDir)
+      $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
     }
 
     function populateForm() {
       $('#doi_creator_list').val(doiDoc.getAuthorList())
       $('#doi_title').val(doiDoc.getTitle())
-      $('#doi_publisher').val(doiDoc.getPublisher())
-      $('#doi_publish_year').val(doiDoc.getPublicationYear())
+      //$('#doi_journal_ref').val(doiDoc.getJournalRef())
     }
 
     function hideInfoModal() {
@@ -338,7 +354,7 @@
               }
             ]
           },
-          publisher: { $: '' },
+          publisher: { $: 'Canadian Astronomy Data Centre (CADC)' },
           publicationYear: { $: new Date().getFullYear() },
           resourceType: {
             '@resourceTypeGeneral': 'Dataset',
