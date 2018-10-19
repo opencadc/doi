@@ -31,20 +31,20 @@
 
 package ca.nrc.cadc.citation.integration;
 
-import ca.nrc.cadc.web.selenium.AbstractTestWebPage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 
-public class DataCitationRequestPage extends AbstractTestWebPage {
-    private static final By DOI_TITLE_BY = By.id("doi_title");
-    private static final By DOI_LOGOUT_BY = By.id("logout");
-    public static final By DOI_INFO_PANEL = By.className("alert-danger");
+public class DataCitationRequestPage extends DataCitationAbstractPage {
     private static final By DOI_DELETE_BY = By.id("doi_form_delete_button");
+    private static final By DOI_DATA_DIR_BY = By.id("doi_data_dir");
     private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_create_button");
-    private static final By DOI_MODAL_LOGIN = By.id("modalUsername");
+    private static final By DOI_REQUEST_UPDATE_BY = By.id("doi_edit_button");
+    private static final By DOI_NUMBER_BY = By.id("doi_number");
+    private static final By DOI_ERRORMSG_BY = By.id("error_msg");
 
     @FindBy(id = "doi_number")
     WebElement doiNumberInput;
@@ -55,30 +55,11 @@ public class DataCitationRequestPage extends AbstractTestWebPage {
     @FindBy(id = "doi_creator_list")
     WebElement doiCreatorsInput;
 
-    @FindBy(id = "doi_publisher")
-    WebElement doiPublisherInput;
-
-    @FindBy(id = "doi_publish_year")
-    WebElement doiPublisherYearInput;
-
-    @FindBy(className = "doi-progress-bar")
-    WebElement statusBar;
+    @FindBy(id = "doi_journal_ref")
+    WebElement doiJournalRef;
 
     @FindBy(id = "doi_metadata")
     WebElement metadataPanel;
-
-    @FindBy(id = "modalUsername")
-    WebElement modalUsernameInput;
-
-    @FindBy(id = "modalPassword")
-    WebElement modalPasswordInput;
-
-    @FindBy(id = "logout")
-    WebElement logout;
-
-    @FindBy(className = "user-actions")
-    WebElement userActionDropdown;
-
 
     public DataCitationRequestPage(WebDriver driver) throws Exception {
         super(driver);
@@ -86,7 +67,7 @@ public class DataCitationRequestPage extends AbstractTestWebPage {
     }
 
     public String getDoiNumber() {
-        return doiNumberInput.getText();
+        return doiNumberInput.getAttribute("value");
     }
 
     public String getDoiTitle() {
@@ -97,13 +78,8 @@ public class DataCitationRequestPage extends AbstractTestWebPage {
         return doiCreatorsInput.getText();
     }
 
-    public String getPublisher() {
-        return doiPublisherInput.getText();
-    }
-
-    public String getPublishYear() {
-        // this is a dropdown, might not work as expected...
-        return doiPublisherYearInput.getText();
+    public String getDoiJournalRef() {
+        return doiJournalRef.getText();
     }
 
     public void setDoiTitle(String title) {
@@ -114,51 +90,40 @@ public class DataCitationRequestPage extends AbstractTestWebPage {
          doiCreatorsInput.sendKeys(authorList);
     }
 
-    public void setPublisher(String publisher) {
-        doiPublisherInput.sendKeys(publisher);
+    public void setJournalRef(String journalRef) {
+        doiJournalRef.sendKeys(journalRef);
     }
 
-    public void setPublishYear(String year) {
-        // this is a dropdown, might not work as expected...
-        doiPublisherYearInput.sendKeys(year);
-    }
-
-    public void pageLoadLogin() throws Exception {
-        waitForElementPresent(DOI_MODAL_LOGIN);
-        sendKeys(modalUsernameInput,"CADCtest");
-        sendKeys(modalPasswordInput, "sywymUL4");
-        modalPasswordInput.submit();
-
-        waitForElementPresent(DOI_TITLE_BY);
-    }
-
-    public void logout() throws Exception {
-        click(userActionDropdown);
-        waitForElementPresent(DOI_LOGOUT_BY);
-        click(logout);
-    }
 
     public void submitForm() throws Exception {
         WebElement cb = find(DOI_REQUEST_SUBMIT_BY);
         click(cb);
-        // If this has a problem, this element will not become visible
-        waitForElementClickable(DOI_REQUEST_SUBMIT_BY);
+        // If submit has a problem, this element will not become visible
+        waitForElementVisible(DOI_REQUEST_UPDATE_BY);
     }
 
     public void deleteDoi() throws Exception {
+        // metadata panel should be displayed
+        waitForElementVisible(DOI_DATA_DIR_BY);
         WebElement db = find(DOI_DELETE_BY);
         click(db);
-        // If this has a problem, this element will not become visible
-        waitForElementClickable(DOI_REQUEST_SUBMIT_BY);
+        // If delete has a problem, this element will not become visible
+        waitForElementVisible(DOI_REQUEST_SUBMIT_BY);
     }
 
-    // State verification functions
-
-    boolean isStateOkay() {
-        return statusBar.getAttribute("class").contains("progress-bar-success");
+    public void waitForMetadataLoaded() throws Exception {
+        waitUntil(new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver d) {
+                return d.findElement(DOI_NUMBER_BY).getAttribute("value").length() != 0;
+            }
+        });
     }
 
-    boolean isMetadataDisplayed() {
-        return metadataPanel.getAttribute("class").contains("hidden");
+    public void waitForCreateStateReady() throws Exception {
+        waitForElementPresent(DOI_REQUEST_SUBMIT_BY);
+    }
+
+    public void waitForGetFailed() throws Exception  {
+        waitForElementVisible(DOI_ERRORMSG_BY);
     }
 }
