@@ -161,7 +161,7 @@ public class DoiStatusReaderWriterTest
         compareTitle(s1.getTitle(), s2.getTitle());
         compareDataDir(s1.getDataDirectory(), s2.getDataDirectory());
         compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
-        compareJournalRef(s1.getJournalRef(), s2.getJournalRef());
+        compareJournalRef(s1.journalRef, s2.journalRef);
     }
     
     private void compareDoiStatusList(List<DoiStatus> l1, List<DoiStatus> l2)

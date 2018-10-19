@@ -93,8 +93,7 @@ public class DoiStatus
     private Title title;
     private String dataDirectory;
     private Status status;
-    private String journalRef;
-
+    public String journalRef;
 
     public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status)
     { 
@@ -130,15 +129,5 @@ public class DoiStatus
     {
         return this.status;
     }
-
-    public void setJournalRef(String journalRef) {
-        this.journalRef = journalRef;
-    }
-
-    public String getJournalRef() {
-        return this.journalRef;
-    }
-
-
 
 }

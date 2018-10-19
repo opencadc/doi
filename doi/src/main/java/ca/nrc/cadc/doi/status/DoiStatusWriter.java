@@ -114,7 +114,7 @@ public class DoiStatusWriter
         ret.addContent(resourceTypeElement);
 
         // add journalRef element
-        Element journalRefElement = getJournalRefElement(doiStatus.getJournalRef());
+        Element journalRefElement = getJournalRefElement(doiStatus.journalRef);
         ret.addContent(journalRefElement);
         
         return ret;

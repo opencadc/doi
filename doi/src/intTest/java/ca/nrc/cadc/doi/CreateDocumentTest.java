@@ -264,7 +264,7 @@ public class CreateDocumentTest extends IntTestBase
                     Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
-                    Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.getJournalRef());
+                    Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
                 }
                 finally
                 {
