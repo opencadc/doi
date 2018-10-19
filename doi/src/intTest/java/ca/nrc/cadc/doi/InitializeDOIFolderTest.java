@@ -157,8 +157,6 @@ public class InitializeDOIFolderTest extends IntTestBase
                 log.info("url: " + postUrl.getPath());
 
                 HttpPost httpPost = new HttpPost(postUrl, params, false);
-
-//                HttpPost httpPost = new HttpPost(postUrl, builder.toString(), "text/xml", false);
                 httpPost.run();
                 
                 // Check that there was no exception thrown

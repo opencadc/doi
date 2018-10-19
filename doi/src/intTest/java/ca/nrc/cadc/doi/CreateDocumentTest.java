@@ -276,7 +276,7 @@ public class CreateDocumentTest extends IntTestBase
         });
     }
     
-//    @Test
+    @Test
     public void testGetStatusList() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);

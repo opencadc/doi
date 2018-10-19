@@ -218,7 +218,8 @@ public class GetAction extends DoiAction {
                 
                 // construct the DOI status
                 doiStatus = new DoiStatus(resource.getIdentifier(), title,
-                        dataDirectory, Status.toValue(status), journalRef);
+                        dataDirectory, Status.toValue(status));
+                doiStatus.setJournalRef(journalRef);
             }
         }
         else

@@ -123,8 +123,10 @@ public class DoiStatusReader
         String journalReference = root.getChild("journalRef").getText();
 
         Status status = Status.toValue(root.getChild("status").getText());
+        DoiStatus ds = new DoiStatus(id, title, dataDirectory, status);
+        ds.setJournalRef(journalReference);
         
-        return new DoiStatus(id, title, dataDirectory, status, journalReference);
+        return ds;
     }
     
     protected Identifier buildIdentifier(Element root)
