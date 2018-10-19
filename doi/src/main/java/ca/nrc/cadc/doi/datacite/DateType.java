@@ -73,101 +73,41 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import java.util.List;
-
-import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
-import org.springframework.util.StringUtils;
-
 /**
- * Root business object for DOI metadata.
+ * Enums for doi status.
  * 
- * @author yeunga
+ * @author jeevesh
  *
  */
-public class Resource
+public enum DateType
 {
-    private static Logger log = Logger.getLogger(Resource.class);
+    ACCEPTED("Accepted"),
+    VALID("Valid"),
+    UPDATED("Updated");
 
-    private static String RIGHTS_STMT = "Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.";
-    // first %s is the publication title,
-    // second %2 is last name of first author
-    // third %s is the journal reference
-    private static String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s ' by %s et al., %s ";
+    private final String value;
 
-    private Namespace namespace;
-    private Identifier identifier;
-    private List<Creator> creators;
-    private List<Title> titles;
-    private String publisher;
-    private String publicationYear;
-    private ResourceType resourceType;
-    private String rights;
-    private List<Contributor> contributors;
-    private List<DoiDate> doiDates;
-    private String description;
+    private DateType(String value)
+    {
+        this.value = value;
+    }
     
-
-    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles, 
-        String publisher, String publicationYear, ResourceType resourceType) 
-    { 
-        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty() || 
-            !StringUtils.hasText(publisher) || !StringUtils.hasText(publicationYear) ||
-            resourceType == null)
-        {
-            String msg = "namespace, identifier, creator, title, publisher, publicationYear and resourceType must be specified.";
-            throw new IllegalArgumentException(msg);
-        }
-        
-        this.namespace = namespace;
-        this.identifier = identifier;
-        this.creators = creators;
-        this.titles = titles;
-        this.publisher = publisher;
-        this.publicationYear = publicationYear;
-        this.resourceType = resourceType;
+    public static DateType toValue(String s)
+    {
+        for (DateType status : values())
+            if (status.value.equals(s))
+                return status;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public Namespace getNamespace()
+    public String getValue()
     {
-        return this.namespace;
-    }
-    
-    public Identifier getIdentifier()
-    {
-        return this.identifier;
-    }
-    
-    public List<Creator> getCreators()
-    {
-        return this.creators;
-    }
-    
-    public List<Title> getTitles()
-    {
-        return this.titles;
-    }
-    
-    public String getPublisher()
-    {
-        return this.publisher;
-    }
-    
-    public String getPublicationYear()
-    {
-        return this.publicationYear;
-    }
-    
-    public ResourceType getResourceType()
-    {
-        return this.resourceType;
+        return value;
     }
 
-    public List<Contributor> getContributors() {
-        return this.contributors;
-    }
-
-    public List<DoiDate> getDoiDates() {
-        return doiDates;
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }
