@@ -106,6 +106,7 @@ public class Resource
     private List<Contributor> contributors;
     private List<DoiDate> doiDates;
     private String description;
+    private String size;  // data set size
     
 
     public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles, 
