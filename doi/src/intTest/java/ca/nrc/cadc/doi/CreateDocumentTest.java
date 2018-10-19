@@ -145,8 +145,7 @@ public class CreateDocumentTest extends IntTestBase
     {
         Map<String, Object> params = new HashMap<String,Object>();
         FileContent fc;
-        fc = new FileContent(document);
-        fc.setContentType("text/xml");
+        fc = new FileContent(document,"text/xml" );
         params.put("doimeta", fc);
         params.put("journalref", TEST_JOURNAL_REF);
         log.info("url: " + postUrl.getPath());

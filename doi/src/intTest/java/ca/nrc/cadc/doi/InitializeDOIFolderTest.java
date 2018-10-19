@@ -151,8 +151,7 @@ public class InitializeDOIFolderTest extends IntTestBase
 
                 Map<String, Object> params = new HashMap<String,Object>();
                 FileContent fc;
-                fc = new FileContent(builder.toString());
-                fc.setContentType("text/xml");
+                fc = new FileContent(builder.toString(),"text/xml");
                 params.put("doimeta", fc);
                 params.put("journalref", "2018, Journal ref. ApJ 1000,100");
                 log.info("url: " + postUrl.getPath());
