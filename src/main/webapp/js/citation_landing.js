@@ -32,7 +32,7 @@
         getDoiStatus(doiSuffix)
 
       } else {
-        page.setInfoModal("Not Found", "Landing page not found.", false)
+        page.setInfoModal('Not Found', 'Landing page not found.', false)
       }
     }
 
@@ -51,7 +51,7 @@
     //GET DOI Metadata
     function handleDOIGet(doiNumber) {
       page.clearAjaxAlert()
-      page.setInfoModal("Please wait ", "Processing request...", true)
+      page.setInfoModal('Please wait ', 'Processing request...', true)
 
       // Submit doc using ajax
       page.prepareCall().then(function(serviceURL) {
@@ -79,7 +79,7 @@
     // GET Status
     function getDoiStatus(doiName) {
       page.prepareCall().then(function(serviceURL) {
-        var statusUrl = serviceURL + '/' + doiName + "/status"
+        var statusUrl = serviceURL + '/' + doiName + '/status'
         $.ajax({
           xhrFields: { withCredentials: true },
           url: statusUrl,
@@ -103,7 +103,7 @@
       var doiName = statusData.doistatus.identifier['$']
       var dataDir = page.mkDataDirLink(statusData.doistatus.dataDirectory['$'])
 
-      $("#doi_number").html(doiName)
+      $('#doi_number').html(doiName)
       $('#doi_status').html(statusData.doistatus.status['$'])
       $('#doi_data_dir').html(dataDir)
       $('#doi_journal_ref').html(statusData.doistatus.journalRef['$'])

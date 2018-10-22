@@ -121,12 +121,12 @@
       // Set up the multi part data to be submitted to the
       // doi web service
       var multiPartData = new FormData();
-      multiPartData.append( "journalRef", journalRef)
+      multiPartData.append( 'journalRef', journalRef)
 
       // 'Blob' type is requred to have the 'filename="blob" parameter added
       // to the multipart section, and have the Content-type header added
       multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getMinimalDoc())], {
-        type: "application/json"
+        type: 'application/json'
       }));
 
       page.prepareCall().then(function(serviceURL) {
@@ -136,11 +136,9 @@
           method: 'POST',
           dataType: 'json',
           cache: false,
-          //contentType: 'application/json',
           data: multiPartData,
           processData: false,
           contentType: false
-          //data: JSON.stringify(doiDoc.getMinimalDoc())
         })
         .success(function(data) {
           // POST redirects to a get.
@@ -169,7 +167,7 @@
     function handleDOIGet(doiNumber) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Please wait ", "Processing request...", true)
+      page.setInfoModal('Please wait ', 'Processing request...', true)
 
       // Submit doc using ajax
       page.prepareCall().then(function(serviceURL) {
@@ -211,7 +209,7 @@
         .split('/')[1]
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Please wait ", "Processing request...", true)
+      page.setInfoModal('Please wait ', 'Processing request...', true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiNumber
@@ -240,7 +238,7 @@
      page.setProgressBar('busy')
 
      page.prepareCall().then(function(serviceURL) {
-      var statusUrl = serviceURL + '/' + doiName + "/status"
+      var statusUrl = serviceURL + '/' + doiName + '/status'
       $.ajax({
         xhrFields: { withCredentials: true },
         url: statusUrl,

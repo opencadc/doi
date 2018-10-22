@@ -29,11 +29,11 @@
     var doiTableSource =[]
 
     var rowTemplate = {
-      "doi_name" : "",
-      "status" : "",
-      "title" : "",
-      "data_dir": "",
-      "action": ""
+      'doi_name' : '',
+      'status' : '',
+      'title' : '',
+      'data_dir' : '',
+      'action' : ''
     }
 
     var page = new cadc.web.citation.CitationPage(inputs)
@@ -53,16 +53,16 @@
       doiTable = $("#doi_table").DataTable({
         data: doiTableSource,
         columns: [
-          {"data" : "doi_name"},
-          {"data" : "status"},
-          {"data" : "title"},
-          {"data" : "data_dir"},
-          {"data" : "action"}
+          {'data' : 'doi_name'},
+          {'data' : 'status'},
+          {'data' : 'title'},
+          {'data' : 'data_dir'},
+          {'data' : 'action'}
         ],
         columnDefs: [
-          { "width": 20, "targets": 0 },
-          { "width": 75, "targets": 1 },
-          { "width": 20, "targets": 4 }
+          { 'width': 20, 'targets': 0 },
+          { 'width': 75, 'targets': 1 },
+          { 'width': 20, 'targets': 4 }
         ],
         ordering: false,
         paging: false,
@@ -107,7 +107,7 @@
       $('.doi-authenticated').addClass('hidden')
 
       $('.doi-not-authenticated').click(function() {
-        $("#auth_modal").modal('show')}
+        $('#auth_modal').modal('show')}
       )
     }
 
@@ -127,7 +127,7 @@
 
       // Table load
       if (doiStatusList.length == 0) {
-        setTableStatus("No data found")
+        setTableStatus('No data found')
       }
       else {
         for (var j = doiStatusList.length - 1; j >= 0; j--) {
@@ -170,7 +170,7 @@
     function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Pease wait ", "Deleting DOI " + doiSuffix, true)
+      page.setInfoModal('Pease wait ', 'Deleting DOI ' + doiSuffix, true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -199,8 +199,8 @@
     function loadDoiList() {
       clearTable()
       page.setProgressBar('busy')
-      setTableStatus("Loading...")
-      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+      setTableStatus('Loading...')
+      page.setInfoModal('Pease wait ', 'Processing request... (may take up to 10 seconds)', true)
 
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
@@ -211,14 +211,14 @@
           contentType: 'application/json'
         })
         .success(function(stringdata) {
-          setTableStatus("Loading......")
+          setTableStatus('Loading......')
           page.trigger(_selfCitationController, cadc.web.citation.events.onDoiListLoaded, {
             doiList: stringdata,
           })
         })
         .fail(function(message) {
           hideInfoModal()
-          setTableStatus("No data")
+          setTableStatus('No data')
           page.setProgressBar('error')
           page.setAjaxFail(message)
         })

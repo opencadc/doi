@@ -37,17 +37,6 @@
       resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
     })
 
-    function setCapabilitiesEndpoint(inputs) {
-      resourceCapabilitiesEndPoint =
-              inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
-                  ? inputs.resourceCapabilitiesEndPoint
-                  : 'http://apps.canfar.net/reg/resource-caps'
-
-      _registryClient = new Registry({
-        resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
-      })
-    }
-
     // ------------ Page state management functions ------------
 
     function clearAjaxAlert() {
@@ -146,8 +135,8 @@
       $('#infoModalLongTitle').html(title)
 
       // Check if modal is already open
-      if ($('#info_modal').data("bs.modal") === undefined ||
-          $('#info_modal').data("bs.modal").isShown === false) {
+      if ($('#info_modal').data('bs.modal') === undefined ||
+          $('#info_modal').data('bs.modal').isShown === false) {
         $('#info_modal').modal('show')
       }
 
@@ -212,7 +201,6 @@
       setInfoModal: setInfoModal,
       mkDataDirLink: mkDataDirLink,
       checkAuthentication: checkAuthentication,
-      setCapabilitiesEndpoint: setCapabilitiesEndpoint,
       subscribe: subscribe,
       trigger: trigger,
       hideModals: hideModals
@@ -359,6 +347,5 @@
       getTitle: getTitle
     })
   }
-
 
 })(jQuery)
