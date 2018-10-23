@@ -248,18 +248,19 @@ public class GetAction extends DoiAction {
         List<Node> nodes = getNodeList();
         for (Node node : nodes)
         {
-            try
-            {
-                DoiStatus doiStatus = getDoiStatus(node.getName());
-                if (doiStatus != null)
-                {
-                    doiStatusList.add(doiStatus);
+            // Verify this is a container node before continuing
+            if (node instanceof ContainerNode) {
+                try {
+                    DoiStatus doiStatus = getDoiStatus(node.getName());
+                    if (doiStatus != null) {
+                        doiStatusList.add(doiStatus);
+                    }
+                } catch (AccessControlException ex) {
+                    // skip
+                    log.debug(ex);
                 }
-            } 
-            catch (AccessControlException ex)
-            {
-                // skip
-                log.debug(ex);
+            } else {
+                log.warn("Non-container node found in DOI base directory. Skipping... ");
             }
         }
 
