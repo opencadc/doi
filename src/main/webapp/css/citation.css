@@ -70,3 +70,11 @@
 .doi_delete {
   cursor: pointer;
 }
+
+.doi-landing {
+  margin-top: 5px;
+}
+
+.doi-landing-text {
+  margin-bottom: 20px;
+}

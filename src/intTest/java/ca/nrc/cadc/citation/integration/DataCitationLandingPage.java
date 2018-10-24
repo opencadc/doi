@@ -33,17 +33,54 @@ package ca.nrc.cadc.citation.integration;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 
-public class DataCitationPage extends DataCitationAbstractPage {
-    private static final By DOI_TABLE_BY = By.id("doi_table");
+public class DataCitationLandingPage extends DataCitationAbstractPage {
+    private static final By DOI_NUMBER_BY = By.id("doi_number");
 
-    public DataCitationPage(WebDriver driver) throws Exception {
+    @FindBy(id = "doi_number")
+    WebElement doiNumberEl;
+
+    @FindBy(id = "doi_title")
+    WebElement doiTitleEl;
+
+    @FindBy(id = "doi_creator_list")
+    WebElement doiCreatorsEl;
+
+    @FindBy(id = "doi_journal_ref")
+    WebElement doiJournalRefEl;
+
+    public DataCitationLandingPage(WebDriver driver) throws Exception {
         super(driver);
         PageFactory.initElements(driver, this);
+        waitForMetadataLoaded();
     }
 
-    public void waitForCreateStateReady() throws Exception {
-        waitForElementPresent(DOI_TABLE_BY);
+    public String getDoiNumber() {
+        return doiNumberEl.getText();
     }
+
+    public String getDoiTitle() {
+        return doiTitleEl.getText();
+    }
+
+    public String getDoiAuthorList() {
+        return doiCreatorsEl.getText();
+    }
+
+    public String getDoiJournalRef() {
+        return doiJournalRefEl.getText();
+    }
+
+    public void waitForMetadataLoaded() throws Exception {
+        waitUntil(new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver d) {
+                return d.findElement(DOI_NUMBER_BY).getText().length() != 0;
+            }
+        });
+    }
+
 }

@@ -12,8 +12,7 @@
   <c:set var="baseURL" value="${fn:substring(url, 0, fn:length(url) - fn:length(uri))}" />
 </c:if>
 
-<%-- Set this by configuration in the future. --%>
-<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />
+<c:set var="resourceCapabilitiesEndPoint" value="${baseURL}/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -59,8 +58,6 @@
                   <span aria-hidden="true" class="octicon octicon-link"></span>
                 </a>Data Citation
               </h2>
-
-
 
               <div >
                 <div class="panel panel-default doi-panel">
@@ -182,32 +179,9 @@
     <script type="application/javascript">
       $(document).ready(function() {
 
-        userManager = new cadc.web.UserManager();
-
-        // From cadc.user.js. Listens for when user logs in
-        userManager.subscribe(cadc.web.events.onUserLoad,
-            function (event, data)
-            {
-              // Check to see if user is logged in or not
-              if (typeof(data.error) != "undefined") {
-                var errorMsg = "";
-                if (data.errorStatus === 401) {
-                  errorMsg = "<em>" + data.errorStatus + " " + data.error + "</em>. Please log in to use this service.";
-                } else {
-                  errorMsg = "Unable to access Data Citation Listing Service " + data.errorStatus + " " + data.error ;
-                }
-                citation_js.setNotAuthenticated(errorMsg);
-              } else {
-                citation_js.setAuthenticated();
-              }
-            });
-
-        // This function is in cadc.user.js, will throw the event
-        // in the userManager.subscribe above...
-        userManager.loadCurrent();
-
         // Instantiate controller for Data Citation List page
-        citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
+        citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+        citation_js.init()
 
     }); // end body onReady function
 

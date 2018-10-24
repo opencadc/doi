@@ -28,6 +28,21 @@
     <url-pattern>/request/</url-pattern>
   </servlet-mapping>
 
+  <servlet>
+    <servlet-name>LandingPage</servlet-name>
+    <jsp-file>/landing/index.jsp</jsp-file>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>LandingPage</servlet-name>
+    <url-pattern>/landing/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>LandingPage</servlet-name>
+    <url-pattern>/landing/</url-pattern>
+  </servlet-mapping>
+
   <jsp-config>
     <taglib>
       <taglib-uri>http://java.sun.com/jsp/jstl/core</taglib-uri>

@@ -1,14 +1,6 @@
 # data-citation
 ### V 1.0
-
 UI for creating and displaying Digital Object Identifiers (DOIs) for research datasets archived with CANFAR. 
-
-## Location
-DOI List page:
-http://apps.canfar.net/citation
-
-DOI Request page:
-http://apps.canfar.net/citation/request
 
 ## Description
 CANFAR provides a service to create, view and mint DOIs for researchers, reducing the amount of paperwork necessary to 
@@ -18,10 +10,24 @@ Currently the service will:
 - take a minimal amount of information in to create a draft DOI document that can then be later submitted to DataCite
 - generate a VOSpace directory for the dataset to be housed and later archived when the DOI is minted
 - allow owners to view their current set of DOIs
+- allow owners to view the landing page associated with their DOIs
+
+## Location
+Data DOI List page:
+http://apps.canfar.net/citation
+
+Data DOI Request page:
+http://apps.canfar.net/citation/request
+
+View Single Data DOI:
+http://apps.canfar.net/citation/request?doi=<YY.####>
+
+Data DOI Landing page:
+http://apps.canfar.net/citation/landing?doi=<YY.####>
 
 
-## CANFAR Digital Object Identifier (DOI) Workflow
-The CANFAR DOI workflow has three distinct phases. No time limit is imposed on any phase.
+## CANFAR Data Digital Object Identifier (DOI) Workflow
+The CANFAR Data DOI workflow has three distinct phases. No time limit is imposed on any phase.
 - Create Draft DOI
 - Upload dataset
 - Finalize DOI
@@ -46,14 +52,14 @@ At this point the metadata and the data sub-directory are available to the user 
 ### Updating a DOI 
 After creation and prior to minting, the metadata can be updated at any time through the DOI Request form.  
 
-### Finalizing the DOI (Not yet Implemented)
+### Minting the DOI (Not yet Implemented)
 After all data files have been uploaded and the metadata has been verfied, the user can finalize (mint) a DOI.
 At this point, the service will:
 - lock the DOI data directory and any associated files so they can't be altered further
 - set all DOI files to be publicly readable
-- submit the DOI metadata and landing page URL information to Data Cite
+- submit the DOI metadata and landing page URL information to DataCite
  
-## Viewing a CANFAR DOI
+### Viewing a Data DOI
 Once a DOI has been created, it can be accessed using the DOI List page:
 
 http://apps.canfar.net/citation
@@ -63,13 +69,23 @@ the DOI, and continue with the workflow. Example URL:
 
 http://apps.canfar.net/citation/request?doi=18.0001
 
-  
-### DOI States
+
+### Viewing a Data DOI Landing page
+When a DOI is submitted for minting, a landing page URL is provided to DataCite. After minting, a search for the DOI 
+number at data doi.org will forward to the URL. 
+
+http://apps.canfar.net/landing?doi=<YY.####>
+
+* Landing pages are publicly viewable after a DOI has been minted. (Not yet implemented)
+
+
+
+## Data DOI States
 A DOI managed through the CANFAR services has 2 states:
-- Draft
+- In progress
 - Minted
 
-#### Draft DOIs
+#### In Progress DOIs
 - can be edited
 - can be deleted from the system
 - are not publicly available

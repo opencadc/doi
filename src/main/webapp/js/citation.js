@@ -25,112 +25,109 @@
   function Citation(inputs) {
 
     var _selfCitationController = this
-    var doiTable;
-    var doiTableSource =[];
+    var doiTable
+    var doiTableSource =[]
 
     var rowTemplate = {
-      "doi_name" : "",
-      "status" : "",
-      "title" : "",
-      "data_dir": "",
-      "action": ""
+      'doi_name' : '',
+      'status' : '',
+      'title' : '',
+      'data_dir' : '',
+      'action' : ''
     }
 
     var page = new cadc.web.citation.CitationPage(inputs)
 
     // ------------ Page load functions ------------
 
-    function initializeDoiTable() {
+    function init() {
+      // Listen for the (CitationPage) onAuthenticated call
+      attachListeners()
+      page.checkAuthentication()
+    }
 
+    function initializeDoiTable() {
       // should be able to have the doi list function in this table
       // may want a refresh button however, to re-load the table if the page is stale?
 
       doiTable = $("#doi_table").DataTable({
         data: doiTableSource,
         columns: [
-          {"data" : "doi_name"},
-          {"data" : "status"},
-          {"data" : "title"},
-          {"data" : "data_dir"},
-          {"data" : "action"}
+          {'data' : 'doi_name'},
+          {'data' : 'status'},
+          {'data' : 'title'},
+          {'data' : 'data_dir'},
+          {'data' : 'action'}
         ],
         columnDefs: [
-          { "width": 20, "targets": 0 },
-          { "width": 75, "targets": 1 },
-          { "width": 20, "targets": 4 }
+          { 'width': 20, 'targets': 0 },
+          { 'width': 75, 'targets': 1 },
+          { 'width': 20, 'targets': 4 }
         ],
         ordering: false,
         paging: false,
         searching: true
-      });
+      })
 
       // Do the initial ajax call to get the DOI list
-      loadDoiList();
+      loadDoiList()
     }
 
     function attachListeners() {
       $('.doi_refresh').click(loadDoiList)
       $('#doi_request').click(handleDOIRequest)
 
-      subscribe(cadc.web.citation.events.onDoiListLoaded, function(e, data) {
+      page.subscribe(_selfCitationController, cadc.web.citation.events.onDoiListLoaded, function(e, data) {
         setTableContent(data.doiList)
       })
 
-      subscribe(cadc.web.citation.events.onDoiDeleted, function(e, data) {
+      page.subscribe(_selfCitationController, cadc.web.citation.events.onDoiDeleted, function(e, data) {
         //       TODO: ideally removeRow would be called but there's a bug in it
         //removeRow(data.doiSuffix)
         loadDoiList()
       })
 
+      page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
+        initializeDoiTable()
+      })
+
       // From delete modal
       $('#delete_ok').click(function () {
-        $('#delete_modal').modal('hide');
-        $('body').removeClass('modal-open');
-        $('.modal-backdrop').remove();
-        handleDOIDelete($('#doi_delete_num').text());
-      });
+        $('#delete_modal').modal('hide')
+        $('body').removeClass('modal-open')
+        $('.modal-backdrop').remove()
+        handleDOIDelete($('#doi_delete_num').text())
+      })
     }
 
     function setNotAuthenticated(errorMsg) {
       // modal is in _application_header.shtml, code found in canfar-root repository (ROOT.war)
-      $("#auth_modal").modal('show');
-      $(".doi-not-authenticated").removeClass('hidden')
-      $(".doi-authenticated").addClass('hidden')
+      $('#auth_modal').modal('show');
+      $('.doi-not-authenticated').removeClass('hidden')
+      $('.doi-authenticated').addClass('hidden')
 
       $('.doi-not-authenticated').click(function() {
-        $("#auth_modal").modal('show')}
+        $('#auth_modal').modal('show')}
       )
     }
 
     function setAuthenticated() {
-      $(".doi_authenticated").removeClass('hidden')
-      $(".doi-not-authenticated").addClass('hidden')
+      $('.doi_authenticated').removeClass('hidden')
+      $('.doi-not-authenticated').addClass('hidden')
       initializeDoiTable()
       attachListeners()
     }
 
     // ------------ Page state management functions ------------
 
-    function subscribe(event, eHandler) {
-      $(_selfCitationController).on(event.type, eHandler)
-    }
-
-    function unsubscribe(event) {
-      $(_selfCitationController).unbind(event.type)
-    }
-
-    function trigger(event, eventData) {
-      $(_selfCitationController).trigger(event, eventData)
-    }
-
     function setTableContent(jsonData) {
       // payload from ajax call to /doi/instances is an array of
       // of status objects the calling user has permission to view
-      var doiStatusList = jsonData.doiStatuses['$'];
+      var doiStatusList = jsonData.doiStatuses['$']
 
       // Table load
       if (doiStatusList.length == 0) {
-        setTableStatus("No data found")
+        setTableStatus('No data found')
       }
       else {
         for (var j = doiStatusList.length - 1; j >= 0; j--) {
@@ -147,7 +144,7 @@
     }
 
     function setTableStatus(displayText) {
-      $(".dataTables_empty").html(displayText)
+      $('.dataTables_empty').html(displayText)
     }
 
     function setDeleteModal(doiName) {
@@ -166,14 +163,14 @@
 
     function confirmDOIDelete(event) {
       var doiSuffix = event.currentTarget.dataset.doinum
-      setDeleteModal(doiSuffix);
+      setDeleteModal(doiSuffix)
     }
 
     // DELETE
     function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal("Pease wait ", "Deleting DOI " + doiSuffix, true)
+      page.setInfoModal('Pease wait ', 'Deleting DOI ' + doiSuffix, true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -185,7 +182,7 @@
           .success(function(data) {
             //hideInfoModal()
             page.setProgressBar('okay')
-            trigger(cadc.web.citation.events.onDoiDeleted, {
+            page.trigger(_selfCitationController, cadc.web.citation.events.onDoiDeleted, {
               doiSuffix: doiSuffix,
             })
           })
@@ -202,8 +199,8 @@
     function loadDoiList() {
       clearTable()
       page.setProgressBar('busy')
-      setTableStatus("Loading...")
-      page.setInfoModal("Pease wait ", "Processing request... (may take up to 10 seconds)", true)
+      setTableStatus('Loading...')
+      page.setInfoModal('Pease wait ', 'Processing request... (may take up to 10 seconds)', true)
 
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
@@ -214,14 +211,14 @@
           contentType: 'application/json'
         })
         .success(function(stringdata) {
-          setTableStatus("Loading......")
-          trigger(cadc.web.citation.events.onDoiListLoaded, {
+          setTableStatus('Loading......')
+          page.trigger(_selfCitationController, cadc.web.citation.events.onDoiListLoaded, {
             doiList: stringdata,
           })
         })
         .fail(function(message) {
           hideInfoModal()
-          setTableStatus("No data")
+          setTableStatus('No data')
           page.setProgressBar('error')
           page.setAjaxFail(message)
         })
@@ -239,7 +236,7 @@
       var doiName = doi.identifier['$']
       newStatus.doi_name = mkNameLink(doiName)
       newStatus.status = doi.status['$']
-      newStatus.data_dir = mkDataDirLink(doi.dataDirectory['$'])
+      newStatus.data_dir = page.mkDataDirLink(doi.dataDirectory['$'])
       newStatus.title = mkTitleLink(doi.title['$'], doiName)
       newStatus.action = mkDeleteLink(doiName)
 
@@ -278,9 +275,9 @@
     function removeRow(rowNum) {
       doiTable.rows().nodes().each(function(a,b) {
         if($(a).children().eq(0).text() == rowNum){
-          doiTable.rows(a).remove();
+          doiTable.rows(a).remove()
         }
-      } );
+      } )
 
       // TODO: bug here - last row of table is duplicated for
       // total number of remaining rows on draw() ??
@@ -320,24 +317,13 @@
               '</a>'
     }
 
-    function mkDataDirLink(dataDir) {
-      return'<a href="/storage/list' +
-              dataDir +
-              '" target="_blank">/storage/list' +
-              dataDir +
-              '</a>'
-    }
-
     function mkDeleteLink(doiName) {
       var doiSuffix = parseDoiSuffix(doiName)
       return '<span class="doi_delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
     }
 
     $.extend(this, {
-      setNotAuthenticated: setNotAuthenticated,
-      setAuthenticated: setAuthenticated,
-      handleDOIDelete: handleDOIDelete,
-      handleDOIRequest: handleDOIRequest
+      init: init
     })
   }
 

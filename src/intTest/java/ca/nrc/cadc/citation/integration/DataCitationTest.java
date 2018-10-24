@@ -31,10 +31,8 @@
 
 package ca.nrc.cadc.citation.integration;
 
-
 import org.junit.Assert;
 import org.junit.Test;
-
 
 public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
@@ -43,15 +41,15 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     }
 
     @Test
-    public void requestDoi() throws Exception {
+    public void testDoiWorkflow() throws Exception {
         DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
 
         requestPage.pageLoadLogin();
+        requestPage.waitForCreateStateReady();
 
         requestPage.setDoiTitle("DOI PUBLICATION TITLE");
         requestPage.setDoiAuthorList("Flintstone, Fred");
-        requestPage.setPublishYear("2019");
-        requestPage.setPublisher("Steady Hand Printing");
+        requestPage.setJournalRef("2018, Astronomy Today, ApJ, 3000, 300");
 
         requestPage.resetForm();
 
@@ -59,27 +57,49 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
         requestPage.setDoiTitle("Real publication title");
         requestPage.setDoiAuthorList("Warbler, Yellow");
-        requestPage.setPublishYear("2019");
-        requestPage.setPublisher("Birds of a Feather Press");
+        requestPage.setJournalRef("2018, Nature, ApJ, 1000, 100");
 
         requestPage.submitForm();
 
         Assert.assertTrue(requestPage.isStateOkay());
 
+        // Check that landing page for this DOI renders as exepcted
+        requestPage.waitForMetadataLoaded();
+        String doiNumber = requestPage.getDoiNumber();
+        System.out.println(doiNumber);
+        String doiSuffix = doiNumber.split("/")[1];
+        System.out.println("doi suffix: " + doiSuffix);
+
+        DataCitationLandingPage landingPage = goTo("/citation/landing",
+            "?doi=" + doiSuffix,
+            DataCitationLandingPage.class
+        );
+
+        Assert.assertEquals("doi number incorrect on landing page", landingPage.getDoiNumber(), doiNumber);
+
+        // Return to the /citation/request page...
+        requestPage = goTo(endpoint,
+            "?doi=" + doiSuffix,
+            DataCitationRequestPage.class
+        );
+
         // Delete DOI just created
         requestPage.deleteDoi();
         Assert.assertTrue(requestPage.isStateOkay());
 
-        System.out.println("requestDoi test complete.");
+        System.out.println("testDoiWorkflow test complete.");
     }
-
 
     @Test
     public void getInvalidDoi() throws Exception {
-        DataCitationRequestPage requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
+
+        DataCitationRequestPage requestPage;
+
+        requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
 
         requestPage.pageLoadLogin();
-        waitForElementVisible(requestPage.DOI_INFO_PANEL);
+        requestPage.waitForGetFailed();
+
         Assert.assertFalse(requestPage.isStateOkay());
 
         requestPage.logout();
@@ -87,15 +107,14 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         System.out.println("getInvalidDoi test complete.");
     }
 
-
     @Test
-    public void testLandingPage() throws Exception {
+    public void testListPage() throws Exception {
         DataCitationPage citationPage = goTo("/citation", null, DataCitationPage.class);
 
         citationPage.pageLoadLogin();
-
+        citationPage.waitForCreateStateReady();
         Assert.assertTrue(citationPage.isStateOkay());
 
-        System.out.println("testLandingPage test complete.");
+        System.out.println("testListPage test complete.");
     }
 }

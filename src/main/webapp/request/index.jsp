@@ -12,8 +12,7 @@
   <c:set var="baseURL" value="${fn:substring(url, 0, fn:length(url) - fn:length(uri))}" />
 </c:if>
 
-<%-- Set this by configuration in the future. --%>
-<c:set var="resourceCapabilitiesEndPoint" value="http://apps.canfar.net/reg/resource-caps" />
+<c:set var="resourceCapabilitiesEndPoint" value="${baseURL}/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
 <!DOCTYPE html>
@@ -59,7 +58,7 @@
 
               <div class="doi-authenticated">
                 <div id="doi_request" class="panel panel-default doi-panel">
-                  <div class="panel-heading doi-panel-heading"><h4>DOI Request</h4>
+                  <div class="panel-heading doi-panel-heading"><h4>Data DOI Request</h4>
                   </div>
                   <div class="progress doi-progress-bar-container">
                     <div class="progress-bar progress-bar-success doi-progress-bar"
@@ -83,11 +82,11 @@
                     <!-- Form starts -->
                     <div class="doi-form-body hidden">
                       <form id="doi_request_form" class="form-horizontal">
-                        <!-- DOI Number -->
+                        <!-- Data DOI Number -->
                         <div class="form-group doi-form-group">
-                          <label for="doi_number" class="col-sm-3 control-label" id="doi_number_label">DOI Number</label>
+                          <label for="doi_number" class="col-sm-3 control-label" id="doi_number_label">Data DOI Reference</label>
                           <div class="col-sm-3">
-                            <input type="text" class="form-control" id="doi_number" name="doi-number"
+                            <input type="text" class="form-control" id="doi_number" name="doiNumber"
                                    placeholder="YY.####" disabled="disabled" readonly />
                           </div>
                         </div>
@@ -103,29 +102,19 @@
 
                         <!-- Author List -->
                         <div class="form-group">
-                          <label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Author List</label>
+                          <label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Authors</label>
                           <div class="col-sm-4">
                             <textarea class="form-control" id="doi_creator_list" name="creatorList"
-                                      placeholder="Last name, first names..." tabindex="2" rows="4" required></textarea>
+                                      placeholder="Last name, first name..." tabindex="2" rows="4" required></textarea>
                           </div>
                         </div>
 
-                        <!-- Publisher -->
+                        <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
-                          <label for="doi_publisher" class="col-sm-3 control-label" id="doi_publisher_label">Publisher</label>
+                          <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
                           <div class="col-sm-6">
-                            <input type="text" class="form-control" id="doi_publisher" name="publisher"
-                                   placeholder="Publisher name or DOI" tabindex="3" required/>
-                          </div>
-                        </div>
-
-                        <!-- Publication Date -->
-                        <div class="form-group">
-                          <label for="doi_publish_year" class="col-sm-3 control-label" >Publication Year</label>
-                          <div class="col-sm-1">
-                            <select id="doi_publish_year" name="publicationYear" class="form-control"
-                                    tabindex="4">
-                            </select>
+                            <input type="text" class="form-control" id="doi_journal_ref" name="journalRef"
+                                   placeholder="Journal Reference" tabindex="3" required/>
                           </div>
                         </div>
 
@@ -216,32 +205,9 @@
     <script type="application/javascript">
       $(document).ready(function() {
 
-        userManager = new cadc.web.UserManager();
-
-        // From cadc.user.js. Listens for when user logs in
-        userManager.subscribe(cadc.web.events.onUserLoad,
-            function (event, data)
-            {
-              // Check to see if user is logged in or not
-              if (typeof(data.error) != "undefined") {
-                var errorMsg = "";
-                if (data.errorStatus === 401) {
-                  errorMsg = "<em>" + data.errorStatus + " " + data.error + "</em>. Please log in to use this service.";
-                } else {
-                  errorMsg = "Unable to access Data Citation " + data.errorStatus + " " + data.error ;
-                }
-                request_js.setNotAuthenticated(errorMsg);
-              } else {
-                request_js.setAuthenticated();
-              }
-            });
-
-        // This function is in cadc.user.js, will throw the event
-        // in the userManager.subscribe above...
-        userManager.loadCurrent();
-
-        // Instantiate controller for Data Citation Request page
-        request_js = new cadc.web.citation.CitationRequest({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'});
+        // Set up controller for Data Citation Request page
+        request_js = new cadc.web.citation.CitationRequest({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+        request_js.init()
 
       });
 
