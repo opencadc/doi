@@ -101,7 +101,6 @@ public class DoiInlineContentHandler implements InlineContentHandler {
         Resource userInput = null;
         InlineContentHandler.Content content = new InlineContentHandler.Content();
 
-        log.info("DOIINLINE");
         if (contentType.toLowerCase().contains("text/xml")) {
             try {
                 // read xml file
