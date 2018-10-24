@@ -70,36 +70,32 @@
 package ca.nrc.cadc.doi.datacite;
 
 import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
 
 /**
  * The institution or person responsible for collecting, creating, or otherwise contributing to the developement of the dataset.
  * The personal name format should be: Family, Given.
  * 
- * @author jeevesh
+ * @author yeunga
  */
 public class Contributor
 {
-    // Used in contributors object
-    // TODO: might not end up remaining here...
-    private static String DATA_MANAGER = "CADC";
-    private static String CONTACT_PERSON = "David Schade";
-    private static String CONTACT_PERSON_ORCID = "0000-0002-4677-1586";
-
     private static Logger log = Logger.getLogger(Contributor.class);
 
-    private String contributorName;
-    private String contributorType;
+    private ContributorName contributorName;
+    private ContributorType contributorType;
+    public String givenName;
+    public String familyName;
     public NameIdentifier nameIdentifier;
+    public String affiliation;
 
     /**
-     * Contributor constructor.
+     * Creator constructor.
      * @param contributorName type of this resource
      * @param contributorType additional text description for this resource type
      */
-    public Contributor(String contributorName, String contributorType)
+    public Contributor(ContributorName contributorName, ContributorType contributorType)
     {
-        if (!StringUtils.hasText(contributorName) || !StringUtils.hasText(contributorType))
+        if ((contributorName == null) || (contributorType == null))
         {
             String msg = "resourceTypeGeneral and resourceType must be specified.";
             throw new IllegalArgumentException(msg);
@@ -109,12 +105,15 @@ public class Contributor
         this.contributorType = contributorType;
     }
 
-    public String getContributorName()
+    /**
+     * @return name of the contributor.
+     */
+    public ContributorName getContributorName()
     {
         return this.contributorName;
     }
 
-    public String getContributorType()
+    public ContributorType getContributorType()
     {
         return this.contributorType;
     }

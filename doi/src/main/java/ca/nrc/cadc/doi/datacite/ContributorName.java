@@ -70,54 +70,42 @@
 package ca.nrc.cadc.doi.datacite;
 
 import org.apache.log4j.Logger;
+import org.springframework.util.StringUtils;
 
 /**
- * One of the main researchers or authors.
- * The main researchers involved working on the data, 
- * or the authors of the publication in priority order. 
- * May be a corporate/institutional or personal name.
+ * Name to identify a contributor.
  * 
  * @author yeunga
  */
-public class Creator
+public class ContributorName
 {
     
-    private static Logger log = Logger.getLogger(Creator.class);
+    private static Logger log = Logger.getLogger(ContributorName.class);
     
-    // Name of the creator.
-    private CreatorName creatorName;
-    
-    // Given name of the creator.
-    public String givenName;
-    
-    // Family name of the creator.
-    public String familyName;
-
-    // Identifier of the name.
-    public NameIdentifier nameIdentifier;
-
-    // Affiliation of the creator.
-    public String affiliation;
+    // name of contributor
+    private String text;
+    public String nameType;
 
     /**
-     * Creator constructor.
-     * @param name Name of creator
+     * Constructor.
+     * @param name of contributor
      */
-    public Creator(CreatorName creatorName)
+    public ContributorName(String contributorName)
     {
-        if (creatorName == null)
+        if (!StringUtils.hasText(contributorName))
         {
-            String msg = "creatorName must be specified.";
+            String msg = "contributorName must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        this.creatorName = creatorName;
+        
+        this.text = contributorName;
     }
 
     /**
-     * @return creatorName of the creator.
+     * @return contributor name.
      */
-    public CreatorName getCreatorName()
+    public String getText()
     {
-        return this.creatorName;
+        return this.text;
     }
 }

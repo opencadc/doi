@@ -58,7 +58,11 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
+
+            // return the node in xml format
+            NodeWriter nodeWriter = new NodeWriter();
+            return new NodeActionResult(new N
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -69,55 +73,59 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-
 /**
- * One of the main researchers or authors.
- * The main researchers involved working on the data, 
- * or the authors of the publication in priority order. 
- * May be a corporate/institutional or personal name.
+ * Enums for types of contributor.
  * 
  * @author yeunga
+ *
  */
-public class Creator
+public enum ContributorType
 {
+    CONTACT_PERSON("ContactPerson"),
+    DATA_COLLECTOR("DataCollector"),
+    DATA_CURATOR("DataCurator"),
+    DATA_MANAGER("DataManager"),
+    DISTRIBUTOR("Distributor"),
+    EDITOR("Editor"),
+    HOSTING_INSTITUTION("HostingInstitution"),
+    OTHER("Other"),
+    PRODUCER("Producer"),
+    PROJECT_LEADER("ProjectLeader"),
+    PROJECT_MANAGER("ProjectManager"),
+    PROJECT_MEMBER("ProjectMember"),
+    REGISTRATION_AGENCY("RegistrationAgency"),
+    REGISTRATION_AUTHORITY("RegistrationAuthority"),
+    RELATED_PERSON("RelatedPerson"),
+    RESEARCH_GROUP("ResearchGroup"),
+    RIGHTS_HOLDER("RightsHolder"),
+    RESEARCHER("Researcher"),
+    SPONSOR("Sponsor"),
+    SUPERVISOR("Supervisor"),
+    WORKPACKAGE_LEADER("WorkPackageLeader");
     
-    private static Logger log = Logger.getLogger(Creator.class);
+    private final String value;
     
-    // Name of the creator.
-    private CreatorName creatorName;
-    
-    // Given name of the creator.
-    public String givenName;
-    
-    // Family name of the creator.
-    public String familyName;
-
-    // Identifier of the name.
-    public NameIdentifier nameIdentifier;
-
-    // Affiliation of the creator.
-    public String affiliation;
-
-    /**
-     * Creator constructor.
-     * @param name Name of creator
-     */
-    public Creator(CreatorName creatorName)
+    private ContributorType(String value)
     {
-        if (creatorName == null)
-        {
-            String msg = "creatorName must be specified.";
-            throw new IllegalArgumentException(msg);
-        }
-        this.creatorName = creatorName;
+        this.value = value;
+    }
+    
+    public static ContributorType toValue(String s)
+    {
+        for (ContributorType type : values())
+            if (type.value.equals(s))
+                return type;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    /**
-     * @return creatorName of the creator.
-     */
-    public CreatorName getCreatorName()
+    public String getValue()
     {
-        return this.creatorName;
+        return value;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }
