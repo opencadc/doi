@@ -74,16 +74,23 @@
 package ca.nrc.cadc.doi.datacite;
 
 /**
- * Enums for doi status.
+ * The type of date. Use RKMS‐ISO8601 standard for depicting date ranges.
  * 
  * @author jeevesh
  *
  */
 public enum DateType
 {
-    ACCEPTED("Accepted"),
-    VALID("Valid"),
-    UPDATED("Updated");
+    ACCEPTED("Accepted"), // To indicate the start of an embargo period
+    AVAILABLE("Available"), // To indicate the end of an embargo period
+    COLLECTED("Collected"),
+    COPYRIGHTED("Copyrighted"),
+    CREATED("Created"),
+    ISSUED("Issued"),
+    OTHER("Other"),
+    SUBMITTED("Submitted"), // To indicate the start of an embargo period
+    UPDATED("Updated"),
+    VALID("Valid");
 
     private final String value;
 

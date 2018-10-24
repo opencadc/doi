@@ -102,11 +102,11 @@ public class Resource
     private String publisher;
     private String publicationYear;
     private ResourceType resourceType;
-    private String rights;
-    private List<Contributor> contributors;
-    private List<DoiDate> doiDates;
-    private String description;
-    private String size;  // data set size
+    public List<Rights> rightsList;
+    public List<Contributor> contributors;
+    public List<DoiDate> doiDates;
+    public List<Description> descriptions;
+    public List<String> sizes;  // Unstructures size information about the resource.
     
 
     public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles, 

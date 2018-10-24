@@ -69,49 +69,60 @@
 
 package ca.nrc.cadc.doi.datacite;
 
+import java.net.URI;
+
 import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 /**
- * Different dates relevant to the work.
+ * Any rights information for this resource. 
+ * Provide a rights management statement for the resource or reference a 
+ * service providing such information. Include embargo information if applicable.
+ * Use the complete title of a license and include version information if applicable.
  * 
- * @author jeevesh
+ * @author yeunga
  */
-public class DoiDate
+public class Rights
 {
-    private static Logger log = Logger.getLogger(DoiDate.class);
-
-    // YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or 
-    // any other format or level of granularity described in W3CDTF.
-    private String isoDate;
-    private DateType dateType; // DoiDate enum has valid values
-    public String dateInformation;
+    
+    private static Logger log = Logger.getLogger(Rights.class);
+    
+    // lang uses the xml namespace
+    private String lang;
+    private String text;
+    public URI rightsURI;
 
     /**
-     * DoiDate constructor.
-     * @param isoDate type of this resource
-     * @param dateType additional text description for this resource type
+     * Title constructor.
+     * @param lang language used, e.g. en-US
+     * @param title title text
      */
-    public DoiDate(String isoDate, DateType dateType)
+    public Rights(String lang, String rights)
     {
-        if (!StringUtils.hasText(isoDate) || dateType == null )
+        if (!StringUtils.hasText(lang) || 
+            !StringUtils.hasText(rights))
         {
-            String msg = "isoDate and dateType must be specified.";
+            String msg = "lang and rights must be specified.";
             throw new IllegalArgumentException(msg);
         }
         
-        this.isoDate = isoDate;
-        this.dateType = dateType;
+        this.lang = lang;
+        this.text = rights;
     }
 
-    public String getIsoDate()
+    /**
+     * @return language used in this title.
+     */
+    public String getLang()
     {
-        return this.isoDate;
+        return this.lang;
     }
-
-    public DateType getDateType()
+        
+    /**
+     * @return rights text
+     */
+    public String getText()
     {
-        return this.dateType;
+        return this.text; 
     }
-
 }

@@ -58,7 +58,11 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
+
+            // return the node in xml format
+            NodeWriter nodeWriter = new NodeWriter();
+            return new NodeActionResult(new N
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -69,49 +73,44 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
-
 /**
- * Different dates relevant to the work.
+ * The type of the description.
  * 
- * @author jeevesh
+ * @author yeunga
+ *
  */
-public class DoiDate
+public enum DescriptionType
 {
-    private static Logger log = Logger.getLogger(DoiDate.class);
-
-    // YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or 
-    // any other format or level of granularity described in W3CDTF.
-    private String isoDate;
-    private DateType dateType; // DoiDate enum has valid values
-    public String dateInformation;
-
-    /**
-     * DoiDate constructor.
-     * @param isoDate type of this resource
-     * @param dateType additional text description for this resource type
-     */
-    public DoiDate(String isoDate, DateType dateType)
+    ABSTRACT("Abstract"),
+    METHODS("Methods"),
+    SERIES_INFORMATION("SeriesInformation"),
+    TABLE_OF_CONTENT("TableOfContents"),
+    TECHNICAL_INFO("TechnicalInfo"),
+    OTHER("Other");
+    
+    private final String value;
+    
+    private DescriptionType(String value)
     {
-        if (!StringUtils.hasText(isoDate) || dateType == null )
-        {
-            String msg = "isoDate and dateType must be specified.";
-            throw new IllegalArgumentException(msg);
-        }
-        
-        this.isoDate = isoDate;
-        this.dateType = dateType;
+        this.value = value;
+    }
+    
+    public static DescriptionType toValue(String s)
+    {
+        for (DescriptionType type : values())
+            if (type.value.equals(s))
+                return type;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getIsoDate()
+    public String getValue()
     {
-        return this.isoDate;
+        return value;
     }
 
-    public DateType getDateType()
+    @Override
+    public String toString()
     {
-        return this.dateType;
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
-
 }
