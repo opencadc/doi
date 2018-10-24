@@ -73,7 +73,8 @@ import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 /**
- * Contributor information
+ * The institution or person responsible for collecting, creating, or otherwise contributing to the developement of the dataset.
+ * The personal name format should be: Family, Given.
  * 
  * @author jeevesh
  */

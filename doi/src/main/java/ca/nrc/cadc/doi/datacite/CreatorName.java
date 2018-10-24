@@ -73,7 +73,7 @@ import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 /**
- * A creator of the publication.
+ * Name to identify a creator.
  * 
  * @author yeunga
  */
@@ -82,12 +82,13 @@ public class CreatorName
     
     private static Logger log = Logger.getLogger(CreatorName.class);
     
+    // name of creator
     private String text;
     public String nameType;
 
     /**
-     * Creator constructor.
-     * @param creatorname Name of creator
+     * Constructor.
+     * @param name of creator
      */
     public CreatorName(String creatorName)
     {
