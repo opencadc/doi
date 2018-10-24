@@ -101,16 +101,10 @@ public class DoiInlineContentHandler implements InlineContentHandler {
         Resource userInput = null;
         InlineContentHandler.Content content = new InlineContentHandler.Content();
 
-        Boolean validateStream = true;
-
-        if (ActionType.CREATE.getValue().equals(name)) {
-            validateStream = false;
-        }
-
         if (contentType.toLowerCase().contains("text/xml")) {
             try {
                 // read xml file
-                DoiXmlReader reader = new DoiXmlReader(validateStream);
+                DoiXmlReader reader = new DoiXmlReader(false);
                 userInput = reader.read(inputStream);
             } catch (DoiParsingException dpe) {
                 log.debug(dpe);

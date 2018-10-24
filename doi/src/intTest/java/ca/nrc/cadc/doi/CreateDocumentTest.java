@@ -140,12 +140,12 @@ public class CreateDocumentTest extends IntTestBase
         initialDocument = builder.toString();
     }
 
-    private String postDocument(URL postUrl, String document, ActionType postType)
+    private String postDocument(URL postUrl, String document)
     {
         Map<String, Object> params = new HashMap<String,Object>();
         FileContent fc;
         fc = new FileContent(document,"text/xml" );
-        params.put(postType.getValue(), fc);
+        params.put("doiMetadata", fc);
         params.put("journalref", TEST_JOURNAL_REF);
         log.info("url: " + postUrl.getPath());
 
@@ -179,7 +179,7 @@ public class CreateDocumentTest extends IntTestBase
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument, ActionType.CREATE);
+                String returnedDoc = postDocument(postUrl, initialDocument);
                 Resource resource = xmlReader.read(returnedDoc);
                 String  returnedIdentifier = resource.getIdentifier().getText();
                 
@@ -228,7 +228,7 @@ public class CreateDocumentTest extends IntTestBase
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument, ActionType.CREATE);
+                String returnedDoc = postDocument(postUrl, initialDocument);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
