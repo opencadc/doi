@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.net.FileContent;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -129,7 +128,7 @@ public class CreateDocumentTest extends IntTestBase
     { 
         // read test xml file
         xmlReader = new DoiXmlReader(true);
-        String fileName = "src/test/data/datacite-example-full-dummy-identifier-v4.1.xml";
+        String fileName = "src/test/data/datacite-example-short-dummy-identifier-v4.1.xml";
         FileInputStream fis = new FileInputStream(fileName);
         initialResource = xmlReader.read(fis);
         fis.close();
@@ -141,12 +140,12 @@ public class CreateDocumentTest extends IntTestBase
         initialDocument = builder.toString();
     }
 
-    private String postDocument(URL postUrl, String document)
+    private String postDocument(URL postUrl, String document, ActionType postType)
     {
         Map<String, Object> params = new HashMap<String,Object>();
         FileContent fc;
         fc = new FileContent(document,"text/xml" );
-        params.put("doimeta", fc);
+        params.put(postType.getValue(), fc);
         params.put("journalref", TEST_JOURNAL_REF);
         log.info("url: " + postUrl.getPath());
 
@@ -180,7 +179,7 @@ public class CreateDocumentTest extends IntTestBase
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument);
+                String returnedDoc = postDocument(postUrl, initialDocument, ActionType.CREATE);
                 Resource resource = xmlReader.read(returnedDoc);
                 String  returnedIdentifier = resource.getIdentifier().getText();
                 
@@ -229,7 +228,7 @@ public class CreateDocumentTest extends IntTestBase
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument);
+                String returnedDoc = postDocument(postUrl, initialDocument, ActionType.CREATE);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
