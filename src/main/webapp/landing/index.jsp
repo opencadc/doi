@@ -171,8 +171,9 @@
 
 <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
 <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
-<script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
-<script type="application/javascript" src="<c:out value=" ${baseURL}/cadcJS/javascript/cadc.registry-client.js" />"></script>
+<script type="text/javascript" src="//apps.canfar.net/cadcJS/javascript/cadc.registry-client.js"></script>
+<script type="text/javascript" src="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/bootstrap/js/cadc.user.js"></script>
+<script type="text/javascript" src="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/bootstrap/js/login.js"></script>
 <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
 <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_landing.js" />"></script>
 

@@ -158,16 +158,13 @@
       userManager.subscribe(cadc.web.events.onUserLoad,
           function (event, data) {
             // Check to see if user is logged in or not
-            if (typeof(data.error) != "undefined") {
+            if (typeof(data.error) != 'undefined') {
               setNotAuthenticated()
             } else {
               setAuthenticated()
             }
           });
 
-      // This function is in cadc.user.js, will throw the event
-      // in the userManager.subscribe above...
-      userManager.loadCurrent()
     }
 
     // #auth_modal is in /canfar/includes/_application_header.shtml
@@ -216,11 +213,11 @@
    */
   function DOIDocument() {
     var _selfDoc = this
-    this._minimalDoc = {}
+    this._badgerfishDoc = {}
 
-    function initMinimalDoc() {
-      // build minimal doc to start.
-      _selfDoc._minimalDoc = {
+    function initDoc() {
+      // build initial badgerfish version of metadata doc to start.
+      _selfDoc._badgerfishDoc = {
         resource: {
           '@xmlns': 'http://datacite.org/schema/kernel-4',
           identifier: {
@@ -250,15 +247,15 @@
       }
     }
 
-    function getMinimalDoc() {
-      if (_selfDoc._minimalDoc === {}) {
-        initMinimalDoc()
+    function getDoc() {
+      if (_selfDoc._badgerfishDoc === {}) {
+        initDoc()
       }
-      return _selfDoc._minimalDoc
+      return _selfDoc._badgerfishDoc
     }
 
     function populateDoc(serviceData) {
-      _selfDoc._minimalDoc = serviceData
+      _selfDoc._badgerfishDoc = serviceData
     }
 
     function makeCreatorStanza(personalInfo) {
@@ -288,7 +285,7 @@
       // personalInfo is a new line delimited list of last name, first name elements
       var names = authorList.split('\n')
       for (var j = 0; j < names.length; j++) {
-        _selfDoc._minimalDoc.resource.creators['$'][j] = makeCreatorStanza(
+        _selfDoc._badgerfishDoc.resource.creators['$'][j] = makeCreatorStanza(
             names[j]
         )
       }
@@ -296,27 +293,27 @@
 
     function setDOINumber(identifier) {
       if (identifier !== '') {
-        _selfDoc._minimalDoc.resource.identifier['$'] = identifier
+        _selfDoc._badgerfishDoc.resource.identifier['$'] = identifier
       }
     }
 
     function setTitle(title) {
-      _selfDoc._minimalDoc.resource.titles['$'][0].title['$'] = title
+      _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$'] = title
     }
 
     function getAuthorFullname() {
-      return _selfDoc._minimalDoc.resource.creators['$'][0].creator.creatorName[
+      return _selfDoc._badgerfishDoc.resource.creators['$'][0].creator.creatorName[
           '$'
           ]
     }
 
     function getAuthorList() {
-      var listSize = _selfDoc._minimalDoc.resource.creators['$'].length
+      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
       var authorList = ''
       for (var ix = 0; ix < listSize; ix++) {
         authorList =
             authorList +
-            _selfDoc._minimalDoc.resource.creators['$'][ix].creator.creatorName[
+            _selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName[
                 '$'
                 ] +
             '\n'
@@ -325,18 +322,18 @@
     }
 
     function getDOINumber() {
-      return _selfDoc._minimalDoc.resource.identifier['$']
+      return _selfDoc._badgerfishDoc.resource.identifier['$']
     }
 
     function getTitle() {
-      return _selfDoc._minimalDoc.resource.titles['$'][0].title['$']
+      return _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$']
     }
 
-    initMinimalDoc()
+    initDoc()
 
     $.extend(this, {
-      initMinimalDoc: initMinimalDoc,
-      getMinimalDoc: getMinimalDoc,
+      initDoc: initDoc,
+      getDoc: getDoc,
       populateDoc: populateDoc,
       setAuthor: setAuthor,
       setDOINumber: setDOINumber,

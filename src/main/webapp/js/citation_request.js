@@ -125,7 +125,7 @@
 
       // 'Blob' type is requred to have the 'filename="blob" parameter added
       // to the multipart section, and have the Content-type header added
-      multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getMinimalDoc())], {
+      multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getDoc())], {
         type: 'application/json'
       }));
 
