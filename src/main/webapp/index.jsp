@@ -3,10 +3,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <c:set var="baseURL" value='<%= System.getenv("CANFAR_WEB_HOST") %>' />
-<c:set var="useDev" value='${param["dev"]}' />
-
-<c:set var="canfarUrl" value="//apps.canfar.net" />
-<c:set var="cadcUrl" value="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca"/>
 
 <%-- Default to current host. --%>
 <c:if test="${empty baseURL}">
@@ -16,11 +12,6 @@
   <c:set var="baseURL" value="${fn:substring(url, 0, fn:length(url) - fn:length(uri))}" />
 </c:if>
 
-<%-- Set dev environment for canfar headers --%>
-<c:if test="${not empty useDev}">
-  <c:set var="canfarUrl" value="${baseURL}" />
-  <c:set var="cadcUrl" value="${baseURL}"/>
-</c:if>
 
 <c:set var="resourceCapabilitiesEndPoint" value="${baseURL}/reg/resource-caps" />
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
