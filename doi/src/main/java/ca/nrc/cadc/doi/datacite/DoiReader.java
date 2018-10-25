@@ -143,7 +143,15 @@ public class DoiReader
         
         String publicationYear = root.getChild("publicationYear", ns).getText();
         ResourceType resourceType = buildResourceType(root);
-        return new Resource(ns, id, creators, titles, publisher, publicationYear, resourceType);
+        Resource resource = new Resource(ns, id, creators, titles, publisher, publicationYear, resourceType);
+        
+        // the following are optional elements that we support
+        resource.contributors = buildContributors(root);
+        resource.rightsList = buildRightsList(root);
+        resource.dates = buildDates(root);
+        resource.descriptions = buildDescriptions(root);
+        resource.sizes = buildSizes(root);
+        return resource;
     }
     
     protected Identifier buildIdentifier(Element root)
@@ -270,5 +278,226 @@ public class DoiReader
         Element resourceTypeElement = root.getChild("resourceType", root.getNamespace());
         String resourceTypeGeneral = resourceTypeElement.getAttributeValue("resourceTypeGeneral");
         return new ResourceType(resourceTypeGeneral, resourceTypeElement.getText());
+    }
+    
+    protected List<Contributor> buildContributors(Element root) throws DoiParsingException
+    {
+        List<Contributor> contributors = null;
+        
+        Namespace ns = root.getNamespace();
+        if (root.getChild("contributors", ns) != null) 
+        {
+            contributors = new ArrayList<Contributor>();
+            List<Element> contributtorElements = root.getChild("contributors", ns).getChildren();
+            for (Element contributorElement : contributtorElements)
+            {
+                // contributorName is mandatory
+                Element contributorNameElement = contributorElement.getChild("contributorName", ns);
+                String name = contributorNameElement.getText();
+                ContributorName contributorName = new ContributorName(name);
+                
+                // nameType attribute is optional
+                String nameType = contributorNameElement.getAttributeValue("nameType");
+                if (nameType != null)
+                {
+                    contributorName.nameType = nameType;
+                }
+                // contributorType is mandatory
+                String contributorTypeString = contributorElement.getAttributeValue("contributorType");
+                ContributorType contributorType = ContributorType.toValue(contributorTypeString);
+                Contributor contributor = new Contributor(contributorName, contributorType);
+    
+                // get optional nameIdentifier
+                Element nameIdentifierElement = contributorElement.getChild("nameIdentifier", ns);
+                if (nameIdentifierElement != null)
+                {
+                    String identifier = nameIdentifierElement.getText();
+                    String nameIdentifierScheme = nameIdentifierElement.getAttributeValue("nameIdentifierScheme");
+                    NameIdentifier nameIdentifier = new NameIdentifier(nameIdentifierScheme, identifier);
+                    String schemeURI = nameIdentifierElement.getAttributeValue("schemeURI");
+                    if (schemeURI != null)
+                    {
+                        nameIdentifier.schemeURI = URI.create(schemeURI);
+                    }
+                    
+                    contributor.nameIdentifier = nameIdentifier;
+                }
+                
+                Element givenNameElement = contributorElement.getChild("givenName", ns);
+                String givenName = null;
+                if (givenNameElement != null)
+                {
+                    givenName = givenNameElement.getText();
+                    contributor.givenName = givenName;
+                }
+                
+                Element familyNameElement = contributorElement.getChild("familyName", ns);
+                String familyName = null;
+                if (familyNameElement != null)
+                {
+                    familyName = familyNameElement.getText();
+                    contributor.familyName = familyName;
+                }
+                
+                Element affiliationElement = contributorElement.getChild("affiliation", ns);
+                String affiliation = null;
+                if (affiliationElement != null)
+                {
+                    affiliation = affiliationElement.getText();
+                    contributor.affiliation = affiliation;
+                }
+    
+                contributors.add(contributor);
+            }
+        }
+        
+        return contributors;
+    }
+    
+    protected List<Rights> buildRightsList(Element root) throws DoiParsingException
+    {
+        List<Rights> rightsList = null;
+        
+        if (root.getChild("rights", root.getNamespace()) != null)
+        {
+            rightsList = new ArrayList<Rights>();
+            List<Element> rightsElements = root.getChild("rights", root.getNamespace()).getChildren();
+            for (Element rightsElement : rightsElements)
+            {
+                // get the rights text
+                String text = rightsElement.getText();
+                String lang = null;
+                String rightsURIString = null;
+                
+                // get the attributes and build a rights instance
+                List<Attribute> attributes = rightsElement.getAttributes();
+                for (Attribute attr : attributes)
+                {
+                    String key = attr.getName();
+                    if ("lang".equals(key))
+                    {
+                        lang = attr.getValue();
+                    }
+                    else
+                    {
+                        rightsURIString = attr.getValue();
+                    }
+                }
+                
+                // the rightsURI attribute is optional
+                Rights rights = new Rights(lang, text);
+                if (rightsURIString != null)
+                {
+                    rights.rightsURI = URI.create(rightsURIString);
+                }
+                
+                rightsList.add(rights);
+            }
+        }
+        
+        return rightsList;
+    }
+   
+    protected List<DoiDate> buildDates(Element root) throws DoiParsingException
+    {
+        List<DoiDate> dates = null;
+        
+        if (root.getChild("datess", root.getNamespace()) != null)
+        {
+            dates = new ArrayList<DoiDate>();
+            List<Element> dateElements = root.getChild("datess", root.getNamespace()).getChildren();
+            for (Element dateElement : dateElements)
+            {
+                // get the date text
+                String text = dateElement.getText();
+                DateType dateType = null;
+                String dateInformation = null;
+                
+                // get the attributes and build a rights instance
+                List<Attribute> attributes = dateElement.getAttributes();
+                for (Attribute attr : attributes)
+                {
+                    String key = attr.getName();
+                    if ("dateType".equals(key))
+                    {
+                        dateType = DateType.toValue(attr.getValue());
+                    }
+                    else
+                    {
+                        dateInformation = attr.getValue();
+                    }
+                }
+                
+                // the dateInformation attribute is optional
+                DoiDate date = new DoiDate(text, dateType);
+                date.dateInformation = dateInformation;
+                
+                dates.add(date);
+            }
+        }
+        return dates;
+    }
+    
+    protected List<Description> buildDescriptions(Element root) throws DoiParsingException
+    {
+        List<Description> descriptions = null;
+        
+        if (root.getChild("descriptions", root.getNamespace()) != null)
+        {
+            descriptions = new ArrayList<Description>();
+            List<Element> descriptionElements = root.getChild("descriptions", root.getNamespace()).getChildren();
+            for (Element descriptionElement : descriptionElements)
+            {
+                // get the description text
+                String text = descriptionElement.getText();
+                String lang = null;
+                String descriptionTypeString = null;
+                DescriptionType descriptionType = null;
+                
+                // get the attributes and build a description instance
+                List<Attribute> attributes = descriptionElement.getAttributes();
+                for (Attribute attr : attributes)
+                {
+                    String key = attr.getName();
+                    if ("lang".equals(key))
+                    {
+                        lang = attr.getValue();
+                    }
+                    else
+                    {
+                        descriptionTypeString = attr.getValue();
+                    }
+                }
+                
+                if (descriptionTypeString != null)
+                {
+                    descriptionType = DescriptionType.toValue(descriptionTypeString);
+                }
+                
+                
+                Description description = new Description(lang, text, descriptionType);
+                descriptions.add(description);
+            }
+        }
+        
+        return descriptions;
+    }
+
+    protected List<String> buildSizes(Element root) throws DoiParsingException
+    {
+        List<String> sizes = null;
+        
+        if (root.getChild("sizes", root.getNamespace()) != null)
+        {
+            List<Element> sizeElements = root.getChild("sizes", root.getNamespace()).getChildren();
+            for (Element sizeElement : sizeElements)
+            {
+                // get the size String
+                String size = sizeElement.getText();
+                sizes.add(size);
+            }
+        }
+        
+        return sizes;
     }
 }

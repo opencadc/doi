@@ -104,7 +104,7 @@ public class Resource
     private ResourceType resourceType;
     public List<Rights> rightsList;
     public List<Contributor> contributors;
-    public List<DoiDate> doiDates;
+    public List<DoiDate> dates;
     public List<Description> descriptions;
     public List<String> sizes;  // Unstructures size information about the resource.
     
@@ -162,13 +162,5 @@ public class Resource
     public ResourceType getResourceType()
     {
         return this.resourceType;
-    }
-
-    public List<Contributor> getContributors() {
-        return this.contributors;
-    }
-
-    public List<DoiDate> getDoiDates() {
-        return doiDates;
     }
 }

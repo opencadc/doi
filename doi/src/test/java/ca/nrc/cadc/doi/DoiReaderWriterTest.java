@@ -72,7 +72,6 @@ package ca.nrc.cadc.doi;
 import static org.junit.Assert.fail;
 
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.util.List;
 
 import org.apache.log4j.Level;
