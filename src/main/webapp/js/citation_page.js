@@ -164,10 +164,7 @@
               setAuthenticated()
             }
           });
-
-      // This function is in cadc.user.js, will throw the event
-      // in the userManager.subscribe above...
-      //userManager.loadCurrent()
+      
     }
 
     // #auth_modal is in /canfar/includes/_application_header.shtml
