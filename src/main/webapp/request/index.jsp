@@ -109,6 +109,15 @@
                           </div>
                         </div>
 
+                        <!-- Publication Language -->
+                        <div class="form-group">
+                          <label for="doi_language" class="col-sm-3 control-label" id="doi_language_label">Language</label>
+                          <div id="doi_language" class="col-sm-3 doi-landing doi-landing-text">
+                            <label class="radio-inline"><input type="radio" name="doi_language" checked>en</label>
+                            <label class="radio-inline"><input type="radio" name="doi_language">fr</label>
+                          </div>
+                        </div>
+
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
                           <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
@@ -198,7 +207,9 @@
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
-    <script type="application/javascript" src="<c:out value=" ${baseURL}/cadcJS/javascript/cadc.registry-client.js" />"></script>
+    <script type="text/javascript" src="//apps.canfar.net/cadcJS/javascript/cadc.registry-client.js"></script>
+    <script type="text/javascript" src="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/bootstrap/js/cadc.user.js"></script>
+    <script type="text/javascript" src="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/bootstrap/js/login.js"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_request.js" />"></script>
 
