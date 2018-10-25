@@ -164,7 +164,7 @@
               setAuthenticated()
             }
           });
-      
+
     }
 
     // #auth_modal is in /canfar/includes/_application_header.shtml

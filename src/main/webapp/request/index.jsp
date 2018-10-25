@@ -108,16 +108,7 @@
                                       placeholder="Last name, first name..." tabindex="2" rows="4" required></textarea>
                           </div>
                         </div>
-
-                        <!-- Publication Language -->
-                        <div class="form-group">
-                          <label for="doi_language" class="col-sm-3 control-label" id="doi_language_label">Language</label>
-                          <div id="doi_language" class="col-sm-3 doi-landing doi-landing-text">
-                            <label class="radio-inline"><input type="radio" name="doi_language" checked>en</label>
-                            <label class="radio-inline"><input type="radio" name="doi_language">fr</label>
-                          </div>
-                        </div>
-
+                        
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
                           <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
