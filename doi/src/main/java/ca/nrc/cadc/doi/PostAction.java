@@ -73,8 +73,10 @@ import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Creator;
+import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DescriptionType;
+import ca.nrc.cadc.doi.datacite.DoiDate;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
@@ -114,6 +116,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import javax.security.auth.Subject;
@@ -209,11 +212,11 @@ public class PostAction extends DoiAction {
         // update the template with the new DOI number
         DoiReader.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
-        // merge the user input Resource into the template Resource
-        String journalRef = syncInput.getParameter(JOURNALREF_PARAM);
-        if (journalRef == null) {
-            journalRef = "";
-        }
+        //Add a Created date to the Resource object
+        String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        DoiDate doiDate = new DoiDate(createdDate, DateType.CREATED);
+        resource.dates = new ArrayList<DoiDate>();
+        resource.dates.add(doiDate);
 
         // Create the group that is able to administer the DOI process
         GroupURI guri = createDoiGroup(nextDoiSuffix);
