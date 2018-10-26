@@ -125,10 +125,45 @@ public class DoiWriter
         Element publicationYearElement = getPublicationYearElement(resource.getPublicationYear(), ns);
         ret.addContent(publicationYearElement);
         
+        // add optional contributors
+        if (resource.contributors != null && resource.contributors.size() > 0)
+        {
+            Element contributorsElement = getContributorsElement(resource.contributors, ns);
+            ret.addContent(contributorsElement);
+        }
+        
+        // add optional dates
+        if (resource.dates != null && resource.dates.size() > 0)
+        {
+            Element datesElement = getDatesElement(resource.dates, ns);
+            ret.addContent(datesElement);
+        }
+
         // add resource type element
         Element resourceTypeElement = getResourceTypeElement(resource.getResourceType(), ns);
         ret.addContent(resourceTypeElement);
         
+        // add optional sizes
+        if (resource.sizes != null && resource.sizes.size() > 0)
+        {
+            Element sizesElement = getSizesElement(resource.sizes, ns);
+            ret.addContent(sizesElement);
+        }
+
+        // add optional rightsList
+        if (resource.rightsList != null && resource.rightsList.size() > 0)
+        {
+            Element rightsListElement = getRightsListElement(resource.rightsList, ns);
+            ret.addContent(rightsListElement);
+        }
+
+        // add optional descriptions
+        if (resource.descriptions != null && resource.descriptions.size() > 0)
+        {
+            Element descriptionsElement = getDescriptionsElement(resource.descriptions, ns);
+            ret.addContent(descriptionsElement);
+        }
+
         return ret;
     }
     
@@ -282,6 +317,149 @@ public class DoiWriter
         return ret;
     }
     
+    protected Element getContributorsElement(List<Contributor> contributors, Namespace ns)
+    {
+        Element ret = new Element("contributors", ns);
+        for (Contributor contributor : contributors)
+        {
+            Element contributorElement = getContributorElement(contributor, ns);
+            ret.addContent(contributorElement);
+        }
+        
+        return ret;
+    }
+    
+    protected Element getContributorElement(Contributor contributor, Namespace ns)
+    {
+        Element ret = new Element("contributor", ns);
+        
+        // add contributor name element
+        Element contributorNameElement = getContributorNameElement(contributor.getContributorName(), ns);
+        ret.addContent(contributorNameElement);
+        
+        if (contributor.givenName != null)
+        {
+            // add give name element
+            Element givenNameElement = getGivenNameElement(contributor.givenName, ns);
+            ret.addContent(givenNameElement);
+        }
+        
+        if (contributor.familyName != null)
+        {
+            // add family name element
+            Element familyNameElement = getFamilyNameElement(contributor.familyName, ns);
+            ret.addContent(familyNameElement);
+        }
+        
+        if (contributor.nameIdentifier != null)
+        {
+            // add name identifier element
+            Element nameIdentifierElement = getNameIdentifierElement(contributor.nameIdentifier, ns);
+            ret.addContent(nameIdentifierElement);
+        }
+        
+        if (contributor.affiliation != null)
+        {
+            // add affiliation element
+            Element affiliationElement = getAffiliationElement(contributor.affiliation, ns);
+            ret.addContent(affiliationElement);
+        }
+        
+        ret.setAttribute("contributorType", contributor.getContributorType().getValue());
+
+        return ret;
+    }
+    
+    protected Element getContributorNameElement(ContributorName contributorName, Namespace ns)
+    {
+        Element ret = new Element("contributorName", ns);
+        ret.setText(contributorName.getText());
+        
+        if (contributorName.nameType != null)
+        {
+            // set name type attribute
+            ret.setAttribute("nameType", contributorName.nameType);
+        }
+        
+        return ret;
+    }
+    
+    protected Element getDatesElement(List<DoiDate> dates, Namespace ns)
+    {
+        Element ret = new Element("dates", ns);
+        for (DoiDate date : dates)
+        {
+            Element dateElement = getDateElement(date, ns);
+            ret.addContent(dateElement);
+        }
+        
+        return ret;
+    }
+    
+    protected Element getDateElement(DoiDate date, Namespace ns)
+    {
+        Element ret = new Element("date", ns);
+        ret.setAttribute("dateType", date.getDateType().getValue());
+        ret.setText(date.getIsoDate());
+        
+        if (date.dateInformation != null)
+        {
+            // set date information
+            ret.setAttribute("dateInformation", date.dateInformation);
+        }
+        
+        return ret;
+    }
+    
+    protected Element getSizesElement(List<String> sizes, Namespace ns)
+    {
+        Element ret = new Element("sizes", ns);
+        for (String size : sizes)
+        {
+            Element sizeElement = new Element("size", ns);
+            sizeElement.setText(size);
+            ret.addContent(sizeElement);
+        }
+        
+        return ret;
+    }
+    
+    protected Element getRightsListElement(List<Rights> rightsList, Namespace ns)
+    {
+        Element ret = new Element("rightsList", ns);
+        for (Rights rights : rightsList)
+        {
+            Element rightsElement = new Element("rights", ns);
+            rightsElement.setAttribute("lang", rights.getLang(), Namespace.XML_NAMESPACE);
+            rightsElement.setText(rights.getText());
+            
+            if (rights.rightsURI != null)
+            {
+                // set title type attribute
+                rightsElement.setAttribute("rightsURI", rights.rightsURI.toString());
+            }
+            
+            ret.addContent(rightsElement);
+        }
+        
+        return ret;
+    }
+    
+    protected Element getDescriptionsElement(List<Description> descriptions, Namespace ns)
+    {
+        Element ret = new Element("descriptions", ns);
+        for (Description description : descriptions)
+        {
+            Element descriptionElement = new Element("description", ns);
+            descriptionElement.setAttribute("lang", description.getLang(), Namespace.XML_NAMESPACE);
+            descriptionElement.setAttribute("descriptionType", description.getDescriptionType().getValue());
+            descriptionElement.setText(description.getText());
+            ret.addContent(descriptionElement);
+        }
+        
+        return ret;
+    }
+
     protected Element getResourceTypeElement(ResourceType resourceType, Namespace ns)
     {
         Element ret = new Element("resourceType", ns);

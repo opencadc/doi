@@ -84,8 +84,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ca.nrc.cadc.doi.datacite.Contributor;
+import ca.nrc.cadc.doi.datacite.ContributorName;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
+import ca.nrc.cadc.doi.datacite.Description;
+import ca.nrc.cadc.doi.datacite.DoiDate;
 import ca.nrc.cadc.doi.datacite.DoiJsonReader;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
@@ -94,6 +98,7 @@ import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -212,8 +217,137 @@ public class DoiReaderWriterTest
         Assert.assertEquals("resourceTypes are different", rst1.getResourceType(), rst2.getResourceType());
     }
     
+    private void compareNull(Object o1, Object o2, String field)
+    {
+        if (o1 == null)
+        {
+            Assert.assertNull("one " + field + " is not null", o2);
+        } 
+        else
+        {
+            Assert.assertNotNull("one " + field + " is null", o2);
+        }
+    }
+    
+    private void compareContributorName(ContributorName cn1, ContributorName cn2)
+    {
+        Assert.assertEquals("name is different", cn1.getText(), cn2.getText());
+        Assert.assertEquals("nameType is different", cn1.nameType, cn2.nameType);
+    }
+    
+    private void compareStrings(String s1, String s2, String field)
+    {
+        compareNull(s1, s2, field);
+        if (s1 != null)
+        {
+            Assert.assertEquals(field + "is different", s1, s2);
+        }
+    }
+    
+    private void compareContributor(Contributor c1, Contributor c2)
+    {
+        compareContributorName(c1.getContributorName(), c2.getContributorName());
+        Assert.assertEquals("contributorType is different", c1.getContributorType(), c2.getContributorType());
+        compareStrings(c1.givenName, c2.givenName, "givenName");
+        compareStrings(c1.familyName, c2.familyName, "familyName");
+        compareStrings(c1.affiliation, c2.affiliation, "affiliation");
+        compareNameIdentifier(c1.nameIdentifier, c2.nameIdentifier);
+    }
+    
+    private void compareContributors(List<Contributor> cs1, List<Contributor> cs2)
+    {
+        compareNull(cs1, cs2, "contributor");
+        if (cs1 != null)
+        {
+            Assert.assertEquals("contributors size is different", cs1.size(), cs2.size());
+            for (int i=0; i< cs1.size(); i++)
+            {
+                compareContributor(cs1.get(i), cs2.get(i));
+            }
+        }
+    }
+    
+    private void compareRights(Rights r1, Rights r2)
+    {
+        compareStrings(r1.getLang(), r2.getLang(), "lang");
+        compareStrings(r1.getText(), r2.getText(), "rights text");
+        compareNull(r1.rightsURI, r2.rightsURI, "rightsURI");
+        if (r1.rightsURI != null)
+        {
+            Assert.assertTrue("rightsURI is different", r1.rightsURI.equals(r2.rightsURI));
+        }
+    }
+    
+    private void compareRightsList(List<Rights> rl1, List<Rights> rl2)
+    {
+        compareNull(rl1, rl2, "contributor");
+        if (rl1 != null)
+        {
+            Assert.assertEquals("rightsList size is different", rl1.size(), rl2.size());
+            for (int i=0; i< rl1.size(); i++)
+            {
+                compareRights(rl1.get(i), rl2.get(i));
+            }
+        }
+    }
+    
+    private void compareDate(DoiDate d1, DoiDate d2)
+    {
+        compareStrings(d1.getIsoDate(), d2.getIsoDate(), "isoDate");
+        Assert.assertEquals("dateType is different", d1.getDateType(), d2.getDateType());
+        compareStrings(d1.dateInformation, d2.dateInformation, "dateInformation");
+    }
+    
+    private void compareDates(List<DoiDate> d1, List<DoiDate> d2)
+    {
+        compareNull(d1, d2, "dates");
+        if (d1 != null)
+        {
+            Assert.assertEquals("dates size is different", d1.size(), d2.size());
+            for (int i=0; i< d1.size(); i++)
+            {
+                compareDate(d1.get(i), d2.get(i));
+            }
+        }
+    }
+    
+    private void compareDescription(Description d1, Description d2)
+    {
+        compareStrings(d1.getLang(), d2.getLang(), "lang");
+        Assert.assertEquals("descriptionType is different", d1.getDescriptionType(), d2.getDescriptionType());
+        // XMLOutputter removes leading and trailing '\n' and spaces
+        compareStrings(d1.getText().trim(), d2.getText().trim(), "desciption text");
+    }
+    
+    private void compareDescriptions(List<Description> d1, List<Description> d2)
+    {
+        compareNull(d1, d2, "descriptions");
+        if (d1 != null)
+        {
+            Assert.assertEquals("descriptions size is different", d1.size(), d2.size());
+            for (int i=0; i< d1.size(); i++)
+            {
+                compareDescription(d1.get(i), d2.get(i));
+            }
+        }
+    }
+    
+    private void compareSizes(List<String> s1, List<String> s2)
+    {
+        compareNull(s1, s2, "sizes");
+        if (s1 != null)
+        {
+            Assert.assertEquals("sizes size is different", s1.size(), s2.size());
+            for (int i=0; i< s1.size(); i++)
+            {
+                compareStrings(s1.get(i), s2.get(i), "size");
+            }
+        }
+    }
+
     private void compareResources(Resource r1, Resource r2)
     {
+        // compare mandatory fields
         compareNamespace(r1.getNamespace(), r2.getNamespace());
         compareIdentifier(r1.getIdentifier(), r2.getIdentifier());
         compareCreators(r1.getCreators(), r2.getCreators());
@@ -221,6 +355,13 @@ public class DoiReaderWriterTest
         comparePublisher(r1.getPublisher(), r2.getPublisher());
         comparePublicationYear(r1.getPublicationYear(), r2.getPublicationYear());
         compareResourceType(r1.getResourceType(), r2.getResourceType());
+        
+        // compare optional fields
+        compareContributors(r1.contributors, r2.contributors);
+        compareRightsList(r1.rightsList, r2.rightsList);
+        compareDates(r1.dates, r2.dates);
+        compareDescriptions(r1.descriptions, r2.descriptions);
+        compareSizes(r1.sizes, r2.sizes);
     }
     
     @Test
@@ -257,6 +398,40 @@ public class DoiReaderWriterTest
     }
 
     @Test
+    public void testBasicXmlReaderWriter()
+    {
+        // tests that missing optional elements are handled correctly
+        try
+        {
+            log.debug("testXmlReaderWriter");
+            DoiXmlReader xmlReader = new DoiXmlReader();
+            
+            // read test xml file
+            String fileName = "src/test/data/datacite-example-mandatory-only-v4.1.xml";
+            FileInputStream fis = new FileInputStream(fileName);
+            Resource resourceFromReader = xmlReader.read(fis);
+            fis.close();
+            
+            // write Resource instance in XMl format
+            StringBuilder builder = new StringBuilder();
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(resourceFromReader, builder);
+            
+            // read document generated by writer
+            Resource resourceFromWriter = xmlReader.read(builder.toString());
+            
+            // compare Resource instance generated by reader to Resource instance generated by writer
+            compareResources(resourceFromReader, resourceFromWriter);
+        }
+        catch (Exception ex)
+        {
+            log.error(ex);
+            fail(ex.getMessage());
+        }
+        
+    }
+
+    @Test
     public void testJsonReaderWriter()
     {
         try
@@ -266,6 +441,41 @@ public class DoiReaderWriterTest
             
             // read test xml file
             String fileName = "src/test/data/datacite-example-full-v4.1.xml";
+            FileInputStream fis = new FileInputStream(fileName);
+            Resource resourceFromReader = xmlReader.read(fis);
+            fis.close();
+            
+            // write Resource instance in JSON format
+            StringBuilder builder = new StringBuilder();
+            DoiJsonWriter writer = new DoiJsonWriter();
+            writer.write(resourceFromReader, builder);
+
+            // read document generated by writer
+            DoiJsonReader jsonReader = new DoiJsonReader();
+            Resource resourceFromWriter = jsonReader.read(builder.toString());
+
+            // compare Resource instance generated by reader to Resource instance generated by writer
+            compareResources(resourceFromReader, resourceFromWriter);
+        }
+        catch (Exception ex)
+        {
+            log.error(ex);
+            fail(ex.getMessage());
+        }
+        
+    }
+
+    @Test
+    public void testBasicJsonReaderWriter()
+    {
+        // tests that missing optional elements are handled correctly
+        try
+        {
+            log.debug("testJsonReaderWriter");
+            DoiXmlReader xmlReader = new DoiXmlReader();
+            
+            // read test xml file
+            String fileName = "src/test/data/datacite-example-mandatory-only-v4.1.xml";
             FileInputStream fis = new FileInputStream(fileName);
             Resource resourceFromReader = xmlReader.read(fis);
             fis.close();

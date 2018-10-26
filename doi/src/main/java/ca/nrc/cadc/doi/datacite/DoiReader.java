@@ -489,6 +489,7 @@ public class DoiReader
         
         if (root.getChild("sizes", root.getNamespace()) != null)
         {
+            sizes = new ArrayList<String>();
             List<Element> sizeElements = root.getChild("sizes", root.getNamespace()).getChildren();
             for (Element sizeElement : sizeElements)
             {
