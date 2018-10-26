@@ -74,7 +74,6 @@ import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Title;
 
 import java.lang.reflect.Field;
@@ -127,14 +126,6 @@ public class DoiReader
         List<Creator> creators = buildCreators(root);
         List<Title> titles = buildTitles(root);
         
-        if (root.getChild("publisher", ns) == null)
-        {
-            String msg = "publisher not found in resource element.";
-            throw new DoiParsingException(msg);
-        }
-        
-        String publisher = root.getChild("publisher", ns).getText();
-        
         if (root.getChild("publicationYear", ns) == null)
         {
             String msg = "publicationYear not found in resource element.";
@@ -142,8 +133,7 @@ public class DoiReader
         }
         
         String publicationYear = root.getChild("publicationYear", ns).getText();
-        ResourceType resourceType = buildResourceType(root);
-        Resource resource = new Resource(ns, id, creators, titles, publisher, publicationYear, resourceType);
+        Resource resource = new Resource(ns, id, creators, titles, publicationYear);
         
         // the following are optional elements that we support
         resource.contributors = buildContributors(root);
@@ -271,13 +261,6 @@ public class DoiReader
         }
         
         return titles;
-    }
-    
-    protected ResourceType buildResourceType(Element root) throws DoiParsingException
-    {
-        Element resourceTypeElement = root.getChild("resourceType", root.getNamespace());
-        String resourceTypeGeneral = resourceTypeElement.getAttributeValue("resourceTypeGeneral");
-        return new ResourceType(resourceTypeGeneral, resourceTypeElement.getText());
     }
     
     protected List<Contributor> buildContributors(Element root) throws DoiParsingException

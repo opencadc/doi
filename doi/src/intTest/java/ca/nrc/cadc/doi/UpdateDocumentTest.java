@@ -72,9 +72,7 @@ package ca.nrc.cadc.doi;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.net.URL;
-import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.List;
 
 import javax.security.auth.Subject;
 
@@ -84,10 +82,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
-import ca.nrc.cadc.doi.status.DoiStatusListXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
@@ -95,9 +93,9 @@ import ca.nrc.cadc.util.Log4jInit;
 
 /**
  */
-public class CreateDocumentTest extends DocumentTest
+public class UpdateDocumentTest extends DocumentTest
 {
-    private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
+    private static final Logger log = Logger.getLogger(UpdateDocumentTest.class);
 
     static final String JSON = "application/json";
     static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
@@ -109,29 +107,10 @@ public class CreateDocumentTest extends DocumentTest
         Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
-    public CreateDocumentTest() { };
+    public UpdateDocumentTest() { };
     
-    private List<DoiStatus> getDoiStatusList(Subject s) throws PrivilegedActionException
-    {
-        List<DoiStatus> doiStatusList = (List<DoiStatus>) Subject.doAs(s, new PrivilegedExceptionAction<List<DoiStatus>>()
-        {
-            public List<DoiStatus> run() throws Exception
-            {
-                URL docURL = new URL(baseURL);
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                HttpDownload get = new HttpDownload(docURL, baos);
-                get.setRequestProperty("Accept", "text/xml");
-                get.run();
-                DoiStatusListXmlReader statusReader = new DoiStatusListXmlReader();
-                return (List<DoiStatus>) statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
-            }
-        });
-        
-        return doiStatusList;
-    }
-    
-    @Test
-    public void testCreateDocumentAndStatus() throws Throwable
+    //@Test
+    public void testUpdateDocument() throws Throwable
     {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
@@ -157,18 +136,10 @@ public class CreateDocumentTest extends DocumentTest
                 
                 try
                 {
-                    // Get the document in JSON format
-                    URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    HttpDownload get = new HttpDownload(docURL, bos);
-                    get.setRequestProperty("Accept", JSON);
-                    get.run();
-                    Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
-                    Assert.assertEquals(JSON, get.getContentType());
-                    
                     // For DOI status test below
+                    URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
                     Title expectedTitle = resource.getTitles().get(0);
-                    String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
+                    Creator expectedCreator = resource.getCreators().get(0);
     
                     // Get the DOI status
                     URL statusURL = new URL(docURL + "/status");
@@ -179,7 +150,6 @@ public class CreateDocumentTest extends DocumentTest
                     DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
                     DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
@@ -192,76 +162,5 @@ public class CreateDocumentTest extends DocumentTest
                 return resource;
             }
         });
-    }
-    
-    @Test
-    public void testGetStatusList() throws Throwable
-    {
-        final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
-        final String[] newDois = new String[3];
-
-        // create a list of documents 
-        for (int i = 0; i < newDois.length; i++)
-        {
-            newDois[i] = this.createADocument(s);
-        }
-        
-        // invoke the doi list service 
-        List<DoiStatus> doiStatusList = getDoiStatusList(s);
-        DoiStatus[] doiStatusArray = doiStatusList.toArray(new DoiStatus[doiStatusList.size()]);
-
-        // verify that the returned list contains the dois of the documents just created above
-        Assert.assertTrue("Some created DOIs are missing from the DOI list", doiStatusList.size() >= newDois.length);
-        try
-        {
-            int matchCount = 0;
-            for (int i = 0; i < doiStatusArray.length; i++)
-            {
-                for (int j = 0; j < newDois.length; j++)
-                {
-                    DoiStatus doiStatus = doiStatusArray[i];
-                    String[] doiParts = doiStatus.getIdentifier().getText().split("/");
-
-                    // verify doi
-                    if (doiParts[1].equals(newDois[j]))
-                    {
-                        // verify status
-                        Status status = doiStatus.getStatus();
-                        Assert.assertEquals("Status of DOI " + doiParts[1] + " is incorrect", Status.DRAFT, status);
-                        
-                        // verify data directory
-                        String actualDataDirectory = doiStatus.getDataDirectory();
-                        String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + newDois[j] + "/data";
-                        Assert.assertEquals("Data directories are different", expectedDataDirectory, actualDataDirectory);
-                        
-                        matchCount++;
-                        break;
-                    }
-                }
-                
-                if (matchCount == newDois.length)
-                {
-                    break;
-                }
-            }
-            
-            Assert.assertEquals("Missing DOIs in DOI list", newDois.length, matchCount);
-        }
-        finally
-        {
-            // clean up
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
-                public Object run() throws Exception
-                {
-                    for (int i = 0; i < newDois.length; i++)
-                    {
-                        deleteTestFolder(newDois[i]);
-                    }
-                    
-                    return null;
-                }
-            });
-        }
     }
 }

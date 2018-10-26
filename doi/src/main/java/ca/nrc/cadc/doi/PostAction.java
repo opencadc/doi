@@ -150,13 +150,13 @@ public class PostAction extends DoiAction {
     // TODO: Under construction...
     private void updateDOI() throws Exception {
         // Get the submitted form data, if it exists
-        Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-        if (resource == null) {
+        Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        if (resourceFromUser == null) {
             throw new IllegalArgumentException("No content");
         }
 
         // Get resource from vospace
-        Resource existingDOI = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+        Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
 
         // journal reference may be updated as well, will have to change the
         // parameter on the vospace nodes involved - parent & data directory
@@ -168,7 +168,7 @@ public class PostAction extends DoiAction {
         if (journalRef == null) {
             journalRef = "";
         }
-//        Resource mergedResource = merge(resource, existingDOI, journalRef);
+        Resource mergedResource = merge(resourceFromUser, resourceFromVos);
 
         // Upload the document
         String docName = super.getDoiFilename(doiSuffix);
@@ -227,7 +227,25 @@ public class PostAction extends DoiAction {
         String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
         syncOutput.setHeader("Location", redirectUrl);
         syncOutput.setCode(303);
+    }
 
+    private Resource merge(Resource sourceRes, Resource targetRes) {
+
+        // Whitelist handling of fields users are allowed to provide information for
+
+        if (sourceRes.getTitles() != null) {
+            targetRes.setTitles(sourceRes.getTitles());
+        }
+
+        if (sourceRes.language != null) {
+            targetRes.language = sourceRes.language;
+        }
+
+        if (sourceRes.getCreators() != null) {
+            targetRes.setCreators(sourceRes.getCreators());
+        }
+
+        return targetRes;
     }
 
     private Resource getTemplateResource() {
@@ -247,26 +265,6 @@ public class PostAction extends DoiAction {
         return templateResource;
     }
 
-    private Resource merge(Resource sourceRes, Resource targetRes) {
-        Resource mergedRes = targetRes.clone();
-
-        // Whitelist handling of fields users are allowed to provide information for
-
-        if (sourceRes.getTitles() != null) {
-            mergedRes.setTitles(sourceRes.getTitles());
-        }
-
-        if (sourceRes.language != null) {
-            mergedRes.language = sourceRes.language;
-        }
-
-        if (sourceRes.getCreators() != null) {
-            mergedRes.setCreators(sourceRes.getCreators());
-        }
-
-        return mergedRes;
-    }
-
     /**
      * Add the CADC template material to the DOI during the minting step
      * @param inProgressDoi
@@ -278,19 +276,17 @@ public class PostAction extends DoiAction {
         // Build a resource using the template file
         Resource cadcTemplate = getTemplateResource();
 
-        Resource mintedDoi = inProgressDoi.clone();
-
         // Whitelist handling of fields users are allowed to provide information for.
 
         if (cadcTemplate.contributors != null) {
-            mintedDoi.contributors = cadcTemplate.contributors;
+            inProgressDoi.contributors = cadcTemplate.contributors;
         }
         else {
             throw new RuntimeException("contributors stanza missing from CADC template.");
         }
 
         if (cadcTemplate.rightsList != null) {
-            mintedDoi.rightsList = cadcTemplate.rightsList;
+            inProgressDoi.rightsList = cadcTemplate.rightsList;
         }
         else {
             throw new RuntimeException("rightslist stanza missing from CADC template.");
@@ -302,22 +298,22 @@ public class PostAction extends DoiAction {
 
         // Generate the description string
         // Get first author's last name
-        String lastName = mintedDoi.getCreators().get(0).familyName;
+        String lastName = inProgressDoi.getCreators().get(0).familyName;
 
         if (lastName == null) {
             // Use full name in a pinch
-            lastName = mintedDoi.getCreators().get(0).getCreatorName().getText();
+            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
         }
 
-        String description =  String.format(DESCRIPTION_TEMPLATE, mintedDoi.getTitles().get(0).getText(), lastName, journalRef);
+        String description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName, journalRef);
 
         List<Description> descriptionList = new ArrayList<Description>();
-        Description newDescrip = new Description(mintedDoi.language,"", DescriptionType.OTHER);
+        Description newDescrip = new Description(inProgressDoi.language,"", DescriptionType.OTHER);
         descriptionList.add(newDescrip);
 
-        mintedDoi.descriptions = descriptionList;
+        inProgressDoi.descriptions = descriptionList;
 
-        return mintedDoi;
+        return inProgressDoi;
     }
 
     

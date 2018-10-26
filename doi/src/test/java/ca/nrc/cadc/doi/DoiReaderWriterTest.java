@@ -92,14 +92,12 @@ import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DoiDate;
 import ca.nrc.cadc.doi.datacite.DoiJsonReader;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
-import ca.nrc.cadc.doi.datacite.DoiReader;
-import ca.nrc.cadc.doi.datacite.DoiWriter;
+import ca.nrc.cadc.doi.datacite.DoiResourceType;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.util.Log4jInit;
@@ -146,19 +144,19 @@ public class DoiReaderWriterTest
     
     private void compareNamespace(Namespace ns1, Namespace ns2)
     {
-        Assert.assertTrue("Namespace prefixes are different", ns1.getPrefix().equals(ns2.getPrefix()));
-        Assert.assertTrue("Namespace URIs are different", ns1.getURI().equals(ns2.getURI()));
+        Assert.assertTrue("Namespace prefixe is different", ns1.getPrefix().equals(ns2.getPrefix()));
+        Assert.assertTrue("Namespace URI is different", ns1.getURI().equals(ns2.getURI()));
     }
     
     private void compareIdentifier(Identifier id1, Identifier id2)
     {
-        Assert.assertEquals("Identifiers are different", id1.getText(), id2.getText());
-        Assert.assertEquals("identifierTypes are different", id1.getIdentifierType(), id2.getIdentifierType());
+        Assert.assertEquals("Identifier is different", id1.getText(), id2.getText());
+        Assert.assertEquals("identifierType is different", id1.getIdentifierType(), id2.getIdentifierType());
     }
     
     private void compareCreators(List<Creator> creators1, List<Creator> creators2)
     {
-        Assert.assertEquals("Number of creators are different", creators1.size(), creators2.size() );
+        Assert.assertEquals("Number of creators is different", creators1.size(), creators2.size() );
         for (int i=0; i<creators1.size(); i++)
         {
             compareCreator(creators1.get(i), creators2.get(i));
@@ -169,31 +167,31 @@ public class DoiReaderWriterTest
     {
         compareCreatorName(creator1.getCreatorName(), creator2.getCreatorName());
         compareNameIdentifier(creator1.nameIdentifier, creator2.nameIdentifier);
-        Assert.assertEquals("givenNames are different", creator1.givenName, creator2.givenName);
-        Assert.assertEquals("familyNames are different", creator1.familyName, creator2.familyName);
-        Assert.assertEquals("affiliations are different", creator1.affiliation, creator2.affiliation);
+        Assert.assertEquals("givenName is different", creator1.givenName, creator2.givenName);
+        Assert.assertEquals("familyName is different", creator1.familyName, creator2.familyName);
+        Assert.assertEquals("affiliation is different", creator1.affiliation, creator2.affiliation);
     }
     
     private void compareCreatorName(CreatorName cn1, CreatorName cn2)
     {
-        Assert.assertEquals("creatorNames are different", cn1.getText(), cn2.getText());
-        Assert.assertEquals("nameTypes are different", cn1.nameType, cn2.nameType);
+        Assert.assertEquals("creatorName is different", cn1.getText(), cn2.getText());
+        Assert.assertEquals("nameType is different", cn1.nameType, cn2.nameType);
     }
     
     private void compareNameIdentifier(NameIdentifier id1, NameIdentifier id2)
     {
-        Assert.assertEquals("nameIdentifierSchemes are different", id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme());
-        Assert.assertEquals("nameIdentifiers are different", id1.getNameIdentifier(), id2.getNameIdentifier());
+        Assert.assertEquals("nameIdentifierScheme is different", id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme());
+        Assert.assertEquals("nameIdentifier is different", id1.getNameIdentifier(), id2.getNameIdentifier());
         compareNull(id1.schemeURI, id2.schemeURI, "schemeURI");
         if (id1.schemeURI != null)
         {
-            Assert.assertTrue("schemeURIs are different", id1.schemeURI.equals(id2.schemeURI));
+            Assert.assertTrue("schemeURI is different", id1.schemeURI.equals(id2.schemeURI));
         }
     }
     
     private void compareTitles(List<Title> t1, List<Title> t2)
     {
-        Assert.assertEquals("Number of titles are different", t1.size(), t2.size());
+        Assert.assertEquals("Number of titles is different", t1.size(), t2.size());
         for (int i=0; i< t1.size(); i++)
         {
             compareTitle(t1.get(i), t2.get(i));
@@ -202,27 +200,27 @@ public class DoiReaderWriterTest
     
     private void compareTitle(Title t1, Title t2)
     {
-        Assert.assertEquals("langs are different", t1.getLang(), t2.getLang());
-        Assert.assertEquals("titles are different", t1.getText(), t2.getText());
-        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
+        Assert.assertEquals("lang is different", t1.getLang(), t2.getLang());
+        Assert.assertEquals("title is different", t1.getText(), t2.getText());
+        Assert.assertEquals("titleType is different", t1.titleType, t2.titleType);
     }
     
     private void comparePublisher(String p1, String p2)
     {
-        Assert.assertEquals("publishers are different", p1, p2);
+        Assert.assertEquals("publisher is different", p1, p2);
     }
     
     private void comparePublicationYear(String p1, String p2)
     {
-        Assert.assertEquals("publicationYears are different", p1, p2);
-    }
-
-    private void compareResourceType(ResourceType rst1, ResourceType rst2)
-    {
-        Assert.assertEquals("resourceTypeGenerals are different", rst1.getResourceTypeGeneral(), rst2.getResourceTypeGeneral());
-        Assert.assertEquals("resourceTypes are different", rst1.getResourceType(), rst2.getResourceType());
+        Assert.assertEquals("publicationYear is different", p1, p2);
     }
     
+    private void compareResourceTypes(DoiResourceType r1, DoiResourceType r2)
+    {
+        Assert.assertEquals("resourceType is different", r1.getResourceType(), r2.getResourceType());
+        compareStrings(r1.resourceTypeGeneral, r2.resourceTypeGeneral, "resourceTypeGeneral");
+    }
+
     private void compareNull(Object o1, Object o2, String field)
     {
         if (o1 == null)
@@ -360,8 +358,8 @@ public class DoiReaderWriterTest
         compareTitles(r1.getTitles(), r2.getTitles());
         comparePublisher(r1.getPublisher(), r2.getPublisher());
         comparePublicationYear(r1.getPublicationYear(), r2.getPublicationYear());
-        compareResourceType(r1.getResourceType(), r2.getResourceType());
-        
+        compareResourceTypes(r1.getResourceType(), r2.getResourceType());
+
         // compare optional fields
         compareContributors(r1.contributors, r2.contributors);
         compareRightsList(r1.rightsList, r2.rightsList);

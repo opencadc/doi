@@ -76,6 +76,8 @@ import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.util.StringUtil;
+
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -460,11 +462,14 @@ public class DoiWriter
         return ret;
     }
 
-    protected Element getResourceTypeElement(ResourceType resourceType, Namespace ns)
+    protected Element getResourceTypeElement(DoiResourceType resourceType, Namespace ns)
     {
         Element ret = new Element("resourceType", ns);
-        ret.setText(resourceType.getResourceType());
-        ret.setAttribute("resourceTypeGeneral", resourceType.getResourceTypeGeneral());
+        ret.setAttribute("resourceTypeGeneral", resourceType.getResourceType().getValue());
+        if (!StringUtil.hasText(resourceType.resourceTypeGeneral))
+        {
+            ret.setText(resourceType.resourceTypeGeneral);
+        }
         return ret;
     }
 }

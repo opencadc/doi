@@ -58,11 +58,7 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
-
-            // return the node in xml format
-            NodeWriter nodeWriter = new NodeWriter();
-            return new NodeActionResult(new N
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -73,53 +69,42 @@
 
 package ca.nrc.cadc.doi.datacite;
 
+import org.apache.log4j.Logger;
+
 /**
- * Enums for types of contributor.
+ * The type of a resource. Additional free text description can be entered into resourceTypeGeneral.
  * 
  * @author yeunga
- *
  */
-public enum ResourceType
+public class DoiResourceType
 {
-    AUDIO_VISUAL("Audiovisual"),
-    COLLECTION("Collection"),
-    DATA_PAPER("DataPaper"),
-    DATA_SET("Dataset"),
-    EVENT("Event"),
-    IMAGE("Image"),
-    INTERACTIVE_RESOURCE("InteractiveResource"),
-    MODEL("Model"),
-    PHYSICAL_OBJECT("PhysicalObject"),
-    SERVICE("Service"),
-    SOFTWARE("Software"),
-    SOUND("Sound"),
-    TEXT("Text"),
-    WORKFLOW("Workflow"),
-    OTHER("Other");
     
-    private final String value;
+    private static Logger log = Logger.getLogger(DoiResourceType.class);
     
-    private ResourceType(String value)
-    {
-        this.value = value;
-    }
-    
-    public static ResourceType toValue(String s)
-    {
-        for (ResourceType type : values())
-            if (type.value.equals(s))
-                return type;
-        throw new IllegalArgumentException("invalid value: " + s);
-    }
+    public String resourceTypeGeneral;
+    private ResourceType resourceType;
 
-    public String getValue()
+    /**
+     * ResourceType constructor.
+     * @param resourceTypeGeneral additional text description for this resource type
+     * @param resourceType type of this resource
+     */
+    public DoiResourceType(ResourceType resourceType)
     {
-        return value;
+        if (resourceType == null)
+        {
+            String msg = "resourceType must be specified.";
+            throw new IllegalArgumentException(msg);
+        }
+        
+        this.resourceType = resourceType;
     }
-
-    @Override
-    public String toString()
+    
+    /**
+     * @return type of this resource
+     */
+    public ResourceType getResourceType()
     {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.resourceType; 
     }
 }
