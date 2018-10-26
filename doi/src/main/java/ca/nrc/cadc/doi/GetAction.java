@@ -78,28 +78,12 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 
-import ca.nrc.cadc.net.InputStreamWrapper;
-import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.NodeNotFoundException;
-import ca.nrc.cadc.vos.Protocol;
-import ca.nrc.cadc.vos.Transfer;
-import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.ClientTransfer;
 
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,7 +103,6 @@ public class GetAction extends DoiAction {
     @Override
     public void doAction() throws Exception {
         super.init(false);
-        vClient = new VospaceDoiClient(this.callingSubjectNumericID);
 
         // need the following statement because the VOSClient is not initializing 
         // the credentials properly

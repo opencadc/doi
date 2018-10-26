@@ -69,16 +69,10 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.NodeNotFoundException;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.net.URI;
+
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import javax.security.auth.Subject;
@@ -110,6 +104,7 @@ public abstract class DoiAction extends RestAction {
     
     protected String doiSuffix;
     protected String doiAction;
+    protected VospaceDoiClient vClient = null;
 
     public DoiAction() { }
 
@@ -122,7 +117,7 @@ public abstract class DoiAction extends RestAction {
         return new DoiInlineContentHandler();
     }
     
-    protected void init(boolean authorize) {
+    protected void init(boolean authorize) throws URISyntaxException {
         callingSubject = AuthenticationUtil.getCurrentSubject();
         log.debug("subject: " + callingSubject);
         if (authorize) {
@@ -131,6 +126,7 @@ public abstract class DoiAction extends RestAction {
         
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
+        this.vClient = new VospaceDoiClient(this.callingSubjectNumericID);
 
         parsePath();
     }

@@ -72,20 +72,15 @@ import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DescriptionType;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
-import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
-import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
@@ -98,27 +93,21 @@ import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import ca.nrc.cadc.xml.XmlUtil;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
-import java.util.ListIterator;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
 
 
 public class PostAction extends DoiAction {
@@ -126,7 +115,6 @@ public class PostAction extends DoiAction {
 
     static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
     static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al., %s";
-    private VospaceDoiClient vClient = null;
 
     public PostAction() {
         super();
@@ -135,7 +123,6 @@ public class PostAction extends DoiAction {
     @Override
     public void doAction() throws Exception {
         super.init(true);
-        vClient = new VospaceDoiClient(this.callingSubjectNumericID);
 
         if (doiAction != null) {
             throw new IllegalArgumentException("Invalid request.");

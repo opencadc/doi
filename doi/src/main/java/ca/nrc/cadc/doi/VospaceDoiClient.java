@@ -101,17 +101,18 @@ public class VospaceDoiClient {
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
 
-    Integer callersNumericId;
+    private Integer callersNumericId;
+    private VOSpaceClient vosClient = null;
+    private VOSURI baseDataURI = null;
 
-    public VospaceDoiClient(Integer callersNumericId) {
+    public VospaceDoiClient(Integer callersNumericId) throws URISyntaxException {
         this.callersNumericId = callersNumericId;
-
+        this.baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
     }
 
     public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException
     {
-        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path))
         {
@@ -123,14 +124,10 @@ public class VospaceDoiClient {
 
     public Resource getResource(String doiSuffixString, String doiFilename) throws Exception
     {
-        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
-
         VOSURI docDataNode = new VOSURI(
             baseDataURI.toString() + "/" + doiSuffixString + "/" + doiFilename );
-
-        return getDoiDocFromVOSpace(vosClient, docDataNode);
-
+        
+        return getDoiDocFromVOSpace(docDataNode);
     }
     
     public boolean isRequesterNode(Node node)
@@ -146,7 +143,7 @@ public class VospaceDoiClient {
     }
     
 
-    public Resource getDoiDocFromVOSpace(VOSpaceClient vosClient, VOSURI dataNode)
+    private Resource getDoiDocFromVOSpace(VOSURI dataNode)
         throws Exception {
         
         List<Protocol> protocols = new ArrayList<Protocol>();
