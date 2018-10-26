@@ -126,6 +126,7 @@ public class PostAction extends DoiAction {
 
     static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
     static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al., %s";
+    private VospaceDoiClient vClient = null;
 
     public PostAction() {
         super();
@@ -134,7 +135,8 @@ public class PostAction extends DoiAction {
     @Override
     public void doAction() throws Exception {
         super.init(true);
-        
+        vClient = new VospaceDoiClient(this.callingSubjectNumericID);
+
         if (doiAction != null) {
             throw new IllegalArgumentException("Invalid request.");
         }
@@ -154,7 +156,8 @@ public class PostAction extends DoiAction {
             }
         });
     }
-    
+
+    // TODO: Under construction...
     private void updateDOI() throws Exception {
         // Get the submitted form data, if it exists
         Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
@@ -162,11 +165,8 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-
         // Get resource from vospace
-//        Resource existingDOI = getDocumentFromVOSpace();
+        Resource existingDOI = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
 
         // journal reference may be updated as well, will have to change the
         // parameter on the vospace nodes involved - parent & data directory
@@ -182,7 +182,7 @@ public class PostAction extends DoiAction {
 
         // Upload the document
         String docName = super.getDoiFilename(doiSuffix);
-
+        // update? upload?
 //        this.updateDOIDocument(vosClient, mergedResource);
 
         // Done, send redirect to GET for the XML file just uploaded

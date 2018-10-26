@@ -154,43 +154,7 @@ public class GetAction extends DoiAction {
         return title;
     }
     
-//    private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException
-//    {
-//        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-//        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
-//        String nodePath = baseDataURI.getPath();
-//        if (StringUtil.hasText(path))
-//        {
-//            nodePath = nodePath + "/" + path;
-//        }
-//
-//        return (ContainerNode) vosClient.getNode(nodePath);
-//    }
-//
-//    private Resource getResource(String doiSuffixString) throws Exception
-//    {
-//        VOSURI baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
-//        VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
-//
-//        VOSURI docDataNode = new VOSURI(
-//            baseDataURI.toString() + "/" + doiSuffixString + "/" + getDoiFilename(doiSuffixString));
-//
-//        return getDoiDocFromVOSpace(vosClient, docDataNode);
-//
-//    }
-    
-//    private boolean isRequesterNode(Node node)
-//    {
-//        boolean isRequesterNode = false;
-//        String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-//        log.info("requester: " + requester);
-//        if (StringUtil.hasText(requester))
-//        {
-//            isRequesterNode = requester.equals(this.callingSubjectNumericID.toString());
-//        }
-//        return isRequesterNode;
-//    }
-    
+
     private DoiStatus getDoiStatus(String doiSuffixString) throws Exception {
         DoiStatus doiStatus = null;
         ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffixString);
@@ -332,51 +296,4 @@ public class GetAction extends DoiAction {
         }
     }
 
-//    private Resource getDoiDocFromVOSpace(VOSpaceClient vosClient, VOSURI dataNode)
-//        throws Exception {
-//
-//        List<Protocol> protocols = new ArrayList<Protocol>();
-//        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-//        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-//        Transfer transfer = new Transfer(dataNode.getURI(), Direction.pullFromVoSpace, protocols);
-//        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-//        DoiInputStream doiStream = new DoiInputStream();
-//        clientTransfer.setInputStreamWrapper(doiStream);
-//        clientTransfer.run();
-//
-//        if (clientTransfer.getThrowable() != null) {
-//            log.debug(clientTransfer.getThrowable().getMessage());
-//            String message = clientTransfer.getThrowable().getMessage();
-//            if (message.contains("NodeNotFound")) {
-//                throw new ResourceNotFoundException(message);
-//            }
-//            if (message.contains("PermissionDenied")) {
-//                throw new AccessControlException(message);
-//            }
-//            throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
-//        }
-//
-//        return doiStream.getResource();
-//    }
-
-//    private class DoiInputStream implements InputStreamWrapper
-//    {
-//        private Resource resource;
-//
-//        public DoiInputStream() { }
-//
-//        public void read(InputStream in) throws IOException
-//        {
-//            try {
-//                DoiXmlReader reader = new DoiXmlReader(true);
-//                resource = reader.read(in);
-//            } catch (DoiParsingException dpe) {
-//                throw new IOException(dpe);
-//            }
-//        }
-//
-//        public Resource getResource() {
-//            return resource;
-//        }
-//    }
 }
