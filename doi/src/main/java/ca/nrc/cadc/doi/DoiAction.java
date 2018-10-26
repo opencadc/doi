@@ -69,9 +69,17 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.NodeNotFoundException;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -159,4 +167,5 @@ public abstract class DoiAction extends RestAction {
     protected String getDoiFilename(String suffix) {
         return CADC_CISTI_PREFIX + suffix + ".xml";
     }
+
 }

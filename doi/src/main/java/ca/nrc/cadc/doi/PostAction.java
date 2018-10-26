@@ -72,11 +72,20 @@ import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.User;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.Creator;
+import ca.nrc.cadc.doi.datacite.Description;
+import ca.nrc.cadc.doi.datacite.DescriptionType;
+import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiReader;
+import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
@@ -89,28 +98,34 @@ import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
 import ca.nrc.cadc.vos.client.VOSpaceClient;
+import ca.nrc.cadc.xml.XmlUtil;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.ListIterator;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Namespace;
 
 
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    // PostAction
-//    private static final String CREATE_REQUEST = "create";
-//    //    protected static final String EDIT_REQUEST = "edit";
-//    //    protected static final String MINT_REQUEST = "mint";
+    static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
+    static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al., %s";
 
     public PostAction() {
         super();
@@ -141,11 +156,43 @@ public class PostAction extends DoiAction {
     }
     
     private void updateDOI() throws Exception {
-        throw new UnsupportedOperationException("DOI updating not yet implementated.");
+        // Get the submitted form data, if it exists
+        Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        if (resource == null) {
+            throw new IllegalArgumentException("No content");
+        }
+
+        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
+
+        // Get resource from vospace
+//        Resource existingDOI = getDocumentFromVOSpace();
+
+        // journal reference may be updated as well, will have to change the
+        // parameter on the vospace nodes involved - parent & data directory
+//        setJournalRef(parentNode);
+//        setJournalRef(dataNode);
+
+        // merge the user input Resource into the template Resource
+        String journalRef = syncInput.getParameter(JOURNALREF_PARAM);
+        if (journalRef == null) {
+            journalRef = "";
+        }
+//        Resource mergedResource = merge(resource, existingDOI, journalRef);
+
+        // Upload the document
+        String docName = super.getDoiFilename(doiSuffix);
+
+//        this.updateDOIDocument(vosClient, mergedResource);
+
+        // Done, send redirect to GET for the XML file just uploaded
+        String redirectUrl = syncInput.getRequestURI() + "/" + doiSuffix;
+        syncOutput.setHeader("Location", redirectUrl);
+        syncOutput.setCode(303);
+
     }
     
     private void createDOI() throws Exception {
-        
         // Get the submitted form data, if it exists
         Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
         if (resource == null) {
@@ -158,7 +205,15 @@ public class PostAction extends DoiAction {
         // Determine next DOI number        
         String nextDoiSuffix = generateNextDOINumber(vosClient, doiDataURI);
         log.debug("Next DOI suffix: " + nextDoiSuffix);
+
+        // update the template with the new DOI number
         DoiReader.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
+
+        // merge the user input Resource into the template Resource
+        String journalRef = syncInput.getParameter(JOURNALREF_PARAM);
+        if (journalRef == null) {
+            journalRef = "";
+        }
 
         // Create the group that is able to administer the DOI process
         GroupURI guri = createDoiGroup(nextDoiSuffix);
@@ -184,6 +239,97 @@ public class PostAction extends DoiAction {
         syncOutput.setCode(303);
 
     }
+
+    private Resource getTemplateResource() {
+        Resource templateResource = null;
+
+        try {
+            InputStream inputStream = new FileInputStream(DOI_TEMPLATE_RESOURCE_41);
+            // read xml file
+            DoiXmlReader reader = new DoiXmlReader(true);
+            templateResource = reader.read(inputStream);
+        } catch (IOException fne) {
+            throw new RuntimeException("failed to load " + DOI_TEMPLATE_RESOURCE_41 + " from classpath");
+        } catch (DoiParsingException dpe) {
+            throw new RuntimeException("Structure of template file " + DOI_TEMPLATE_RESOURCE_41 + " failed validation");
+        }
+
+        return templateResource;
+    }
+
+    private Resource merge(Resource sourceRes, Resource targetRes) {
+        Resource mergedRes = targetRes.clone();
+
+        // Whitelist handling of fields users are allowed to provide information for
+
+        if (sourceRes.getTitles() != null) {
+            mergedRes.setTitles(sourceRes.getTitles());
+        }
+
+        if (sourceRes.language != null) {
+            mergedRes.language = sourceRes.language;
+        }
+
+        if (sourceRes.getCreators() != null) {
+            mergedRes.setCreators(sourceRes.getCreators());
+        }
+
+        return mergedRes;
+    }
+
+    /**
+     * Add the CADC template material to the DOI during the minting step
+     * @param inProgressDoi
+     * @param journalRef
+     * @return
+     */
+    private Resource mkMintedResource(Resource inProgressDoi, String journalRef) {
+
+        // Build a resource using the template file
+        Resource cadcTemplate = getTemplateResource();
+
+        Resource mintedDoi = inProgressDoi.clone();
+
+        // Whitelist handling of fields users are allowed to provide information for.
+
+        if (cadcTemplate.contributors != null) {
+            mintedDoi.contributors = cadcTemplate.contributors;
+        }
+        else {
+            throw new RuntimeException("contributors stanza missing from CADC template.");
+        }
+
+        if (cadcTemplate.rightsList != null) {
+            mintedDoi.rightsList = cadcTemplate.rightsList;
+        }
+        else {
+            throw new RuntimeException("rightslist stanza missing from CADC template.");
+        }
+
+        // TODO:
+        // calculate size of data set and add to the mintedDoi resource
+
+
+        // Generate the description string
+        // Get first author's last name
+        String lastName = mintedDoi.getCreators().get(0).familyName;
+
+        if (lastName == null) {
+            // Use full name in a pinch
+            lastName = mintedDoi.getCreators().get(0).getCreatorName().getText();
+        }
+
+        String description =  String.format(DESCRIPTION_TEMPLATE, mintedDoi.getTitles().get(0).getText(), lastName, journalRef);
+
+        List<Description> descriptionList = new ArrayList<Description>();
+        Description newDescrip = new Description(mintedDoi.language,"", DescriptionType.OTHER);
+        descriptionList.add(newDescrip);
+
+        mintedDoi.descriptions = descriptionList;
+
+        return mintedDoi;
+    }
+
     
     private GroupURI createDoiGroup(String groupName) throws Exception {
         // Create group to use for applying permissions

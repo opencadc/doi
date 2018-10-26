@@ -128,7 +128,7 @@ public class CreateDocumentTest extends IntTestBase
     { 
         // read test xml file
         xmlReader = new DoiXmlReader(true);
-        String fileName = "src/test/data/datacite-example-short-dummy-identifier-v4.1.xml";
+        String fileName = "src/test/data/datacite-example-full-dummy-identifier-v4.1.xml";
         FileInputStream fis = new FileInputStream(fileName);
         initialResource = xmlReader.read(fis);
         fis.close();

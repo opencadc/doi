@@ -106,7 +106,8 @@ public class Resource
     public List<Contributor> contributors;
     public List<DoiDate> dates;
     public List<Description> descriptions;
-    public List<String> sizes;  // Unstructures size information about the resource.
+    public List<String> sizes;  // Stores size information about the resource.
+    public String language;
     
 
     public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles, 
@@ -143,12 +144,11 @@ public class Resource
     {
         return this.creators;
     }
-    
-    public List<Title> getTitles()
-    {
-        return this.titles;
+
+    public void setCreators(List<Creator> creators) {
+        this.creators = creators;
     }
-    
+
     public String getPublisher()
     {
         return this.publisher;
@@ -163,4 +163,24 @@ public class Resource
     {
         return this.resourceType;
     }
+
+    public List<Title> getTitles() {
+        return titles;
+    }
+
+    public void setTitles(List<Title> titles) {
+        this.titles = titles;
+    }
+
+    public Resource clone() {
+        return new Resource(this.getNamespace(),
+            this.getIdentifier(),
+            this.getCreators(),
+            this.getTitles(),
+            this.getPublisher(),
+            this.getPublicationYear(),
+            this.getResourceType()
+        );
+    }
+
 }
