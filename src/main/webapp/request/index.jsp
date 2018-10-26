@@ -100,6 +100,15 @@
                           </div>
                         </div>
 
+                        <!-- Publication Language -->
+                        <div class="form-group">
+                          <label for="doi_language" class="col-sm-3 control-label" id="doi_language_label">Language</label>
+                          <div id="doi_language" class="col-sm-3 doi-landing doi-landing-text">
+                            <label class="radio-inline"><input type="radio" name="doi_language" checked>en</label>
+                            <label class="radio-inline"><input type="radio" name="doi_language">fr</label>
+                          </div>
+                        </div>
+
                         <!-- Author List -->
                         <div class="form-group">
                           <label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Authors</label>
@@ -108,13 +117,13 @@
                                       placeholder="Last name, first name..." tabindex="2" rows="4" required></textarea>
                           </div>
                         </div>
-                        
+
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
                           <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control" id="doi_journal_ref" name="journalRef"
-                                   placeholder="Journal Reference" tabindex="3" required/>
+                                   placeholder="Journal  Reference" tabindex="3" required/>
                           </div>
                         </div>
 
