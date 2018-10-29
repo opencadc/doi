@@ -78,7 +78,9 @@ import ca.nrc.cadc.doi.datacite.Title;
 
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.jdom2.Attribute;
@@ -125,14 +127,19 @@ public class DoiReader
         Identifier id = buildIdentifier(root);
         List<Creator> creators = buildCreators(root);
         List<Title> titles = buildTitles(root);
-        
-        if (root.getChild("publicationYear", ns) == null)
+
+        String publicationYear = "";
+        if (root.getChild("publicationYear", ns) != null)
         {
-            String msg = "publicationYear not found in resource element.";
-            throw new DoiParsingException(msg);
+//            String msg = "publicationYear not found in resource element.";
+//            throw new DoiParsingException(msg);
+            publicationYear = root.getChild("publicationYear", ns).getText();
+        } else {
+            publicationYear = new SimpleDateFormat("yyyy").format(new Date());
         }
         
-        String publicationYear = root.getChild("publicationYear", ns).getText();
+//        String publicationYear =
+//            root.getChild("publicationYear", ns).getText();
         Resource resource = new Resource(ns, id, creators, titles, publicationYear);
         
         // the following are optional elements that we support
