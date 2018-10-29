@@ -99,6 +99,7 @@ public class DocumentTest extends IntTestBase
 
     static final String JSON = "application/json";
     static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
+    static final String NEW_JOURNAL_REF = "2018, Test Journal ref. ApJ 2000,200";
 
     static
     {
@@ -129,13 +130,13 @@ public class DocumentTest extends IntTestBase
         initialDocument = builder.toString();
     }
 
-    protected String postDocument(URL postUrl, String document)
+    protected String postDocument(URL postUrl, String document, String journalRef)
     {
         Map<String, Object> params = new HashMap<String,Object>();
         FileContent fc;
         fc = new FileContent(document,"text/xml" );
         params.put("doiMetadata", fc);
-        params.put("journalref", TEST_JOURNAL_REF);
+        params.put("journalref", journalRef);
         log.info("url: " + postUrl.getPath());
 
         HttpPost httpPost = new HttpPost(postUrl, params, true);
@@ -168,7 +169,7 @@ public class DocumentTest extends IntTestBase
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String  returnedIdentifier = resource.getIdentifier().getText();
                 
