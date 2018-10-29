@@ -94,7 +94,6 @@ import org.apache.log4j.Logger;
 public class GetAction extends DoiAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
-    private VospaceDoiClient vClient = null;
 
     public GetAction() {
         super();
