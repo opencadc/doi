@@ -84,7 +84,7 @@ public class ContributorName
     
     // name of contributor
     private String text;
-    public String nameType;
+    public NameType nameType;
 
     /**
      * Constructor.

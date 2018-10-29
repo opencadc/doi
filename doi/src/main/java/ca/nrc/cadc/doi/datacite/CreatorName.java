@@ -84,7 +84,7 @@ public class CreatorName
     
     // name of creator
     private String text;
-    public String nameType;
+    public NameType nameType;
 
     /**
      * Constructor.

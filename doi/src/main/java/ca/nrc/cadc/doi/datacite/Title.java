@@ -84,7 +84,7 @@ public class Title
     
     // lang uses the xml namespace
     private String lang;
-    public String titleType;
+    public TitleType titleType;
     private String text;
 
     /**

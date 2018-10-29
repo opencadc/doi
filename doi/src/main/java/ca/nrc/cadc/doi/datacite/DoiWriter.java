@@ -236,7 +236,7 @@ public class DoiWriter
         if (creatorName.nameType != null)
         {
             // set name type attribute
-            ret.setAttribute("nameType", creatorName.nameType);
+            ret.setAttribute("nameType", creatorName.nameType.getValue());
         }
         
         return ret;
@@ -299,7 +299,7 @@ public class DoiWriter
         if (title.titleType != null)
         {
             // set title type attribute
-            ret.setAttribute("titleType", title.titleType);
+            ret.setAttribute("titleType", title.titleType.getValue());
         }
         
         return ret;
@@ -380,7 +380,7 @@ public class DoiWriter
         if (contributorName.nameType != null)
         {
             // set name type attribute
-            ret.setAttribute("nameType", contributorName.nameType);
+            ret.setAttribute("nameType", contributorName.nameType.getValue());
         }
         
         return ret;

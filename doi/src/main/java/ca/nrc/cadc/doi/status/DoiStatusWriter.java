@@ -138,7 +138,7 @@ public class DoiStatusWriter
         if (title.titleType != null)
         {
             // set title type attribute
-            ret.setAttribute("titleType", title.titleType);
+            ret.setAttribute("titleType", title.titleType.getValue());
         }
         
         return ret;

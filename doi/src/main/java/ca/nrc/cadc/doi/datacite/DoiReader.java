@@ -172,7 +172,7 @@ public class DoiReader
             String nameType = creatorNameElement.getAttributeValue("nameType");
             if (nameType != null)
             {
-                creatorName.nameType = nameType;
+                creatorName.nameType = NameType.toValue(nameType);
             }
             
             Creator creator = new Creator(creatorName);
@@ -254,7 +254,7 @@ public class DoiReader
             Title title = new Title(lang, text);
             if (titleType != null)
             {
-                title.titleType = titleType;
+                title.titleType = TitleType.toValue(titleType);
             }
             
             titles.add(title);
@@ -283,7 +283,7 @@ public class DoiReader
                 String nameType = contributorNameElement.getAttributeValue("nameType");
                 if (nameType != null)
                 {
-                    contributorName.nameType = nameType;
+                    contributorName.nameType = NameType.toValue(nameType);
                 }
                 // contributorType is mandatory
                 String contributorTypeString = contributorElement.getAttributeValue("contributorType");
