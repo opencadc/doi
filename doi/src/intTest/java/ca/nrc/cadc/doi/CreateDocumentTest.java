@@ -100,7 +100,6 @@ public class CreateDocumentTest extends DocumentTest
     private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
 
     static final String JSON = "application/json";
-    static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
 
     static
     {
@@ -147,7 +146,7 @@ public class CreateDocumentTest extends DocumentTest
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));

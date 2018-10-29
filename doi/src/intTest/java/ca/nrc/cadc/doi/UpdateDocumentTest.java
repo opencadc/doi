@@ -70,19 +70,26 @@
 package ca.nrc.cadc.doi;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Test;
 
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Creator;
+import ca.nrc.cadc.doi.datacite.CreatorName;
+import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
@@ -117,6 +124,81 @@ public class UpdateDocumentTest extends DocumentTest
         this.buildInitialDocument();
         Subject.doAs(s, new PrivilegedExceptionAction<Object>()
         {
+            private void compareNull(Object o1, Object o2, String field)
+            {
+                if (o1 == null)
+                {
+                    Assert.assertNull("one " + field + " is not null", o2);
+                } 
+                else
+                {
+                    Assert.assertNotNull("one " + field + " is null", o2);
+                }
+            }
+            
+            private void compareCreatorName(CreatorName cn1, CreatorName cn2)
+            {
+                Assert.assertEquals("creatorName is different", cn1.getText(), cn2.getText());
+                Assert.assertEquals("nameType is different", cn1.nameType, cn2.nameType);
+            }
+            
+            private void compareNameIdentifier(NameIdentifier id1, NameIdentifier id2)
+            {
+                Assert.assertEquals("nameIdentifierScheme is different", id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme());
+                Assert.assertEquals("nameIdentifier is different", id1.getNameIdentifier(), id2.getNameIdentifier());
+                compareNull(id1.schemeURI, id2.schemeURI, "schemeURI");
+                if (id1.schemeURI != null)
+                {
+                    Assert.assertTrue("schemeURI is different", id1.schemeURI.equals(id2.schemeURI));
+                }
+            }
+            private void compareCreator(Creator creator1, Creator creator2)
+            {
+                compareCreatorName(creator1.getCreatorName(), creator2.getCreatorName());
+                compareNameIdentifier(creator1.nameIdentifier, creator2.nameIdentifier);
+                Assert.assertEquals("givenName is different", creator1.givenName, creator2.givenName);
+                Assert.assertEquals("familyName is different", creator1.familyName, creator2.familyName);
+                Assert.assertEquals("affiliation is different", creator1.affiliation, creator2.affiliation);
+            }
+
+            private void compareCreators(List<Creator> c1, List<Creator> c2)
+            {
+                Assert.assertNotNull("missing expected creators", c1);
+                Assert.assertNotNull("missing actual creators", c2);
+                Assert.assertEquals("different number of creators", c1.size(), c2.size());
+                for (int i=0; i<c1.size(); i++)
+                {
+                    compareCreator(c1.get(i), c2.get(i));
+                }
+            }
+            
+            private void compareTitles(List<Title> t1, List<Title> t2)
+            {
+                Assert.assertEquals("Number of titles is different", t1.size(), t2.size());
+                for (int i=0; i< t1.size(); i++)
+                {
+                    compareTitle(t1.get(i), t2.get(i));
+                }
+            }
+            
+            private void compareTitle(Title t1, Title t2)
+            {
+                Assert.assertEquals("lang is different", t1.getLang(), t2.getLang());
+                Assert.assertEquals("title is different", t1.getText(), t2.getText());
+                Assert.assertEquals("titleType is different", t1.titleType, t2.titleType);
+            }
+            
+            private DoiStatus getStatus(URL docURL) throws UnsupportedEncodingException, DoiParsingException, IOException
+            {
+                URL statusURL = new URL(docURL + "/status");
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                HttpDownload getStatus = new HttpDownload(statusURL, baos);
+                getStatus.run();
+                Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
+                DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
+                return statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
+            }
+            
             public Object run() throws Exception
             {
                 // post the job
@@ -126,7 +208,7 @@ public class UpdateDocumentTest extends DocumentTest
                 log.debug("posting to: " + postUrl);
                 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
@@ -142,17 +224,53 @@ public class UpdateDocumentTest extends DocumentTest
                     Creator expectedCreator = resource.getCreators().get(0);
     
                     // Get the DOI status
-                    URL statusURL = new URL(docURL + "/status");
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    HttpDownload getStatus = new HttpDownload(statusURL, baos);
-                    getStatus.run();
-                    Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
-                    DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
-                    DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
+                    DoiStatus doiStatus = getStatus(docURL);
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
+                    
+                    // update title
+                    Title newTitle = new Title(expectedTitle.getLang(), "new " + expectedTitle.getText());
+                    newTitle.titleType = expectedTitle.titleType;
+                    
+                    // update creator
+                    CreatorName expectedCreatorName = expectedCreator.getCreatorName();
+                    CreatorName newCreatorName = new CreatorName("new " + expectedCreatorName.getText());
+                    newCreatorName.nameType = expectedCreatorName.nameType;
+                    Creator newCreator = new Creator(newCreatorName);
+                    newCreator.givenName = "new " + expectedCreator.givenName;
+                    newCreator.familyName = "new " + expectedCreator.familyName;
+                    newCreator.affiliation = "new " + expectedCreator.affiliation;
+                    NameIdentifier expectedNameIdentifier = expectedCreator.nameIdentifier;
+                    NameIdentifier newNameIdentifier = new NameIdentifier(expectedNameIdentifier.getNameIdentifierScheme(), "new" + expectedNameIdentifier.getNameIdentifier());
+                    newNameIdentifier.schemeURI = expectedNameIdentifier.schemeURI;
+                    newCreator.nameIdentifier = newNameIdentifier;
+                    
+                    // update resource
+                    List<Title> newTitles = new ArrayList<Title>();
+                    newTitles.add(newTitle);
+                    resource.setTitles(newTitles);
+                    List<Creator> newCreators = new ArrayList<Creator>();
+                    newCreators.add(newCreator);
+                    resource.setCreators(newCreators);
+                    
+                    // generate updated document
+                    final StringBuilder builder = new StringBuilder();
+                    DoiXmlWriter writer = new DoiXmlWriter();
+                    writer.write(resource, builder);
+                    String newDocument = builder.toString();
+                    
+                    // post the update and check result
+                    String updatedDoc = postDocument(docURL, newDocument, NEW_JOURNAL_REF);
+                    Resource updatedResource = xmlReader.read(updatedDoc);
+                    compareCreators(newCreators, updatedResource.getCreators());
+                    compareTitles(newTitles, updatedResource.getTitles());
+                    
+                    // check new journal reference
+                    DoiStatus updatedStatus = getStatus(docURL);
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
+                    Assert.assertEquals("journalRef is incorrect", NEW_JOURNAL_REF, doiStatus.journalRef);
                 }
                 finally
                 {
