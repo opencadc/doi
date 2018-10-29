@@ -32,7 +32,7 @@ dependencies {
 
 sourceCompatibility = '1.7'
 group = 'ca.nrc.cadc'
-version = '1003'
+version = '1004'
 
 ext {
     intTest_user_name = 'CADCtest'
@@ -41,8 +41,8 @@ ext {
     docker_image_name = 'mach378.cadc.dao.nrc.ca:5000/citation'
 
     // Change this value to test other locations, such as Production or RC.
-    intTest_default_web_app_url = 'http://rcapps.canfar.net'
-//    intTest_default_web_app_url = 'http://jeevesh.cadc.dao.nrc.ca'
+//    intTest_default_web_app_url = 'http://rcapps.canfar.net'
+    intTest_default_web_app_url = 'http://jeevesh.cadc.dao.nrc.ca'
     intTest_default_web_app_endpoint = '/citation'
 }
 

@@ -106,6 +106,11 @@
             doiDoc.setAuthor(formField.value)
             break
           }
+          case 'firstAuthor': {
+            // parsing will be different
+            doiDoc.setAuthor(formField.value)
+            break
+          }
           case 'journalRef' : {
             journalRef = formField.value
             break
@@ -273,7 +278,7 @@
     }
 
     function populateForm() {
-      $('#doi_creator_list').val(doiDoc.getAuthorList())
+      $('#doi_author').val(doiDoc.getAuthorList())
       $('#doi_title').val(doiDoc.getTitle())
       $('#doi_number').val(doiDoc.getDOINumber())
     }

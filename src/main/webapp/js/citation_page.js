@@ -236,13 +236,13 @@
                 }
               }
             ]
-          },
-          publisher: { $: 'Canadian Astronomy Data Centre (CADC)' },
-          publicationYear: { $: new Date().getFullYear() },
-          resourceType: {
-            '@resourceTypeGeneral': 'Dataset',
-            $: 'Dataset'
           }
+          //publisher: { $: 'Canadian Astronomy Data Centre (CADC)' },
+          //publicationYear: { $: new Date().getFullYear() },
+          //resourceType: {
+          //  '@resourceTypeGeneral': 'Dataset',
+          //  $: 'Dataset'
+          //}
         }
       }
     }
@@ -259,7 +259,7 @@
     }
 
     function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(/s*[s,]s*/).filter(Boolean)
+      var nameParts = personalInfo.split(",").filter(Boolean)
       var creatorObject = {
         creatorName: {
           '@nameType': 'Personal',
@@ -274,7 +274,7 @@
       // in the XML file is consistent
       var givenName = nameParts[1].trim()
       var familyName = nameParts[0].trim()
-      creatorObject.creatorName['$'] = givenName + ", " + familyName
+      creatorObject.creatorName['$'] = familyName  + ", " + givenName
       creatorObject.familyName['$'] = familyName
       creatorObject.givenName['$'] = givenName
 

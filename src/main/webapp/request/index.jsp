@@ -110,12 +110,22 @@
                         </div>
 
                         <!-- Author List -->
+                        <%--<div class="form-group">--%>
+                          <%--<label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Authors</label>--%>
+                          <%--<div class="col-sm-4">--%>
+                            <%--<textarea class="form-control" id="doi_creator_list" name="creatorList"--%>
+                                      <%--placeholder="Last name, first name..." tabindex="2" rows="4" required></textarea>--%>
+                          <%--</div>--%>
+                        <%--</div>--%>
+
                         <div class="form-group">
-                          <label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Authors</label>
-                          <div class="col-sm-4">
-                            <textarea class="form-control" id="doi_creator_list" name="creatorList"
-                                      placeholder="Last name, first name..." tabindex="2" rows="4" required></textarea>
-                          </div>
+                          <label for="doi_author" class="col-sm-3 control-label" id="doi_first_name_label">First Author</label>
+
+                            <div class="col-sm-6">
+                              <input type="text" class="form-control" id="doi_author" name="firstAuthor"
+                                     placeholder="family name, given name" tabindex="1" required/>
+                            </div>
+                            format: family name, given name
                         </div>
 
                         <!-- Journal Reference - will appear on landing page -->
