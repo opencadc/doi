@@ -78,8 +78,10 @@ import ca.nrc.cadc.doi.datacite.DescriptionType;
 import ca.nrc.cadc.doi.datacite.DoiDate;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiReader;
+import ca.nrc.cadc.doi.datacite.DoiResourceType;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -111,6 +113,7 @@ import java.util.Date;
 import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.jdom2.Namespace;
 
 
 public class PostAction extends DoiAction {
@@ -141,13 +144,13 @@ public class PostAction extends DoiAction {
                     createDOI();
                 } else {
                     updateDOI();
-                }
+                } 
                 return null;
             }
         });
     }
 
-    // TODO: Under construction...
+    // update a DOI instance
     private void updateDOI() throws Exception {
         // Get the submitted form data, if it exists
         Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
@@ -157,29 +160,118 @@ public class PostAction extends DoiAction {
 
         // Get resource from vospace
         Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+        
+        // udpate the resource from vospace and upload it
+        Resource mergedResource = merge(resourceFromUser, resourceFromVos);
+        VOSURI docDataURI = new VOSURI(
+                vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
+        this.uploadDOIDocument(vClient.getVOSpaceClient(), mergedResource, new DataNode(docDataURI));
 
         // journal reference may be updated as well, will have to change the
         // parameter on the vospace nodes involved - parent & data directory
 //        setJournalRef(parentNode);
 //        setJournalRef(dataNode);
-
-        // merge the user input Resource into the template Resource
+/*
         String journalRef = syncInput.getParameter(JOURNALREF_PARAM);
         if (journalRef == null) {
             journalRef = "";
         }
-        Resource mergedResource = merge(resourceFromUser, resourceFromVos);
-
-        // Upload the document
-        String docName = super.getDoiFilename(doiSuffix);
-        // update? upload?
-//        this.updateDOIDocument(vosClient, mergedResource);
-
+*/
         // Done, send redirect to GET for the XML file just uploaded
-        String redirectUrl = syncInput.getRequestURI() + "/" + doiSuffix;
+        String redirectUrl = syncInput.getRequestURI();
         syncOutput.setHeader("Location", redirectUrl);
         syncOutput.setCode(303);
+    }
 
+    private Resource merge(Resource sourceResource, Resource targetResource) {
+
+        // A user is only allowed to update creators and titles
+        verifyUneditableFields(sourceResource, targetResource);
+
+        // update editable fields
+        targetResource.setCreators(sourceResource.getCreators());
+        targetResource.setTitles(sourceResource.getTitles());
+
+        return targetResource;
+    }
+
+    private void verifyUneditableFields(Resource s1, Resource s2) {
+        if (!s1.getNamespace().equals(s2.getNamespace())) {
+            Namespace expected = s2.getNamespace();
+            Namespace actual = s1.getNamespace();
+            String msg = "namespace update is not allowed, expected = " + expected + ", actual = " + actual;
+            throw new IllegalStateException(msg);
+        } else if (!s1.getPublisher().equals(s2.getPublisher())) {
+            String expected = s2.getPublisher();
+            String actual = s1.getPublisher();
+            String msg = "software error, publisher is different, expected = " + expected + ", actual = " + actual;
+            throw new IllegalStateException(msg);
+        } else if (!s1.getPublicationYear().equals(s2.getPublicationYear())) {
+            String expected = s2.getPublicationYear();
+            String actual = s1.getPublicationYear();
+            String msg = "publicationYear update is not allowed, expected = " + expected + ", actual = " + actual;
+            throw new IllegalStateException(msg);
+        } else {
+            verifyIdentifier(s1.getIdentifier(), s2.getIdentifier());
+            verifyResourceType(s1.getResourceType(), s2.getResourceType());
+            verifyString(s1.language, s2.language, "language");
+        }
+    }
+    
+    private void verifyString(String s1, String s2, String field)
+    {
+        verifyNull(s1, s2, field);
+        if (s1 != null)
+        {
+            if (!s1.equals(s2)) {
+                String msg = field + " update is not allowed, expected = " + s2 + ", actual = " + s1;
+                throw new IllegalStateException(msg);
+            }
+        }
+    }
+
+    private void verifyNull(Object o1, Object o2, String field)
+    {
+        if (o1 == null)
+        {
+            if (o2 != null) {
+                String msg = field + " update is not allowed, expected = " + o2 + ", actual = null";
+                throw new IllegalStateException(msg);
+            }
+        } 
+        else
+        {
+            if (o2 == null) {
+                String msg = field + " update is not allowed, expected = null, actual = " + o1;
+                throw new IllegalStateException(msg);
+            }
+        }
+    }
+
+    private void verifyIdentifier(Identifier id1, Identifier id2) {
+        if (!id1.getText().equals(id2.getText())) {
+            String expected = id2.getText();
+            String actual = id1.getText();
+            String msg = "identifier update is not allowed, expected = " + expected + ", actual = " + actual;
+            throw new IllegalStateException(msg);
+        } else if (!id1.getIdentifierType().equals(id2.getIdentifierType())) {
+            String expected = id2.getIdentifierType();
+            String actual = id1.getIdentifierType();
+            String msg = "identifierType update is not allowed, expected = " + expected + ", actual = " + actual;
+            throw new IllegalStateException(msg);
+        }
+    }
+    
+    private void verifyResourceType(DoiResourceType rt1, DoiResourceType rt2) {
+        verifyNull(rt1, rt2, "DoiResourceType");
+        if (rt1.getResourceType() != rt2.getResourceType()) {
+            String expected = rt2.getResourceType().getValue();
+            String actual = rt1.getResourceType().getValue();
+            String msg = "resourceType update is not allowed, expected = " + expected + ", actual = " + actual;
+            throw new IllegalStateException(msg);
+        } else {
+            verifyString(rt1.resourceTypeGeneral, rt2.resourceTypeGeneral, "resourceTypeGeneral");
+        }
     }
     
     private void createDOI() throws Exception {
@@ -189,7 +281,7 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
+        VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
         VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
         // Determine next DOI number        
@@ -211,9 +303,10 @@ public class PostAction extends DoiAction {
         // Create the VOSpace area for DOI work
         ContainerNode doiFolder = this.createDOIDirectory(vosClient, guri, nextDoiSuffix);
         
-        // Upload the document
+        // create VOSpace data node to house XML doc using doi filename and upload the document
         String docName = super.getDoiFilename(nextDoiSuffix);
         DataNode doiDocNode = new DataNode(new VOSURI(doiFolder.getUri().toString() + "/" + docName));
+        vosClient.createNode(doiDocNode);
         this.uploadDOIDocument(vosClient, resource, doiDocNode);
         
         // Create the DOI data folder
@@ -227,25 +320,6 @@ public class PostAction extends DoiAction {
         String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
         syncOutput.setHeader("Location", redirectUrl);
         syncOutput.setCode(303);
-    }
-
-    private Resource merge(Resource sourceRes, Resource targetRes) {
-
-        // Whitelist handling of fields users are allowed to provide information for
-
-        if (sourceRes.getTitles() != null) {
-            targetRes.setTitles(sourceRes.getTitles());
-        }
-
-        if (sourceRes.language != null) {
-            targetRes.language = sourceRes.language;
-        }
-
-        if (sourceRes.getCreators() != null) {
-            targetRes.setCreators(sourceRes.getCreators());
-        }
-
-        return targetRes;
     }
 
     private Resource getTemplateResource() {
@@ -371,9 +445,6 @@ public class PostAction extends DoiAction {
     
     private void uploadDOIDocument(VOSpaceClient vosClient, Resource resource, DataNode docNode)
         throws ResourceNotFoundException {
-        
-        // Create VOSpace data node to house XML doc using doi filename
-        vosClient.createNode(docNode);
         
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));

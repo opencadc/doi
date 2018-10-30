@@ -111,8 +111,15 @@ public class VospaceDoiClient {
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
     }
 
-    public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException
-    {
+    public VOSpaceClient getVOSpaceClient() {
+        return this.vosClient;
+    }
+    
+    public VOSURI getDoiBaseVOSURI() {
+        return this.baseDataURI;
+    }
+    
+    public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path))
         {
@@ -122,16 +129,14 @@ public class VospaceDoiClient {
         return (ContainerNode) vosClient.getNode(nodePath);
     }
 
-    public Resource getResource(String doiSuffixString, String doiFilename) throws Exception
-    {
-        VOSURI docDataNode = new VOSURI(
+    public Resource getResource(String doiSuffixString, String doiFilename) throws Exception {
+        VOSURI docDataURI = new VOSURI(
             baseDataURI.toString() + "/" + doiSuffixString + "/" + doiFilename );
         
-        return getDoiDocFromVOSpace(docDataNode);
+        return getDoiDocFromVOSpace(docDataURI);
     }
     
-    public boolean isRequesterNode(Node node)
-    {
+    public boolean isRequesterNode(Node node) {
         boolean isRequesterNode = false;
         String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
         log.info("requester: " + requester);
@@ -170,8 +175,7 @@ public class VospaceDoiClient {
         return doiStream.getResource();
     }
 
-    private class DoiInputStream implements InputStreamWrapper
-    {
+    private class DoiInputStream implements InputStreamWrapper {
         private Resource resource;
 
         public DoiInputStream() { }
