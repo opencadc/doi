@@ -227,6 +227,9 @@
           creators: {
             $: []
           },
+          language: {
+            $: []
+          },
           titles: {
             $: [
               {
@@ -281,12 +284,11 @@
       return { creator: creatorObject }
     }
 
-    function setAuthor(authorList) {
-      // personalInfo is a new line delimited list of last name, first name elements
-      var names = authorList.split('\n')
-      for (var j = 0; j < names.length; j++) {
+    function setAuthorList(authorList) {
+      // authorList is an array of strings with structure 'family name, given name'
+      for (var j = 0; j < authorList.length; j++) {
         _selfDoc._badgerfishDoc.resource.creators['$'][j] = makeCreatorStanza(
-            names[j]
+            authorList[j]
         )
       }
     }
@@ -301,6 +303,12 @@
       _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$'] = title
     }
 
+    function setLanguage(language) {
+      if (language !== '') {
+        _selfDoc._badgerfishDoc.resource.language['$'] = language
+      }
+    }
+
     function getAuthorFullname() {
       return _selfDoc._badgerfishDoc.resource.creators['$'][0].creator.creatorName[
           '$'
@@ -309,14 +317,9 @@
 
     function getAuthorList() {
       var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
-      var authorList = ''
+      var authorList = new Array();
       for (var ix = 0; ix < listSize; ix++) {
-        authorList =
-            authorList +
-            _selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName[
-                '$'
-                ] +
-            '\n'
+        authorList.push(_selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName['$'])
       }
       return authorList
     }
@@ -329,19 +332,30 @@
       return _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$']
     }
 
+    function getLanguage() {
+      var language = "";
+      if (typeof _selfDoc._badgerfishDoc.resource.language !== "undefined") {
+        language = _selfDoc._badgerfishDoc.resource.language['$']
+      }
+
+      return language
+    }
+
     initDoc()
 
     $.extend(this, {
       initDoc: initDoc,
       getDoc: getDoc,
       populateDoc: populateDoc,
-      setAuthor: setAuthor,
+      setAuthorList: setAuthorList,
       setDOINumber: setDOINumber,
       setTitle: setTitle,
+      setLanguage: setLanguage,
       getAuthorFullname: getAuthorFullname,
       getAuthorList: getAuthorList,
       getDOINumber: getDOINumber,
-      getTitle: getTitle
+      getTitle: getTitle,
+      getLanguage: getLanguage
     })
   }
 

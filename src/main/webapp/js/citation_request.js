@@ -44,6 +44,8 @@
       $('#doi_form_delete_button').click(handleDOIDelete)
       $('#doi_request_form').submit(handleDOIRequest)
 
+      $("#doi_add_author").click(handleAddAuthor)
+
       page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
         parseUrl()
       })
@@ -59,6 +61,7 @@
       $('#doi_landing_page').html('')
       page.setProgressBar('okay')
       setButtonState('create')
+      $("#doi_additional_authors").empty()
 
       // Do this only if explicitly asked
       // If this comes in from clicking the 'Clear' button, the data will be
@@ -80,6 +83,56 @@
       }
     }
 
+    // Must be 1 to start
+    var authorcount = 1;
+    function handleAddAuthor(event) {
+      // #doi_additional_authors div is where these are added
+
+      authorcount++;
+      //// something to handle tabindex.. TODO
+      //var elementName = "addtl_author_" + authorcount;
+      //var elementId = "doi_" + elementName;
+      //var inputHtml = "<div class=\"input-group mb-3\" id=\"" + elementId + "\" '>" +
+      //        "<input type=\"text\" class=\"form-control\"  name=\"" + elementName +
+      //    "\"placeholder=\"family name, given name\" />" +
+      //    "<div class=\"input-group-addon\">" +
+      //    "<button type=\"button\" class=\"btn btn-default doi-button doi-remove-author\" id=\"" + elementName + "\" > - </button>" +
+      //    "</div></div>"
+      //
+      //$("#doi_additional_authors").append(inputHtml);
+      //$("#" + elementName).bind("click", handleRemoveAuthor)
+    }
+
+    function buildAuthorInput(authorNum) {
+      // something to handle tabindex.. TODO
+      var elementName = "addtl_author_" + authorNum;
+      var elementId = "doi_" + elementName;
+      var paretElementId = "doi_" + elementName + "_div";
+
+      var inputHtml = "<div class=\"input-group mb-3\" id=\"" + paretElementId + "\" >" +
+          "<input type=\"text\" class=\"form-control\"  name=\"" + elementName +
+          "\"placeholder=\"family name, given name\" id=\"" + elementId + "\" />" +
+          "<div class=\"input-group-addon\">" +
+          "<button type=\"button\" class=\"btn btn-default doi-button doi-remove-author\" id=\"" + elementName + "\" > - </button>" +
+          "</div></div>"
+
+      $("#doi_additional_authors").append(inputHtml);
+      $("#" + elementName).bind("click", handleRemoveAuthor)
+      return elementName;
+    }
+
+    function addAuthorStanza(authorName) {
+      var elementName = buildAuthorInput(authorcount++);
+      $("#" +  "doi_" + elementName).val(authorName)
+    }
+
+    function handleRemoveAuthor(event) {
+      var elId = event.currentTarget.getAttribute("id")
+      $("#" + elId).unbind("click")
+      // Remove entire input-group
+      $("#" + "doi_" + elId + "_div").remove()
+    }
+
     // ------------ HTTP/Ajax functions ------------
 
     // POST
@@ -88,6 +141,7 @@
       page.clearAjaxAlert()
       var _formdata = $(this).serializeArray()
       var journalRef = ""
+      var additionalAuthors = new Array();
 
       for (var i = 0, fdl = _formdata.length; i < fdl; i++) {
         var formField = _formdata[i]
@@ -102,24 +156,29 @@
             doiDoc.setDOINumber(formField.value)
             break
           }
-          case 'creatorList': {
-            doiDoc.setAuthor(formField.value)
-            break
-          }
           case 'firstAuthor': {
-            // parsing will be different
-            doiDoc.setAuthor(formField.value)
+            additionalAuthors.push(formField.value)
             break
           }
           case 'journalRef' : {
             journalRef = formField.value
             break
           }
+          case 'doiLanguage' : {
+            doiDoc.setLanguage(formField.value)
+            break
+          }
           default: {
+            // Check to see if this an additional author:
+            if (formField.name.match("addtl_author_")) {
+              additionalAuthors.push(formField.value)
+            }
             break
           }
         }
       }
+
+      doiDoc.setAuthorList(additionalAuthors)
 
       page.setProgressBar('busy')
 
@@ -278,9 +337,21 @@
     }
 
     function populateForm() {
-      $('#doi_author').val(doiDoc.getAuthorList())
+      var authorList = doiDoc.getAuthorList()
+
+      // First author is assumed to be the first one sent back
+      $('#doi_author').val(authorList[0])
+
+      // Additional authors may be present in the doiDoc
+      for (var i=1; i<authorList.length; i++) {
+        addAuthorStanza(authorList[i])
+      }
       $('#doi_title').val(doiDoc.getTitle())
       $('#doi_number').val(doiDoc.getDOINumber())
+
+      if (doiDoc.getLanguage() !== "") {
+        var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click();
+      }
     }
 
     function hideInfoModal() {

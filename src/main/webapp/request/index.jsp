@@ -104,8 +104,8 @@
                         <div class="form-group">
                           <label for="doi_language" class="col-sm-3 control-label" id="doi_language_label">Language</label>
                           <div id="doi_language" class="col-sm-3 doi-landing doi-landing-text">
-                            <label class="radio-inline"><input type="radio" name="doi_language" checked>en</label>
-                            <label class="radio-inline"><input type="radio" name="doi_language">fr</label>
+                            <label class="radio-inline"><input type="radio" name="doiLanguage" value="en" checked>en</label>
+                            <label class="radio-inline"><input type="radio" name="doiLanguage" value="fr">fr</label>
                           </div>
                         </div>
 
@@ -127,6 +127,18 @@
                             </div>
                             format: family name, given name
                         </div>
+
+                      <div class="form-group">
+                          <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (Optional)</label>
+                          <div class="col-sm-6">
+                              <div id="doi_additional_authors"></div>
+                              <div>
+                              <label for="doi_add_author" class="col-sm-3 control-label"><i>add author</i></label>
+                              <button type="button" class="btn btn-default doi-button" id="doi_add_author" tabindex="5"> + </button>
+                              </div>
+                          </div>
+                      </div>
+
 
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
