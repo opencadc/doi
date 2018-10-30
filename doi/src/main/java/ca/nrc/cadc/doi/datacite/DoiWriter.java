@@ -166,6 +166,12 @@ public class DoiWriter
             ret.addContent(descriptionsElement);
         }
 
+        if (resource.language != null)
+        {
+            Element languageElement = getLanguageElement(resource.language, ns);
+            ret.addContent(languageElement);
+        }
+
         return ret;
     }
     
@@ -471,5 +477,12 @@ public class DoiWriter
             ret.setText(resourceType.resourceTypeGeneral);
         }
         return ret;
+    }
+
+    protected Element getLanguageElement(String language, Namespace ns)
+    {
+        Element languageEl = new Element("language", ns);
+        languageEl.setText(language);
+        return languageEl;
     }
 }

@@ -148,6 +148,7 @@ public class DoiReader
         resource.dates = buildDates(root);
         resource.descriptions = buildDescriptions(root);
         resource.sizes = buildSizes(root);
+        resource.language = buildLanguage(root);
         return resource;
     }
     
@@ -476,7 +477,7 @@ public class DoiReader
     protected List<String> buildSizes(Element root) throws DoiParsingException
     {
         List<String> sizes = null;
-        
+
         if (root.getChild("sizes", root.getNamespace()) != null)
         {
             sizes = new ArrayList<String>();
@@ -488,7 +489,18 @@ public class DoiReader
                 sizes.add(size);
             }
         }
-        
+
         return sizes;
+    }
+
+    protected String buildLanguage(Element root)
+    {
+        Namespace ns = root.getNamespace();
+        Element languageElement = root.getChild("language", ns);
+        String text = null;
+        if (languageElement != null) {
+            text = languageElement.getText();
+        }
+        return text;
     }
 }
