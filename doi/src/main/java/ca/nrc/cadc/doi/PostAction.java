@@ -167,16 +167,31 @@ public class PostAction extends DoiAction {
                 vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
         this.uploadDOIDocument(vClient.getVOSpaceClient(), mergedResource, new DataNode(docDataURI));
 
-        // journal reference may be updated as well, will have to change the
-        // parameter on the vospace nodes involved - parent & data directory
-//        setJournalRef(parentNode);
-//        setJournalRef(dataNode);
-/*
-        String journalRef = syncInput.getParameter(JOURNALREF_PARAM);
-        if (journalRef == null) {
-            journalRef = "";
+        // update journal reference 
+        String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
+        if (journalRefFromUser != null) {
+            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+            String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+            if (journalRefFromVOSpace == null) {
+                if (journalRefFromUser.length() > 0) {
+                    // journal reference does not exist, add it
+                    NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
+                    doiContainerNode.getProperties().add(journalRef);
+                    vClient.setNode(doiContainerNode);
+                }
+            } else {
+                if (journalRefFromUser.length() > 0) {
+                    // journal reference already exists, update it
+                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
+                } else {
+                    // delete existing journal reference
+                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
+                }
+                
+                vClient.setNode(doiContainerNode);
+            }
         }
-*/
+
         // Done, send redirect to GET for the XML file just uploaded
         String redirectUrl = syncInput.getRequestURI();
         syncOutput.setHeader("Location", redirectUrl);

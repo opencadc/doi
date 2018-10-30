@@ -136,7 +136,13 @@ public class DocumentTest extends IntTestBase
         FileContent fc;
         fc = new FileContent(document,"text/xml" );
         params.put("doiMetadata", fc);
-        params.put("journalref", journalRef);
+        if (journalRef != null) {
+            if (journalRef.length() > 0) {
+                params.put("journalref", journalRef);
+            } else {
+                params.put("journalref", "");
+            }
+        }
         log.info("url: " + postUrl.getPath());
 
         HttpPost httpPost = new HttpPost(postUrl, params, true);

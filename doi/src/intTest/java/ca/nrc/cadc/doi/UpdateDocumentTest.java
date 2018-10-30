@@ -106,7 +106,6 @@ public class UpdateDocumentTest extends DocumentTest
     private static final Logger log = Logger.getLogger(UpdateDocumentTest.class);
 
     static final String JSON = "application/json";
-    static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
 
     static
     {
@@ -270,9 +269,32 @@ public class UpdateDocumentTest extends DocumentTest
                     compareTitles(newTitles, updatedResource.getTitles());
                     
                     // check new journal reference
-                    //DoiStatus updatedStatus = getStatus(docURL);
-                    //Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
-                    //Assert.assertEquals("journalRef is incorrect", NEW_JOURNAL_REF, doiStatus.journalRef);
+                    DoiStatus updatedStatus = getStatus(docURL);
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
+                    Assert.assertEquals("journalRef is incorrect", NEW_JOURNAL_REF, updatedStatus.journalRef);
+                    
+                    // no change
+                    updatedDoc = postDocument(docURL, newDocument, null);
+                    updatedResource = xmlReader.read(updatedDoc);
+                    compareCreators(newCreators, updatedResource.getCreators());
+                    compareTitles(newTitles, updatedResource.getTitles());
+                    
+                    // check for same journal reference
+                    updatedStatus = getStatus(docURL);
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
+                    Assert.assertEquals("journalRef has changed", NEW_JOURNAL_REF, updatedStatus.journalRef);
+                    /*
+                    // delete journal reference
+                    updatedDoc = postDocument(docURL, newDocument, "");
+                    updatedResource = xmlReader.read(updatedDoc);
+                    compareCreators(newCreators, updatedResource.getCreators());
+                    compareTitles(newTitles, updatedResource.getTitles());
+                    
+                    // check for null journal reference
+                    updatedStatus = getStatus(docURL);
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
+                    Assert.assertNull("journalRef was not deleted", updatedStatus.journalRef);
+                    */
                 }
                 finally
                 {
