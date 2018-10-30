@@ -119,10 +119,6 @@ public class VospaceDoiClient {
         return this.baseDataURI;
     }
     
-    public Node setNode(Node node) {
-        return this.vosClient.setNode(node);
-    }
-    
     public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path))

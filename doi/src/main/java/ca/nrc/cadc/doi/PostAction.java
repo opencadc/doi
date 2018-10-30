@@ -165,7 +165,7 @@ public class PostAction extends DoiAction {
         Resource mergedResource = merge(resourceFromUser, resourceFromVos);
         VOSURI docDataURI = new VOSURI(
                 vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
-        this.uploadDOIDocument(vClient.getVOSpaceClient(), mergedResource, new DataNode(docDataURI));
+        this.uploadDOIDocument(mergedResource, new DataNode(docDataURI));
 
         // update journal reference 
         String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
@@ -177,7 +177,7 @@ public class PostAction extends DoiAction {
                     // journal reference does not exist, add it
                     NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
                     doiContainerNode.getProperties().add(journalRef);
-                    vClient.setNode(doiContainerNode);
+                    vClient.getVOSpaceClient().setNode(doiContainerNode);
                 }
             } else {
                 if (journalRefFromUser.length() > 0) {
@@ -188,7 +188,7 @@ public class PostAction extends DoiAction {
                     doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
                 }
                 
-                vClient.setNode(doiContainerNode);
+                vClient.getVOSpaceClient().setNode(doiContainerNode);
             }
         }
 
@@ -296,11 +296,9 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
-        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-
         // Determine next DOI number        
-        String nextDoiSuffix = generateNextDOINumber(vosClient, doiDataURI);
+        VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
+        String nextDoiSuffix = generateNextDOINumber(doiDataURI);
         log.debug("Next DOI suffix: " + nextDoiSuffix);
 
         // update the template with the new DOI number
@@ -316,20 +314,20 @@ public class PostAction extends DoiAction {
         GroupURI guri = createDoiGroup(nextDoiSuffix);
         
         // Create the VOSpace area for DOI work
-        ContainerNode doiFolder = this.createDOIDirectory(vosClient, guri, nextDoiSuffix);
+        ContainerNode doiFolder = this.createDOIDirectory(guri, nextDoiSuffix);
         
         // create VOSpace data node to house XML doc using doi filename and upload the document
         String docName = super.getDoiFilename(nextDoiSuffix);
         DataNode doiDocNode = new DataNode(new VOSURI(doiFolder.getUri().toString() + "/" + docName));
-        vosClient.createNode(doiDocNode);
-        this.uploadDOIDocument(vosClient, resource, doiDocNode);
+        vClient.getVOSpaceClient().createNode(doiDocNode);
+        this.uploadDOIDocument(resource, doiDocNode);
         
         // Create the DOI data folder
         VOSURI dataDir = new VOSURI(doiFolder.getUri().toString() + "/data");
         ContainerNode newDataFolder = new ContainerNode(dataDir);
         NodeProperty writeGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE, guri.toString());
         newDataFolder.getProperties().add(writeGroup);
-        vosClient.createNode(newDataFolder);
+        vClient.getVOSpaceClient().createNode(newDataFolder);
 
         // Done, send redirect to GET for the XML file just made
         String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
@@ -424,7 +422,7 @@ public class PostAction extends DoiAction {
         return guri;
     }
     
-    private ContainerNode createDOIDirectory(VOSpaceClient vosClient, GroupURI guri, String folderName)
+    private ContainerNode createDOIDirectory(GroupURI guri, String folderName)
         throws Exception {
         
         List<NodeProperty> properties = new ArrayList<>();
@@ -454,18 +452,18 @@ public class PostAction extends DoiAction {
 
         VOSURI target = new VOSURI(new URI(dataDirURI));
         ContainerNode newFolder = new ContainerNode(target, properties);
-        vosClient.createNode(newFolder);
+        vClient.getVOSpaceClient().createNode(newFolder);
         return newFolder;
     }
     
-    private void uploadDOIDocument(VOSpaceClient vosClient, Resource resource, DataNode docNode)
+    private void uploadDOIDocument(Resource resource, DataNode docNode)
         throws ResourceNotFoundException {
         
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
         Transfer transfer = new Transfer(docNode.getUri().getURI(), Direction.pushToVoSpace, protocols);
-        ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+        ClientTransfer clientTransfer = vClient.getVOSpaceClient().createTransfer(transfer);
         DoiOutputStream outStream = new DoiOutputStream(resource);
         clientTransfer.setOutputStreamWrapper(outStream);
         clientTransfer.run();
@@ -491,7 +489,7 @@ public class PostAction extends DoiAction {
         }
     }
 
-    private String generateNextDOINumber(VOSpaceClient vosClient, VOSURI baseDoiURI)
+    private String generateNextDOINumber(VOSURI baseDoiURI)
         throws Exception {
         
         // child nodes of baseNode should have name structure YY.XXXX
@@ -501,7 +499,7 @@ public class PostAction extends DoiAction {
         // add 1
         // reconstruct YY.XXXX structure and return
         
-        ContainerNode baseNode = (ContainerNode) vosClient.getNode(baseDoiURI.getPath());
+        ContainerNode baseNode = (ContainerNode) vClient.getVOSpaceClient().getNode(baseDoiURI.getPath());
 
         // Look into the node list for folders from current year only
         DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
