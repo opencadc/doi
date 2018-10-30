@@ -129,17 +129,13 @@ public class DoiReader
         List<Title> titles = buildTitles(root);
 
         String publicationYear = "";
-        if (root.getChild("publicationYear", ns) != null)
+        if (root.getChild("publicationYear", ns) == null)
         {
-//            String msg = "publicationYear not found in resource element.";
-//            throw new DoiParsingException(msg);
-            publicationYear = root.getChild("publicationYear", ns).getText();
-        } else {
             publicationYear = new SimpleDateFormat("yyyy").format(new Date());
+        } else {
+            publicationYear = root.getChild("publicationYear", ns).getText();
         }
         
-//        String publicationYear =
-//            root.getChild("publicationYear", ns).getText();
         Resource resource = new Resource(ns, id, creators, titles, publicationYear);
         
         // the following are optional elements that we support
