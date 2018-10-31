@@ -137,6 +137,15 @@ public class UpdateDocumentTest extends DocumentTest
                 }
             }
             
+            private void compareStrings(String s1, String s2, String field)
+            {
+                compareNull(s1, s2, field);
+                if (s1 != null)
+                {
+                    Assert.assertEquals(field + "is different", s1, s2);
+                }
+            }
+
             private void compareCreatorName(CreatorName cn1, CreatorName cn2)
             {
                 Assert.assertEquals("creatorName is different", cn1.getText(), cn2.getText());
@@ -145,21 +154,24 @@ public class UpdateDocumentTest extends DocumentTest
             
             private void compareNameIdentifier(NameIdentifier id1, NameIdentifier id2)
             {
-                Assert.assertEquals("nameIdentifierScheme is different", id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme());
-                Assert.assertEquals("nameIdentifier is different", id1.getNameIdentifier(), id2.getNameIdentifier());
-                compareNull(id1.schemeURI, id2.schemeURI, "schemeURI");
-                if (id1.schemeURI != null)
-                {
-                    Assert.assertTrue("schemeURI is different", id1.schemeURI.equals(id2.schemeURI));
+                compareNull(id1, id2, "nameIdentifier");
+                if (id1 != null) {
+                    compareStrings(id1.getNameIdentifier(), id2.getNameIdentifier(), "nameIdentifier text");
+                    compareStrings(id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme(), "nameIdentifierScheme");
+                    compareNull(id1.schemeURI, id2.schemeURI, "schemeURI");
+                    if (id1.schemeURI != null)
+                    {
+                        Assert.assertTrue("schemeURI is different", id1.schemeURI.equals(id2.schemeURI));
+                    }
                 }
             }
             private void compareCreator(Creator creator1, Creator creator2)
             {
                 compareCreatorName(creator1.getCreatorName(), creator2.getCreatorName());
                 compareNameIdentifier(creator1.nameIdentifier, creator2.nameIdentifier);
-                Assert.assertEquals("givenName is different", creator1.givenName, creator2.givenName);
-                Assert.assertEquals("familyName is different", creator1.familyName, creator2.familyName);
-                Assert.assertEquals("affiliation is different", creator1.affiliation, creator2.affiliation);
+                compareStrings(creator1.givenName, creator2.givenName, "givenName");
+                compareStrings(creator1.familyName, creator2.familyName, "familyName");
+                compareStrings(creator1.affiliation, creator2.affiliation, "affiliation");
             }
 
             private void compareCreators(List<Creator> c1, List<Creator> c2)
@@ -175,6 +187,8 @@ public class UpdateDocumentTest extends DocumentTest
             
             private void compareTitles(List<Title> t1, List<Title> t2)
             {
+                Assert.assertNotNull("missing expected titles", t1);
+                Assert.assertNotNull("missing actual titles", t2);
                 Assert.assertEquals("Number of titles is different", t1.size(), t2.size());
                 for (int i=0; i< t1.size(); i++)
                 {
@@ -184,9 +198,12 @@ public class UpdateDocumentTest extends DocumentTest
             
             private void compareTitle(Title t1, Title t2)
             {
-                Assert.assertEquals("lang is different", t1.getLang(), t2.getLang());
-                Assert.assertEquals("title is different", t1.getText(), t2.getText());
-                Assert.assertEquals("titleType is different", t1.titleType, t2.titleType);
+                compareStrings(t1.getLang(), t2.getLang(), "lang");
+                compareStrings(t1.getText(), t2.getText(), "title");
+                compareNull(t1.titleType, t2.titleType, "titleType");
+                if (t1.titleType != null) {
+                    Assert.assertEquals("titleType is different", t1.titleType, t2.titleType);
+                }
             }
             
             private DoiStatus getStatus(URL docURL) throws UnsupportedEncodingException, DoiParsingException, IOException
@@ -198,6 +215,36 @@ public class UpdateDocumentTest extends DocumentTest
                 Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
                 DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
                 return statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
+            }
+            
+            private String generateDocument(Resource resource) throws IOException {
+                StringBuilder builder = new StringBuilder();
+                DoiXmlWriter writer = new DoiXmlWriter();
+                writer.write(resource, builder);
+                return builder.toString();
+            }
+            
+            private Resource executeTest(URL docURL, String document, 
+                List<Creator> expectedCreators, List<Title> expectedTitles,
+                String expectedIdentifier, String expectedJournalRef, String newJournalRef) 
+                    throws DoiParsingException, UnsupportedEncodingException, IOException {
+                String uDoc = postDocument(docURL, document, newJournalRef);
+                Resource uResource = xmlReader.read(uDoc);
+                compareCreators(expectedCreators, uResource.getCreators());
+                compareTitles(expectedTitles, uResource.getTitles());
+                
+                // check for same journal reference
+                DoiStatus uStatus = getStatus(docURL);
+                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, uStatus.getIdentifier().getText());
+                if (newJournalRef == null) {
+                    Assert.assertEquals("journalRef has changed", expectedJournalRef, uStatus.journalRef);
+                } else if (newJournalRef.length() > 0) {
+                    Assert.assertEquals("journalRef is incorrect", expectedJournalRef, uStatus.journalRef);
+                } else {
+                    Assert.assertNull("journalRef was not deleted", uStatus.journalRef);
+                }
+                
+                return uResource;
             }
             
             public Object run() throws Exception
@@ -257,43 +304,32 @@ public class UpdateDocumentTest extends DocumentTest
                     resource.setCreators(newCreators);
                     
                     // generate updated document
-                    final StringBuilder builder = new StringBuilder();
-                    DoiXmlWriter writer = new DoiXmlWriter();
-                    writer.write(resource, builder);
-                    String newDocument = builder.toString();
+                    String newDocument = this.generateDocument(resource);
                     
-                    // post the update and check result
-                    String updatedDoc = postDocument(docURL, newDocument, NEW_JOURNAL_REF);
-                    Resource updatedResource = xmlReader.read(updatedDoc);
-                    compareCreators(newCreators, updatedResource.getCreators());
-                    compareTitles(newTitles, updatedResource.getTitles());
+                    // TEST CASE 1: update both creators and title, and journalRef
+                    Resource t1Resource = executeTest(docURL, newDocument, newCreators, newTitles, returnedIdentifier, NEW_JOURNAL_REF, NEW_JOURNAL_REF);
                     
-                    // check new journal reference
-                    DoiStatus updatedStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
-                    Assert.assertEquals("journalRef is incorrect", NEW_JOURNAL_REF, updatedStatus.journalRef);
+                    // TEST CASE 2: no update to document or journalRef
+                    Resource t2Resource = executeTest(docURL, newDocument, newCreators, newTitles, returnedIdentifier, NEW_JOURNAL_REF, null);
                     
-                    // no change
-                    updatedDoc = postDocument(docURL, newDocument, null);
-                    updatedResource = xmlReader.read(updatedDoc);
-                    compareCreators(newCreators, updatedResource.getCreators());
-                    compareTitles(newTitles, updatedResource.getTitles());
+                    // TEST CASE 3: title and creator with null optional elements, and delete journal reference
+                    Title titleWithNullTitleType = new Title(expectedTitle.getLang(), "NullTitleType");
+                    t2Resource.getTitles().add(titleWithNullTitleType);
+                    List<Title> t3ExpectedTitles = t2Resource.getTitles();
+                    Creator creatorWithNullOptionalFields = new Creator(new CreatorName("NullOptionalFields"));
+                    List<Creator> t3ExpectedCreators = t2Resource.getCreators();
+                    t3ExpectedCreators.add(creatorWithNullOptionalFields);
+                    String t3GeneratedDoc = this.generateDocument(t2Resource);
+                    Resource t3Resource = executeTest(docURL, t3GeneratedDoc, t3ExpectedCreators, t3ExpectedTitles, returnedIdentifier, null, "");
                     
-                    // check for same journal reference
-                    updatedStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
-                    Assert.assertEquals("journalRef has changed", NEW_JOURNAL_REF, updatedStatus.journalRef);
-                    
-                    // delete journal reference
-                    updatedDoc = postDocument(docURL, newDocument, "");
-                    updatedResource = xmlReader.read(updatedDoc);
-                    compareCreators(newCreators, updatedResource.getCreators());
-                    compareTitles(newTitles, updatedResource.getTitles());
-                    
-                    // check for null journal reference
-                    updatedStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
-                    Assert.assertNull("journalRef was not deleted", updatedStatus.journalRef);
+                    // TEST CASE 4: creator with nameIdentifer but no optional schemeURI
+                    Creator creatorWithNullSchemeURI = new Creator(new CreatorName("NullOptionalFields"));
+                    NameIdentifier nameID = new NameIdentifier(expectedNameIdentifier.getNameIdentifier(), "nullSchemURI");
+                    creatorWithNullSchemeURI.nameIdentifier = nameID;
+                    List<Creator> t4ExpectedCreators = t3Resource.getCreators();
+                    t4ExpectedCreators.add(creatorWithNullSchemeURI);
+                    String t4GeneratedDoc = this.generateDocument(t3Resource);
+                    Resource t4Resource = executeTest(docURL, t4GeneratedDoc, t4ExpectedCreators, t3ExpectedTitles, returnedIdentifier, null, "");
                 }
                 finally
                 {
