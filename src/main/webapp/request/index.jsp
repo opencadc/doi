@@ -115,7 +115,7 @@
                               <input type="text" class="form-control doi-form-input" id="doi_author" name="firstAuthor"
                                      placeholder="family name, given name" tabindex="1" required/>
                             </div>
-                            <div class="doi-form-info"><i>format: family name, given name</i></div>
+                            <div class="col-sm-3 doi-form-info"><i>format: family name, given name</i></div>
                         </div>
 
                       <div class="form-group">
