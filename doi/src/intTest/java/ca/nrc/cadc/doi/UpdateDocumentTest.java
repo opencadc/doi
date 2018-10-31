@@ -246,6 +246,14 @@ public class UpdateDocumentTest extends DocumentTest
                 
                 return uResource;
             }
+
+            private Resource executeUpdateLanguageTest(URL docURL, String document, String expectedLanguage) 
+                    throws DoiParsingException, UnsupportedEncodingException, IOException {
+                String uDoc = postDocument(docURL, document, null);
+                Resource uResource = xmlReader.read(uDoc);
+                compareStrings(expectedLanguage, uResource.language, "language");
+                return uResource;
+            }
             
             public Object run() throws Exception
             {
@@ -330,6 +338,17 @@ public class UpdateDocumentTest extends DocumentTest
                     t4ExpectedCreators.add(creatorWithNullSchemeURI);
                     String t4GeneratedDoc = this.generateDocument(t3Resource);
                     Resource t4Resource = executeTest(docURL, t4GeneratedDoc, t4ExpectedCreators, t3ExpectedTitles, returnedIdentifier, null, "");
+
+                    // TEST CASE 5: update language
+                    if (t4Resource.language.contains("en")) {
+                        t4Resource.language = "fr";
+                    } else {
+                        t4Resource.language = "en-US";
+                    }
+                    
+                    String t5GeneratedDoc = this.generateDocument(t4Resource);
+                    Resource t5Resource = executeUpdateLanguageTest(docURL, t5GeneratedDoc, t4Resource.language);
+
                 }
                 finally
                 {

@@ -206,6 +206,7 @@ public class PostAction extends DoiAction {
         // update editable fields
         targetResource.setCreators(sourceResource.getCreators());
         targetResource.setTitles(sourceResource.getTitles());
+        targetResource.language = sourceResource.language;
 
         return targetResource;
     }
@@ -229,7 +230,6 @@ public class PostAction extends DoiAction {
         } else {
             verifyIdentifier(s1.getIdentifier(), s2.getIdentifier());
             verifyResourceType(s1.getResourceType(), s2.getResourceType());
-            verifyString(s1.language, s2.language, "language");
         }
     }
     
