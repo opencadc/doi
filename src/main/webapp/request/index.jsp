@@ -86,8 +86,8 @@
                         <div class="form-group doi-form-group">
                           <label for="doi_number" class="col-sm-3 control-label" id="doi_number_label">Data DOI Reference</label>
                           <div class="col-sm-3">
-                            <input type="text" class="form-control" id="doi_number" name="doiNumber"
-                                   placeholder="YY.####" disabled="disabled" readonly />
+                            <input type="text" class="form-control doi-form-input" id="doi_number" name="doiNumber"
+                                   disabled="disabled" readonly />
                           </div>
                         </div>
 
@@ -95,7 +95,7 @@
                         <div class="form-group">
                           <label for="doi_title" class="col-sm-3 control-label" id="doi_title_label">Title</label>
                           <div class="col-sm-6">
-                            <input type="text" class="form-control" id="doi_title" name="title"
+                            <input type="text" class="form-control doi-form-input" id="doi_title" name="title"
                                    placeholder="Title" tabindex="1" required/>
                           </div>
                         </div>
@@ -103,29 +103,19 @@
                         <!-- Publication Language -->
                         <div class="form-group">
                           <label for="doi_language" class="col-sm-3 control-label" id="doi_language_label">Language</label>
-                          <div id="doi_language" class="col-sm-3 doi-landing doi-landing-text">
+                          <div id="doi_language" class="col-sm-3">
                             <label class="radio-inline"><input type="radio" name="doiLanguage" value="en" checked>en</label>
                             <label class="radio-inline"><input type="radio" name="doiLanguage" value="fr">fr</label>
                           </div>
                         </div>
 
-                        <!-- Author List -->
-                        <%--<div class="form-group">--%>
-                          <%--<label for="doi_creator_list" class="col-sm-3 control-label" id="doi_first_name_label">Authors</label>--%>
-                          <%--<div class="col-sm-4">--%>
-                            <%--<textarea class="form-control" id="doi_creator_list" name="creatorList"--%>
-                                      <%--placeholder="Last name, first name..." tabindex="2" rows="4" required></textarea>--%>
-                          <%--</div>--%>
-                        <%--</div>--%>
-
                         <div class="form-group">
                           <label for="doi_author" class="col-sm-3 control-label" id="doi_first_name_label">First Author</label>
-
                             <div class="col-sm-6">
-                              <input type="text" class="form-control" id="doi_author" name="firstAuthor"
+                              <input type="text" class="form-control doi-form-input" id="doi_author" name="firstAuthor"
                                      placeholder="family name, given name" tabindex="1" required/>
                             </div>
-                            format: family name, given name
+                            <div class="doi-form-info"><i>format: family name, given name</i></div>
                         </div>
 
                       <div class="form-group">
@@ -133,8 +123,8 @@
                           <div class="col-sm-6">
                               <div id="doi_additional_authors"></div>
                               <div>
-                              <label for="doi_add_author" class="col-sm-3 control-label"><i>add author</i></label>
-                              <button type="button" class="btn btn-default doi-button" id="doi_add_author" tabindex="5"> + </button>
+                              <label for="doi_add_author" class="col-sm-2 control-label doi-vertical-align"><i>add author</i></label>
+                              <button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
                               </div>
                           </div>
                       </div>
@@ -144,7 +134,7 @@
                         <div class="form-group">
                           <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
                           <div class="col-sm-6">
-                            <input type="text" class="form-control" id="doi_journal_ref" name="journalRef"
+                            <input type="text" class="form-control doi-form-input" id="doi_journal_ref" name="journalRef"
                                    placeholder="Journal  Reference" tabindex="3" required/>
                           </div>
                         </div>
@@ -153,14 +143,10 @@
                         <div class="form-group">
                           <div class="col-sm-offset-3 col-sm-10">
                             <div class="button-group" role="group">
-                              <button type="submit" class="btn btn-primary" id="doi_create_button" tabindex="5">Create</button>
-                              <!-- Disabled until the edit story is completed -->
-                              <button type="button" class="doi_edit btn btn-primary hidden .disabled" disabled
-                                      id="doi_edit_button" tabindex="5">Update</button>
+                              <button type="submit" class="btn btn-primary" id="doi_action_button" tabindex="5">Create</button>
                               <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Clear</button>
                               <button type="delete" class="btn btn-danger doi-button hidden" id="doi_form_delete_button">Delete</button>
                             </div>
-                            <div><span class="doi_edit hidden"><i>Apologies... the update function will be available soon.</i></span></div>
                           </div>
 
                         </div>

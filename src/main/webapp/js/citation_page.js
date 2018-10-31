@@ -222,7 +222,7 @@
           '@xmlns': 'http://datacite.org/schema/kernel-4',
           identifier: {
             '@identifierType': 'DOI',
-            $: '10.11570/YY.xxxx'
+            $: ''
           },
           creators: {
             $: []
@@ -240,12 +240,6 @@
               }
             ]
           }
-          //publisher: { $: 'Canadian Astronomy Data Centre (CADC)' },
-          //publicationYear: { $: new Date().getFullYear() },
-          //resourceType: {
-          //  '@resourceTypeGeneral': 'Dataset',
-          //  $: 'Dataset'
-          //}
         }
       }
     }
@@ -255,6 +249,13 @@
         initDoc()
       }
       return _selfDoc._badgerfishDoc
+    }
+
+    function clearDoc() {
+      if (_selfDoc._badgerfishDoc !== {}) {
+        delete _selfDoc._badgerfishDoc;
+        initDoc()
+      }
     }
 
     function populateDoc(serviceData) {
@@ -328,6 +329,15 @@
       return _selfDoc._badgerfishDoc.resource.identifier['$']
     }
 
+    function getDOISuffix() {
+      var suffix = '';
+      if (_selfDoc._badgerfishDoc.resource.identifier['$'] !== '' &&
+          _selfDoc._badgerfishDoc.resource.identifier['$'].match("/") !== null) {
+        suffix = _selfDoc._badgerfishDoc.resource.identifier['$'].split('/')[1];
+      }
+      return suffix
+    }
+
     function getTitle() {
       return _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$']
     }
@@ -346,6 +356,7 @@
     $.extend(this, {
       initDoc: initDoc,
       getDoc: getDoc,
+      clearDoc: clearDoc,
       populateDoc: populateDoc,
       setAuthorList: setAuthorList,
       setDOINumber: setDOINumber,
@@ -354,6 +365,7 @@
       getAuthorFullname: getAuthorFullname,
       getAuthorList: getAuthorList,
       getDOINumber: getDOINumber,
+      getDOISuffix: getDOISuffix,
       getTitle: getTitle,
       getLanguage: getLanguage
     })
