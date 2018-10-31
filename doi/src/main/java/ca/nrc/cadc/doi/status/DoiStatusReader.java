@@ -121,12 +121,14 @@ public class DoiStatusReader
             throw new DoiParsingException(msg);
         }
 
-        // optional element
-        String journalReference = root.getChild("journalRef").getText();
-
         Status status = Status.toValue(root.getChild("status").getText());
         DoiStatus ds = new DoiStatus(id, title, dataDirectory, status);
-        ds.journalRef = journalReference;
+
+        // optional element
+        if (root.getChild("journalRef") != null) {
+            String journalReference = root.getChild("journalRef").getText();
+            ds.journalRef = journalReference;
+        }
         
         return ds;
     }

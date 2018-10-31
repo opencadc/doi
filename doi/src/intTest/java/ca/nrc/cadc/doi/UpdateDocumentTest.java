@@ -283,7 +283,7 @@ public class UpdateDocumentTest extends DocumentTest
                     updatedStatus = getStatus(docURL);
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
                     Assert.assertEquals("journalRef has changed", NEW_JOURNAL_REF, updatedStatus.journalRef);
-                    /*
+                    
                     // delete journal reference
                     updatedDoc = postDocument(docURL, newDocument, "");
                     updatedResource = xmlReader.read(updatedDoc);
@@ -294,7 +294,6 @@ public class UpdateDocumentTest extends DocumentTest
                     updatedStatus = getStatus(docURL);
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, updatedStatus.getIdentifier().getText());
                     Assert.assertNull("journalRef was not deleted", updatedStatus.journalRef);
-                    */
                 }
                 finally
                 {
