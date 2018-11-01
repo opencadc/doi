@@ -101,7 +101,7 @@
                         </div>
 
                         <!-- Publication Language -->
-                        <div class="form-group">
+                        <div class="form-group hidden">
                           <label for="doi_language" class="col-sm-3 control-label" id="doi_language_label">Language</label>
                           <div id="doi_language" class="col-sm-3">
                             <label class="radio-inline"><input type="radio" name="doiLanguage" value="en" checked>en</label>
@@ -123,7 +123,7 @@
                           <div class="col-sm-6">
                               <div id="doi_additional_authors"></div>
                               <div>
-                              <label for="doi_add_author" class="col-sm-2 control-label doi-vertical-align"><i>add author</i></label>
+                              <label for="doi_add_author" class="col-sm-3 control-label doi-vertical-align"><i>add author</i></label>
                               <button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
                               </div>
                           </div>
