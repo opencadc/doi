@@ -129,7 +129,6 @@
                           </div>
                       </div>
 
-
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
                           <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>

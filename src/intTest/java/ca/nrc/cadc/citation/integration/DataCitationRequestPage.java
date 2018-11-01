@@ -41,10 +41,13 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 public class DataCitationRequestPage extends DataCitationAbstractPage {
     private static final By DOI_DELETE_BY = By.id("doi_form_delete_button");
     private static final By DOI_DATA_DIR_BY = By.id("doi_data_dir");
-    private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_create_button");
-    private static final By DOI_REQUEST_UPDATE_BY = By.id("doi_edit_button");
+    private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_action_button");
     private static final By DOI_NUMBER_BY = By.id("doi_number");
+    private static final By DOI_JOURNALREF_BY = By.id("doi_journal_ref");
     private static final By DOI_ERRORMSG_BY = By.id("error_msg");
+    private static final By DOI_UPDATE_BUTTON = By.xpath("//button[@type='submit' and span='New']");
+
+    //*[@id="doi_action_button"]
 
     @FindBy(id = "doi_number")
     WebElement doiNumberInput;
@@ -52,8 +55,8 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
     @FindBy(id = "doi_title")
     WebElement doiTitleInput;
 
-    @FindBy(id = "doi_creator_list")
-    WebElement doiCreatorsInput;
+    @FindBy(id = "doi_author")
+    WebElement doiAuthorInput;
 
     @FindBy(id = "doi_journal_ref")
     WebElement doiJournalRef;
@@ -74,8 +77,8 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
         return doiTitleInput.getText();
     }
 
-    public String getDoiAuthorList() {
-        return doiCreatorsInput.getText();
+    public String getDoiFirstAuthor() {
+        return doiAuthorInput.getText();
     }
 
     public String getDoiJournalRef() {
@@ -83,23 +86,26 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
     }
 
     public void setDoiTitle(String title) {
+        doiTitleInput.clear();
         doiTitleInput.sendKeys(title);
     }
 
     public void setDoiAuthorList(String authorList) {
-         doiCreatorsInput.sendKeys(authorList);
+        doiAuthorInput.clear();
+        doiAuthorInput.sendKeys(authorList);
     }
 
     public void setJournalRef(String journalRef) {
+        doiJournalRef.clear();
         doiJournalRef.sendKeys(journalRef);
     }
-
 
     public void submitForm() throws Exception {
         WebElement cb = find(DOI_REQUEST_SUBMIT_BY);
         click(cb);
         // If submit has a problem, this element will not become visible
-        waitForElementVisible(DOI_REQUEST_UPDATE_BY);
+        waitForElementVisible(DOI_DATA_DIR_BY);
+        waitForElementClickable(DOI_DELETE_BY);
     }
 
     public void deleteDoi() throws Exception {
@@ -111,7 +117,15 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
         waitForElementVisible(DOI_REQUEST_SUBMIT_BY);
     }
 
-    public void waitForMetadataLoaded() throws Exception {
+    public void waitForJournalRefLoaded() throws Exception {
+        waitUntil(new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver d) {
+                return d.findElement(DOI_JOURNALREF_BY).getAttribute("value").length() != 0;
+            }
+        });
+    }
+
+    public void waitForDOIGetDone() throws Exception {
         waitUntil(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver d) {
                 return d.findElement(DOI_NUMBER_BY).getAttribute("value").length() != 0;
@@ -126,4 +140,5 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
     public void waitForGetFailed() throws Exception  {
         waitForElementVisible(DOI_ERRORMSG_BY);
     }
+
 }

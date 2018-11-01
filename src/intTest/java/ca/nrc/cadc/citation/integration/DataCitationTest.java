@@ -64,7 +64,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         Assert.assertTrue(requestPage.isStateOkay());
 
         // Check that landing page for this DOI renders as exepcted
-        requestPage.waitForMetadataLoaded();
+        requestPage.waitForJournalRefLoaded();
         String doiNumber = requestPage.getDoiNumber();
         System.out.println(doiNumber);
         String doiSuffix = doiNumber.split("/")[1];
@@ -83,6 +83,43 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
             DataCitationRequestPage.class
         );
 
+        requestPage.waitForJournalRefLoaded();
+
+        // Update the journal reference and title
+        // one is an XML file change, one is a vospace attribute change
+        String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
+        String newDoiTitle = "Birdsong in the Afternoon";
+        requestPage.setDoiTitle(newDoiTitle);
+        requestPage.setJournalRef(newJournalRef);
+
+        requestPage.submitForm();
+        requestPage.waitForDOIGetDone();
+
+        Assert.assertTrue(requestPage.isStateOkay());
+        
+        // Go back to landing page and verify the title and journal reference have changed
+        landingPage = goTo("/citation/landing",
+            "?doi=" + doiSuffix,
+            DataCitationLandingPage.class
+        );
+
+        if (newDoiTitle.equals(landingPage.getDoiTitle())) {
+            Assert.assertEquals("DOI title update didn't succeed", newDoiTitle, landingPage.getDoiTitle());
+        } else {
+            // reload the page - sometimes the update is slow
+            landingPage = goTo("/citation/landing",
+                "?doi=" + doiSuffix,
+                DataCitationLandingPage.class
+            );
+        }
+        Assert.assertEquals("DOI Journal ref update didn't succeed", newJournalRef, landingPage.getDoiJournalRef());
+
+        // Return to the /citation/request page...
+        requestPage = goTo(endpoint,
+            "?doi=" + doiSuffix,
+            DataCitationRequestPage.class
+        );
+
         // Delete DOI just created
         requestPage.deleteDoi();
         Assert.assertTrue(requestPage.isStateOkay());
@@ -92,7 +129,6 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
     @Test
     public void getInvalidDoi() throws Exception {
-
         DataCitationRequestPage requestPage;
 
         requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
