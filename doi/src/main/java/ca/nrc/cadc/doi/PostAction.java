@@ -96,7 +96,6 @@ import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -206,6 +205,7 @@ public class PostAction extends DoiAction {
         // update editable fields
         targetResource.setCreators(sourceResource.getCreators());
         targetResource.setTitles(sourceResource.getTitles());
+        targetResource.setPublicationYear(sourceResource.getPublicationYear());
         targetResource.language = sourceResource.language;
 
         return targetResource;
@@ -221,11 +221,6 @@ public class PostAction extends DoiAction {
             String expected = s2.getPublisher();
             String actual = s1.getPublisher();
             String msg = "software error, publisher is different, expected = " + expected + ", actual = " + actual;
-            throw new IllegalStateException(msg);
-        } else if (!s1.getPublicationYear().equals(s2.getPublicationYear())) {
-            String expected = s2.getPublicationYear();
-            String actual = s1.getPublicationYear();
-            String msg = "publicationYear update is not allowed, expected = " + expected + ", actual = " + actual;
             throw new IllegalStateException(msg);
         } else {
             verifyIdentifier(s1.getIdentifier(), s2.getIdentifier());

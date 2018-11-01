@@ -254,6 +254,14 @@ public class UpdateDocumentTest extends DocumentTest
                 compareStrings(expectedLanguage, uResource.language, "language");
                 return uResource;
             }
+
+            private Resource executeUpdatePublicationYearTest(URL docURL, String document, String expectedPublicationYear) 
+                    throws DoiParsingException, UnsupportedEncodingException, IOException {
+                String uDoc = postDocument(docURL, document, null);
+                Resource uResource = xmlReader.read(uDoc);
+                compareStrings(expectedPublicationYear, uResource.getPublicationYear(), "publicationYear");
+                return uResource;
+            }
             
             public Object run() throws Exception
             {
@@ -348,6 +356,32 @@ public class UpdateDocumentTest extends DocumentTest
                     
                     String t5GeneratedDoc = this.generateDocument(t4Resource);
                     Resource t5Resource = executeUpdateLanguageTest(docURL, t5GeneratedDoc, t4Resource.language);
+                    
+                    // TEST CASE 6: update publicationYear
+                    // update to a valid year
+                    t5Resource.setPublicationYear("2010");
+                    String t6GeneratedDoc = this.generateDocument(t5Resource);
+                    Resource t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+
+                    // update to a year too far in the past
+                    try {
+                        t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_LOWER_LIMIT - 1));
+                        t6GeneratedDoc = this.generateDocument(t5Resource);
+                        t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                    } catch (Exception ex) {
+                        log.info("alinga-- message=" + ex.getMessage());
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("Bad Request"));
+                    }
+                    
+                    // update to a year too far in the future
+                    try {
+                        t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_UPPER_LIMIT + 1));
+                        t6GeneratedDoc = this.generateDocument(t5Resource);
+                        t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                    } catch (Exception ex) {
+                        log.info("alinga-- message1=" + ex.getMessage());
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("Bad Request"));
+                    }
 
                 }
                 finally

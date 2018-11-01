@@ -95,8 +95,12 @@ public class Resource
     // third %s is the journal reference
     private static String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s ' by %s et al., %s ";
 
+    // define boundaries for the publicationYear
+    public static final Integer PUBLICATION_YEAR_LOWER_LIMIT = 1900;
+    public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
     public static final String PUBLISHER = "CADC";
     public static final ResourceType RESOURCE_TYPE = ResourceType.toValue("Dataset");
+    
     
     private Namespace namespace;
     private Identifier identifier;
@@ -125,6 +129,7 @@ public class Resource
         this.creators = creators;
         this.titles = titles;
         this.resourceType = new DoiResourceType(RESOURCE_TYPE);
+        validatePublicationYear(publicationYear);
         this.publicationYear = publicationYear;
     }
 
@@ -157,6 +162,11 @@ public class Resource
         return this.publicationYear;
     }
     
+    public void setPublicationYear(String newYear)
+    {
+        this.publicationYear = newYear;
+    }
+    
     public DoiResourceType getResourceType()
     {
         return this.resourceType;
@@ -168,5 +178,17 @@ public class Resource
 
     public void setTitles(List<Title> titles) {
         this.titles = titles;
+    }
+    
+    private void validatePublicationYear(String pYear) 
+    {
+        try {
+            Integer year = Integer.valueOf(pYear);
+            if (year > PUBLICATION_YEAR_UPPER_LIMIT || year < PUBLICATION_YEAR_LOWER_LIMIT) {
+                throw new IllegalArgumentException("publicationYear is not a recent year");
+            }
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("publicationYear is not a number");
+        }
     }
 }
