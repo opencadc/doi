@@ -289,9 +289,9 @@
     // ------------ Display/rendering functions ------------
 
     function parseDoiSuffix(doiName) {
-      var doiSuffix = "";
-      if (doiName.match("/")) {
-        doiSuffix = doiName.split("/")[1];
+      var doiSuffix = '';
+      if (doiName.match('/')) {
+        doiSuffix = doiName.split('/')[1];
       }
       else {
         doiSuffix = doiName;

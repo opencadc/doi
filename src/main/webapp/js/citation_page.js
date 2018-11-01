@@ -263,7 +263,7 @@
     }
 
     function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(",").filter(Boolean)
+      var nameParts = personalInfo.split(',').filter(Boolean)
       var creatorObject = {
         creatorName: {
           '@nameType': 'Personal',
@@ -273,12 +273,12 @@
         familyName: { $: '' }
       }
 
-      // clean up the ", " format that might not have been done
+      // clean up the ', ' format that might not have been done
       // in the input box, so that output is consistent and format
       // in the XML file is consistent
       var givenName = nameParts[1].trim()
       var familyName = nameParts[0].trim()
-      creatorObject.creatorName['$'] = familyName  + ", " + givenName
+      creatorObject.creatorName['$'] = familyName  + ', ' + givenName
       creatorObject.familyName['$'] = familyName
       creatorObject.givenName['$'] = givenName
 
@@ -332,7 +332,7 @@
     function getDOISuffix() {
       var suffix = '';
       if (_selfDoc._badgerfishDoc.resource.identifier['$'] !== '' &&
-          _selfDoc._badgerfishDoc.resource.identifier['$'].match("/") !== null) {
+          _selfDoc._badgerfishDoc.resource.identifier['$'].match('/') !== null) {
         suffix = _selfDoc._badgerfishDoc.resource.identifier['$'].split('/')[1];
       }
       return suffix
@@ -343,8 +343,8 @@
     }
 
     function getLanguage() {
-      var language = "";
-      if (typeof _selfDoc._badgerfishDoc.resource.language !== "undefined") {
+      var language = '';
+      if (typeof _selfDoc._badgerfishDoc.resource.language !== 'undefined') {
         language = _selfDoc._badgerfishDoc.resource.language['$']
       }
 

@@ -96,7 +96,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         requestPage.waitForDOIGetDone();
 
         Assert.assertTrue(requestPage.isStateOkay());
-        
+
         // Go back to landing page and verify the title and journal reference have changed
         landingPage = goTo("/citation/landing",
             "?doi=" + doiSuffix,

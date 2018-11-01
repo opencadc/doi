@@ -73,11 +73,11 @@
 
     function setButtonState(mode) {
       if (mode === 'update') {
-        $('#doi_action_button').text("Update")
+        $('#doi_action_button').text('Update')
         $('#doi_form_delete_button').removeClass('hidden')
       } else if (mode === 'create') {
         $('.doi_edit').addClass('hidden')
-        $('#doi_action_button').text("Create")
+        $('#doi_action_button').text('Create')
         $('#doi_form_delete_button').addClass('hidden')
       }
     }
@@ -94,12 +94,12 @@
       var elementId = 'doi_' + elementName;
       var paretElementId = 'doi_' + elementName + '_div';
 
-      var inputHtml = "<div class=\"input-group mb-3 doi-remove-author\" id=\"" + paretElementId + "\" >" +
-          "<input type=\"text\" class=\"form-control doi-form-input\"  name=\"" + elementName +
-          "\"placeholder=\"family name, given name\" id=\"" + elementId + "\" />" +
-          "<div class=\"input-group-addon\">" +
-          "<button type=\"button\" class=\"btn btn-default doi-small-button glyphicon glyphicon-minus\" id=\"" + elementName + "\" ></button>" +
-          "</div></div>"
+      var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + paretElementId + '" >' +
+          '<input type="text" class="form-control doi-form-input"  name="' + elementName +
+          '"placeholder="family name, given name" id="' + elementId + '" />' +
+          '<div class="input-group-addon">' +
+          '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
+          '</div></div>'
 
       $('#doi_additional_authors').append(inputHtml);
       $('#' + elementName).bind('click', handleRemoveAuthor)
@@ -161,7 +161,7 @@
           }
           default: {
             // Check to see if this an additional author:
-            if (formField.name.match("addtl_author_")) {
+            if (formField.name.match('addtl_author_')) {
               additionalAuthors.push(formField.value)
             }
             break
@@ -358,7 +358,7 @@
       $('#doi_title').val(doiDoc.getTitle())
       $('#doi_number').val(doiDoc.getDOINumber())
 
-      if (doiDoc.getLanguage() !== "") {
+      if (doiDoc.getLanguage() !== '') {
         var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click();
       }
     }
