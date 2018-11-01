@@ -212,7 +212,8 @@ public class PostAction extends DoiAction {
     }
 
     private void verifyUneditableFields(Resource s1, Resource s2) {
-        if (!s1.getNamespace().equals(s2.getNamespace())) {
+        if (!s1.getNamespace().getPrefix().equals(s2.getNamespace().getPrefix()) ||
+            !s1.getNamespace().getURI().equals(s2.getNamespace().getURI())) {
             Namespace expected = s2.getNamespace();
             Namespace actual = s1.getNamespace();
             String msg = "namespace update is not allowed, expected = " + expected + ", actual = " + actual;

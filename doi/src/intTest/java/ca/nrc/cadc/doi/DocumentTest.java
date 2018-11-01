@@ -150,8 +150,9 @@ public class DocumentTest extends IntTestBase
         httpPost.run();
         
         // Check that there was no exception thrown
-        if (httpPost.getThrowable() != null)
-            throw new RuntimeException(httpPost.getThrowable());
+        if (httpPost.getThrowable() != null) {
+            throw new RuntimeException(httpPost.getResponseBody() + ", " + httpPost.getThrowable());
+        }
         
         // Check that the HttpPost was sent successfully
         Assert.assertEquals("HttpPost failed, return code = " + httpPost.getResponseCode(), httpPost.getResponseCode(), 200);

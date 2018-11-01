@@ -82,6 +82,7 @@ import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.jdom2.Namespace;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -89,7 +90,9 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.doi.datacite.DoiReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
@@ -368,9 +371,9 @@ public class UpdateDocumentTest extends DocumentTest
                         t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_LOWER_LIMIT - 1));
                         t6GeneratedDoc = this.generateDocument(t5Resource);
                         t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                        Assert.fail("publicationiYear lower limit not detected");
                     } catch (Exception ex) {
-                        log.info("alinga-- message=" + ex.getMessage());
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("Bad Request"));
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("publicationYear is not a recent year"));
                     }
                     
                     // update to a year too far in the future
@@ -378,12 +381,53 @@ public class UpdateDocumentTest extends DocumentTest
                         t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_UPPER_LIMIT + 1));
                         t6GeneratedDoc = this.generateDocument(t5Resource);
                         t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                        Assert.fail("publicationiYear upper limit not detected");
                     } catch (Exception ex) {
-                        log.info("alinga-- message1=" + ex.getMessage());
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("Bad Request"));
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("publicationYear is not a recent year"));
                     }
-
-                }
+                    
+                    // TEST CASE 7: update to Resource.namespace is not allowed
+                    // updating Namespace.predix should fail
+                    String t7Prefix = t1Resource.getNamespace().getPrefix() + "a";
+                    Namespace t7Namespace = Namespace.getNamespace(t7Prefix, t1Resource.getNamespace().getURI());
+                    Resource t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(), 
+                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
+                    String t7GeneratedDoc = this.generateDocument(t7Resource);
+                    try {
+                        executeTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(), returnedIdentifier, null, null);
+                        Assert.fail("resource.namespace update failure not detected");
+                    } catch (Exception ex) {
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("namespace update is not allowed"));
+                    }
+                    
+                    // updating Namespace.URI should fail
+                    String t7NamespaceURI = t1Resource.getNamespace().getURI() + "a";
+                    t7Namespace = Namespace.getNamespace(t1Resource.getNamespace().getPrefix(), t7NamespaceURI);
+                    t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(), 
+                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
+                    t7GeneratedDoc = this.generateDocument(t7Resource);
+                    try {
+                        executeTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(), returnedIdentifier, null, null);
+                        Assert.fail("resource.namespace update failure not detected");
+                    } catch (Exception ex) {
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("namespace update is not allowed"));
+                    }
+                    
+                    // TEST CASE 8: update to Resource.identifier is not allowed
+                    // Note: IdentifierType is validated by xsd to be "DOI"
+                    // updating Identifier text should fail
+                    Identifier t8Identifier = t1Resource.getIdentifier();
+                    DoiReader.assignIdentifier(t8Identifier, "test8");
+                    Resource t8Resource = new Resource(t1Resource.getNamespace(), t8Identifier, 
+                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
+                    String t8GeneratedDoc = this.generateDocument(t8Resource);
+                    try {
+                        executeTest(docURL, t8GeneratedDoc, t8Resource.getCreators(), t8Resource.getTitles(), returnedIdentifier, null, null);
+                        Assert.fail("resource.identifier update failure not detected");
+                    } catch (Exception ex) {
+                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("identifier update is not allowed"));
+                    }
+               }
                 finally
                 {
                     // delete containing folder using doiadmin credentials
