@@ -7,13 +7,10 @@ Usage of this service can be divided into three distinct phases described below.
 
 ### DOI creation
 1. user enters metadata of a publication using a GUI
-   - example metadata:
-     - creator name
-     - given name
-     - family
-     - affiliation
-     - title
-     - language 
+   - first auther
+   - additional authros
+   - title
+   - journal reference
 2. user submits the metdata
 3. this service then:
    - validates the metadata 
