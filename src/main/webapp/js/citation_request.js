@@ -83,16 +83,16 @@
     }
 
     // Must be 1 to start
-    var authorcount = 1;
+    var authorcount = 1
     function handleAddAuthor(event) {
       buildAuthorInput(authorcount++)
     }
 
     function buildAuthorInput(authorNum) {
       // something to handle tabindex.. TODO
-      var elementName = 'addtl_author_' + authorNum;
-      var elementId = 'doi_' + elementName;
-      var paretElementId = 'doi_' + elementName + '_div';
+      var elementName = 'addtl_author_' + authorNum
+      var elementId = 'doi_' + elementName
+      var paretElementId = 'doi_' + elementName + '_div'
 
       var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + paretElementId + '" >' +
           '<input type="text" class="form-control doi-form-input"  name="' + elementName +
@@ -101,13 +101,13 @@
           '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
           '</div></div>'
 
-      $('#doi_additional_authors').append(inputHtml);
+      $('#doi_additional_authors').append(inputHtml)
       $('#' + elementName).bind('click', handleRemoveAuthor)
-      return elementName;
+      return elementName
     }
 
     function addAuthorStanza(authorName) {
-      var elementName = buildAuthorInput(authorcount++);
+      var elementName = buildAuthorInput(authorcount++)
       $('#doi_' + elementName).val(authorName)
     }
 
@@ -123,7 +123,7 @@
     // POST
     function handleDOIRequest(event) {
       // Stop normal form submit
-      event.preventDefault();
+      event.preventDefault()
       // Clear any previous error bars
       page.clearAjaxAlert()
       var _formdata = $(this).serializeArray()
@@ -131,7 +131,7 @@
       // Grab the doiNumber field
       _formdata.push({'name': 'doiNumber' , 'value': $('#doi_number').val()})
       var journalRef = ''
-      var additionalAuthors = new Array();
+      var additionalAuthors = new Array()
       doiDoc.clearDoc()
 
       for (var i = 0, fdl = _formdata.length; i < fdl; i++) {
@@ -189,14 +189,14 @@
 
       // Set up the multi part data to be submitted to the
       // doi web service
-      var multiPartData = new FormData();
+      var multiPartData = new FormData()
       multiPartData.append( 'journalRef', journalRef)
 
       // 'Blob' type is requred to have the 'filename="blob" parameter added
       // to the multipart section, and have the Content-type header added
       multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getDoc())], {
         type: 'application/json'
-      }));
+      }))
 
       page.prepareCall().then(function(serviceURL) {
 
@@ -224,7 +224,7 @@
           populateForm()
 
           // Kick off status call
-          getDoiStatus(doiSuffix);
+          getDoiStatus(doiSuffix)
         })
         .fail(function(message) {
           hideInfoModal()
@@ -261,7 +261,7 @@
           populateForm()
 
           // Kick off status call
-          getDoiStatus(doiSuffix);
+          getDoiStatus(doiSuffix)
         })
         .fail(function(message) {
           hideInfoModal()
@@ -359,14 +359,14 @@
       $('#doi_number').val(doiDoc.getDOINumber())
 
       if (doiDoc.getLanguage() !== '') {
-        var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click();
+        var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click()
       }
     }
 
     function hideInfoModal() {
-      $('#info_modal').modal('hide');
-      $('body').removeClass('modal-open');
-      $('.modal-backdrop').remove();
+      $('#info_modal').modal('hide')
+      $('body').removeClass('modal-open')
+      $('.modal-backdrop').remove()
     }
 
     $.extend(this, {

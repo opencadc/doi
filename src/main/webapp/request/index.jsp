@@ -123,7 +123,7 @@
                           <div class="col-sm-6">
                               <div id="doi_additional_authors"></div>
                               <div>
-                              <label for="doi_add_author" class="col-sm-3 control-label doi-vertical-align"><i>add author</i></label>
+                              <label for="doi_add_author" class="col-sm-2 control-label doi-vertical-align"><i>add author</i></label>
                               <button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
                               </div>
                           </div>

@@ -32,7 +32,6 @@
 
     // NOTE: for deployment to production, this constructor should have no parameters.
     // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
-    //var _registryClient = new Registy();
     var _registryClient = new Registry({
       resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
     })
@@ -163,7 +162,7 @@
             } else {
               setAuthenticated()
             }
-          });
+          })
 
     }
 
@@ -186,7 +185,7 @@
     }
 
     function hideModals() {
-      $('.modal-backdrop').remove();
+      $('.modal-backdrop').remove()
     }
 
     $.extend(this, {
@@ -253,7 +252,7 @@
 
     function clearDoc() {
       if (_selfDoc._badgerfishDoc !== {}) {
-        delete _selfDoc._badgerfishDoc;
+        delete _selfDoc._badgerfishDoc
         initDoc()
       }
     }
@@ -263,24 +262,35 @@
     }
 
     function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(',').filter(Boolean)
+      var nameParts
+      if (personalInfo.match(',')) {
+        nameParts = personalInfo.split(',').filter(Boolean)
+      } else {
+        nameParts = personalInfo
+      }
+
+      var givenName
+      var familyName
+
+      if (nameParts.length > 1) {
+        // clean up the ', ' format that might not have been done
+        // in the input box, so that output is consistent and format
+        // in the XML file is consistent
+        givenName = nameParts[1].trim()
+        familyName = nameParts[0].trim()
+      } else {
+        givenName = ''
+        familyName = nameParts[0]
+      }
+
       var creatorObject = {
         creatorName: {
           '@nameType': 'Personal',
-          $: ''
+          $: familyName  + ', ' + givenName
         },
-        givenName: { $: '' },
-        familyName: { $: '' }
+        givenName: { $: givenName },
+        familyName: { $: familyName }
       }
-
-      // clean up the ', ' format that might not have been done
-      // in the input box, so that output is consistent and format
-      // in the XML file is consistent
-      var givenName = nameParts[1].trim()
-      var familyName = nameParts[0].trim()
-      creatorObject.creatorName['$'] = familyName  + ', ' + givenName
-      creatorObject.familyName['$'] = familyName
-      creatorObject.givenName['$'] = givenName
 
       return { creator: creatorObject }
     }
@@ -288,9 +298,7 @@
     function setAuthorList(authorList) {
       // authorList is an array of strings with structure 'family name, given name'
       for (var j = 0; j < authorList.length; j++) {
-        _selfDoc._badgerfishDoc.resource.creators['$'][j] = makeCreatorStanza(
-            authorList[j]
-        )
+        _selfDoc._badgerfishDoc.resource.creators['$'][j] = makeCreatorStanza(authorList[j])
       }
     }
 
@@ -318,7 +326,7 @@
 
     function getAuthorList() {
       var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
-      var authorList = new Array();
+      var authorList = new Array()
       for (var ix = 0; ix < listSize; ix++) {
         authorList.push(_selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName['$'])
       }
@@ -330,10 +338,10 @@
     }
 
     function getDOISuffix() {
-      var suffix = '';
+      var suffix = ''
       if (_selfDoc._badgerfishDoc.resource.identifier['$'] !== '' &&
           _selfDoc._badgerfishDoc.resource.identifier['$'].match('/') !== null) {
-        suffix = _selfDoc._badgerfishDoc.resource.identifier['$'].split('/')[1];
+        suffix = _selfDoc._badgerfishDoc.resource.identifier['$'].split('/')[1]
       }
       return suffix
     }
@@ -343,7 +351,7 @@
     }
 
     function getLanguage() {
-      var language = '';
+      var language = ''
       if (typeof _selfDoc._badgerfishDoc.resource.language !== 'undefined') {
         language = _selfDoc._badgerfishDoc.resource.language['$']
       }
