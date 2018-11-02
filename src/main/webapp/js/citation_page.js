@@ -32,7 +32,6 @@
 
     // NOTE: for deployment to production, this constructor should have no parameters.
     // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
-    //var _registryClient = new Registy();
     var _registryClient = new Registry({
       resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
     })
@@ -163,7 +162,7 @@
             } else {
               setAuthenticated()
             }
-          });
+          })
 
     }
 
@@ -186,7 +185,7 @@
     }
 
     function hideModals() {
-      $('.modal-backdrop').remove();
+      $('.modal-backdrop').remove()
     }
 
     $.extend(this, {
@@ -222,9 +221,12 @@
           '@xmlns': 'http://datacite.org/schema/kernel-4',
           identifier: {
             '@identifierType': 'DOI',
-            $: '10.11570/YY.xxxx'
+            $: ''
           },
           creators: {
+            $: []
+          },
+          language: {
             $: []
           },
           titles: {
@@ -236,12 +238,6 @@
                 }
               }
             ]
-          },
-          publisher: { $: 'Canadian Astronomy Data Centre (CADC)' },
-          publicationYear: { $: new Date().getFullYear() },
-          resourceType: {
-            '@resourceTypeGeneral': 'Dataset',
-            $: 'Dataset'
           }
         }
       }
@@ -254,40 +250,55 @@
       return _selfDoc._badgerfishDoc
     }
 
+    function clearDoc() {
+      if (_selfDoc._badgerfishDoc !== {}) {
+        delete _selfDoc._badgerfishDoc
+        initDoc()
+      }
+    }
+
     function populateDoc(serviceData) {
       _selfDoc._badgerfishDoc = serviceData
     }
 
     function makeCreatorStanza(personalInfo) {
-      var nameParts = personalInfo.split(/s*[s,]s*/).filter(Boolean)
+      var nameParts
+      if (personalInfo.match(',')) {
+        nameParts = personalInfo.split(',').filter(Boolean)
+      } else {
+        nameParts = personalInfo
+      }
+
+      var givenName
+      var familyName
+
+      if (nameParts.length > 1) {
+        // clean up the ', ' format that might not have been done
+        // in the input box, so that output is consistent and format
+        // in the XML file is consistent
+        givenName = nameParts[1].trim()
+        familyName = nameParts[0].trim()
+      } else {
+        givenName = ''
+        familyName = nameParts[0]
+      }
+
       var creatorObject = {
         creatorName: {
           '@nameType': 'Personal',
-          $: ''
+          $: familyName  + ', ' + givenName
         },
-        givenName: { $: '' },
-        familyName: { $: '' }
+        givenName: { $: givenName },
+        familyName: { $: familyName }
       }
-
-      // clean up the ", " format that might not have been done
-      // in the input box, so that output is consistent and format
-      // in the XML file is consistent
-      var givenName = nameParts[1].trim()
-      var familyName = nameParts[0].trim()
-      creatorObject.creatorName['$'] = givenName + ", " + familyName
-      creatorObject.familyName['$'] = familyName
-      creatorObject.givenName['$'] = givenName
 
       return { creator: creatorObject }
     }
 
-    function setAuthor(authorList) {
-      // personalInfo is a new line delimited list of last name, first name elements
-      var names = authorList.split('\n')
-      for (var j = 0; j < names.length; j++) {
-        _selfDoc._badgerfishDoc.resource.creators['$'][j] = makeCreatorStanza(
-            names[j]
-        )
+    function setAuthorList(authorList) {
+      // authorList is an array of strings with structure 'family name, given name'
+      for (var j = 0; j < authorList.length; j++) {
+        _selfDoc._badgerfishDoc.resource.creators['$'][j] = makeCreatorStanza(authorList[j])
       }
     }
 
@@ -301,6 +312,12 @@
       _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$'] = title
     }
 
+    function setLanguage(language) {
+      if (language !== '') {
+        _selfDoc._badgerfishDoc.resource.language['$'] = language
+      }
+    }
+
     function getAuthorFullname() {
       return _selfDoc._badgerfishDoc.resource.creators['$'][0].creator.creatorName[
           '$'
@@ -309,14 +326,9 @@
 
     function getAuthorList() {
       var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
-      var authorList = ''
+      var authorList = new Array()
       for (var ix = 0; ix < listSize; ix++) {
-        authorList =
-            authorList +
-            _selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName[
-                '$'
-                ] +
-            '\n'
+        authorList.push(_selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName['$'])
       }
       return authorList
     }
@@ -325,8 +337,26 @@
       return _selfDoc._badgerfishDoc.resource.identifier['$']
     }
 
+    function getDOISuffix() {
+      var suffix = ''
+      if (_selfDoc._badgerfishDoc.resource.identifier['$'] !== '' &&
+          _selfDoc._badgerfishDoc.resource.identifier['$'].match('/') !== null) {
+        suffix = _selfDoc._badgerfishDoc.resource.identifier['$'].split('/')[1]
+      }
+      return suffix
+    }
+
     function getTitle() {
       return _selfDoc._badgerfishDoc.resource.titles['$'][0].title['$']
+    }
+
+    function getLanguage() {
+      var language = ''
+      if (typeof _selfDoc._badgerfishDoc.resource.language !== 'undefined') {
+        language = _selfDoc._badgerfishDoc.resource.language['$']
+      }
+
+      return language
     }
 
     initDoc()
@@ -334,14 +364,18 @@
     $.extend(this, {
       initDoc: initDoc,
       getDoc: getDoc,
+      clearDoc: clearDoc,
       populateDoc: populateDoc,
-      setAuthor: setAuthor,
+      setAuthorList: setAuthorList,
       setDOINumber: setDOINumber,
       setTitle: setTitle,
+      setLanguage: setLanguage,
       getAuthorFullname: getAuthorFullname,
       getAuthorList: getAuthorList,
       getDOINumber: getDOINumber,
-      getTitle: getTitle
+      getDOISuffix: getDOISuffix,
+      getTitle: getTitle,
+      getLanguage: getLanguage
     })
   }
 

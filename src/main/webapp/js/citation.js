@@ -102,7 +102,7 @@
 
     function setNotAuthenticated(errorMsg) {
       // modal is in _application_header.shtml, code found in canfar-root repository (ROOT.war)
-      $('#auth_modal').modal('show');
+      $('#auth_modal').modal('show')
       $('.doi-not-authenticated').removeClass('hidden')
       $('.doi-authenticated').addClass('hidden')
 
@@ -148,14 +148,14 @@
     }
 
     function setDeleteModal(doiName) {
-      $('#doi_delete_num').html(doiName);
-      $('#delete_modal').modal('show');
-    };
+      $('#doi_delete_num').html(doiName)
+      $('#delete_modal').modal('show')
+    }
 
     function hideInfoModal() {
-      $('#info_modal').modal('hide');
-      $('body').removeClass('modal-open');
-      $('.modal-backdrop').remove();
+      $('#info_modal').modal('hide')
+      $('body').removeClass('modal-open')
+      $('.modal-backdrop').remove()
     }
 
 
@@ -170,7 +170,7 @@
     function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal('Pease wait ', 'Deleting DOI ' + doiSuffix, true)
+      page.setInfoModal('Please wait ', 'Deleting DOI ' + doiSuffix, true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -200,7 +200,7 @@
       clearTable()
       page.setProgressBar('busy')
       setTableStatus('Loading...')
-      page.setInfoModal('Pease wait ', 'Processing request... (may take up to 10 seconds)', true)
+      page.setInfoModal('Please wait ', 'Processing request... (may take up to 10 seconds)', true)
 
       page.prepareCall().then(function(serviceURL) {
         $.ajax({
@@ -240,18 +240,18 @@
       newStatus.title = mkTitleLink(doi.title['$'], doiName)
       newStatus.action = mkDeleteLink(doiName)
 
-      addRow(newStatus);
+      addRow(newStatus)
     }
 
     // New DOI button click handler
     function handleDOIRequest(event) {
-      var win = window.open('/citation/request', '_blank');
+      var win = window.open('/citation/request', '_blank')
       if (win) {
         //Browser has allowed it to be opened
-        win.focus();
+        win.focus()
       } else {
         //Browser has blocked it
-        alert('Please allow popups for this website');
+        alert('Please allow popups for this website')
       }
     }
 
@@ -281,22 +281,22 @@
 
       // TODO: bug here - last row of table is duplicated for
       // total number of remaining rows on draw() ??
-      doiTable.rows().invalidate();
-      doiTable.draw();
+      doiTable.rows().invalidate()
+      doiTable.draw()
 
     }
 
     // ------------ Display/rendering functions ------------
 
     function parseDoiSuffix(doiName) {
-      var doiSuffix = "";
-      if (doiName.match("/")) {
-        doiSuffix = doiName.split("/")[1];
+      var doiSuffix = ''
+      if (doiName.match('/')) {
+        doiSuffix = doiName.split('/')[1]
       }
       else {
-        doiSuffix = doiName;
+        doiSuffix = doiName
       }
-      return doiSuffix;
+      return doiSuffix
     }
 
     function mkNameLink(doiName) {

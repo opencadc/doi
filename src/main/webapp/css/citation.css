@@ -42,6 +42,27 @@
   margin-left: 5px;
 }
 
+.doi-small-button {
+  height: 22px;
+  width: 22px;
+  text-align: center;
+  padding: 0px;
+  opacity: .6;
+  display: inline-block;
+  float: none;
+  vertical-align: middle;
+}
+
+.doi-vertical-align {
+  display: inline-block;
+  float: none;
+  vertical-align: middle;
+}
+
+.doi-small-button:hover {
+  opacity: .8;
+}
+
 .doi-listpage-header {
   margin-left: 10px;
   margin-top: 5px
@@ -52,7 +73,6 @@
   width: 100%;
   min-height: 40px;
 }
-
 
 .panel-body {
   background-image: linear-gradient(to bottom, #ffffff 0, #f5f5f5 100%);
@@ -71,10 +91,33 @@
   cursor: pointer;
 }
 
-.doi-landing {
-  margin-top: 5px;
+.doi-form-input {
+  height: 36px;
 }
 
-.doi-landing-text {
-  margin-bottom: 20px;
+.doi-form-info {
+  padding-top: 7px;
+  display: inline-block;
+  float: none;
+  vertical-align: middle;
 }
+
+.doi-inline-radio {
+  padding: 0px;
+}
+
+#doi_language {
+  padding-top: 4px;
+  padding-bottom: 2px;
+}
+
+#doi_language > label {
+  padding-top: 4px;
+  padding-bottom: 2px;
+}
+
+.doi-remove-author {
+  padding-bottom: 5px;
+}
+
+

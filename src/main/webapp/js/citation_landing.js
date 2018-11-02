@@ -110,7 +110,12 @@
     }
 
     function displayMetadata() {
-      $('#doi_creator_list').text(doiDoc.getAuthorList())
+      var authorList = doiDoc.getAuthorList()
+      var authorListString = ''
+      for (var i=0; i< authorList.length; i++ ){
+        authorListString += authorList[i] + ' '
+      }
+      $('#doi_creator_list').text(authorListString)
       $('#doi_title').text(doiDoc.getTitle())
     }
 

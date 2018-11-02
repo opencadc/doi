@@ -44,6 +44,8 @@
       $('#doi_form_delete_button').click(handleDOIDelete)
       $('#doi_request_form').submit(handleDOIRequest)
 
+      $('#doi_add_author').click(handleAddAuthor)
+
       page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
         parseUrl()
       })
@@ -59,6 +61,7 @@
       $('#doi_landing_page').html('')
       page.setProgressBar('okay')
       setButtonState('create')
+      $('#doi_additional_authors').empty()
 
       // Do this only if explicitly asked
       // If this comes in from clicking the 'Clear' button, the data will be
@@ -70,24 +73,66 @@
 
     function setButtonState(mode) {
       if (mode === 'update') {
-        $('.doi_edit').removeClass('hidden')
-        $('#doi_create_button').addClass('hidden')
+        $('#doi_action_button').text('Update')
         $('#doi_form_delete_button').removeClass('hidden')
       } else if (mode === 'create') {
         $('.doi_edit').addClass('hidden')
-        $('#doi_create_button').removeClass('hidden')
+        $('#doi_action_button').text('Create')
         $('#doi_form_delete_button').addClass('hidden')
       }
+    }
+
+    // Must be 1 to start
+    var authorcount = 1
+    function handleAddAuthor(event) {
+      buildAuthorInput(authorcount++)
+    }
+
+    function buildAuthorInput(authorNum) {
+      // something to handle tabindex.. TODO
+      var elementName = 'addtl_author_' + authorNum
+      var elementId = 'doi_' + elementName
+      var paretElementId = 'doi_' + elementName + '_div'
+
+      var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + paretElementId + '" >' +
+          '<input type="text" class="form-control doi-form-input"  name="' + elementName +
+          '"placeholder="family name, given name" id="' + elementId + '" />' +
+          '<div class="input-group-addon">' +
+          '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
+          '</div></div>'
+
+      $('#doi_additional_authors').append(inputHtml)
+      $('#' + elementName).bind('click', handleRemoveAuthor)
+      return elementName
+    }
+
+    function addAuthorStanza(authorName) {
+      var elementName = buildAuthorInput(authorcount++)
+      $('#doi_' + elementName).val(authorName)
+    }
+
+    function handleRemoveAuthor(event) {
+      var elId = event.currentTarget.getAttribute('id')
+      $('#' + elId).unbind('click')
+      // Remove entire input-group
+      $('#doi_' + elId + '_div').remove()
     }
 
     // ------------ HTTP/Ajax functions ------------
 
     // POST
     function handleDOIRequest(event) {
+      // Stop normal form submit
+      event.preventDefault()
       // Clear any previous error bars
       page.clearAjaxAlert()
       var _formdata = $(this).serializeArray()
-      var journalRef = ""
+      // Disabled fields are not included in .serializeArray()...
+      // Grab the doiNumber field
+      _formdata.push({'name': 'doiNumber' , 'value': $('#doi_number').val()})
+      var journalRef = ''
+      var additionalAuthors = new Array()
+      doiDoc.clearDoc()
 
       for (var i = 0, fdl = _formdata.length; i < fdl; i++) {
         var formField = _formdata[i]
@@ -102,37 +147,62 @@
             doiDoc.setDOINumber(formField.value)
             break
           }
-          case 'creatorList': {
-            doiDoc.setAuthor(formField.value)
+          case 'firstAuthor': {
+            additionalAuthors.push(formField.value)
             break
           }
           case 'journalRef' : {
             journalRef = formField.value
             break
           }
+          case 'doiLanguage' : {
+            doiDoc.setLanguage(formField.value)
+            break
+          }
           default: {
+            // Check to see if this an additional author:
+            if (formField.name.match('addtl_author_')) {
+              additionalAuthors.push(formField.value)
+            }
             break
           }
         }
       }
 
+      doiDoc.setAuthorList(additionalAuthors)
+
       page.setProgressBar('busy')
+
+      // Display message and set URL addition depending on whether
+      // this is a CREATE or UPDATE function
+      var urlAddition = ''
+      var modalMessage = ''
+      var doiSuffix = doiDoc.getDOISuffix()
+      if (doiSuffix !== '') {
+        urlAddition = '/' + doiSuffix
+        modalMessage += ' Updating Data DOI ' + doiSuffix + '...'
+      }
+      else {
+        modalMessage += 'Requesting new Data DOI...'
+      }
+      page.setInfoModal('Please wait ', modalMessage, false)
 
       // Set up the multi part data to be submitted to the
       // doi web service
-      var multiPartData = new FormData();
+      var multiPartData = new FormData()
       multiPartData.append( 'journalRef', journalRef)
 
       // 'Blob' type is requred to have the 'filename="blob" parameter added
       // to the multipart section, and have the Content-type header added
       multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getDoc())], {
         type: 'application/json'
-      }));
+      }))
 
       page.prepareCall().then(function(serviceURL) {
+
         $.ajax({
           xhrFields: { withCredentials: true },
-          url: serviceURL,
+          url: serviceURL + urlAddition,
           method: 'POST',
           dataType: 'json',
           cache: false,
@@ -144,6 +214,7 @@
           // POST redirects to a get.
           // Load the data returned into the local doiDocument to be
           // accessed.
+          hideInfoModal()
           page.setProgressBar('okay')
           $('#doi_number').val(data.resource.identifier['$'])
           var doiSuffix = data.resource.identifier['$'].split('/')[1]
@@ -153,9 +224,10 @@
           populateForm()
 
           // Kick off status call
-          getDoiStatus(doiSuffix);
+          getDoiStatus(doiSuffix)
         })
         .fail(function(message) {
+          hideInfoModal()
           page.setAjaxFail(message)
         })
       })
@@ -167,7 +239,7 @@
     function handleDOIGet(doiNumber) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal('Please wait ', 'Processing request...', true)
+      page.setInfoModal('Please wait ', 'Fetching DOI ' + doiNumber + '...', true)
 
       // Submit doc using ajax
       page.prepareCall().then(function(serviceURL) {
@@ -189,7 +261,7 @@
           populateForm()
 
           // Kick off status call
-          getDoiStatus(doiSuffix);
+          getDoiStatus(doiSuffix)
         })
         .fail(function(message) {
           hideInfoModal()
@@ -273,15 +345,28 @@
     }
 
     function populateForm() {
-      $('#doi_creator_list').val(doiDoc.getAuthorList())
+      var authorList = doiDoc.getAuthorList()
+
+      // First author is assumed to be the first one sent back
+      $('#doi_author').val(authorList[0])
+
+      // Additional authors may be present in the doiDoc
+      $('#doi_additional_authors').empty()
+      for (var i=1; i<authorList.length; i++) {
+        addAuthorStanza(authorList[i])
+      }
       $('#doi_title').val(doiDoc.getTitle())
       $('#doi_number').val(doiDoc.getDOINumber())
+
+      if (doiDoc.getLanguage() !== '') {
+        var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click()
+      }
     }
 
     function hideInfoModal() {
-      $('#info_modal').modal('hide');
-      $('body').removeClass('modal-open');
-      $('.modal-backdrop').remove();
+      $('#info_modal').modal('hide')
+      $('body').removeClass('modal-open')
+      $('.modal-backdrop').remove()
     }
 
     $.extend(this, {
