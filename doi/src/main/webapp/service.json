@@ -64,15 +64,7 @@
           "503": {
             "description": "Temporarily unavailable"
           }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
+        }
       },
       "put": {
         "tags": [
@@ -110,15 +102,7 @@
           "404": {
             "description": "DOI not found"
           }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
+        }
       },
       "get": {
         "tags": [
@@ -154,18 +138,73 @@
           "503": {
             "description": "Temporarily unavailable"
           }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
+        }
       }
     },
     "/instances/{DOINum}": {
+      "post": {
+        "tags": [
+          "instances"
+        ],
+        "summary": "Update a DOI instance",
+        "description": "Multipart update request. One part contains the DOI instance. Another part contains the optional journal reference",
+        "requestBody": {
+          "required": "true",
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fc": {
+                    "type": "object",
+                    "schema": {
+                      "$ref": "#/definitions/DOIMeta"
+                    }
+                  },
+                  "journalRef": {
+                    "type": "string",
+                    "example": "10.5072/example-full"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "DOINum",
+            "in": "path",
+            "description": "Digital Object Identifier number to retrieve",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "DOI update successful."
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "403": {
+            "description": "Not authorised"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
+          }
+        }
+      },
       "get": {
         "tags": [
           "instances"
@@ -208,15 +247,7 @@
           "503": {
             "description": "Temporarily unavailable"
           }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
+        }
       },
       "delete": {
         "tags": [
@@ -251,15 +282,7 @@
           "503": {
             "description": "Temporarily unavailable"
           }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
+        }
       }
     },
     "/instances/{DOINum}/status": {
@@ -305,32 +328,8 @@
           "503": {
             "description": "Temporarily unavailable"
           }
-        },
-        "security": [
-          {
-            "petstore_auth": [
-              "write:pets",
-              "read:pets"
-            ]
-          }
-        ]
+        }
       }
-    }
-  },
-  "securityDefinitions": {
-    "petstore_auth": {
-      "type": "oauth2",
-      "authorizationUrl": "http://petstore.swagger.io/oauth/dialog",
-      "flow": "implicit",
-      "scopes": {
-        "write:pets": "modify pets in your account",
-        "read:pets": "read your pets"
-      }
-    },
-    "api_key": {
-      "type": "apiKey",
-      "name": "api_key",
-      "in": "header"
     }
   },
   "definitions": {
