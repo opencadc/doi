@@ -69,18 +69,15 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-public class DoiParsingException extends Exception
-{
+public class DoiParsingException extends Exception {
     private static final long serialVersionUID = -5942924380206370808L;
 
-    public DoiParsingException(String message)
-    {
+    public DoiParsingException(String message) {
         super(message);
     }
 
-    public DoiParsingException(String message, Throwable cause)
-    {
+    public DoiParsingException(String message, Throwable cause) {
         super(message, cause);
     }
-    
+
 }

@@ -75,39 +75,38 @@ import ca.nrc.cadc.xml.JsonInputter;
 import org.apache.log4j.Logger;
 
 /**
- * Constructs a DoiStatus instance from a JSON source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple JSON node
- * documents.
+ * Constructs a DoiStatus instance from a JSON source. This class is not thread
+ * safe but it is re-usable so it can safely be used to sequentially parse
+ * multiple JSON node documents.
  *
  * @author yeunga
  */
-public class DoiStatusJsonReader extends DoiStatusReader
-{
+public class DoiStatusJsonReader extends DoiStatusReader {
     private static final Logger log = Logger.getLogger(DoiStatusJsonReader.class);
- 
+
     /**
      * Constructor. XML Schema validation is enabled by default.
      */
-    public DoiStatusJsonReader() { }
+    public DoiStatusJsonReader() {
+    }
 
     /**
-     *  Construct a DoiStatus instance from a JSON String source.
+     * Construct a DoiStatus instance from a JSON String source.
      *
-     * @param xml String of the JSON.
+     * @param xml
+     *            String of the JSON.
      * @return DoiStatus object containing the status of DOI instance.
-     * @throws DoiParsingException if there is an error parsing the JSON.
+     * @throws DoiParsingException
+     *             if there is an error parsing the JSON.
      */
-    public DoiStatus read(String json) throws DoiParsingException
-    {
-        if (json == null)
+    public DoiStatus read(String json) throws DoiParsingException {
+        if (json == null) {
             throw new IllegalArgumentException("JSON string must not be null");
-        try
-        {
+        }
+        try {
             JsonInputter inputter = new JsonInputter();
             return this.buildStatus(inputter.input(json));
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             String error = "Error reading JSON string: " + ex.getMessage();
             throw new DoiParsingException(error, ex);
         }

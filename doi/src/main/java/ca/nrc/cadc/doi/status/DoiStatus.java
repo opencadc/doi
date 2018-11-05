@@ -85,8 +85,7 @@ import org.apache.log4j.Logger;
  * @author yeunga
  *
  */
-public class DoiStatus
-{
+public class DoiStatus {
     private static Logger log = Logger.getLogger(DoiStatus.class);
 
     private Identifier identifier;
@@ -95,38 +94,31 @@ public class DoiStatus
     private Status status;
     public String journalRef;
 
-    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status)
-    { 
-        if (identifier == null || title == null || !StringUtil.hasText(dataDirectory) || 
-            status == null)
-        {
+    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) {
+        if (identifier == null || title == null || !StringUtil.hasText(dataDirectory) || status == null) {
             String msg = "identifier, title, dataDirectory and status must be specified.";
             throw new IllegalArgumentException(msg);
         }
-                
+
         this.identifier = identifier;
         this.title = title;
         this.dataDirectory = dataDirectory;
         this.status = status;
     }
-    
-    public Identifier getIdentifier()
-    {
+
+    public Identifier getIdentifier() {
         return this.identifier;
     }
-    
-    public Title getTitle()
-    {
+
+    public Title getTitle() {
         return this.title;
     }
-    
-    public String getDataDirectory()
-    {
+
+    public String getDataDirectory() {
         return this.dataDirectory;
     }
-    
-    public Status getStatus()
-    {
+
+    public Status getStatus() {
         return this.status;
     }
 

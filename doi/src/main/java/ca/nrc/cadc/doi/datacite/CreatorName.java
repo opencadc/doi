@@ -77,35 +77,33 @@ import org.springframework.util.StringUtils;
  * 
  * @author yeunga
  */
-public class CreatorName
-{
-    
+public class CreatorName {
+
     private static Logger log = Logger.getLogger(CreatorName.class);
-    
+
     // name of creator
     private String text;
     public NameType nameType;
 
     /**
      * Constructor.
-     * @param name of creator
+     * 
+     * @param name
+     *            of creator
      */
-    public CreatorName(String creatorName)
-    {
-        if (!StringUtils.hasText(creatorName))
-        {
+    public CreatorName(String creatorName) {
+        if (!StringUtils.hasText(creatorName)) {
             String msg = "creatorName must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.text = creatorName;
     }
 
     /**
      * @return creator name.
      */
-    public String getText()
-    {
+    public String getText() {
         return this.text;
     }
 }

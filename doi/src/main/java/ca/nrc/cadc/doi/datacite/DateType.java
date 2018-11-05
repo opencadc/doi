@@ -79,42 +79,36 @@ package ca.nrc.cadc.doi.datacite;
  * @author jeevesh
  *
  */
-public enum DateType
-{
+public enum DateType {
     ACCEPTED("Accepted"), // To indicate the start of an embargo period
     AVAILABLE("Available"), // To indicate the end of an embargo period
-    COLLECTED("Collected"),
-    COPYRIGHTED("Copyrighted"),
-    CREATED("Created"),
-    ISSUED("Issued"),
-    OTHER("Other"),
+    COLLECTED("Collected"), 
+    COPYRIGHTED("Copyrighted"), 
+    CREATED("Created"), 
+    ISSUED("Issued"), 
+    OTHER("Other"), 
     SUBMITTED("Submitted"), // To indicate the start of an embargo period
-    UPDATED("Updated"),
-    VALID("Valid");
+    UPDATED("Updated"), VALID("Valid");
 
     private final String value;
 
-    private DateType(String value)
-    {
+    private DateType(String value) {
         this.value = value;
     }
-    
-    public static DateType toValue(String s)
-    {
+
+    public static DateType toValue(String s) {
         for (DateType status : values())
             if (status.value.equals(s))
                 return status;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

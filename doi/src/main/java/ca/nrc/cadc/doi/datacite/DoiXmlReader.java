@@ -85,27 +85,27 @@ import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
 
 /**
- * Constructs a DoiMetadata from an XML source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple XML node
- * documents.
+ * Constructs a DoiMetadata from an XML source. This class is not thread safe
+ * but it is re-usable so it can safely be used to sequentially parse multiple
+ * XML node documents.
  *
  * @author yeunga
  */
-public class DoiXmlReader extends DoiReader
-{
+public class DoiXmlReader extends DoiReader {
     private static final Logger log = Logger.getLogger(DoiXmlReader.class);
-    
+
     static final String DOI_NS_41 = "http://datacite.org/schema/kernel-4";
     static final String DOI_SCHEMA_RESOURCE_41 = "DoiMetadata-4.1.xsd";
 
-    
     protected Map<String, String> schemaMap;
     protected Namespace xsiNamespace;
 
     /**
      * Constructor. XML Schema validation is enabled by default.
      */
-    public DoiXmlReader() { this(true); }
+    public DoiXmlReader() {
+        this(true);
+    }
 
     /**
      * Constructor. XML schema validation may be disabled, in which case the client
@@ -114,10 +114,8 @@ public class DoiXmlReader extends DoiReader
      *
      * @param enableSchemaValidation
      */
-    public DoiXmlReader(boolean enableSchemaValidation)
-    {
-        if (enableSchemaValidation)
-        {
+    public DoiXmlReader(boolean enableSchemaValidation) {
+        if (enableSchemaValidation) {
             String doiSchemaUrl4 = XmlUtil.getResourceUrlString(DOI_SCHEMA_RESOURCE_41, DoiXmlReader.class);
             log.debug("doiSchemaUrl4: " + doiSchemaUrl4);
 
@@ -127,30 +125,26 @@ public class DoiXmlReader extends DoiReader
             schemaMap = new HashMap<String, String>();
             schemaMap.put(DOI_NS_41, doiSchemaUrl4);
             log.debug("schema validation enabled");
-        }
-        else
-        {
+        } else {
             log.debug("schema validation disabled");
         }
     }
 
     /**
-     *  Construct a DOM document from an XML String source.
+     * Construct a DOM document from an XML String source.
      *
-     * @param xml String of the XML.
+     * @param xml
+     *            String of the XML.
      * @return Resource object containing all doi metadata.
-     * @throws DoiParsingException if there is an error parsing the XML.
+     * @throws DoiParsingException
+     *             if there is an error parsing the XML.
      */
-    public Resource read(String xml) throws DoiParsingException
-    {
+    public Resource read(String xml) throws DoiParsingException {
         if (xml == null)
             throw new IllegalArgumentException("XML must not be null");
-        try
-        {
+        try {
             return read(new StringReader(xml));
-        }
-        catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             String error = "Error reading XML: " + ioe.getMessage();
             throw new DoiParsingException(error, ioe);
         }
@@ -159,51 +153,46 @@ public class DoiXmlReader extends DoiReader
     /**
      * Construct a DOM document from a InputStream.
      *
-     * @param in InputStream.
+     * @param in
+     *            InputStream.
      * @return Resource object containing all doi metadata.
-     * @throws DoiParsingException if there is an error parsing the XML.
+     * @throws DoiParsingException
+     *             if there is an error parsing the XML.
      */
-    public Resource read(InputStream in) throws IOException, DoiParsingException
-    {
+    public Resource read(InputStream in) throws IOException, DoiParsingException {
         if (in == null)
             throw new IOException("stream closed");
-        try
-        {
+        try {
             return read(new InputStreamReader(in, "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e)
-        {
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 encoding not supported");
         }
     }
 
     /**
-     *  Construct a DOM document from a Reader.
+     * Construct a DOM document from a Reader.
      *
-     * @param reader Reader.
+     * @param reader
+     *            Reader.
      * @return Resource object containing all doi metadata.
-     * @throws NodeParsingException if there is an error parsing the XML.
+     * @throws NodeParsingException
+     *             if there is an error parsing the XML.
      */
-    public Resource read(Reader reader) 
-    		throws DoiParsingException, IOException
-    {
+    public Resource read(Reader reader) throws DoiParsingException, IOException {
         if (reader == null)
             throw new IllegalArgumentException("reader must not be null");
 
         // Create a JDOM Document from the XML
         Document document;
-        try
-        {
+        try {
             // TODO: investigate creating a SAXBuilder once and re-using it
             // as long as we can detect concurrent access (a la java collections)
             document = XmlUtil.buildDocument(reader, schemaMap);
-        }
-        catch (JDOMException jde)
-        {
+        } catch (JDOMException jde) {
             String error = "XML failed schema validation: " + jde.getMessage();
             throw new DoiParsingException(error, jde);
         }
-       
+
         return this.buildResource(document);
     }
 }

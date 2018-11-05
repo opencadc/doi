@@ -79,46 +79,43 @@ import org.springframework.util.StringUtils;
  * 
  * @author yeunga
  */
-public class NameIdentifier
-{
-    
+public class NameIdentifier {
+
     private static Logger log = Logger.getLogger(NameIdentifier.class);
-    
+
     public URI schemeURI;
     private String nameIdentifierScheme;
     private String nameIdentifier;
 
     /**
      * NameIdentifier constructor.
-     * @param nameIdentifierSchem scheme of this name identifier
-     * @param nameIdentifier value of this name identifier
+     * 
+     * @param nameIdentifierSchem
+     *            scheme of this name identifier
+     * @param nameIdentifier
+     *            value of this name identifier
      */
-    public NameIdentifier(String nameIdentifierScheme, String nameIdentifier)
-    {
-        if (!StringUtils.hasText(nameIdentifierScheme) ||
-            !StringUtils.hasText(nameIdentifier))
-        {
+    public NameIdentifier(String nameIdentifierScheme, String nameIdentifier) {
+        if (!StringUtils.hasText(nameIdentifierScheme) || !StringUtils.hasText(nameIdentifier)) {
             String msg = "nameIdentifierScheme and nameIdentifier must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.nameIdentifierScheme = nameIdentifierScheme;
         this.nameIdentifier = nameIdentifier;
     }
-    
+
     /**
      * @return the scheme of this name identifier.
      */
-    public String getNameIdentifierScheme()
-    {
+    public String getNameIdentifierScheme() {
         return this.nameIdentifierScheme;
     }
-    
+
     /**
      * @return this name identifier.
      */
-    public String getNameIdentifier()
-    {
+    public String getNameIdentifier() {
         return this.nameIdentifier;
     }
 

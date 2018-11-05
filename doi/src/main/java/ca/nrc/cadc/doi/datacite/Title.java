@@ -77,11 +77,10 @@ import org.springframework.util.StringUtils;
  * 
  * @author yeunga
  */
-public class Title
-{
-    
+public class Title {
+
     private static Logger log = Logger.getLogger(Title.class);
-    
+
     // lang uses the xml namespace
     private String lang;
     public TitleType titleType;
@@ -89,18 +88,18 @@ public class Title
 
     /**
      * Title constructor.
-     * @param lang language used, e.g. en-US
-     * @param title title text
+     * 
+     * @param lang
+     *            language used, e.g. en-US
+     * @param title
+     *            title text
      */
-    public Title(String lang, String title)
-    {
-        if (!StringUtils.hasText(lang) || 
-            !StringUtils.hasText(title))
-        {
+    public Title(String lang, String title) {
+        if (!StringUtils.hasText(lang) || !StringUtils.hasText(title)) {
             String msg = "lang and title must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.lang = lang;
         this.text = title;
     }
@@ -108,16 +107,14 @@ public class Title
     /**
      * @return language used in this title.
      */
-    public String getLang()
-    {
+    public String getLang() {
         return this.lang;
     }
-        
+
     /**
      * @return title text
      */
-    public String getText()
-    {
-        return this.text; 
+    public String getText() {
+        return this.text;
     }
 }

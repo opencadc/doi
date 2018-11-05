@@ -77,39 +77,37 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * Constructs a list of DoiStatus instances from a JSON source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple JSON node
- * documents.
+ * Constructs a list of DoiStatus instances from a JSON source. This class is
+ * not thread safe but it is re-usable so it can safely be used to sequentially
+ * parse multiple JSON node documents.
  *
  * @author yeunga
  */
-public class DoiStatusListJsonReader extends DoiStatusListReader
-{
+public class DoiStatusListJsonReader extends DoiStatusListReader {
     private static final Logger log = Logger.getLogger(DoiStatusListJsonReader.class);
- 
+
     /**
      * Constructor. XML Schema validation is enabled by default.
      */
-    public DoiStatusListJsonReader() { }
+    public DoiStatusListJsonReader() {
+    }
 
     /**
-     *  Construct a list of DoiStatus instances from a JSON String source.
+     * Construct a list of DoiStatus instances from a JSON String source.
      *
-     * @param xml String of the JSON.
+     * @param xml
+     *            String of the JSON.
      * @return List of DoiStatus objects containing the status of each DOI instance.
-     * @throws DoiParsingException if there is an error parsing the JSON.
+     * @throws DoiParsingException
+     *             if there is an error parsing the JSON.
      */
-    public List<DoiStatus> read(String json) throws DoiParsingException
-    {
+    public List<DoiStatus> read(String json) throws DoiParsingException {
         if (json == null)
             throw new IllegalArgumentException("JSON string must not be null");
-        try
-        {
+        try {
             JsonInputter inputter = new JsonInputter();
             return this.buildStatusList(inputter.input(json));
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             String error = "Error reading JSON string: " + ex.getMessage();
             throw new DoiParsingException(error, ex);
         }

@@ -79,36 +79,31 @@ package ca.nrc.cadc.doi.datacite;
  * @author yeunga
  *
  */
-public enum TitleType
-{
-    ALTERNATIVE_TITLE("AlternativeTitle"),
-    SUBTITLE("Subtitle"),
-    TRANSLATED_TITLE("TranslatedTitle"),
+public enum TitleType {
+    ALTERNATIVE_TITLE("AlternativeTitle"), 
+    SUBTITLE("Subtitle"), 
+    TRANSLATED_TITLE("TranslatedTitle"), 
     OTHER("Other");
-    
+
     private final String value;
-    
-    private TitleType(String value)
-    {
+
+    private TitleType(String value) {
         this.value = value;
     }
-    
-    public static TitleType toValue(String s)
-    {
+
+    public static TitleType toValue(String s) {
         for (TitleType type : values())
             if (type.value.equals(s))
                 return type;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

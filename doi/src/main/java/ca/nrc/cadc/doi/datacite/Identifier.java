@@ -73,55 +73,50 @@ import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 /**
- * A persistent identifier that identifies a resource.
- *      * 
- * To prevent the identifier from being accidentally created,
- * there is no method provided to set the identifier. 
- * The identifier field is set by DoiReader.assignIdentifier() via reflection.
+ * A persistent identifier that identifies a resource. * To prevent the
+ * identifier from being accidentally created, there is no method provided to
+ * set the identifier. The identifier field is set by
+ * DoiReader.assignIdentifier() via reflection.
  * 
  * @author yeunga
  */
-public class Identifier
-{
-    
+public class Identifier {
+
     private static Logger log = Logger.getLogger(Identifier.class);
-    
+
     // currently, only DOI identifier type is allowed..
     private String identifierType;
-    
+
     // the identifier
     private String text;
 
     /**
      * Identifier constructor.
      * 
-     * @param identifierType type of the identifier
-
+     * @param identifierType
+     *            type of the identifier
+     * 
      */
-    public Identifier(String identifierType) 
-    { 
-        if (!StringUtils.hasText(identifierType))
-        {
+    public Identifier(String identifierType) {
+        if (!StringUtils.hasText(identifierType)) {
             String msg = "identifierType must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.identifierType = identifierType;
     }
 
     /**
      * @return type of this identifier.
      */
-    public String getIdentifierType()
-    {
+    public String getIdentifierType() {
         return this.identifierType;
     }
-    
+
     /**
      * @return the identifier text
      */
-    public String getText()
-    {
+    public String getText() {
         return this.text;
     }
 }

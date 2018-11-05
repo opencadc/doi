@@ -72,39 +72,39 @@ package ca.nrc.cadc.doi.datacite;
 import org.apache.log4j.Logger;
 
 /**
- * The type of a resource. Additional free text description can be entered into resourceTypeGeneral.
+ * The type of a resource. Additional free text description can be entered into
+ * resourceTypeGeneral.
  * 
  * @author yeunga
  */
-public class DoiResourceType
-{
-    
+public class DoiResourceType {
+
     private static Logger log = Logger.getLogger(DoiResourceType.class);
-    
+
     public String resourceTypeGeneral;
     private ResourceType resourceType;
 
     /**
      * ResourceType constructor.
-     * @param resourceTypeGeneral additional text description for this resource type
-     * @param resourceType type of this resource
+     * 
+     * @param resourceTypeGeneral
+     *            additional text description for this resource type
+     * @param resourceType
+     *            type of this resource
      */
-    public DoiResourceType(ResourceType resourceType)
-    {
-        if (resourceType == null)
-        {
+    public DoiResourceType(ResourceType resourceType) {
+        if (resourceType == null) {
             String msg = "resourceType must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.resourceType = resourceType;
     }
-    
+
     /**
      * @return type of this resource
      */
-    public ResourceType getResourceType()
-    {
-        return this.resourceType; 
+    public ResourceType getResourceType() {
+        return this.resourceType;
     }
 }

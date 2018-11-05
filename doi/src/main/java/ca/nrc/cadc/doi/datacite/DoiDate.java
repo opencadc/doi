@@ -77,11 +77,10 @@ import org.springframework.util.StringUtils;
  * 
  * @author jeevesh
  */
-public class DoiDate
-{
+public class DoiDate {
     private static Logger log = Logger.getLogger(DoiDate.class);
 
-    // YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or 
+    // YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or
     // any other format or level of granularity described in W3CDTF.
     private String isoDate;
     private DateType dateType; // DoiDate enum has valid values
@@ -89,28 +88,27 @@ public class DoiDate
 
     /**
      * DoiDate constructor.
-     * @param isoDate type of this resource
-     * @param dateType additional text description for this resource type
+     * 
+     * @param isoDate
+     *            type of this resource
+     * @param dateType
+     *            additional text description for this resource type
      */
-    public DoiDate(String isoDate, DateType dateType)
-    {
-        if (!StringUtils.hasText(isoDate) || dateType == null )
-        {
+    public DoiDate(String isoDate, DateType dateType) {
+        if (!StringUtils.hasText(isoDate) || dateType == null) {
             String msg = "isoDate and dateType must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.isoDate = isoDate;
         this.dateType = dateType;
     }
 
-    public String getIsoDate()
-    {
+    public String getIsoDate() {
         return this.isoDate;
     }
 
-    public DateType getDateType()
-    {
+    public DateType getDateType() {
         return this.dateType;
     }
 

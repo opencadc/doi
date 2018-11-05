@@ -77,35 +77,33 @@ import org.springframework.util.StringUtils;
  * 
  * @author yeunga
  */
-public class ContributorName
-{
-    
+public class ContributorName {
+
     private static Logger log = Logger.getLogger(ContributorName.class);
-    
+
     // name of contributor
     private String text;
     public NameType nameType;
 
     /**
      * Constructor.
-     * @param name of contributor
+     * 
+     * @param name
+     *            of contributor
      */
-    public ContributorName(String contributorName)
-    {
-        if (!StringUtils.hasText(contributorName))
-        {
+    public ContributorName(String contributorName) {
+        if (!StringUtils.hasText(contributorName)) {
             String msg = "contributorName must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.text = contributorName;
     }
 
     /**
      * @return contributor name.
      */
-    public String getText()
-    {
+    public String getText() {
         return this.text;
     }
 }

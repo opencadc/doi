@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi.status;
 
-
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -80,18 +79,16 @@ import org.jdom2.Element;
  * 
  * @author yeunga
  */
-public class DoiStatusListWriter 
-{
+public class DoiStatusListWriter {
     private static Logger log = Logger.getLogger(DoiStatusListWriter.class);
 
-    public DoiStatusListWriter() { }
+    public DoiStatusListWriter() {
+    }
 
-    protected Element getRootElement(List<DoiStatus> doiStatusList)
-    {
+    protected Element getRootElement(List<DoiStatus> doiStatusList) {
         DoiStatusWriter doiStatusWriter = new DoiStatusWriter();
         Element root = new Element("doiStatuses");
-        for (DoiStatus doiStatus : doiStatusList)
-        {
+        for (DoiStatus doiStatus : doiStatusList) {
             Element statusElement = doiStatusWriter.getDoiStatusElement(doiStatus);
             root.addContent(statusElement);
         }

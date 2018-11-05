@@ -82,27 +82,25 @@ import org.jdom2.Element;
  *
  * @author yeunga
  */
-public class DoiStatusListReader
-{
+public class DoiStatusListReader {
     private static final Logger log = Logger.getLogger(DoiStatusListReader.class);
 
     /**
      * Constructor.
      */
-    public DoiStatusListReader() { }
-    
-    protected List<DoiStatus> buildStatusList(Document doc) throws DoiParsingException
-    {
+    public DoiStatusListReader() {
+    }
+
+    protected List<DoiStatus> buildStatusList(Document doc) throws DoiParsingException {
         DoiStatusReader doiStatusReader = new DoiStatusReader();
-        List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>(); 
+        List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>();
         Element root = doc.getRootElement();
         List<Element> childrenElements = root.getChildren();
-        for (Element childElement : childrenElements)
-        {
+        for (Element childElement : childrenElements) {
             DoiStatus doiStatus = doiStatusReader.buildStatus(childElement);
             doiStatusList.add(doiStatus);
         }
-        
+
         return doiStatusList;
     }
 }

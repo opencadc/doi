@@ -72,24 +72,22 @@ package ca.nrc.cadc.doi.datacite;
 import org.apache.log4j.Logger;
 
 /**
- * One of the main researchers or authors.
- * The main researchers involved working on the data, 
- * or the authors of the publication in priority order. 
- * May be a corporate/institutional or personal name.
+ * One of the main researchers or authors. The main researchers involved working
+ * on the data, or the authors of the publication in priority order. May be a
+ * corporate/institutional or personal name.
  * 
  * @author yeunga
  */
-public class Creator
-{
-    
+public class Creator {
+
     private static Logger log = Logger.getLogger(Creator.class);
-    
+
     // Name of the creator.
     private CreatorName creatorName;
-    
+
     // Given name of the creator.
     public String givenName;
-    
+
     // Family name of the creator.
     public String familyName;
 
@@ -101,12 +99,12 @@ public class Creator
 
     /**
      * Creator constructor.
-     * @param name Name of creator
+     * 
+     * @param name
+     *            Name of creator
      */
-    public Creator(CreatorName creatorName)
-    {
-        if (creatorName == null)
-        {
+    public Creator(CreatorName creatorName) {
+        if (creatorName == null) {
             String msg = "creatorName must be specified.";
             throw new IllegalArgumentException(msg);
         }
@@ -116,8 +114,7 @@ public class Creator
     /**
      * @return creatorName of the creator.
      */
-    public CreatorName getCreatorName()
-    {
+    public CreatorName getCreatorName() {
         return this.creatorName;
     }
 }

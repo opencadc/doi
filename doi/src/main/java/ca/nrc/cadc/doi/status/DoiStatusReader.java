@@ -87,36 +87,32 @@ import org.jdom2.Namespace;
  *
  * @author yeunga
  */
-public class DoiStatusReader
-{
+public class DoiStatusReader {
     private static final Logger log = Logger.getLogger(DoiStatusReader.class);
 
     /**
      * Constructor.
      */
-    public DoiStatusReader() { }
-    
-    protected DoiStatus buildStatus(Document doc) throws DoiParsingException
-    {
+    public DoiStatusReader() {
+    }
+
+    protected DoiStatus buildStatus(Document doc) throws DoiParsingException {
         Element root = doc.getRootElement();
         return buildStatus(root);
     }
-    
-    public DoiStatus buildStatus(Element root) throws DoiParsingException
-    {
+
+    public DoiStatus buildStatus(Element root) throws DoiParsingException {
         Identifier id = buildIdentifier(root);
         Title title = buildTitle(root);
-        
-        if (root.getChild("dataDirectory") == null)
-        {
+
+        if (root.getChild("dataDirectory") == null) {
             String msg = "dataDirectory not found in doi status element.";
             throw new DoiParsingException(msg);
         }
-        
+
         String dataDirectory = root.getChild("dataDirectory").getText();
-        
-        if (root.getChild("status") == null)
-        {
+
+        if (root.getChild("status") == null) {
             String msg = "status not found in doi status element.";
             throw new DoiParsingException(msg);
         }
@@ -129,12 +125,11 @@ public class DoiStatusReader
             String journalReference = root.getChild("journalRef").getText();
             ds.journalRef = journalReference;
         }
-        
+
         return ds;
     }
-    
-    protected Identifier buildIdentifier(Element root)
-    {
+
+    protected Identifier buildIdentifier(Element root) {
         Namespace ns = root.getNamespace();
         Element identifierElement = root.getChild("identifier", ns);
         String text = identifierElement.getText();
@@ -143,37 +138,31 @@ public class DoiStatusReader
         DoiReader.assignIdentifier(id, text);
         return id;
     }
-    
-    protected Title buildTitle(Element root) throws DoiParsingException
-    {
+
+    protected Title buildTitle(Element root) throws DoiParsingException {
         Element titleElement = root.getChild("title");
         // get the title text
         String text = titleElement.getText();
         String lang = null;
         String titleType = null;
-        
+
         // get the attributes and build a title instance
         List<Attribute> attributes = titleElement.getAttributes();
-        for (Attribute attr : attributes)
-        {
+        for (Attribute attr : attributes) {
             String key = attr.getName();
-            if ("lang".equals(key))
-            {
+            if ("lang".equals(key)) {
                 lang = attr.getValue();
-            }
-            else
-            {
+            } else {
                 titleType = attr.getValue();
             }
         }
-        
+
         // the titleType attribute is optional
         Title title = new Title(lang, text);
-        if (titleType != null)
-        {
+        if (titleType != null) {
             title.titleType = TitleType.toValue(titleType);
         }
-        
+
         return title;
     }
 }

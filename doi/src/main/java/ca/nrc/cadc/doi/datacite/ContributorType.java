@@ -79,53 +79,48 @@ package ca.nrc.cadc.doi.datacite;
  * @author yeunga
  *
  */
-public enum ContributorType
-{
-    CONTACT_PERSON("ContactPerson"),
-    DATA_COLLECTOR("DataCollector"),
-    DATA_CURATOR("DataCurator"),
-    DATA_MANAGER("DataManager"),
-    DISTRIBUTOR("Distributor"),
-    EDITOR("Editor"),
-    HOSTING_INSTITUTION("HostingInstitution"),
-    OTHER("Other"),
-    PRODUCER("Producer"),
-    PROJECT_LEADER("ProjectLeader"),
-    PROJECT_MANAGER("ProjectManager"),
-    PROJECT_MEMBER("ProjectMember"),
-    REGISTRATION_AGENCY("RegistrationAgency"),
-    REGISTRATION_AUTHORITY("RegistrationAuthority"),
-    RELATED_PERSON("RelatedPerson"),
-    RESEARCH_GROUP("ResearchGroup"),
-    RIGHTS_HOLDER("RightsHolder"),
-    RESEARCHER("Researcher"),
-    SPONSOR("Sponsor"),
-    SUPERVISOR("Supervisor"),
+public enum ContributorType {
+    CONTACT_PERSON("ContactPerson"), 
+    DATA_COLLECTOR("DataCollector"), 
+    DATA_CURATOR("DataCurator"), 
+    DATA_MANAGER("DataManager"), 
+    DISTRIBUTOR("Distributor"), 
+    EDITOR("Editor"), 
+    HOSTING_INSTITUTION("HostingInstitution"), 
+    OTHER("Other"), 
+    PRODUCER("Producer"), 
+    PROJECT_LEADER("ProjectLeader"), 
+    PROJECT_MANAGER("ProjectManager"), 
+    PROJECT_MEMBER("ProjectMember"), 
+    REGISTRATION_AGENCY("RegistrationAgency"), 
+    REGISTRATION_AUTHORITY("RegistrationAuthority"), 
+    RELATED_PERSON("RelatedPerson"), 
+    RESEARCH_GROUP("ResearchGroup"), 
+    RIGHTS_HOLDER("RightsHolder"), 
+    RESEARCHER("Researcher"), 
+    SPONSOR("Sponsor"), 
+    SUPERVISOR("Supervisor"), 
     WORKPACKAGE_LEADER("WorkPackageLeader");
-    
+
     private final String value;
-    
-    private ContributorType(String value)
-    {
+
+    private ContributorType(String value) {
         this.value = value;
     }
-    
-    public static ContributorType toValue(String s)
-    {
+
+    public static ContributorType toValue(String s) {
         for (ContributorType type : values())
             if (type.value.equals(s))
                 return type;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

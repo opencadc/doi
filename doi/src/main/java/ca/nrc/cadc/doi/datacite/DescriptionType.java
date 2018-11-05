@@ -79,38 +79,33 @@ package ca.nrc.cadc.doi.datacite;
  * @author yeunga
  *
  */
-public enum DescriptionType
-{
-    ABSTRACT("Abstract"),
-    METHODS("Methods"),
-    SERIES_INFORMATION("SeriesInformation"),
-    TABLE_OF_CONTENT("TableOfContents"),
-    TECHNICAL_INFO("TechnicalInfo"),
+public enum DescriptionType {
+    ABSTRACT("Abstract"), 
+    METHODS("Methods"), 
+    SERIES_INFORMATION("SeriesInformation"), 
+    TABLE_OF_CONTENT("TableOfContents"), 
+    TECHNICAL_INFO("TechnicalInfo"), 
     OTHER("Other");
-    
+
     private final String value;
-    
-    private DescriptionType(String value)
-    {
+
+    private DescriptionType(String value) {
         this.value = value;
     }
-    
-    public static DescriptionType toValue(String s)
-    {
+
+    public static DescriptionType toValue(String s) {
         for (DescriptionType type : values())
             if (type.value.equals(s))
                 return type;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

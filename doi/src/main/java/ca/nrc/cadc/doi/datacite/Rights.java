@@ -75,18 +75,17 @@ import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 /**
- * Any rights information for this resource. 
- * Provide a rights management statement for the resource or reference a 
- * service providing such information. Include embargo information if applicable.
- * Use the complete title of a license and include version information if applicable.
+ * Any rights information for this resource. Provide a rights management
+ * statement for the resource or reference a service providing such information.
+ * Include embargo information if applicable. Use the complete title of a
+ * license and include version information if applicable.
  * 
  * @author yeunga
  */
-public class Rights
-{
-    
+public class Rights {
+
     private static Logger log = Logger.getLogger(Rights.class);
-    
+
     // lang uses the xml namespace
     private String lang;
     private String text;
@@ -94,18 +93,18 @@ public class Rights
 
     /**
      * Title constructor.
-     * @param lang language used, e.g. en-US
-     * @param title title text
+     * 
+     * @param lang
+     *            language used, e.g. en-US
+     * @param title
+     *            title text
      */
-    public Rights(String lang, String rights)
-    {
-        if (!StringUtils.hasText(lang) || 
-            !StringUtils.hasText(rights))
-        {
+    public Rights(String lang, String rights) {
+        if (!StringUtils.hasText(lang) || !StringUtils.hasText(rights)) {
             String msg = "lang and rights must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.lang = lang;
         this.text = rights;
     }
@@ -113,16 +112,14 @@ public class Rights
     /**
      * @return language used in this title.
      */
-    public String getLang()
-    {
+    public String getLang() {
         return this.lang;
     }
-        
+
     /**
      * @return rights text
      */
-    public String getText()
-    {
-        return this.text; 
+    public String getText() {
+        return this.text;
     }
 }

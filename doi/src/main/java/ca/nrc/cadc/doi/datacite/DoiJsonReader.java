@@ -74,39 +74,37 @@ import ca.nrc.cadc.xml.JsonInputter;
 import org.apache.log4j.Logger;
 
 /**
- * Constructs a DoiMetadata from a JSON source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple JSON node
- * documents.
+ * Constructs a DoiMetadata from a JSON source. This class is not thread safe
+ * but it is re-usable so it can safely be used to sequentially parse multiple
+ * JSON node documents.
  *
  * @author yeunga
  */
-public class DoiJsonReader extends DoiReader
-{
+public class DoiJsonReader extends DoiReader {
     private static final Logger log = Logger.getLogger(DoiJsonReader.class);
- 
+
     /**
      * Constructor. XML Schema validation is enabled by default.
      */
-    public DoiJsonReader() { }
+    public DoiJsonReader() {
+    }
 
     /**
-     *  Construct a Resource instance from a JSON String source.
+     * Construct a Resource instance from a JSON String source.
      *
-     * @param xml String of the JSON.
+     * @param xml
+     *            String of the JSON.
      * @return Resource object containing all doi metadata.
-     * @throws DoiParsingException if there is an error parsing the JSON.
+     * @throws DoiParsingException
+     *             if there is an error parsing the JSON.
      */
-    public Resource read(String json) throws DoiParsingException
-    {
+    public Resource read(String json) throws DoiParsingException {
         if (json == null)
             throw new IllegalArgumentException("JSON string must not be null");
-        try
-        {
+        try {
             JsonInputter inputter = new JsonInputter();
             return this.buildResource(inputter.input(json));
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             String error = "Error reading JSON string: " + ex.getMessage();
             throw new DoiParsingException(error, ex);
         }

@@ -72,13 +72,13 @@ package ca.nrc.cadc.doi.datacite;
 import org.apache.log4j.Logger;
 
 /**
- * The institution or person responsible for collecting, creating, or otherwise contributing to the developement of the dataset.
- * The personal name format should be: Family, Given.
+ * The institution or person responsible for collecting, creating, or otherwise
+ * contributing to the developement of the dataset. The personal name format
+ * should be: Family, Given.
  * 
  * @author yeunga
  */
-public class Contributor
-{
+public class Contributor {
     private static Logger log = Logger.getLogger(Contributor.class);
 
     private ContributorName contributorName;
@@ -90,17 +90,18 @@ public class Contributor
 
     /**
      * Creator constructor.
-     * @param contributorName type of this resource
-     * @param contributorType additional text description for this resource type
+     * 
+     * @param contributorName
+     *            type of this resource
+     * @param contributorType
+     *            additional text description for this resource type
      */
-    public Contributor(ContributorName contributorName, ContributorType contributorType)
-    {
-        if ((contributorName == null) || (contributorType == null))
-        {
+    public Contributor(ContributorName contributorName, ContributorType contributorType) {
+        if ((contributorName == null) || (contributorType == null)) {
             String msg = "resourceTypeGeneral and resourceType must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.contributorName = contributorName;
         this.contributorType = contributorType;
     }
@@ -108,13 +109,11 @@ public class Contributor
     /**
      * @return name of the contributor.
      */
-    public ContributorName getContributorName()
-    {
+    public ContributorName getContributorName() {
         return this.contributorName;
     }
 
-    public ContributorType getContributorType()
-    {
+    public ContributorType getContributorType() {
         return this.contributorType;
     }
 

@@ -79,46 +79,43 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URL;
 
-public class ServiceAvailability implements WebService
-{
-    private static String AC_AVAIL =    "ivo://cadc.nrc.ca/gms";
-    private static String VOS_AVAIL =    "ivo://cadc.nrc.ca/vospace";
+public class ServiceAvailability implements WebService {
+    private static String AC_AVAIL = "ivo://cadc.nrc.ca/gms";
+    private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vospace";
 
-    public ServiceAvailability() { }
+    public ServiceAvailability() {
+    }
 
-    public AvailabilityStatus getStatus()
-    {
+    public AvailabilityStatus getStatus() {
         boolean isGood = true;
         String note = "service is accepting requests";
-        try
-        {
+        try {
             RegistryClient reg = new RegistryClient();
             CheckResource checkResource;
             String url;
-            
+
             // check ac service availability
-            url = reg.getServiceURL(URI.create(AC_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
+            url = reg.getServiceURL(URI.create(AC_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON)
+                    .toExternalForm();
             checkResource = new CheckWebService(url);
             checkResource.check();
-            
+
             // check vospace service availability
-            url = reg.getServiceURL(URI.create(VOS_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON).toExternalForm();
+            url = reg.getServiceURL(URI.create(VOS_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON)
+                    .toExternalForm();
             checkResource = new CheckWebService(url);
             checkResource.check();
-            
+
             // Check that datacite is available
             URL docURL = new URL(DoiAction.DATACITE_URL);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(docURL, bos);
             get.run();
             int responseCode = get.getResponseCode();
-            if (responseCode != 200)
-            {
+            if (responseCode != 200) {
                 throw new RuntimeException("response code from " + DoiAction.DATACITE_URL + ": " + responseCode);
             }
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             // the test itself failed
             isGood = false;
             note = "test failed, reason: " + t;
@@ -126,8 +123,7 @@ public class ServiceAvailability implements WebService
         return new AvailabilityStatus(isGood, null, null, null, note);
     }
 
-    public void setState(String string)
-    {
-        //no-op
+    public void setState(String string) {
+        // no-op
     }
 }

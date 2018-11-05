@@ -87,28 +87,27 @@ import org.jdom2.output.XMLOutputter;
  * 
  * @author yeunga
  */
-public class DoiStatusXmlWriter extends DoiStatusWriter
-{
+public class DoiStatusXmlWriter extends DoiStatusWriter {
     private static Logger log = Logger.getLogger(DoiStatusXmlWriter.class);
 
-    public DoiStatusXmlWriter() { }
+    public DoiStatusXmlWriter() {
+    }
 
     /**
      * Write a DoiStatus instance to an OutputStream using UTF-8 encoding.
      *
-     * @param doiStatus DoiStatus instance to write.
-     * @param out OutputStream to write to.
-     * @throws IOException if the writer fails to write.
+     * @param doiStatus
+     *            DoiStatus instance to write.
+     * @param out
+     *            OutputStream to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
-    public void write(DoiStatus doiStatus, OutputStream out) throws IOException
-    {
+    public void write(DoiStatus doiStatus, OutputStream out) throws IOException {
         OutputStreamWriter outWriter;
-        try
-        {
+        try {
             outWriter = new OutputStreamWriter(out, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e)
-        {
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 encoding not supported", e);
         }
         write(doiStatus, outWriter);
@@ -116,24 +115,27 @@ public class DoiStatusXmlWriter extends DoiStatusWriter
 
     /**
      * Write a DoiStatus instance to a StringBuilder.
-     * @param doiStatus DoiStatus instance to write.
+     * 
+     * @param doiStatus
+     *            DoiStatus instance to write.
      * @param builder
      * @throws IOException
      */
-    public void write(DoiStatus doiStatus, StringBuilder builder) throws IOException
-    {
+    public void write(DoiStatus doiStatus, StringBuilder builder) throws IOException {
         write(doiStatus, new StringBuilderWriter(builder));
     }
 
     /**
      * Write a DoiStatus instance to a writer.
      *
-     * @param doiStatus DoiStatus instance to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
+     * @param doiStatus
+     *            DoiStatus instance to write.
+     * @param writer
+     *            Writer to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
-    public void write(DoiStatus doiStatus, Writer writer) throws IOException
-    {
+    public void write(DoiStatus doiStatus, Writer writer) throws IOException {
         long start = System.currentTimeMillis();
         Element root = this.getRootElement(doiStatus);
         write(root, writer);
@@ -144,12 +146,14 @@ public class DoiStatusXmlWriter extends DoiStatusWriter
     /**
      * Write a Document instance by providing the root element to a writer.
      *
-     * @param root Root element to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
+     * @param root
+     *            Root element to write.
+     * @param writer
+     *            Writer to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
-    protected void write(Element root, Writer writer) throws IOException
-    {
+    protected void write(Element root, Writer writer) throws IOException {
         XMLOutputter outputter = new XMLOutputter();
         outputter.setFormat(Format.getPrettyFormat());
         outputter.output(new Document(root), writer);

@@ -79,34 +79,30 @@ package ca.nrc.cadc.doi.status;
  * @author yeunga
  *
  */
-public enum Status
-{
-    DRAFT("in progress"),
+public enum Status {
+    DRAFT("in progress"), 
+    MINTING_IN_PROGRESS("minting in progress"), 
     MINTED("minted");
-    
+
     private final String value;
-    
-    private Status(String value)
-    {
+
+    private Status(String value) {
         this.value = value;
     }
-    
-    public static Status toValue(String s)
-    {
+
+    public static Status toValue(String s) {
         for (Status status : values())
             if (status.value.equals(s))
                 return status;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

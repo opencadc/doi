@@ -81,34 +81,32 @@ import org.jdom2.Namespace;
  * 
  * @author yeunga
  */
-public class DoiStatusWriter 
-{
+public class DoiStatusWriter {
     private static Logger log = Logger.getLogger(DoiStatusWriter.class);
 
-    public DoiStatusWriter() { }
+    public DoiStatusWriter() {
+    }
 
-    protected Element getRootElement(DoiStatus doiStatus)
-    {
+    protected Element getRootElement(DoiStatus doiStatus) {
         Element root = getDoiStatusElement(doiStatus);
         return root;
     }
-    
-    public Element getDoiStatusElement(DoiStatus doiStatus)
-    {
+
+    public Element getDoiStatusElement(DoiStatus doiStatus) {
         Element ret = new Element("doistatus");
 
         // add identifier element
         Element identifierElement = getIdentifierElement(doiStatus.getIdentifier());
         ret.addContent(identifierElement);
-        
+
         // add title element
         Element titlesElement = getTitleElement(doiStatus.getTitle());
         ret.addContent(titlesElement);
-        
+
         // add data directory element
         Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
         ret.addContent(dataDirectoryElement);
-        
+
         // add status element
         Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
         ret.addContent(resourceTypeElement);
@@ -118,50 +116,44 @@ public class DoiStatusWriter
             Element journalRefElement = getJournalRefElement(doiStatus.journalRef);
             ret.addContent(journalRefElement);
         }
-        
+
         return ret;
     }
-    
-    protected Element getIdentifierElement(Identifier identifier)
-    {
+
+    protected Element getIdentifierElement(Identifier identifier) {
         Element ret = new Element("identifier");
         ret.setAttribute("identifierType", identifier.getIdentifierType());
         ret.setText(identifier.getText());
         return ret;
-        
+
     }
-    
-    protected Element getTitleElement(Title title)
-    {
+
+    protected Element getTitleElement(Title title) {
         Element ret = new Element("title");
         ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
         ret.setText(title.getText());
-        
-        if (title.titleType != null)
-        {
+
+        if (title.titleType != null) {
             // set title type attribute
             ret.setAttribute("titleType", title.titleType.getValue());
         }
-        
+
         return ret;
     }
-    
-    protected Element getDataDirectoryElement(String dataDirectory)
-    {
+
+    protected Element getDataDirectoryElement(String dataDirectory) {
         Element ret = new Element("dataDirectory");
         ret.setText(dataDirectory);
         return ret;
     }
-    
-    protected Element getStatusElement(String status)
-    {
+
+    protected Element getStatusElement(String status) {
         Element ret = new Element("status");
         ret.setText(status);
         return ret;
     }
 
-    protected Element getJournalRefElement(String journalRef)
-    {
+    protected Element getJournalRefElement(String journalRef) {
         Element ret = new Element("journalRef");
         ret.setText(journalRef);
         return ret;

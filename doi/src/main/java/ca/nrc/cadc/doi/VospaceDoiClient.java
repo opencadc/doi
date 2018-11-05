@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.doi;
 
-
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
@@ -93,7 +92,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
 
-
 public class VospaceDoiClient {
 
     private static final Logger log = Logger.getLogger(VospaceDoiClient.class);
@@ -114,15 +112,14 @@ public class VospaceDoiClient {
     public VOSpaceClient getVOSpaceClient() {
         return this.vosClient;
     }
-    
+
     public VOSURI getDoiBaseVOSURI() {
         return this.baseDataURI;
     }
-    
+
     public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
         String nodePath = baseDataURI.getPath();
-        if (StringUtil.hasText(path))
-        {
+        if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
         }
 
@@ -130,27 +127,23 @@ public class VospaceDoiClient {
     }
 
     public Resource getResource(String doiSuffixString, String doiFilename) throws Exception {
-        VOSURI docDataURI = new VOSURI(
-            baseDataURI.toString() + "/" + doiSuffixString + "/" + doiFilename );
-        
+        VOSURI docDataURI = new VOSURI(baseDataURI.toString() + "/" + doiSuffixString + "/" + doiFilename);
+
         return getDoiDocFromVOSpace(docDataURI);
     }
-    
+
     public boolean isRequesterNode(Node node) {
         boolean isRequesterNode = false;
         String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
         log.info("requester: " + requester);
-        if (StringUtil.hasText(requester))
-        {
+        if (StringUtil.hasText(requester)) {
             isRequesterNode = requester.equals(this.callersNumericId.toString());
         }
         return isRequesterNode;
     }
-    
 
-    private Resource getDoiDocFromVOSpace(VOSURI dataNode)
-        throws Exception {
-        
+    private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {
+
         List<Protocol> protocols = new ArrayList<Protocol>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
@@ -178,10 +171,10 @@ public class VospaceDoiClient {
     private class DoiInputStream implements InputStreamWrapper {
         private Resource resource;
 
-        public DoiInputStream() { }
+        public DoiInputStream() {
+        }
 
-        public void read(InputStream in) throws IOException
-        {
+        public void read(InputStream in) throws IOException {
             try {
                 DoiXmlReader reader = new DoiXmlReader(true);
                 resource = reader.read(in);

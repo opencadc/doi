@@ -73,16 +73,16 @@ import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
 /**
- * All additional information that does not fit in any of the other categories. 
- * May be used for technical information. It is a best practice to supply a description.
+ * All additional information that does not fit in any of the other categories.
+ * May be used for technical information. It is a best practice to supply a
+ * description.
  * 
  * @author yeunga
  */
-public class Description
-{
-    
+public class Description {
+
     private static Logger log = Logger.getLogger(Description.class);
-    
+
     // lang uses the xml namespace
     private String lang;
     private DescriptionType descriptionType;
@@ -90,18 +90,18 @@ public class Description
 
     /**
      * Title constructor.
-     * @param lang language used, e.g. en-US
-     * @param title title text
+     * 
+     * @param lang
+     *            language used, e.g. en-US
+     * @param title
+     *            title text
      */
-    public Description(String lang, String br, DescriptionType descriptionType)
-    {
-        if (!StringUtils.hasText(lang) || 
-            !StringUtils.hasText(br) || descriptionType == null)
-        {
+    public Description(String lang, String br, DescriptionType descriptionType) {
+        if (!StringUtils.hasText(lang) || !StringUtils.hasText(br) || descriptionType == null) {
             String msg = "lang, br and descriptionType must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.lang = lang;
         this.text = br;
         this.descriptionType = descriptionType;
@@ -110,24 +110,21 @@ public class Description
     /**
      * @return language used in this description.
      */
-    public String getLang()
-    {
+    public String getLang() {
         return this.lang;
     }
-    
+
     /**
      * @return description text
      */
-    public String getText()
-    {
-        return this.text; 
+    public String getText() {
+        return this.text;
     }
-        
+
     /**
      * @return description typet
      */
-    public DescriptionType getDescriptionType()
-    {
-        return this.descriptionType; 
+    public DescriptionType getDescriptionType() {
+        return this.descriptionType;
     }
 }

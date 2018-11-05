@@ -86,8 +86,7 @@ import org.jdom2.output.Format;
  *
  * @author yeunga
  */
-public class DoiJsonWriter extends DoiWriter 
-{
+public class DoiJsonWriter extends DoiWriter {
     private static final Logger log = Logger.getLogger(DoiJsonWriter.class);
 
     private boolean prettyPrint;
@@ -103,19 +102,18 @@ public class DoiJsonWriter extends DoiWriter
     /**
      * Write a Resource instance to an OutputStream using UTF-8 encoding.
      *
-     * @param resource Resource instance to write.
-     * @param out OutputStream to write to.
-     * @throws IOException if the writer fails to write.
+     * @param resource
+     *            Resource instance to write.
+     * @param out
+     *            OutputStream to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
-    public void write(Resource resource, OutputStream out) throws IOException
-    {
+    public void write(Resource resource, OutputStream out) throws IOException {
         OutputStreamWriter outWriter;
-        try
-        {
+        try {
             outWriter = new OutputStreamWriter(out, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e)
-        {
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 encoding not supported", e);
         }
         write(resource, outWriter);
@@ -123,21 +121,25 @@ public class DoiJsonWriter extends DoiWriter
 
     /**
      * Write a Resource instance to a StringBuilder.
-     * @param resource Resource instance to write.
+     * 
+     * @param resource
+     *            Resource instance to write.
      * @param builder
      * @throws IOException
      */
-    public void write(Resource resource, StringBuilder builder) throws IOException
-    {
+    public void write(Resource resource, StringBuilder builder) throws IOException {
         write(resource, new StringBuilderWriter(builder));
     }
 
     /**
      * Write the Resource instance to a writer.
      *
-     * @param resource Resource instance to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
+     * @param resource
+     *            Resource instance to write.
+     * @param writer
+     *            Writer to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
     public void write(Resource resource, Writer writer) throws IOException {
         long start = System.currentTimeMillis();
@@ -150,12 +152,14 @@ public class DoiJsonWriter extends DoiWriter
     /**
      * Write a Document instance by providing the root element to a writer.
      *
-     * @param root Root element to write.
-     * @param writer Writer to write to.
-     * @throws IOException if the writer fails to write.
+     * @param root
+     *            Root element to write.
+     * @param writer
+     *            Writer to write to.
+     * @throws IOException
+     *             if the writer fails to write.
      */
-    protected void write(Element root, Writer writer) throws IOException
-    {
+    protected void write(Element root, Writer writer) throws IOException {
         JsonOutputter outputter = new JsonOutputter();
         outputter.getListElementNames().add("creators");
         outputter.getListElementNames().add("titles");

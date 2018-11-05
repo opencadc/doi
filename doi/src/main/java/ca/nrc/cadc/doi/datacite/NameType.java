@@ -79,34 +79,29 @@ package ca.nrc.cadc.doi.datacite;
  * @author yeunga
  *
  */
-public enum NameType
-{
-    ORGANIZATIONAL("Organizational"),
+public enum NameType {
+    ORGANIZATIONAL("Organizational"), 
     PERSONAL("Personal");
-    
+
     private final String value;
-    
-    private NameType(String value)
-    {
+
+    private NameType(String value) {
         this.value = value;
     }
-    
-    public static NameType toValue(String s)
-    {
+
+    public static NameType toValue(String s) {
         for (NameType type : values())
             if (type.value.equals(s))
                 return type;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

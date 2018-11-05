@@ -85,8 +85,7 @@ import org.springframework.util.StringUtils;
  * @author yeunga
  *
  */
-public class Resource
-{
+public class Resource {
     private static Logger log = Logger.getLogger(Resource.class);
 
     private static String RIGHTS_STMT = "Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.";
@@ -100,8 +99,7 @@ public class Resource
     public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
     public static final String PUBLISHER = "CADC";
     public static final ResourceType RESOURCE_TYPE = ResourceType.toValue("Dataset");
-    
-    
+
     private Namespace namespace;
     private Identifier identifier;
     private List<Creator> creators;
@@ -112,18 +110,17 @@ public class Resource
     public List<Contributor> contributors;
     public List<DoiDate> dates;
     public List<Description> descriptions;
-    public List<String> sizes;  // Stores size information about the resource.
+    public List<String> sizes; // Stores size information about the resource.
     public String language;
-    
 
-    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles, String publicationYear) 
-    { 
-        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty() || !StringUtils.hasText(publicationYear))
-        {
+    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles,
+            String publicationYear) {
+        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty()
+                || !StringUtils.hasText(publicationYear)) {
             String msg = "namespace, identifier, creator, title AND publicationYear must be specified.";
             throw new IllegalArgumentException(msg);
         }
-        
+
         this.namespace = namespace;
         this.identifier = identifier;
         this.creators = creators;
@@ -133,18 +130,15 @@ public class Resource
         this.publicationYear = publicationYear;
     }
 
-    public Namespace getNamespace()
-    {
+    public Namespace getNamespace() {
         return this.namespace;
     }
-    
-    public Identifier getIdentifier()
-    {
+
+    public Identifier getIdentifier() {
         return this.identifier;
     }
-    
-    public List<Creator> getCreators()
-    {
+
+    public List<Creator> getCreators() {
         return this.creators;
     }
 
@@ -152,23 +146,19 @@ public class Resource
         this.creators = creators;
     }
 
-    public String getPublisher()
-    {
+    public String getPublisher() {
         return PUBLISHER;
     }
-    
-    public String getPublicationYear()
-    {
+
+    public String getPublicationYear() {
         return this.publicationYear;
     }
-    
-    public void setPublicationYear(String newYear)
-    {
+
+    public void setPublicationYear(String newYear) {
         this.publicationYear = newYear;
     }
-    
-    public DoiResourceType getResourceType()
-    {
+
+    public DoiResourceType getResourceType() {
         return this.resourceType;
     }
 
@@ -179,9 +169,8 @@ public class Resource
     public void setTitles(List<Title> titles) {
         this.titles = titles;
     }
-    
-    private void validatePublicationYear(String pYear) 
-    {
+
+    private void validatePublicationYear(String pYear) {
         try {
             Integer year = Integer.valueOf(pYear);
             if (year > PUBLICATION_YEAR_UPPER_LIMIT || year < PUBLICATION_YEAR_LOWER_LIMIT) {

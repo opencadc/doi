@@ -84,38 +84,36 @@ import org.jdom2.Document;
 import org.jdom2.JDOMException;
 
 /**
- * Constructs a list of DOI instance statuses from an XML source. This class is not thread safe but it is
- * re-usable  so it can safely be used to sequentially parse multiple XML node
- * documents.
+ * Constructs a list of DOI instance statuses from an XML source. This class is
+ * not thread safe but it is re-usable so it can safely be used to sequentially
+ * parse multiple XML node documents.
  *
  * @author yeunga
  */
-public class DoiStatusListXmlReader extends DoiStatusListReader
-{
+public class DoiStatusListXmlReader extends DoiStatusListReader {
     private static final Logger log = Logger.getLogger(DoiStatusListXmlReader.class);
 
     /**
      * Default constructor.
      */
-    public DoiStatusListXmlReader() { }
+    public DoiStatusListXmlReader() {
+    }
 
     /**
-     *  Construct a list of DoiStatus from an XML String source.
+     * Construct a list of DoiStatus from an XML String source.
      *
-     * @param xml String of the XML.
+     * @param xml
+     *            String of the XML.
      * @return List of DoiStatus object .
-     * @throws DoiParsingException if there is an error parsing the XML.
+     * @throws DoiParsingException
+     *             if there is an error parsing the XML.
      */
-    public List<DoiStatus> read(String xml) throws DoiParsingException
-    {
+    public List<DoiStatus> read(String xml) throws DoiParsingException {
         if (xml == null)
             throw new IllegalArgumentException("XML must not be null");
-        try
-        {
+        try {
             return read(new StringReader(xml));
-        }
-        catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             String error = "Error reading XML: " + ioe.getMessage();
             throw new DoiParsingException(error, ioe);
         }
@@ -124,49 +122,44 @@ public class DoiStatusListXmlReader extends DoiStatusListReader
     /**
      * Construct a list of DoiStatus from a InputStream.
      *
-     * @param in InputStream.
+     * @param in
+     *            InputStream.
      * @return List of DoiStatus object .
-     * @throws DoiParsingException if there is an error parsing the XML.
+     * @throws DoiParsingException
+     *             if there is an error parsing the XML.
      */
-    public List<DoiStatus> read(InputStream in) throws IOException, DoiParsingException
-    {
+    public List<DoiStatus> read(InputStream in) throws IOException, DoiParsingException {
         if (in == null)
             throw new IOException("stream closed");
-        try
-        {
+        try {
             return read(new InputStreamReader(in, "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e)
-        {
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 encoding not supported");
         }
     }
 
     /**
-     *  Construct a list of DoiStatus from a Reader.
+     * Construct a list of DoiStatus from a Reader.
      *
-     * @param reader Reader.
+     * @param reader
+     *            Reader.
      * @return List of DoiStatus object containing the status of the specified DOI.
-     * @throws NodeParsingException if there is an error parsing the XML.
+     * @throws NodeParsingException
+     *             if there is an error parsing the XML.
      */
-    public List<DoiStatus> read(Reader reader) 
-    		throws DoiParsingException, IOException
-    {
+    public List<DoiStatus> read(Reader reader) throws DoiParsingException, IOException {
         if (reader == null)
             throw new IllegalArgumentException("reader must not be null");
 
         // Create a JDOM Document from the XML
         Document document;
-        try
-        {
+        try {
             document = XmlUtil.buildDocument(reader, null);
-        }
-        catch (JDOMException jde)
-        {
+        } catch (JDOMException jde) {
             String error = "XML failed schema validation: " + jde.getMessage();
             throw new DoiParsingException(error, jde);
         }
-       
+
         // build a list of DoiStatus from the document
         return this.buildStatusList(document);
     }

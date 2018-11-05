@@ -79,47 +79,42 @@ package ca.nrc.cadc.doi.datacite;
  * @author yeunga
  *
  */
-public enum ResourceType
-{
-    AUDIO_VISUAL("Audiovisual"),
-    COLLECTION("Collection"),
-    DATA_PAPER("DataPaper"),
-    DATA_SET("Dataset"),
-    EVENT("Event"),
-    IMAGE("Image"),
-    INTERACTIVE_RESOURCE("InteractiveResource"),
-    MODEL("Model"),
-    PHYSICAL_OBJECT("PhysicalObject"),
-    SERVICE("Service"),
-    SOFTWARE("Software"),
-    SOUND("Sound"),
-    TEXT("Text"),
-    WORKFLOW("Workflow"),
+public enum ResourceType {
+    AUDIO_VISUAL("Audiovisual"), 
+    COLLECTION("Collection"), 
+    DATA_PAPER("DataPaper"), 
+    DATA_SET("Dataset"), 
+    EVENT("Event"), 
+    IMAGE("Image"), 
+    INTERACTIVE_RESOURCE("InteractiveResource"), 
+    MODEL("Model"), 
+    PHYSICAL_OBJECT("PhysicalObject"), 
+    SERVICE("Service"), 
+    SOFTWARE("Software"), 
+    SOUND("Sound"), 
+    TEXT("Text"), 
+    WORKFLOW("Workflow"), 
     OTHER("Other");
-    
+
     private final String value;
-    
-    private ResourceType(String value)
-    {
+
+    private ResourceType(String value) {
         this.value = value;
     }
-    
-    public static ResourceType toValue(String s)
-    {
+
+    public static ResourceType toValue(String s) {
         for (ResourceType type : values())
             if (type.value.equals(s))
                 return type;
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public String getValue()
-    {
+    public String getValue() {
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }
