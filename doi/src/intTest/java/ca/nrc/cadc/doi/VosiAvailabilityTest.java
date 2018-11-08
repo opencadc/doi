@@ -77,14 +77,10 @@ import java.net.URI;
 /**
  * All tests inherited from AvailabilityTest
  */
-public class VosiAvailabilityTest extends AvailabilityTest
-{
+public class VosiAvailabilityTest extends AvailabilityTest {
     private static final Logger log = Logger.getLogger(VosiAvailabilityTest.class);
 
-    public VosiAvailabilityTest()
-    {
+    public VosiAvailabilityTest() {
         super(URI.create("ivo://cadc.nrc.ca/doi"));
     }
 }
-
-

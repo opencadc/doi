@@ -90,8 +90,7 @@ import org.junit.BeforeClass;
  *
  * @author jeevesh
  */
-public abstract class IntTestBase
-{
+public abstract class IntTestBase {
     private static final Logger log = Logger.getLogger(IntTestBase.class);
 
     protected static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
@@ -103,38 +102,36 @@ public abstract class IntTestBase
     protected static VOSURI astroDataURI;
     protected static RegistryClient rc;
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
-    public IntTestBase() { }
+    public IntTestBase() {
+    }
 
     @BeforeClass
-    public static void staticInit() throws Exception
-    {
+    public static void staticInit() throws Exception {
         // CadcAuthtest1 will have write access to DOI data folders
         // CadcRegtest1 will only have read access
         CADCAUTHTEST_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", IntTestBase.class);
         CADCREGTEST_CERT = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", IntTestBase.class);
-        
+
         rc = new RegistryClient();
         URL doi = rc.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
         baseURL = doi.toExternalForm();
 
         // Initialize vosClient for later use
-        astroDataURI = new VOSURI(new URI(DOI_BASE_NODE ));
+        astroDataURI = new VOSURI(new URI(DOI_BASE_NODE));
         vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
     }
 
-    protected void deleteTestFolder(String doiSuffix) throws RuntimeException, MalformedURLException
-    {
+    protected void deleteTestFolder(String doiSuffix) throws RuntimeException, MalformedURLException {
         // Clean up test folder
         // Set up DELETE
         URL deleteUrl = new URL(baseURL + "/" + doiSuffix);
         log.info("Deleting folder: " + doiSuffix + " using URL: " + deleteUrl.getPath());
 
-        HttpDelete deleteTask = new HttpDelete( deleteUrl, false);
+        HttpDelete deleteTask = new HttpDelete(deleteUrl, false);
         deleteTask.run();
         // Check that there was no exception thrown
         if (deleteTask.getThrowable() != null)

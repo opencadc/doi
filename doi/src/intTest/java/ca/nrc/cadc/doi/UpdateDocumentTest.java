@@ -104,113 +104,30 @@ import ca.nrc.cadc.util.Log4jInit;
 
 /**
  */
-public class UpdateDocumentTest extends DocumentTest
-{
+public class UpdateDocumentTest extends DocumentTest {
     private static final Logger log = Logger.getLogger(UpdateDocumentTest.class);
 
     static final String JSON = "application/json";
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
-    public UpdateDocumentTest() { };
-    
-    // test update DOI instance happy path
+    public UpdateDocumentTest() {
+    };
+
+    // test update DOI instance
     @Test
-    public void testUpdateDocument() throws Throwable
-    {
+    public void testUpdateDocument() throws Throwable {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
         this.buildInitialDocument();
-        Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-        {
-            private void compareNull(Object o1, Object o2, String field)
-            {
-                if (o1 == null)
-                {
-                    Assert.assertNull("one " + field + " is not null", o2);
-                } 
-                else
-                {
-                    Assert.assertNotNull("one " + field + " is null", o2);
-                }
-            }
-            
-            private void compareStrings(String s1, String s2, String field)
-            {
-                compareNull(s1, s2, field);
-                if (s1 != null)
-                {
-                    Assert.assertEquals(field + "is different", s1, s2);
-                }
-            }
+        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
-            private void compareCreatorName(CreatorName cn1, CreatorName cn2)
-            {
-                Assert.assertEquals("creatorName is different", cn1.getText(), cn2.getText());
-                Assert.assertEquals("nameType is different", cn1.nameType, cn2.nameType);
-            }
-            
-            private void compareNameIdentifier(NameIdentifier id1, NameIdentifier id2)
-            {
-                compareNull(id1, id2, "nameIdentifier");
-                if (id1 != null) {
-                    compareStrings(id1.getNameIdentifier(), id2.getNameIdentifier(), "nameIdentifier text");
-                    compareStrings(id1.getNameIdentifierScheme(), id2.getNameIdentifierScheme(), "nameIdentifierScheme");
-                    compareNull(id1.schemeURI, id2.schemeURI, "schemeURI");
-                    if (id1.schemeURI != null)
-                    {
-                        Assert.assertTrue("schemeURI is different", id1.schemeURI.equals(id2.schemeURI));
-                    }
-                }
-            }
-            private void compareCreator(Creator creator1, Creator creator2)
-            {
-                compareCreatorName(creator1.getCreatorName(), creator2.getCreatorName());
-                compareNameIdentifier(creator1.nameIdentifier, creator2.nameIdentifier);
-                compareStrings(creator1.givenName, creator2.givenName, "givenName");
-                compareStrings(creator1.familyName, creator2.familyName, "familyName");
-                compareStrings(creator1.affiliation, creator2.affiliation, "affiliation");
-            }
-
-            private void compareCreators(List<Creator> c1, List<Creator> c2)
-            {
-                Assert.assertNotNull("missing expected creators", c1);
-                Assert.assertNotNull("missing actual creators", c2);
-                Assert.assertEquals("different number of creators", c1.size(), c2.size());
-                for (int i=0; i<c1.size(); i++)
-                {
-                    compareCreator(c1.get(i), c2.get(i));
-                }
-            }
-            
-            private void compareTitles(List<Title> t1, List<Title> t2)
-            {
-                Assert.assertNotNull("missing expected titles", t1);
-                Assert.assertNotNull("missing actual titles", t2);
-                Assert.assertEquals("Number of titles is different", t1.size(), t2.size());
-                for (int i=0; i< t1.size(); i++)
-                {
-                    compareTitle(t1.get(i), t2.get(i));
-                }
-            }
-            
-            private void compareTitle(Title t1, Title t2)
-            {
-                compareStrings(t1.getLang(), t2.getLang(), "lang");
-                compareStrings(t1.getText(), t2.getText(), "title");
-                compareNull(t1.titleType, t2.titleType, "titleType");
-                if (t1.titleType != null) {
-                    Assert.assertEquals("titleType is different", t1.titleType, t2.titleType);
-                }
-            }
-            
-            private DoiStatus getStatus(URL docURL) throws UnsupportedEncodingException, DoiParsingException, IOException
-            {
+            private DoiStatus getStatus(URL docURL)
+                    throws UnsupportedEncodingException, DoiParsingException, IOException {
                 URL statusURL = new URL(docURL + "/status");
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 HttpDownload getStatus = new HttpDownload(statusURL, baos);
@@ -219,26 +136,26 @@ public class UpdateDocumentTest extends DocumentTest
                 DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
                 return statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
             }
-            
+
             private String generateDocument(Resource resource) throws IOException {
                 StringBuilder builder = new StringBuilder();
                 DoiXmlWriter writer = new DoiXmlWriter();
                 writer.write(resource, builder);
                 return builder.toString();
             }
-            
-            private Resource executeTest(URL docURL, String document, 
-                List<Creator> expectedCreators, List<Title> expectedTitles,
-                String expectedIdentifier, String expectedJournalRef, String newJournalRef) 
-                    throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String uDoc = postDocument(docURL, document, newJournalRef);
+
+            private Resource executeTest(URL docURL, String document, List<Creator> expectedCreators,
+                    List<Title> expectedTitles, String expectedIdentifier, String expectedJournalRef,
+                    String newJournalRef) throws DoiParsingException, UnsupportedEncodingException, IOException {
+                String uDoc = updateDocument(docURL, document, newJournalRef);
                 Resource uResource = xmlReader.read(uDoc);
                 compareCreators(expectedCreators, uResource.getCreators());
                 compareTitles(expectedTitles, uResource.getTitles());
-                
+
                 // check for same journal reference
                 DoiStatus uStatus = getStatus(docURL);
-                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, uStatus.getIdentifier().getText());
+                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier,
+                        uStatus.getIdentifier().getText());
                 if (newJournalRef == null) {
                     Assert.assertEquals("journalRef has changed", expectedJournalRef, uStatus.journalRef);
                 } else if (newJournalRef.length() > 0) {
@@ -246,61 +163,63 @@ public class UpdateDocumentTest extends DocumentTest
                 } else {
                     Assert.assertNull("journalRef was not deleted", uStatus.journalRef);
                 }
-                
+
                 return uResource;
             }
 
-            private Resource executeUpdateLanguageTest(URL docURL, String document, String expectedLanguage) 
+            private Resource executeUpdateLanguageTest(URL docURL, String document, String expectedLanguage)
                     throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String uDoc = postDocument(docURL, document, null);
+                String uDoc = updateDocument(docURL, document, null);
                 Resource uResource = xmlReader.read(uDoc);
                 compareStrings(expectedLanguage, uResource.language, "language");
                 return uResource;
             }
 
-            private Resource executeUpdatePublicationYearTest(URL docURL, String document, String expectedPublicationYear) 
+            private Resource executeUpdatePublicationYearTest(URL docURL, String document,
+                    String expectedPublicationYear)
                     throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String uDoc = postDocument(docURL, document, null);
+                String uDoc = updateDocument(docURL, document, null);
                 Resource uResource = xmlReader.read(uDoc);
                 compareStrings(expectedPublicationYear, uResource.getPublicationYear(), "publicationYear");
                 return uResource;
             }
-            
-            public Object run() throws Exception
-            {
+
+            public Object run() throws Exception {
                 // post the job
                 URL postUrl = new URL(baseURL);
 
                 log.debug("baseURL: " + baseURL);
                 log.debug("posting to: " + postUrl);
-                
+
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
+                String returnedDoc = updateDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
-                Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
-                
+                Assert.assertFalse("New identifier not received from doi service.",
+                        initialResource.getIdentifier().getText().equals(returnedIdentifier));
+
                 // Pull the suffix from the identifier
                 String[] doiNumberParts = returnedIdentifier.split("/");
-                
-                try
-                {
+
+                try {
                     // For DOI status test below
                     URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
                     Title expectedTitle = resource.getTitles().get(0);
                     Creator expectedCreator = resource.getCreators().get(0);
-    
+
                     // Get the DOI status
                     DoiStatus doiStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
+                            doiStatus.getIdentifier().getText());
+                    Assert.assertEquals("title from DOI status is different", expectedTitle.getText(),
+                            doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
-                    
+
                     // update title
                     Title newTitle = new Title(expectedTitle.getLang(), "new " + expectedTitle.getText());
                     newTitle.titleType = expectedTitle.titleType;
-                    
+
                     // update creator
                     CreatorName expectedCreatorName = expectedCreator.getCreatorName();
                     CreatorName newCreatorName = new CreatorName("new " + expectedCreatorName.getText());
@@ -310,10 +229,12 @@ public class UpdateDocumentTest extends DocumentTest
                     newCreator.familyName = "new " + expectedCreator.familyName;
                     newCreator.affiliation = "new " + expectedCreator.affiliation;
                     NameIdentifier expectedNameIdentifier = expectedCreator.nameIdentifier;
-                    NameIdentifier newNameIdentifier = new NameIdentifier(expectedNameIdentifier.getNameIdentifierScheme(), "new" + expectedNameIdentifier.getNameIdentifier());
+                    NameIdentifier newNameIdentifier = new NameIdentifier(
+                            expectedNameIdentifier.getNameIdentifierScheme(),
+                            "new" + expectedNameIdentifier.getNameIdentifier());
                     newNameIdentifier.schemeURI = expectedNameIdentifier.schemeURI;
                     newCreator.nameIdentifier = newNameIdentifier;
-                    
+
                     // update resource
                     List<Title> newTitles = new ArrayList<Title>();
                     newTitles.add(newTitle);
@@ -321,17 +242,20 @@ public class UpdateDocumentTest extends DocumentTest
                     List<Creator> newCreators = new ArrayList<Creator>();
                     newCreators.add(newCreator);
                     resource.setCreators(newCreators);
-                    
+
                     // generate updated document
                     String newDocument = this.generateDocument(resource);
-                    
+
                     // TEST CASE 1: update both creators and title, and journalRef
-                    Resource t1Resource = executeTest(docURL, newDocument, newCreators, newTitles, returnedIdentifier, NEW_JOURNAL_REF, NEW_JOURNAL_REF);
-                    
+                    Resource t1Resource = executeTest(docURL, newDocument, newCreators, newTitles, returnedIdentifier,
+                            NEW_JOURNAL_REF, NEW_JOURNAL_REF);
+
                     // TEST CASE 2: no update to document or journalRef
-                    Resource t2Resource = executeTest(docURL, newDocument, newCreators, newTitles, returnedIdentifier, NEW_JOURNAL_REF, null);
-                    
-                    // TEST CASE 3: title and creator with null optional elements, and delete journal reference
+                    Resource t2Resource = executeTest(docURL, newDocument, newCreators, newTitles, returnedIdentifier,
+                            NEW_JOURNAL_REF, null);
+
+                    // TEST CASE 3: title and creator with null optional elements, and delete
+                    // journal reference
                     Title titleWithNullTitleType = new Title(expectedTitle.getLang(), "NullTitleType");
                     t2Resource.getTitles().add(titleWithNullTitleType);
                     List<Title> t3ExpectedTitles = t2Resource.getTitles();
@@ -339,16 +263,19 @@ public class UpdateDocumentTest extends DocumentTest
                     List<Creator> t3ExpectedCreators = t2Resource.getCreators();
                     t3ExpectedCreators.add(creatorWithNullOptionalFields);
                     String t3GeneratedDoc = this.generateDocument(t2Resource);
-                    Resource t3Resource = executeTest(docURL, t3GeneratedDoc, t3ExpectedCreators, t3ExpectedTitles, returnedIdentifier, null, "");
-                    
+                    Resource t3Resource = executeTest(docURL, t3GeneratedDoc, t3ExpectedCreators, t3ExpectedTitles,
+                            returnedIdentifier, null, "");
+
                     // TEST CASE 4: creator with nameIdentifer but no optional schemeURI
                     Creator creatorWithNullSchemeURI = new Creator(new CreatorName("NullOptionalFields"));
-                    NameIdentifier nameID = new NameIdentifier(expectedNameIdentifier.getNameIdentifier(), "nullSchemURI");
+                    NameIdentifier nameID = new NameIdentifier(expectedNameIdentifier.getNameIdentifier(),
+                            "nullSchemURI");
                     creatorWithNullSchemeURI.nameIdentifier = nameID;
                     List<Creator> t4ExpectedCreators = t3Resource.getCreators();
                     t4ExpectedCreators.add(creatorWithNullSchemeURI);
                     String t4GeneratedDoc = this.generateDocument(t3Resource);
-                    Resource t4Resource = executeTest(docURL, t4GeneratedDoc, t4ExpectedCreators, t3ExpectedTitles, returnedIdentifier, null, "");
+                    Resource t4Resource = executeTest(docURL, t4GeneratedDoc, t4ExpectedCreators, t3ExpectedTitles,
+                            returnedIdentifier, null, "");
 
                     // TEST CASE 5: update language
                     if (t4Resource.language.contains("en")) {
@@ -356,80 +283,86 @@ public class UpdateDocumentTest extends DocumentTest
                     } else {
                         t4Resource.language = "en-US";
                     }
-                    
+
                     String t5GeneratedDoc = this.generateDocument(t4Resource);
                     Resource t5Resource = executeUpdateLanguageTest(docURL, t5GeneratedDoc, t4Resource.language);
-                    
+
                     // TEST CASE 6: update publicationYear
                     // update to a valid year
                     t5Resource.setPublicationYear("2010");
                     String t6GeneratedDoc = this.generateDocument(t5Resource);
-                    Resource t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                    executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
 
                     // update to a year too far in the past
                     try {
                         t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_LOWER_LIMIT - 1));
                         t6GeneratedDoc = this.generateDocument(t5Resource);
-                        t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                        executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
                         Assert.fail("publicationiYear lower limit not detected");
                     } catch (Exception ex) {
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("publicationYear is not a recent year"));
+                        Assert.assertTrue("caught an unexpected exception",
+                                ex.getMessage().contains("publicationYear is not a recent year"));
                     }
-                    
+
                     // update to a year too far in the future
                     try {
                         t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_UPPER_LIMIT + 1));
                         t6GeneratedDoc = this.generateDocument(t5Resource);
-                        t6Resource = executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
+                        executeUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
                         Assert.fail("publicationiYear upper limit not detected");
                     } catch (Exception ex) {
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("publicationYear is not a recent year"));
+                        Assert.assertTrue("caught an unexpected exception",
+                                ex.getMessage().contains("publicationYear is not a recent year"));
                     }
-                    
+
                     // TEST CASE 7: update to Resource.namespace is not allowed
                     // updating Namespace.predix should fail
                     String t7Prefix = t1Resource.getNamespace().getPrefix() + "a";
                     Namespace t7Namespace = Namespace.getNamespace(t7Prefix, t1Resource.getNamespace().getURI());
-                    Resource t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(), 
-                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
+                    Resource t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(),
+                            t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
                     String t7GeneratedDoc = this.generateDocument(t7Resource);
                     try {
-                        executeTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(), returnedIdentifier, null, null);
+                        executeTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(),
+                                returnedIdentifier, null, null);
                         Assert.fail("resource.namespace update failure not detected");
                     } catch (Exception ex) {
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("namespace update is not allowed"));
+                        Assert.assertTrue("caught an unexpected exception",
+                                ex.getMessage().contains("namespace update is not allowed"));
                     }
-                    
+
                     // updating Namespace.URI should fail
                     String t7NamespaceURI = t1Resource.getNamespace().getURI() + "a";
                     t7Namespace = Namespace.getNamespace(t1Resource.getNamespace().getPrefix(), t7NamespaceURI);
-                    t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(), 
-                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
+                    t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(), t1Resource.getCreators(),
+                            t1Resource.getTitles(), t1Resource.getPublicationYear());
                     t7GeneratedDoc = this.generateDocument(t7Resource);
                     try {
-                        executeTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(), returnedIdentifier, null, null);
+                        executeTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(),
+                                returnedIdentifier, null, null);
                         Assert.fail("resource.namespace update failure not detected");
                     } catch (Exception ex) {
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("namespace update is not allowed"));
+                        Assert.assertTrue("caught an unexpected exception",
+                                ex.getMessage().contains("namespace update is not allowed"));
                     }
-                    
+
                     // TEST CASE 8: update to Resource.identifier is not allowed
                     // Note: IdentifierType is validated by xsd to be "DOI"
                     // updating Identifier text should fail
                     Identifier t8Identifier = t1Resource.getIdentifier();
                     DoiReader.assignIdentifier(t8Identifier, "test8");
-                    Resource t8Resource = new Resource(t1Resource.getNamespace(), t8Identifier, 
-                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
+                    Resource t8Resource = new Resource(t1Resource.getNamespace(), t8Identifier,
+                            t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
                     String t8GeneratedDoc = this.generateDocument(t8Resource);
                     try {
-                        executeTest(docURL, t8GeneratedDoc, t8Resource.getCreators(), t8Resource.getTitles(), returnedIdentifier, null, null);
+                        executeTest(docURL, t8GeneratedDoc, t8Resource.getCreators(), t8Resource.getTitles(),
+                                returnedIdentifier, null, null);
                         Assert.fail("resource.identifier update failure not detected");
                     } catch (Exception ex) {
-                        Assert.assertTrue("caught an unexpected exception", ex.getMessage().contains("identifier update is not allowed"));
+                        Assert.assertTrue("caught an unexpected exception",
+                                ex.getMessage().contains("identifier update is not allowed"));
                     }
-               }
-                finally
-                {
+                } finally {
                     // delete containing folder using doiadmin credentials
                     deleteTestFolder(doiNumberParts[1]);
                 }

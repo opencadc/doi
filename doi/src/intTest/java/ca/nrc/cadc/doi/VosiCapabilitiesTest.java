@@ -82,23 +82,18 @@ import org.junit.Assert;
  *
  * @author jeevesh
  */
-public class VosiCapabilitiesTest extends CapabilitiesTest
-{
+public class VosiCapabilitiesTest extends CapabilitiesTest {
     private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
-    
-    public VosiCapabilitiesTest()
-    { 
+
+    public VosiCapabilitiesTest() {
         super(DoiIntTest.RESOURCE_ID);
     }
 
     @Override
-    protected void validateContent(Capabilities caps) 
-        throws Exception
-    {
+    protected void validateContent(Capabilities caps) throws Exception {
         super.validateContent(caps);
 
         // doi standard
@@ -106,7 +101,9 @@ public class VosiCapabilitiesTest extends CapabilitiesTest
 
         // interfaces that should be present (anon not supported)
         Assert.assertNotNull("cert", tap.findInterface(Standards.SECURITY_METHOD_CERT, Standards.INTERFACE_PARAM_HTTP));
-        Assert.assertNotNull("cookie", tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
-        Assert.assertNotNull("password", tap.findInterface(Standards.SECURITY_METHOD_HTTP_BASIC, Standards.INTERFACE_PARAM_HTTP));
+        Assert.assertNotNull("cookie",
+                tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
+        Assert.assertNotNull("password",
+                tap.findInterface(Standards.SECURITY_METHOD_HTTP_BASIC, Standards.INTERFACE_PARAM_HTTP));
     }
 }

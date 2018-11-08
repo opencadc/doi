@@ -83,6 +83,7 @@ import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -118,8 +119,8 @@ import org.jdom2.Namespace;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
-    static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al., %s";
+    public static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
+    public static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al., %s";
 
     public PostAction() {
         super();
@@ -129,17 +130,15 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        if (doiAction != null) {
-            throw new IllegalArgumentException("Invalid request.");
-        }
-
         // Do DOI creation work as doiadmin
         File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
         Subject doiadminSubject = SSLUtil.createSubject(pemFile);
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
-                if (doiSuffix == null) {
+                if (doiAction != null) {
+                    performDoiAction();
+                } else if (doiSuffix == null) {
                     createDOI();
                 } else {
                     updateDOI();
@@ -148,48 +147,177 @@ public class PostAction extends DoiAction {
             }
         });
     }
+    
+    private Resource updateResource(Resource resourceFromUser) throws Exception {
+        Resource updatedResource = null;
+        if (resourceFromUser != null) {
+            // Get resource from vospace
+            Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+            
+            // udpate the resource from vospace and upload it
+            updatedResource = merge(resourceFromUser, resourceFromVos);
+            VOSURI docDataURI = new VOSURI(
+                    vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
+            this.uploadDOIDocument(updatedResource, new DataNode(docDataURI));
+        }
 
+        return updatedResource;
+    }
+    
+    private String updateJournalRef(String journalRefFromUser) throws Exception {
+        String updatedJournalRef = null;
+        if (journalRefFromUser != null) {
+            // update journal reference 
+            if (journalRefFromUser != null) {
+                ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+                String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+                if (journalRefFromVOSpace == null) {
+                    if (journalRefFromUser.length() > 0) {
+                        // journal reference does not exist, add it
+                        NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
+                        doiContainerNode.getProperties().add(journalRef);
+                        vClient.getVOSpaceClient().setNode(doiContainerNode);
+                    }
+                } else {
+                    if (journalRefFromUser.length() > 0) {
+                        // journal reference already exists, update it
+                        doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
+                    } else {
+                        // delete existing journal reference
+                        doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
+                    }
+                    
+                    vClient.getVOSpaceClient().setNode(doiContainerNode);
+                }
+            }
+        }
+
+        return updatedJournalRef;
+    }
+
+    private Resource getTemplateResource() {
+        Resource templateResource = null;
+
+        try {
+            InputStream inputStream = new FileInputStream(DOI_TEMPLATE_RESOURCE_41);
+            // read xml file
+            DoiXmlReader reader = new DoiXmlReader(true);
+            templateResource = reader.read(inputStream);
+        } catch (IOException fne) {
+            throw new RuntimeException("failed to load " + DOI_TEMPLATE_RESOURCE_41 + " from classpath");
+        } catch (DoiParsingException dpe) {
+            throw new RuntimeException("Structure of template file " + DOI_TEMPLATE_RESOURCE_41 + " failed validation");
+        }
+
+        return templateResource;
+    }
+
+    private Resource addDescription(Resource inProgressDoi, String journalRef) {
+        // Generate the description string
+        // Get first author's last name
+        String lastName = inProgressDoi.getCreators().get(0).familyName;
+        if (lastName == null) {
+            // Use full name in a pinch
+            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
+        }
+
+        String description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName, journalRef);
+        List<Description> descriptionList = new ArrayList<Description>();
+        Description newDescrip = new Description(inProgressDoi.language, description, DescriptionType.OTHER);
+        descriptionList.add(newDescrip);
+        inProgressDoi.descriptions = descriptionList;
+
+        return inProgressDoi;
+    }
+    
+    /**
+     * Add the CADC template material to the DOI during the minting step
+     */
+    private Resource addFinalElements(Resource inProgressDoi, String journalRef) {
+
+        // Build a resource using the template file
+        Resource cadcTemplate = getTemplateResource();
+
+        // Whitelist handling of fields users are allowed to provide information for.
+
+        if (cadcTemplate.contributors == null) {
+            throw new RuntimeException("contributors stanza missing from CADC template.");
+        } else {
+            inProgressDoi.contributors = cadcTemplate.contributors;
+        }
+
+        if (cadcTemplate.rightsList != null) {
+            throw new RuntimeException("rightslist stanza missing from CADC template.");
+        } else {
+            inProgressDoi.rightsList = cadcTemplate.rightsList;
+        }
+
+        // Generate the description string
+        if (journalRef != null) {
+            inProgressDoi = addDescription(inProgressDoi, journalRef);
+        }
+
+        return inProgressDoi;
+    }
+
+    private void performDoiAction() throws Exception {
+        if (doiAction.equals("mint")) {
+            // start minting process
+            
+            // perform one last update in case there are changes
+            Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+            String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
+            Resource resourceToMint = null;
+            // journalRefToMinto == null means we need to get journalRef from VOSpace
+            String journalRefToMint = journalRefFromUser;
+            if (resourceFromUser == null) {
+                // get the resource from VOSpace
+                resourceToMint = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+            } else {
+                resourceToMint = updateResource(resourceFromUser);
+            }
+            
+            if (journalRefFromUser != null) {
+                journalRefToMint = updateJournalRef(journalRefFromUser);
+            }
+
+            // append generative elements to the resource
+            resourceToMint = addFinalElements(resourceToMint, journalRefToMint);
+            
+            // update the DOI container node properties
+            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTING.getValue());;
+            doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).isMarkedForDeletion();
+            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            
+            // add descriptionList if it has not been added
+            if (journalRefToMint == null) {
+                journalRefToMint = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+                resourceToMint = addDescription(resourceToMint, journalRefToMint);
+            }
+            
+            // update the data container node properties
+            ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
+            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+            vClient.getVOSpaceClient().setNode(dataContainerNode);
+        } else {
+            throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
+        }
+    }
+    
     // update a DOI instance
     private void updateDOI() throws Exception {
         // Get the submitted form data, if it exists
         Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-        if (resourceFromUser == null) {
+        String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
+        if (resourceFromUser == null && journalRefFromUser == null) {
             throw new IllegalArgumentException("No content");
         }
 
-        // Get resource from vospace
-        Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
-        
-        // udpate the resource from vospace and upload it
-        Resource mergedResource = merge(resourceFromUser, resourceFromVos);
-        VOSURI docDataURI = new VOSURI(
-                vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
-        this.uploadDOIDocument(mergedResource, new DataNode(docDataURI));
-
-        // update journal reference 
-        String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
-        if (journalRefFromUser != null) {
-            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-            if (journalRefFromVOSpace == null) {
-                if (journalRefFromUser.length() > 0) {
-                    // journal reference does not exist, add it
-                    NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
-                    doiContainerNode.getProperties().add(journalRef);
-                    vClient.getVOSpaceClient().setNode(doiContainerNode);
-                }
-            } else {
-                if (journalRefFromUser.length() > 0) {
-                    // journal reference already exists, update it
-                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
-                } else {
-                    // delete existing journal reference
-                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
-                }
-                
-                vClient.getVOSpaceClient().setNode(doiContainerNode);
-            }
-        }
+        // perform the update
+        updateResource(resourceFromUser);
+        updateJournalRef(journalRefFromUser);
 
         // Done, send redirect to GET for the XML file just uploaded
         String redirectUrl = syncInput.getRequestURI();
@@ -330,75 +458,6 @@ public class PostAction extends DoiAction {
         syncOutput.setHeader("Location", redirectUrl);
         syncOutput.setCode(303);
     }
-
-    private Resource getTemplateResource() {
-        Resource templateResource = null;
-
-        try {
-            InputStream inputStream = new FileInputStream(DOI_TEMPLATE_RESOURCE_41);
-            // read xml file
-            DoiXmlReader reader = new DoiXmlReader(true);
-            templateResource = reader.read(inputStream);
-        } catch (IOException fne) {
-            throw new RuntimeException("failed to load " + DOI_TEMPLATE_RESOURCE_41 + " from classpath");
-        } catch (DoiParsingException dpe) {
-            throw new RuntimeException("Structure of template file " + DOI_TEMPLATE_RESOURCE_41 + " failed validation");
-        }
-
-        return templateResource;
-    }
-
-    /**
-     * Add the CADC template material to the DOI during the minting step
-     * @param inProgressDoi
-     * @param journalRef
-     * @return
-     */
-    private Resource mkMintedResource(Resource inProgressDoi, String journalRef) {
-
-        // Build a resource using the template file
-        Resource cadcTemplate = getTemplateResource();
-
-        // Whitelist handling of fields users are allowed to provide information for.
-
-        if (cadcTemplate.contributors != null) {
-            inProgressDoi.contributors = cadcTemplate.contributors;
-        }
-        else {
-            throw new RuntimeException("contributors stanza missing from CADC template.");
-        }
-
-        if (cadcTemplate.rightsList != null) {
-            inProgressDoi.rightsList = cadcTemplate.rightsList;
-        }
-        else {
-            throw new RuntimeException("rightslist stanza missing from CADC template.");
-        }
-
-        // TODO:
-        // calculate size of data set and add to the mintedDoi resource
-
-
-        // Generate the description string
-        // Get first author's last name
-        String lastName = inProgressDoi.getCreators().get(0).familyName;
-
-        if (lastName == null) {
-            // Use full name in a pinch
-            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
-        }
-
-        String description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName, journalRef);
-
-        List<Description> descriptionList = new ArrayList<Description>();
-        Description newDescrip = new Description(inProgressDoi.language,"", DescriptionType.OTHER);
-        descriptionList.add(newDescrip);
-
-        inProgressDoi.descriptions = descriptionList;
-
-        return inProgressDoi;
-    }
-
     
     private GroupURI createDoiGroup(String groupName) throws Exception {
         // Create group to use for applying permissions

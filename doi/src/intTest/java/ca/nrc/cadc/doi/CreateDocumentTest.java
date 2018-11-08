@@ -95,67 +95,62 @@ import ca.nrc.cadc.util.Log4jInit;
 
 /**
  */
-public class CreateDocumentTest extends DocumentTest
-{
+public class CreateDocumentTest extends DocumentTest {
     private static final Logger log = Logger.getLogger(CreateDocumentTest.class);
 
     static final String JSON = "application/json";
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
-    public CreateDocumentTest() { };
-    
-    private List<DoiStatus> getDoiStatusList(Subject s) throws PrivilegedActionException
-    {
-        List<DoiStatus> doiStatusList = (List<DoiStatus>) Subject.doAs(s, new PrivilegedExceptionAction<List<DoiStatus>>()
-        {
-            public List<DoiStatus> run() throws Exception
-            {
-                URL docURL = new URL(baseURL);
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                HttpDownload get = new HttpDownload(docURL, baos);
-                get.setRequestProperty("Accept", "text/xml");
-                get.run();
-                DoiStatusListXmlReader statusReader = new DoiStatusListXmlReader();
-                return (List<DoiStatus>) statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
-            }
-        });
-        
+    public CreateDocumentTest() {
+    };
+
+    private List<DoiStatus> getDoiStatusList(Subject s) throws PrivilegedActionException {
+        List<DoiStatus> doiStatusList = (List<DoiStatus>) Subject.doAs(s,
+                new PrivilegedExceptionAction<List<DoiStatus>>() {
+                    public List<DoiStatus> run() throws Exception {
+                        URL docURL = new URL(baseURL);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        HttpDownload get = new HttpDownload(docURL, baos);
+                        get.setRequestProperty("Accept", "text/xml");
+                        get.run();
+                        DoiStatusListXmlReader statusReader = new DoiStatusListXmlReader();
+                        return (List<DoiStatus>) statusReader
+                                .read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
+                    }
+                });
+
         return doiStatusList;
     }
-    
+
     @Test
-    public void testCreateDocumentAndStatus() throws Throwable
-    {
+    public void testCreateDocumentAndStatus() throws Throwable {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
         this.buildInitialDocument();
-        Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-        {
-            public Object run() throws Exception
-            {
+        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+            public Object run() throws Exception {
                 // post the job
                 URL postUrl = new URL(baseURL);
 
                 log.debug("baseURL: " + baseURL);
                 log.debug("posting to: " + postUrl);
-                
+
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
+                String returnedDoc = updateDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
-                Assert.assertFalse("New identifier not received from doi service.", initialResource.getIdentifier().getText().equals(returnedIdentifier));
-                
+                Assert.assertFalse("New identifier not received from doi service.",
+                        initialResource.getIdentifier().getText().equals(returnedIdentifier));
+
                 // Pull the suffix from the identifier
                 String[] doiNumberParts = returnedIdentifier.split("/");
-                
-                try
-                {
+
+                try {
                     // Get the document in JSON format
                     URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
                     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -164,11 +159,11 @@ public class CreateDocumentTest extends DocumentTest
                     get.run();
                     Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
                     Assert.assertEquals(JSON, get.getContentType());
-                    
+
                     // For DOI status test below
                     Title expectedTitle = resource.getTitles().get(0);
                     String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
-    
+
                     // Get the DOI status
                     URL statusURL = new URL(docURL + "/status");
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -177,14 +172,15 @@ public class CreateDocumentTest extends DocumentTest
                     Assert.assertNull("GET " + statusURL.toString() + " in XML failed. ", getStatus.getThrowable());
                     DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
                     DoiStatus doiStatus = statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier, doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory, doiStatus.getDataDirectory());
-                    Assert.assertEquals("title from DOI status is different", expectedTitle.getText(), doiStatus.getTitle().getText());
+                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
+                            doiStatus.getIdentifier().getText());
+                    Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory,
+                            doiStatus.getDataDirectory());
+                    Assert.assertEquals("title from DOI status is different", expectedTitle.getText(),
+                            doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
-                }
-                finally
-                {
+                } finally {
                     // delete containing folder using doiadmin credentials
                     deleteTestFolder(doiNumberParts[1]);
                 }
@@ -192,72 +188,62 @@ public class CreateDocumentTest extends DocumentTest
             }
         });
     }
-    
+
     @Test
-    public void testGetStatusList() throws Throwable
-    {
+    public void testGetStatusList() throws Throwable {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
         final String[] newDois = new String[3];
 
-        // create a list of documents 
-        for (int i = 0; i < newDois.length; i++)
-        {
+        // create a list of documents
+        for (int i = 0; i < newDois.length; i++) {
             newDois[i] = this.createADocument(s);
         }
-        
-        // invoke the doi list service 
+
+        // invoke the doi list service
         List<DoiStatus> doiStatusList = getDoiStatusList(s);
         DoiStatus[] doiStatusArray = doiStatusList.toArray(new DoiStatus[doiStatusList.size()]);
 
-        // verify that the returned list contains the dois of the documents just created above
+        // verify that the returned list contains the dois of the documents just created
+        // above
         Assert.assertTrue("Some created DOIs are missing from the DOI list", doiStatusList.size() >= newDois.length);
-        try
-        {
+        try {
             int matchCount = 0;
-            for (int i = 0; i < doiStatusArray.length; i++)
-            {
-                for (int j = 0; j < newDois.length; j++)
-                {
+            for (int i = 0; i < doiStatusArray.length; i++) {
+                for (int j = 0; j < newDois.length; j++) {
                     DoiStatus doiStatus = doiStatusArray[i];
                     String[] doiParts = doiStatus.getIdentifier().getText().split("/");
 
                     // verify doi
-                    if (doiParts[1].equals(newDois[j]))
-                    {
+                    if (doiParts[1].equals(newDois[j])) {
                         // verify status
                         Status status = doiStatus.getStatus();
                         Assert.assertEquals("Status of DOI " + doiParts[1] + " is incorrect", Status.DRAFT, status);
-                        
+
                         // verify data directory
                         String actualDataDirectory = doiStatus.getDataDirectory();
                         String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + newDois[j] + "/data";
-                        Assert.assertEquals("Data directories are different", expectedDataDirectory, actualDataDirectory);
-                        
+                        Assert.assertEquals("Data directories are different", expectedDataDirectory,
+                                actualDataDirectory);
+
                         matchCount++;
                         break;
                     }
                 }
-                
-                if (matchCount == newDois.length)
-                {
+
+                if (matchCount == newDois.length) {
                     break;
                 }
             }
-            
+
             Assert.assertEquals("Missing DOIs in DOI list", newDois.length, matchCount);
-        }
-        finally
-        {
+        } finally {
             // clean up
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>()
-            {
-                public Object run() throws Exception
-                {
-                    for (int i = 0; i < newDois.length; i++)
-                    {
+            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+                public Object run() throws Exception {
+                    for (int i = 0; i < newDois.length; i++) {
                         deleteTestFolder(newDois[i]);
                     }
-                    
+
                     return null;
                 }
             });

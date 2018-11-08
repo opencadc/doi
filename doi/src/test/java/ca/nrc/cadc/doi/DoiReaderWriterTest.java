@@ -335,19 +335,6 @@ public class DoiReaderWriterTest
             }
         }
     }
-    
-    private void compareSizes(List<String> s1, List<String> s2)
-    {
-        compareNull(s1, s2, "sizes");
-        if (s1 != null)
-        {
-            Assert.assertEquals("sizes size is different", s1.size(), s2.size());
-            for (int i=0; i< s1.size(); i++)
-            {
-                compareStrings(s1.get(i), s2.get(i), "size");
-            }
-        }
-    }
 
     private void compareResources(Resource r1, Resource r2)
     {
@@ -365,7 +352,6 @@ public class DoiReaderWriterTest
         compareRightsList(r1.rightsList, r2.rightsList);
         compareDates(r1.dates, r2.dates);
         compareDescriptions(r1.descriptions, r2.descriptions);
-        compareSizes(r1.sizes, r2.sizes);
     }
 
     private void testXmlReaderWriter(String fileName)

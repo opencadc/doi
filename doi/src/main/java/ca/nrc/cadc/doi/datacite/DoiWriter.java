@@ -140,12 +140,6 @@ public class DoiWriter {
         Element resourceTypeElement = getResourceTypeElement(resource.getResourceType(), ns);
         ret.addContent(resourceTypeElement);
 
-        // add optional sizes
-        if (resource.sizes != null && resource.sizes.size() > 0) {
-            Element sizesElement = getSizesElement(resource.sizes, ns);
-            ret.addContent(sizesElement);
-        }
-
         // add optional rightsList
         if (resource.rightsList != null && resource.rightsList.size() > 0) {
             Element rightsListElement = getRightsListElement(resource.rightsList, ns);

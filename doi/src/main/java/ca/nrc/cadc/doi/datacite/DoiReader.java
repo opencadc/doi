@@ -141,7 +141,6 @@ public class DoiReader {
         resource.rightsList = buildRightsList(root);
         resource.dates = buildDates(root);
         resource.descriptions = buildDescriptions(root);
-        resource.sizes = buildSizes(root);
         resource.language = buildLanguage(root);
         return resource;
     }

@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi;
 
-
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Level;
@@ -79,20 +78,19 @@ import org.apache.log4j.Logger;
  *
  * @author jeevesh
  */
-public class DoiIntTest
-{
+public class DoiIntTest {
     private static final Logger log = Logger.getLogger(DoiIntTest.class);
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
 
-    public DoiIntTest()
-    {
-        // TODO: leaving this here as it might be necessary to have some sort of parent class that
+    public DoiIntTest() {
+        // TODO: leaving this here as it might be necessary to have some sort of parent
+        // class that
         // handles certificates, etc. later on.
-//        super(RESOURCE_ID, "x509_CADCAuthtest1.pem", "x509_CADCAuthtest2.pem", "x509_CADCRegtest1.pem");
+        // super(RESOURCE_ID, "x509_CADCAuthtest1.pem", "x509_CADCAuthtest2.pem",
+        // "x509_CADCRegtest1.pem");
     }
 }

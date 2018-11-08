@@ -110,7 +110,6 @@ public class Resource {
     public List<Contributor> contributors;
     public List<DoiDate> dates;
     public List<Description> descriptions;
-    public List<String> sizes; // Stores size information about the resource.
     public String language;
 
     public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles,
