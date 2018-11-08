@@ -9,12 +9,10 @@
     </creator>
   </creators>
   <titles>
-    <title>
-      Input from user
-    </title>
+    <title xml:lang="en-US">Input from user</title>
   </titles>
   <publisher>Canadian Astronomy Data Centre (CADC)</publisher>
-  <publicationYear>Set by service</publicationYear>
+  <publicationYear>2018</publicationYear>
   <subjects>
     <subject>Astronomy</subject>
     <subject>Astrophysics</subject>
@@ -32,19 +30,19 @@
     <date dateType="Valid">2018-10-16</date>
     <date dateType="Accepted">2018-10-16</date>
   </dates>
-  <language>Set by requester</language>
-  <sizes>
-    <size>Size of dataset when minted</size>
-  </sizes>
+  <language>en-US</language>
+  <resourceType resourceTypeGeneral="Software">XML</resourceType>
   <formats>
     <format>text/plain</format>
   </formats>
   <version>1.0</version>
-  <rights>
-    Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.
-  </rights>
+  <rightsList>
+    <rights>
+      Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.
+    </rights>
+  </rightsList>
   <descriptions>
-    <description descriptionType="Other">
+    <description xml:lang="en-US" descriptionType="Other">
       This contains data and other information related to the publication '%title from title stanza%' by %first author's last name% et al., %Journal Reference%
     </description>
   </descriptions>

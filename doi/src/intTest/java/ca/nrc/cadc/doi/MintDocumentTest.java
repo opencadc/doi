@@ -128,7 +128,7 @@ public class MintDocumentTest extends DocumentTest {
     }
 
     // test minting DOI instance
-    //@Test
+    @Test
     public void testMintingDocumentWithNoUpdates() throws Throwable {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
@@ -270,7 +270,7 @@ public class MintDocumentTest extends DocumentTest {
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
 
                     // mint the document with no changes
-                    Resource resourceFromMinting = executeMintTest(docURL, null, returnedIdentifier, null);
+                    Resource resourceFromMinting = executeMintTest(docURL, returnedDoc, returnedIdentifier, null);
                     
                     // construct the expected resource
                     Resource expectedResource = addFinalElements(resource, TEST_JOURNAL_REF);
