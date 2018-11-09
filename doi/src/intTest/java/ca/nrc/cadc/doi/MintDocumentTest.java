@@ -140,7 +140,7 @@ public class MintDocumentTest extends DocumentTest {
 
             private DoiStatus getStatus(URL docURL)
                     throws UnsupportedEncodingException, DoiParsingException, IOException {
-                URL statusURL = new URL(docURL + "/status");
+                URL statusURL = new URL(docURL + "/" + DoiAction.STATUS_ACTION);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 HttpDownload getStatus = new HttpDownload(statusURL, baos);
                 getStatus.run();
@@ -151,7 +151,8 @@ public class MintDocumentTest extends DocumentTest {
 
             private Resource executeMintTest(URL docURL, String document, String expectedIdentifier, String journalRef) 
                 throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String mDoc = mintDocument(docURL, document, journalRef);
+                URL mintURL = new URL(docURL + "/" + DoiAction.MINT_ACTION);
+                String mDoc = postDocument(mintURL, document, journalRef);
                 Resource mResource = xmlReader.read(mDoc);
                 
                 // verify the DOI status to be "minting"
@@ -246,7 +247,7 @@ public class MintDocumentTest extends DocumentTest {
                 log.debug("posting to: " + postUrl);
 
                 // Create the test DOI document in VOSpace
-                String returnedDoc = updateDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.",
@@ -268,22 +269,34 @@ public class MintDocumentTest extends DocumentTest {
                             doiStatus.getIdentifier().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
+                    
+                    // verify the DOI containerNode properties
+                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
+                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "false");
+                    Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    
+                    // verify the DOI data containerNode properties
+                    ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                    Assert.assertNotNull("should have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
 
                     // mint the document with no changes
                     Resource resourceFromMinting = executeMintTest(docURL, returnedDoc, returnedIdentifier, null);
                     
                     // construct the expected resource
                     Resource expectedResource = addFinalElements(resource, TEST_JOURNAL_REF);
-                    
+
                     // verify the resource returned from the mint process
                     compareResource(expectedResource, resourceFromMinting);
                     
                     // verify the DOI containerNode properties
-                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[0]);
+                    doiContainerNode = getContainerNode(doiNumberParts[1]);
                     Assert.assertEquals("incorrect status", doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP), Status.MINTING.getValue());
                     Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "true");
-                    Assert.assertNull("incorrect status", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-                    Assert.assertNull("incorrect status", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+                    Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    
+                    // verify the DOI data containerNode properties
+                    dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                    Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
                 } finally {
                     // delete containing folder using doiadmin credentials
                     deleteTestFolder(doiNumberParts[1]);

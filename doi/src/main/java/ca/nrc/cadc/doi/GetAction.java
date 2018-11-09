@@ -251,7 +251,7 @@ public class GetAction extends DoiAction {
     }
     
     private void performDoiAction() throws Exception {
-        if (doiAction.equals("status"))
+        if (doiAction.equals(DoiAction.STATUS_ACTION))
         {
             DoiStatus doiStatus = getDoiStatus(doiSuffix);
 

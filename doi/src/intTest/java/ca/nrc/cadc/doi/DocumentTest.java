@@ -98,7 +98,6 @@ import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.net.HttpPost;
@@ -141,11 +140,17 @@ public class DocumentTest extends IntTestBase {
         initialDocument = builder.toString();
     }
 
-    protected String postDocument(URL postUrl, String document, Map<String, Object> params) {
+    protected String postDocument(URL postUrl, String document, String journalRef) {
         log.info("url: " + postUrl.getPath());
-        if (document != null) {
-            FileContent fc = new FileContent(document, "text/xml");
-            params.put("doiMetadata", fc);
+        Map<String, Object> params = new HashMap<String, Object>();
+        FileContent fc = new FileContent(document, "text/xml");
+        params.put("doiMetadata", fc);
+        if (journalRef != null) {
+            if (journalRef.length() > 0) {
+                params.put("journalref", journalRef);
+            } else {
+                params.put("journalref", "");
+            }
         }
         HttpPost httpPost = new HttpPost(postUrl, params, true);
         httpPost.run();
@@ -163,29 +168,6 @@ public class DocumentTest extends IntTestBase {
         return httpPost.getResponseBody();
     }
 
-    private Map<String, Object> createParams(String journalRef) {
-        Map<String, Object> params = new HashMap<String, Object>();
-        if (journalRef != null) {
-            if (journalRef.length() > 0) {
-                params.put("journalref", journalRef);
-            } else {
-                params.put("journalref", "");
-            }
-        }
-        return params;
-    }
-    
-    protected String updateDocument(URL postUrl, String document, String journalRef) {
-        Map<String, Object> params = createParams(journalRef);
-        return postDocument(postUrl, document, params);
-    }
-
-    protected String mintDocument(URL postUrl, String document, String journalRef) {
-        Map<String, Object> params = createParams(journalRef);
-        params.put("mint", "true");
-        return postDocument(postUrl, document, params);
-    }
-
     protected String createADocument(Subject s) throws Throwable {
         s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
         this.buildInitialDocument();
@@ -198,7 +180,7 @@ public class DocumentTest extends IntTestBase {
                 log.debug("posting to: " + postUrl);
 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = updateDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
 
@@ -308,9 +290,17 @@ public class DocumentTest extends IntTestBase {
     protected boolean isEqualRights(Rights eR, Rights aR) {
         boolean same = isNull(eR, aR);
         if (!same && eR != null && aR != null) {
-            same = eR.rightsURI.equals(aR.rightsURI);
+            same = isNull(eR.rightsURI, aR.rightsURI);
+            if (!same && eR.rightsURI != null && aR.rightsURI != null) {
+                same = eR.rightsURI.equals(aR.rightsURI);
+            }
         }
-        return same || isEqualStrings(eR.getLang(), aR.getLang()) && isEqualStrings(eR.getText(), aR.getText());
+        
+        if (same && eR != null) {
+            same = isEqualStrings(eR.getLang(), aR.getLang()) && isEqualStrings(eR.getText(), aR.getText());
+        }
+        
+        return same;
     }
     
     protected void compareRightsList(List<Rights> eRL, List<Rights> aRL) {
@@ -332,31 +322,51 @@ public class DocumentTest extends IntTestBase {
     }
     
     protected boolean isEqualContributorName(ContributorName eCN, ContributorName aCN) {
-        return isEqualStrings(eCN.getText(), aCN.getText()) && 
-            isEqualStrings(eCN.nameType.getValue(), aCN.nameType.getValue());
-    }
-    
-    protected boolean isEqualNameIdentifier(NameIdentifier eNId, NameIdentifier aNId) {
-        boolean same = isNull(eNId, aNId);
-        if (!same && eNId != null && aNId != null) {
-            same = isEqualStrings(eNId.getNameIdentifier(), aNId.getNameIdentifier()) &&
-                isEqualStrings(eNId.getNameIdentifierScheme(), aNId.getNameIdentifierScheme()) &&
-                isNull(eNId.schemeURI, aNId.schemeURI);
-            if (!same && eNId.schemeURI != null) {
-                same = eNId.schemeURI.equals(aNId.schemeURI);
+        boolean same = isNull(eCN, aCN);
+        if (!same && eCN != null && aCN != null) {
+            same = isNull(eCN.nameType, aCN.nameType);
+            if (!same && eCN.nameType != null && aCN.nameType != null) {
+                same = eCN.nameType == aCN.nameType;
             }
+        }
+        
+        if (same && eCN != null) {
+            same = isEqualStrings(eCN.getText(), aCN.getText());
         }
         
         return same;
     }
     
+    protected boolean isEqualNameIdentifier(NameIdentifier eNId, NameIdentifier aNId) {
+        boolean same = isNull(eNId, aNId);
+        if (!same && eNId != null && aNId != null) {
+            same = isNull(eNId.schemeURI, aNId.schemeURI);
+            if (!same && eNId.schemeURI != null && aNId.schemeURI != null) {
+                same = eNId.schemeURI.equals(aNId.schemeURI);
+            }
+        }
+        
+        if (same && eNId != null) {
+            same = isEqualStrings(eNId.getNameIdentifier(), aNId.getNameIdentifier()) &&
+                   isEqualStrings(eNId.getNameIdentifierScheme(), aNId.getNameIdentifierScheme());
+        }
+        return same;
+    }
+    
     protected boolean isEqualContributor(Contributor eC, Contributor aC) {
-        boolean same = isEqualStrings(eC.givenName, aC.givenName) && 
-            isEqualStrings(eC.familyName, aC.familyName) && 
-            isEqualStrings(eC.affiliation, aC.affiliation) &&
-            isEqualContributorName(eC.getContributorName(), aC.getContributorName()) && 
-            isEqualStrings(eC.getContributorType().getValue(), aC.getContributorType().getValue()) &&
-            isEqualNameIdentifier(eC.nameIdentifier, aC.nameIdentifier);
+        boolean same = isNull(eC, aC);
+        if (!same && eC != null && aC != null) {
+            same = isEqualStrings(eC.givenName, aC.givenName) &&
+                   isEqualStrings(eC.familyName, aC.familyName) &&
+                   isEqualStrings(eC.affiliation, aC.affiliation) &&
+                   isEqualNameIdentifier(eC.nameIdentifier, aC.nameIdentifier);
+        }
+        
+        if (same && eC != null) {
+            same = isEqualContributorName(eC.getContributorName(), aC.getContributorName()) &&
+                   eC.getContributorType() == aC.getContributorType();
+        }
+        
         return same;
     }
     
@@ -379,9 +389,17 @@ public class DocumentTest extends IntTestBase {
     }
     
     protected boolean isEqualDate(DoiDate eD, DoiDate aD) {
-        return isEqualStrings(eD.getIsoDate(), aD.getIsoDate()) &&
-            isEqualStrings(eD.dateInformation, aD.dateInformation) &&
-            isEqualStrings(eD.getDateType().getValue(), aD.getDateType().getValue());
+        boolean same = isNull(eD, aD);
+        if (!same && eD != null && aD != null) {
+            same = isEqualStrings(eD.dateInformation, aD.dateInformation);
+        }
+        
+        if (same && eD != null) {
+            same = isEqualStrings(eD.getIsoDate(), aD.getIsoDate()) &&
+                   eD.getDateType() == aD.getDateType();
+        }
+        
+        return same;
     }
     
     protected void compareDates(List<DoiDate> eDL, List<DoiDate> aDL) {
@@ -403,9 +421,14 @@ public class DocumentTest extends IntTestBase {
     }
     
     protected boolean isEqualDescription(Description eD, Description aD) {
-        return isEqualStrings(eD.getLang(), aD.getLang()) &&
-            isEqualStrings(eD.getText(), aD.getText()) &&
-            isEqualStrings(eD.getDescriptionType().getValue(), aD.getDescriptionType().getValue());
+        boolean same = isNull(eD, aD);
+        if (!same && eD != null && aD != null) {
+            same = isEqualStrings(eD.getLang(), aD.getLang()) &&
+                   isEqualStrings(eD.getText(), aD.getText()) &&
+                   eD.getDescriptionType() == aD.getDescriptionType();
+        }
+        
+        return same;
     }
 
     protected void compareDescriptions(List<Description> eDL, List<Description> aDL) {

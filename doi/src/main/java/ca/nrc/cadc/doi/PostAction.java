@@ -103,6 +103,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
@@ -111,6 +112,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.MissingResourceException;
+
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.jdom2.Namespace;
@@ -147,7 +150,21 @@ public class PostAction extends DoiAction {
             }
         });
     }
-    
+
+    private Resource merge(Resource sourceResource, Resource targetResource) {
+
+        // A user is only allowed to update creators and titles
+        verifyUneditableFields(sourceResource, targetResource);
+
+        // update editable fields
+        targetResource.setCreators(sourceResource.getCreators());
+        targetResource.setTitles(sourceResource.getTitles());
+        targetResource.setPublicationYear(sourceResource.getPublicationYear());
+        targetResource.language = sourceResource.language;
+
+        return targetResource;
+    }
+
     private Resource updateResource(Resource resourceFromUser) throws Exception {
         Resource updatedResource = null;
         if (resourceFromUser != null) {
@@ -162,6 +179,15 @@ public class PostAction extends DoiAction {
         }
 
         return updatedResource;
+    }
+    
+    private void finalizeResource(Resource resourceFromUser, String journalRefToMint) throws Exception {
+        Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+        Resource updatedResource = merge(resourceFromUser, resourceFromVos);
+        Resource resourceToMint = addFinalElements(updatedResource, journalRefToMint);
+        VOSURI docDataURI = new VOSURI(
+                vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
+        this.uploadDOIDocument(resourceToMint, new DataNode(docDataURI));
     }
     
     private String updateJournalRef(String journalRefFromUser) throws Exception {
@@ -199,9 +225,17 @@ public class PostAction extends DoiAction {
         Resource templateResource = null;
 
         try {
-            InputStream inputStream = new FileInputStream(DOI_TEMPLATE_RESOURCE_41);
+            URL doiTemplateURL = DoiXmlReader.class.getClassLoader().getResource(DOI_TEMPLATE_RESOURCE_41);
+            if (doiTemplateURL == null) {
+                throw new MissingResourceException("Resource not found: " + DOI_TEMPLATE_RESOURCE_41, 
+                    DoiXmlReader.class.getName(), DOI_TEMPLATE_RESOURCE_41);
+            }
+            
+            String doiTemplatePath = doiTemplateURL.getPath();
+            log.debug("doiTemplatePath: " + doiTemplatePath);
+            InputStream inputStream = new FileInputStream(doiTemplatePath);
             // read xml file
-            DoiXmlReader reader = new DoiXmlReader(true);
+            DoiXmlReader reader = new DoiXmlReader(false);
             templateResource = reader.read(inputStream);
         } catch (IOException fne) {
             throw new RuntimeException("failed to load " + DOI_TEMPLATE_RESOURCE_41 + " from classpath");
@@ -261,46 +295,42 @@ public class PostAction extends DoiAction {
     }
 
     private void performDoiAction() throws Exception {
-        if (doiAction.equals("mint")) {
+        if (doiAction.equals(DoiAction.MINT_ACTION)) {
             // start minting process
             
             // perform one last update in case there are changes
             Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
             String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
-            Resource resourceToMint = null;
+            
             // journalRefToMinto == null means we need to get journalRef from VOSpace
             String journalRefToMint = journalRefFromUser;
-            if (resourceFromUser == null) {
-                // get the resource from VOSpace
-                resourceToMint = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+            if (journalRefFromUser == null) {
+                journalRefToMint = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
             } else {
-                resourceToMint = updateResource(resourceFromUser);
-            }
-            
-            if (journalRefFromUser != null) {
                 journalRefToMint = updateJournalRef(journalRefFromUser);
             }
 
-            // append generative elements to the resource
-            resourceToMint = addFinalElements(resourceToMint, journalRefToMint);
+            // add final minting elements to the resource and update VOSpace
+            finalizeResource(resourceFromUser, journalRefToMint);
             
             // update the DOI container node properties
-            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTING.getValue());;
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).isMarkedForDeletion();
+            doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
             doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
             vClient.getVOSpaceClient().setNode(doiContainerNode);
-            
-            // add descriptionList if it has not been added
-            if (journalRefToMint == null) {
-                journalRefToMint = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-                resourceToMint = addDescription(resourceToMint, journalRefToMint);
-            }
             
             // update the data container node properties
             ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
             dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
             vClient.getVOSpaceClient().setNode(dataContainerNode);
+
+            // Done, send redirect to GET for the XML file just minted
+            int lastPosition = syncInput.getRequestURI().lastIndexOf('/');
+            String redirectUrl = syncInput.getRequestURI().substring(0, lastPosition);
+            log.info("redirectUrl: " + redirectUrl);
+            syncOutput.setHeader("Location", redirectUrl);
+            syncOutput.setCode(303);
         } else {
             throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
         }
@@ -323,20 +353,6 @@ public class PostAction extends DoiAction {
         String redirectUrl = syncInput.getRequestURI();
         syncOutput.setHeader("Location", redirectUrl);
         syncOutput.setCode(303);
-    }
-
-    private Resource merge(Resource sourceResource, Resource targetResource) {
-
-        // A user is only allowed to update creators and titles
-        verifyUneditableFields(sourceResource, targetResource);
-
-        // update editable fields
-        targetResource.setCreators(sourceResource.getCreators());
-        targetResource.setTitles(sourceResource.getTitles());
-        targetResource.setPublicationYear(sourceResource.getPublicationYear());
-        targetResource.language = sourceResource.language;
-
-        return targetResource;
     }
 
     private void verifyUneditableFields(Resource s1, Resource s2) {

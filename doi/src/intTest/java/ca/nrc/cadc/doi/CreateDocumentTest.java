@@ -141,7 +141,7 @@ public class CreateDocumentTest extends DocumentTest {
                 log.debug("posting to: " + postUrl);
 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = updateDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.",
@@ -165,7 +165,7 @@ public class CreateDocumentTest extends DocumentTest {
                     String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
 
                     // Get the DOI status
-                    URL statusURL = new URL(docURL + "/status");
+                    URL statusURL = new URL(docURL + "/" + DoiAction.STATUS_ACTION);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     HttpDownload getStatus = new HttpDownload(statusURL, baos);
                     getStatus.run();

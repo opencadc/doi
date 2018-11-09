@@ -83,6 +83,9 @@ public abstract class DoiAction extends RestAction {
 
     public static final String DATACITE_URL = "https://www.datacite.org";
     
+    public static final String STATUS_ACTION = "status";
+    public static final String MINT_ACTION = "mint";
+   
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     protected static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";

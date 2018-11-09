@@ -147,7 +147,7 @@ public class UpdateDocumentTest extends DocumentTest {
             private Resource executeTest(URL docURL, String document, List<Creator> expectedCreators,
                     List<Title> expectedTitles, String expectedIdentifier, String expectedJournalRef,
                     String newJournalRef) throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String uDoc = updateDocument(docURL, document, newJournalRef);
+                String uDoc = postDocument(docURL, document, newJournalRef);
                 Resource uResource = xmlReader.read(uDoc);
                 compareCreators(expectedCreators, uResource.getCreators());
                 compareTitles(expectedTitles, uResource.getTitles());
@@ -169,7 +169,7 @@ public class UpdateDocumentTest extends DocumentTest {
 
             private Resource executeUpdateLanguageTest(URL docURL, String document, String expectedLanguage)
                     throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String uDoc = updateDocument(docURL, document, null);
+                String uDoc = postDocument(docURL, document, null);
                 Resource uResource = xmlReader.read(uDoc);
                 compareStrings(expectedLanguage, uResource.language, "language");
                 return uResource;
@@ -178,7 +178,7 @@ public class UpdateDocumentTest extends DocumentTest {
             private Resource executeUpdatePublicationYearTest(URL docURL, String document,
                     String expectedPublicationYear)
                     throws DoiParsingException, UnsupportedEncodingException, IOException {
-                String uDoc = updateDocument(docURL, document, null);
+                String uDoc = postDocument(docURL, document, null);
                 Resource uResource = xmlReader.read(uDoc);
                 compareStrings(expectedPublicationYear, uResource.getPublicationYear(), "publicationYear");
                 return uResource;
@@ -192,7 +192,7 @@ public class UpdateDocumentTest extends DocumentTest {
                 log.debug("posting to: " + postUrl);
 
                 // Check that the doi server processed the document and added an identifier
-                String returnedDoc = updateDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
+                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
                 String returnedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.",
