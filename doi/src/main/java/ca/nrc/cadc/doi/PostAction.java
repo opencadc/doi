@@ -86,6 +86,7 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
@@ -123,7 +124,7 @@ public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
     public static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
-    public static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al., %s";
+    public static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al.";
 
     public PostAction() {
         super();
@@ -252,7 +253,13 @@ public class PostAction extends DoiAction {
             lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
         }
 
-        String description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName, journalRef);
+        String description = null;
+        if (StringUtil.hasText(journalRef)) {
+	        description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName) + ", " +journalRef;
+        } else {
+	        description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName);
+        }
+        
         List<Description> descriptionList = new ArrayList<Description>();
         Description newDescrip = new Description(inProgressDoi.language, description, DescriptionType.OTHER);
         descriptionList.add(newDescrip);

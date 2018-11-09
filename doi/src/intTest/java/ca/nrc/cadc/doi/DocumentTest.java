@@ -424,7 +424,7 @@ public class DocumentTest extends IntTestBase {
         boolean same = isNull(eD, aD);
         if (!same && eD != null && aD != null) {
             same = isEqualStrings(eD.getLang(), aD.getLang()) &&
-                   isEqualStrings(eD.getText(), aD.getText()) &&
+                   isEqualStrings(eD.getText().trim(), aD.getText().trim()) &&
                    eD.getDescriptionType() == aD.getDescriptionType();
         }
         
