@@ -191,34 +191,31 @@ public class PostAction extends DoiAction {
     }
     
     private String updateJournalRef(String journalRefFromUser) throws Exception {
-        String updatedJournalRef = null;
+        // update journal reference 
         if (journalRefFromUser != null) {
-            // update journal reference 
-            if (journalRefFromUser != null) {
-                ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-                String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-                if (journalRefFromVOSpace == null) {
-                    if (journalRefFromUser.length() > 0) {
-                        // journal reference does not exist, add it
-                        NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
-                        doiContainerNode.getProperties().add(journalRef);
-                        vClient.getVOSpaceClient().setNode(doiContainerNode);
-                    }
-                } else {
-                    if (journalRefFromUser.length() > 0) {
-                        // journal reference already exists, update it
-                        doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
-                    } else {
-                        // delete existing journal reference
-                        doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
-                    }
-                    
+            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+            String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+            if (journalRefFromVOSpace == null) {
+                if (journalRefFromUser.length() > 0) {
+                    // journal reference does not exist, add it
+                    NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
+                    doiContainerNode.getProperties().add(journalRef);
                     vClient.getVOSpaceClient().setNode(doiContainerNode);
                 }
+            } else {
+                if (journalRefFromUser.length() > 0) {
+                    // journal reference already exists, update it
+                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
+                } else {
+                    // delete existing journal reference
+                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
+                }
+                
+                vClient.getVOSpaceClient().setNode(doiContainerNode);
             }
         }
 
-        return updatedJournalRef;
+        return journalRefFromUser;
     }
 
     private Resource getTemplateResource() {
