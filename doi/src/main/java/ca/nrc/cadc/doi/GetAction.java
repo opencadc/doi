@@ -141,7 +141,7 @@ public class GetAction extends DoiAction {
         DoiStatus doiStatus = null;
         ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffixString);
 
-        if (vClient.isRequesterNode(doiContainerNode))
+        if (vClient.isCallerAllowed(doiContainerNode))
         {
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.info("node: " + doiContainerNode.getName() + ", status: " + status);
@@ -172,7 +172,7 @@ public class GetAction extends DoiAction {
         }
         else
         {
-            String msg = "No access to " + doiSuffixString + " which was created by someone else.";
+            String msg = "Access Denied to " + doiSuffixString + ".";
             throw new AccessControlException(msg);
         }
 

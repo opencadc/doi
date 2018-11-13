@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
@@ -90,6 +91,7 @@ import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 public class VospaceDoiClient {
@@ -100,13 +102,17 @@ public class VospaceDoiClient {
     protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
 
     private Integer callersNumericId;
+    private String callersDN;
     private VOSpaceClient vosClient = null;
     private VOSURI baseDataURI = null;
 
-    public VospaceDoiClient(Integer callersNumericId) throws URISyntaxException {
-        this.callersNumericId = callersNumericId;
+    public VospaceDoiClient(Subject callingSubject) throws URISyntaxException {
         this.baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+
+        ACIdentityManager acIdentMgr = new ACIdentityManager();
+        this.callersNumericId = (Integer) acIdentMgr.toOwner(callingSubject);
+        this.callersDN = acIdentMgr.toOwnerString(callingSubject);
     }
 
     public VOSpaceClient getVOSpaceClient() {
@@ -132,12 +138,14 @@ public class VospaceDoiClient {
         return getDoiDocFromVOSpace(docDataURI);
     }
 
-    public boolean isRequesterNode(Node node) {
+    //  doi admin should have access as well
+    public boolean isCallerAllowed(Node node) {
         boolean isRequesterNode = false;
         String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-        log.info("requester: " + requester);
+        log.info("requester for node: " + requester);
         if (StringUtil.hasText(requester)) {
-            isRequesterNode = requester.equals(this.callersNumericId.toString());
+            isRequesterNode = requester.equals(this.callersNumericId.toString()) ||
+                callersDN.contains("doiadmin");
         }
         return isRequesterNode;
     }

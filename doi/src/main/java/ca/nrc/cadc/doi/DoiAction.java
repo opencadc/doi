@@ -129,7 +129,7 @@ public abstract class DoiAction extends RestAction {
         
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
-        this.vClient = new VospaceDoiClient(this.callingSubjectNumericID);
+        this.vClient = new VospaceDoiClient(callingSubject);
 
         parsePath();
     }
