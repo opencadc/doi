@@ -129,6 +129,14 @@
           '</a>'
     }
 
+    function mkLandingPageLink(doiSuffix) {
+      return '<a href="/citation/landing?doi=' +
+          doiSuffix +
+          '" target="_blank">/citation/landing?doi=' +
+          doiSuffix +
+          '</a>'
+    }
+
     function setInfoModal(title, msg, hideThanks) {
       $('.info-span').html(msg)
       $('#infoModalLongTitle').html(title)
@@ -196,6 +204,7 @@
       clearAjaxAlert: clearAjaxAlert,
       setInfoModal: setInfoModal,
       mkDataDirLink: mkDataDirLink,
+      mkLandingPageLink: mkLandingPageLink,
       checkAuthentication: checkAuthentication,
       subscribe: subscribe,
       trigger: trigger,

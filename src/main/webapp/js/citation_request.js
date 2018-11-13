@@ -339,6 +339,7 @@
       $('#doi_metadata').removeClass('hidden')
       $('#doi_status').html(statusData.doistatus.status['$'])
       $('#doi_data_dir').html(dataDir)
+      $('#doi_landing_page').html(page.mkLandingPageLink(statusData.doistatus.identifier['$'].split("/")[1]))
 
       // This happens to be an input element in the form, so 'val' is preferred
       $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])

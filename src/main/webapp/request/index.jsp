@@ -174,12 +174,12 @@
                       </div>
                     </div>
 
-                    <%--<div class="row">--%>
-                      <%--<label for="doi_landing_page" class="col-sm-2 control-label text-right " id="doi_landing_page_label">URL</label>--%>
-                      <%--<div class="col-sm-10">--%>
-                        <%--<span id="doi_landing_page">url</span>--%>
-                      <%--</div>--%>
-                    <%--</div>--%>
+                    <div class="row">
+                      <label for="doi_landing_page" class="col-sm-2 control-label text-right " id="doi_landing_page_label">URL</label>
+                      <div class="col-sm-10">
+                        <span id="doi_landing_page">not available yet</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
