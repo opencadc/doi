@@ -42,6 +42,7 @@
     function attachListeners() {
       $('#doi_form_reset_button').click(handleFormReset)
       $('#doi_form_delete_button').click(handleDOIDelete)
+      $('#doi_form_mint_button').click(handleDoiMint)
       $('#doi_request_form').submit(handleDOIRequest)
 
       $('#doi_add_author').click(handleAddAuthor)
@@ -55,11 +56,12 @@
     // ------------ Page state management functions ------------
 
     function handleFormReset(callFormReset) {
-      $('#doi_metadata').addClass('hidden')
+      $('#doi_related').addClass('hidden')
       page.clearAjaxAlert()
       $('#doi_data_dir').html('')
       $('#doi_landing_page').html('')
       page.setProgressBar('okay')
+      setFormDisplayState('form')
       setButtonState('create')
       $('#doi_additional_authors').empty()
 
@@ -71,14 +73,35 @@
       }
     }
 
+    function setFormDisplayState(mode) {
+      if (mode === 'display') {
+        $('.doi-display').removeClass('hidden')
+        $('.doi-form').addClass('hidden')
+      } else {
+        $('.doi-display').addClass('hidden')
+        $('.doi-form').removeClass('hidden')
+      }
+    }
+
     function setButtonState(mode) {
       if (mode === 'update') {
+        $('#doi_minted').addClass('hidden')
         $('#doi_action_button').text('Update')
         $('#doi_form_delete_button').removeClass('hidden')
+        $('#doi_form_mint_button').removeClass('hidden')
+
       } else if (mode === 'create') {
-        $('.doi_edit').addClass('hidden')
+        $('#doi_minted').addClass('hidden')
         $('#doi_action_button').text('Create')
         $('#doi_form_delete_button').addClass('hidden')
+        $('#doi_form_mint_button').addClass('hidden')
+
+      } else if (mode === 'minted') {
+        // May consider setting form to read only as well.
+        $('#doi_minted').removeClass('hidden')
+        $('#doi_action_button').addClass('hidden')
+        $('#doi_form_delete_button').addClass('hidden')
+        $('#doi_form_mint_button').addClass('hidden')
       }
     }
 
@@ -92,14 +115,14 @@
       // something to handle tabindex.. TODO
       var elementName = 'addtl_author_' + authorNum
       var elementId = 'doi_' + elementName
-      var paretElementId = 'doi_' + elementName + '_div'
+      var parentElementId = 'doi_' + elementName + '_div'
 
-      var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + paretElementId + '" >' +
-          '<input type="text" class="form-control doi-form-input"  name="' + elementName +
+      var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
+          '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
           '"placeholder="family name, given name" id="' + elementId + '" />' +
-          '<div class="input-group-addon">' +
+          '<div class="input-group-addon doi-form ">' +
           '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
-          '</div></div>'
+          '</div><div class="mb-3 doi-display ' + elementId + ' hidden"></div></div></div>'
 
       $('#doi_additional_authors').append(inputHtml)
       $('#' + elementName).bind('click', handleRemoveAuthor)
@@ -109,6 +132,7 @@
     function addAuthorStanza(authorName) {
       var elementName = buildAuthorInput(authorcount++)
       $('#doi_' + elementName).val(authorName)
+      $('.doi_' + elementName).html(authorName)
     }
 
     function handleRemoveAuthor(event) {
@@ -120,13 +144,9 @@
 
     // ------------ HTTP/Ajax functions ------------
 
-    // POST
-    function handleDOIRequest(event) {
-      // Stop normal form submit
-      event.preventDefault()
-      // Clear any previous error bars
-      page.clearAjaxAlert()
-      var _formdata = $(this).serializeArray()
+    // Used in POST for Create, Update and Mint
+    function gatherFormData() {
+      var _formdata = $('#doi_request_form').serializeArray()
       // Disabled fields are not included in .serializeArray()...
       // Grab the doiNumber field
       _formdata.push({'name': 'doiNumber' , 'value': $('#doi_number').val()})
@@ -173,6 +193,28 @@
 
       page.setProgressBar('busy')
 
+      // Set up the multi part data to be submitted to the
+      // doi web service
+      var multiPartData = new FormData()
+      multiPartData.append( 'journalRef', journalRef)
+
+      // 'Blob' type is requred to have the 'filename="blob" parameter added
+      // to the multipart section, and have the Content-type header added
+      multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getDoc())], {
+        type: 'application/json'
+      }))
+
+      return multiPartData
+    }
+
+    // POST
+    function handleDOIRequest(event) {
+      // Stop normal form submit
+      event.preventDefault()
+      // Clear any previous error bars
+      page.clearAjaxAlert()
+      var multiPartData = gatherFormData()
+
       // Display message and set URL addition depending on whether
       // this is a CREATE or UPDATE function
       var urlAddition = ''
@@ -186,17 +228,6 @@
         modalMessage += 'Requesting new Data DOI...'
       }
       page.setInfoModal('Please wait ', modalMessage, false)
-
-      // Set up the multi part data to be submitted to the
-      // doi web service
-      var multiPartData = new FormData()
-      multiPartData.append( 'journalRef', journalRef)
-
-      // 'Blob' type is requred to have the 'filename="blob" parameter added
-      // to the multipart section, and have the Content-type header added
-      multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getDoc())], {
-        type: 'application/json'
-      }))
 
       page.prepareCall().then(function(serviceURL) {
 
@@ -252,7 +283,6 @@
           contentType: 'application/json'
         })
         .success(function(data) {
-          //page.setProgressBar('okay')
           setButtonState('update')
 
           var doiSuffix = data.resource.identifier['$'].split('/')[1]
@@ -305,6 +335,58 @@
       return false
     }
 
+    // Mint
+    function handleDoiMint(event) {
+      event.preventDefault()
+      var multiPartData = gatherFormData()
+
+      // Display message and set URL addition depending on whether
+      // this is a CREATE or UPDATE function
+      var urlAddition = ''
+      var modalMessage = ''
+      var doiSuffix = doiDoc.getDOISuffix()
+
+      urlAddition = '/' + doiSuffix  + '/mint'
+      modalMessage += 'Minting Data DOI ' + doiSuffix + '...'
+
+      page.setInfoModal('Please wait ', modalMessage, false)
+
+      setFormDisplayState('display')
+
+      //page.prepareCall().then(function(serviceURL) {
+      //
+      //  $.ajax({
+      //    xhrFields: { withCredentials: true },
+      //    url: serviceURL + urlAddition,
+      //    method: 'POST',
+      //    dataType: 'json',
+      //    cache: false,
+      //    data: multiPartData,
+      //    processData: false,
+      //    contentType: false
+      //  })
+      //  .success(function(data) {
+      //    // POST redirects to a get.
+      //    // Load the data returned into the local doiDocument to be accessed.
+      //    hideInfoModal()
+      //    page.setProgressBar('okay')
+      //    setButtonState('minted')
+      //
+      //    doiDoc.populateDoc(data)
+      //    populateForm()
+      //
+      //    // Kick off status call
+      //    getDoiStatus(doiSuffix)
+      //  })
+      //  .fail(function(message) {
+      //    hideInfoModal()
+      //    page.setAjaxFail(message)
+      //  })
+      //})
+
+      return false
+    }
+
     // GET
    function getDoiStatus(doiName) {
      page.setProgressBar('busy')
@@ -336,13 +418,14 @@
       // Performed after a successful GET for status
       var dataDir = page.mkDataDirLink(statusData.doistatus.dataDirectory['$'])
       // Once the Mint function is completed, landing page will also be displayed
-      $('#doi_metadata').removeClass('hidden')
+      $('#doi_related').removeClass('hidden')
       $('#doi_status').html(statusData.doistatus.status['$'])
       $('#doi_data_dir').html(dataDir)
       $('#doi_landing_page').html(page.mkLandingPageLink(statusData.doistatus.identifier['$'].split("/")[1]))
 
       // This happens to be an input element in the form, so 'val' is preferred
       $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
+      $('.doi-journal-ref').html(statusData.doistatus.journalRef['$'])
     }
 
     function populateForm() {
@@ -350,6 +433,7 @@
 
       // First author is assumed to be the first one sent back
       $('#doi_author').val(authorList[0])
+      $('.doi-author').html(authorList[0])
 
       // Additional authors may be present in the doiDoc
       $('#doi_additional_authors').empty()
@@ -357,7 +441,11 @@
         addAuthorStanza(authorList[i])
       }
       $('#doi_title').val(doiDoc.getTitle())
-      $('#doi_number').val(doiDoc.getDOINumber())
+      $('.doi-title').html(doiDoc.getTitle())
+
+      var doiNum = doiDoc.getDOINumber()
+      $('#doi_number').val(doiNum)
+      $('.doi-number').html(doiNum)
 
       if (doiDoc.getLanguage() !== '') {
         var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click()
