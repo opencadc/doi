@@ -440,7 +440,11 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        // Determine next DOI number        
+        // Determine next DOI number   
+        // Note: The generated DOI number is the suffix which should be case insensitive.
+        //       Since we are using a number, it does not matter. However if we decide
+        //       to use a String, we should only generate either a lowercase or an
+        //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
         VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
         String nextDoiSuffix = generateNextDOINumber(doiDataURI);
         log.debug("Next DOI suffix: " + nextDoiSuffix);
