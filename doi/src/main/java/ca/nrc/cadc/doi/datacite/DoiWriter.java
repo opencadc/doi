@@ -414,9 +414,9 @@ public class DoiWriter {
 
     protected Element getResourceTypeElement(DoiResourceType resourceType, Namespace ns) {
         Element ret = new Element("resourceType", ns);
-        ret.setAttribute("resourceTypeGeneral", resourceType.getResourceType().getValue());
-        if (!StringUtil.hasText(resourceType.resourceTypeGeneral)) {
-            ret.setText(resourceType.resourceTypeGeneral);
+        ret.setAttribute("resourceTypeGeneral", resourceType.getResourceTypeGeneral().getValue());
+        if (!StringUtil.hasText(resourceType.text)) {
+            ret.setText(resourceType.text);
         }
         return ret;
     }

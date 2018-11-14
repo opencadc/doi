@@ -81,15 +81,13 @@ public class DoiResourceType {
 
     private static Logger log = Logger.getLogger(DoiResourceType.class);
 
-    public String resourceTypeGeneral;
-    private ResourceType resourceType;
+    public String text;
+    private ResourceType resourceTypeGeneral;
 
     /**
      * ResourceType constructor.
      * 
      * @param resourceTypeGeneral
-     *            additional text description for this resource type
-     * @param resourceType
      *            type of this resource
      */
     public DoiResourceType(ResourceType resourceType) {
@@ -98,13 +96,13 @@ public class DoiResourceType {
             throw new IllegalArgumentException(msg);
         }
 
-        this.resourceType = resourceType;
+        this.resourceTypeGeneral = resourceType;
     }
 
     /**
      * @return type of this resource
      */
-    public ResourceType getResourceType() {
-        return this.resourceType;
+    public ResourceType getResourceTypeGeneral() {
+        return this.resourceTypeGeneral;
     }
 }

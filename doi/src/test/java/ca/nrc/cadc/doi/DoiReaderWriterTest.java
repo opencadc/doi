@@ -217,8 +217,8 @@ public class DoiReaderWriterTest
     
     private void compareResourceTypes(DoiResourceType r1, DoiResourceType r2)
     {
-        Assert.assertEquals("resourceType is different", r1.getResourceType(), r2.getResourceType());
-        compareStrings(r1.resourceTypeGeneral, r2.resourceTypeGeneral, "resourceTypeGeneral");
+        Assert.assertEquals("resourceTypeGeneral is different", r1.getResourceTypeGeneral(), r2.getResourceTypeGeneral());
+        compareStrings(r1.text, r2.text, "resourceType text");
     }
 
     private void compareNull(Object o1, Object o2, String field)

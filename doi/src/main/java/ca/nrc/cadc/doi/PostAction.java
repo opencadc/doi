@@ -423,13 +423,13 @@ public class PostAction extends DoiAction {
     
     private void verifyResourceType(DoiResourceType rt1, DoiResourceType rt2) {
         verifyNull(rt1, rt2, "DoiResourceType");
-        if (rt1.getResourceType() != rt2.getResourceType()) {
-            String expected = rt2.getResourceType().getValue();
-            String actual = rt1.getResourceType().getValue();
+        if (rt1.getResourceTypeGeneral() != rt2.getResourceTypeGeneral()) {
+            String expected = rt2.getResourceTypeGeneral().getValue();
+            String actual = rt1.getResourceTypeGeneral().getValue();
             String msg = "resourceType update is not allowed, expected = " + expected + ", actual = " + actual;
             throw new IllegalStateException(msg);
         } else {
-            verifyString(rt1.resourceTypeGeneral, rt2.resourceTypeGeneral, "resourceTypeGeneral");
+            verifyString(rt1.text, rt2.text, "resourceTYpe text");
         }
     }
     

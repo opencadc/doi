@@ -265,8 +265,8 @@ public class DocumentTest extends IntTestBase {
     }
 
     protected void compareResourceType(DoiResourceType eRT, DoiResourceType aRT, String field) {
-        compareStrings(eRT.resourceTypeGeneral, aRT.resourceTypeGeneral, "resourceTypeGeneral");
-        compareStrings(eRT.getResourceType().getValue(), aRT.getResourceType().getValue(), "resourceType");
+        compareStrings(eRT.text, aRT.text, "resourceType text");
+        Assert.assertEquals("resourceTypeGeneral in resourceType is different", eRT.getResourceTypeGeneral(), aRT.getResourceTypeGeneral());
     }
     
     protected void compareTitle(Title t1, Title t2) {
