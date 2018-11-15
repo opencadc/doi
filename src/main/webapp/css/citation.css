@@ -87,10 +87,6 @@
   margin-right: 15px;
 }
 
-.doi_delete {
-  cursor: pointer;
-}
-
 .doi-form-input {
   height: 36px;
 }
@@ -122,6 +118,26 @@
 
 .doi-display {
   margin-top: 8px;
+}
+
+.doi-mint {
+  color: green;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.doi-mint:hover {
+  opacity: .8;
+}
+
+.doi-delete {
+  color: red;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.doi-delete:hover {
+  opacity: .8;
 }
 
 

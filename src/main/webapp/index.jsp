@@ -107,6 +107,7 @@
                           <th>Status</th>
                           <th>Title</th>
                           <th>Data Directory</th>
+                          <th>Landing Page</th>
                           <th class="no-sort">Actions</th>
                         </tr>
                         </thead>
@@ -168,8 +169,6 @@
         </div>
       </div>
     </div>
-
-
 
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
     <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>

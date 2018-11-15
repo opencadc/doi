@@ -33,6 +33,7 @@
       'status' : '',
       'title' : '',
       'data_dir' : '',
+      'landing_page' : '',
       'action' : ''
     }
 
@@ -57,12 +58,13 @@
           {'data' : 'status'},
           {'data' : 'title'},
           {'data' : 'data_dir'},
+          {'data' : 'landing_page'},
           {'data' : 'action'}
         ],
         columnDefs: [
           { 'width': 20, 'targets': 0 },
           { 'width': 75, 'targets': 1 },
-          { 'width': 20, 'targets': 4 }
+          { 'width': 20, 'targets': 5 }
         ],
         ordering: false,
         paging: false,
@@ -139,8 +141,9 @@
       page.setProgressBar('okay')
       hideInfoModal()
 
-      // attach listeners to delete icons.
-      $('.doi_delete').click(confirmDOIDelete)
+      // attach listeners to action icons.
+      $('.doi-delete').click(confirmDOIDelete)
+      $('.doi-mint').click(loadRequestPage)
     }
 
     function setTableStatus(displayText) {
@@ -164,6 +167,11 @@
     function confirmDOIDelete(event) {
       var doiSuffix = event.currentTarget.dataset.doinum
       setDeleteModal(doiSuffix)
+    }
+
+    function loadRequestPage(event) {
+      var doiSuffix = event.currentTarget.dataset.doinum
+      window.open('/citation/request?doi=' + doiSuffix, '_blank');
     }
 
     // DELETE
@@ -237,8 +245,9 @@
       newStatus.doi_name = mkNameLink(doiName)
       newStatus.status = doi.status['$']
       newStatus.data_dir = page.mkDataDirLink(doi.dataDirectory['$'])
+      newStatus.landing_page = page.mkLandingPageLink(doi.identifier['$'].split("/")[1])
       newStatus.title = mkTitleLink(doi.title['$'], doiName)
-      newStatus.action = mkDeleteLink(doiName)
+      newStatus.action = mkActionLinks(doiName)
 
       addRow(newStatus)
     }
@@ -294,7 +303,7 @@
         doiSuffix = doiName.split('/')[1]
       }
       else {
-        doiSuffix = doiName
+        doiSuffix = doiNam
       }
       return doiSuffix
     }
@@ -317,9 +326,22 @@
               '</a>'
     }
 
+    function mkActionLinks(doiName, status) {
+      var actionLinkString = '';
+      if (status !== 'minted') {
+        actionLinkString = mkMintLink(doiName) + mkDeleteLink(doiName)
+      }
+      return actionLinkString
+    }
+
     function mkDeleteLink(doiName) {
       var doiSuffix = parseDoiSuffix(doiName)
-      return '<span class="doi_delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
+      return '<span class="doi-delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
+    }
+
+    function mkMintLink(doiName) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      return '<span class="doi-mint glyphicon glyphicon-lock" data-doiNum = ' + doiSuffix + '></span>'
     }
 
     $.extend(this, {
