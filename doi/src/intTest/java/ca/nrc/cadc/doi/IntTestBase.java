@@ -133,9 +133,9 @@ public abstract class IntTestBase {
         // Set up DELETE
         final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
         ContainerNode doiContainerNode = (ContainerNode) vosClient.getNode(baseDataURI.getPath() + "/" + doiSuffix);
-        String readOnly = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE);
-        if (readOnly != null && readOnly.equals("false")) {
-	        doiContainerNode.findProperty(VOS.PROPERTY_URI_WRITABLE).setValue("true");
+        String isLocked = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+        if (isLocked != null && isLocked.equals("true")) {
+	        doiContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setValue("false");
 	        vosClient.setNode(doiContainerNode);
         }
         

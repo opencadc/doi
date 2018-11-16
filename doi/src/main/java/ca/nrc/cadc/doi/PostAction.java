@@ -303,21 +303,23 @@ public class PostAction extends DoiAction {
     private void makeDOIFindable(ContainerNode doiContainerNode) {
     	// add the landing page URL
     	// TODO: implement the code
+    	
+    	
         doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.MINTED.getValue());;
 		doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
-        NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
-        doiContainerNode.getProperties().add(readOnly);
+        NodeProperty isLocked = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
+        doiContainerNode.getProperties().add(isLocked);
         vClient.getVOSpaceClient().setNode(doiContainerNode);
-        /*
+        
         try {
 			ContainerNode testContainerNode = vClient.getContainerNode(doiSuffix);
-			String isWritable = testContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE);
-			log.info("alinga-- isWritable = " + isWritable);
+			String locked = testContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+			log.info("alinga-- locked = " + locked);
 		} catch (NodeNotFoundException | URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		*/
+		
     }
    
     private void registerDOI(ContainerNode doiContainerNode) {
@@ -332,8 +334,8 @@ public class PostAction extends DoiAction {
         ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
         if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
             dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
-            dataContainerNode.getProperties().add(readOnly);
+            //NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
+            //dataContainerNode.getProperties().add(readOnly);
             vClient.getVOSpaceClient().setNode(dataContainerNode);
         }
         
@@ -393,18 +395,18 @@ public class PostAction extends DoiAction {
             	// ensure that the status has been set to "minted"
             	if (!Status.MINTED.equals(doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP))) {
             		doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
-                    NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
-                    doiContainerNode.getProperties().add(readOnly);
+                    NodeProperty isLocked = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
+                    doiContainerNode.getProperties().add(isLocked);
                     vClient.getVOSpaceClient().setNode(doiContainerNode);
             	} else {
             		// ensure that the container node has been set to read only
-            		String readOnlyString = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE);
+            		String readOnlyString = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
             		if (readOnlyString == null) {
-                        NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
-                        doiContainerNode.getProperties().add(readOnly);
+                        NodeProperty isLocked = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
+                        doiContainerNode.getProperties().add(isLocked);
                         vClient.getVOSpaceClient().setNode(doiContainerNode);
             		} else if (!readOnlyString.equals("false")) {
-                		doiContainerNode.findProperty(VOS.PROPERTY_URI_WRITABLE).setValue("false");
+                		doiContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setValue("true");
                         vClient.getVOSpaceClient().setNode(doiContainerNode);
             		}
             	}
