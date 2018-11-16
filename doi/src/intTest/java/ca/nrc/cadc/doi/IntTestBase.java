@@ -75,9 +75,7 @@ import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.NodeNotFoundException;
-import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
@@ -132,13 +130,6 @@ public abstract class IntTestBase {
         // Clean up test folder
         // Set up DELETE
         final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
-        ContainerNode doiContainerNode = (ContainerNode) vosClient.getNode(baseDataURI.getPath() + "/" + doiSuffix);
-        String isLocked = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-        if (isLocked != null && isLocked.equals("true")) {
-	        doiContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setValue("false");
-	        vosClient.setNode(doiContainerNode);
-        }
-        
         URL deleteUrl = new URL(baseURL + "/" + doiSuffix);
         log.info("Deleting folder: " + doiSuffix + " using URL: " + deleteUrl.getPath());
 
