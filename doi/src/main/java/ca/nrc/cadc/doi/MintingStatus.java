@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,100 +54,57 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
+
+            // return the node in xml format
+            NodeWriter nodeWriter = new NodeWriter();
+            return new NodeActionResult(new N
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
+*  $Revision: 4 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.HttpDelete;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.FileUtil;
-import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.NodeNotFoundException;
-import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.BeforeClass;
-
 /**
- * Integration tests generating DOI folders in VOSpace
+ * Enums for doi transient status during minting.
+ * 
+ * @author yeunga
  *
- * @author jeevesh
  */
-public abstract class IntTestBase {
-    private static final Logger log = Logger.getLogger(IntTestBase.class);
+public enum MintingStatus {
+	BEFORE_MINTING("before minting"),
+    MINTING("minting"), 
+    REGISTERING("registering"), 
+    MAKING_FINDABLE("making findable"),
+    MINTED("minted");
 
-    protected static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
-    protected static File CADCAUTHTEST_CERT;
-    protected static File CADCREGTEST_CERT;
-    protected static String baseURL;
-    protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
-    protected static VOSpaceClient vosClient;
-    protected static VOSURI astroDataURI;
-    protected static RegistryClient rc;
+    private final String value;
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+    private MintingStatus(String value) {
+        this.value = value;
     }
 
-    public IntTestBase() {
+    public static MintingStatus toValue(String s) {
+        for (MintingStatus status : values())
+            if (status.value.equals(s))
+                return status;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    @BeforeClass
-    public static void staticInit() throws Exception {
-        // CadcAuthtest1 will have write access to DOI data folders
-        // CadcRegtest1 will only have read access
-        CADCAUTHTEST_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", IntTestBase.class);
-        CADCREGTEST_CERT = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", IntTestBase.class);
-
-        rc = new RegistryClient();
-        URL doi = rc.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        baseURL = doi.toExternalForm();
-
-        // Initialize vosClient for later use
-        astroDataURI = new VOSURI(new URI(DOI_BASE_NODE));
-        vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
+    public String getValue() {
+        return value;
     }
 
-    protected void deleteTestFolder(VOSpaceClient vosClient, String doiSuffix) throws RuntimeException, MalformedURLException, NodeNotFoundException {
-        // Clean up test folder
-        // Set up DELETE
-        final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
-        ContainerNode doiContainerNode = (ContainerNode) vosClient.getNode(baseDataURI.getPath() + "/" + doiSuffix);
-        String readOnly = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE);
-        if (readOnly != null && readOnly.equals("false")) {
-	        doiContainerNode.findProperty(VOS.PROPERTY_URI_WRITABLE).setValue("true");
-	        vosClient.setNode(doiContainerNode);
-        }
-        
-        URL deleteUrl = new URL(baseURL + "/" + doiSuffix);
-        log.info("Deleting folder: " + doiSuffix + " using URL: " + deleteUrl.getPath());
-
-        HttpDelete deleteTask = new HttpDelete(deleteUrl, false);
-        deleteTask.run();
-        // Check that there was no exception thrown
-        if (deleteTask.getThrowable() != null) {
-            throw new RuntimeException(deleteTask.getThrowable());
-        }
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
-
 }

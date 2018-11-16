@@ -224,7 +224,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
                     }
                 });
 
-                deleteTestFolder(doiSuffix);
+                deleteTestFolder(vosClient, doiSuffix);
                 return "done";
             }
         });

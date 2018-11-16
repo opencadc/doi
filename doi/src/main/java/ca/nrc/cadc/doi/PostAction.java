@@ -91,6 +91,7 @@ import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
@@ -104,6 +105,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
@@ -297,37 +299,116 @@ public class PostAction extends DoiAction {
 
         return inProgressDoi;
     }
+    
+    private void makeDOIFindable(ContainerNode doiContainerNode) {
+    	// add the landing page URL
+    	// TODO: implement the code
+        doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.MINTED.getValue());;
+		doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
+        NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
+        doiContainerNode.getProperties().add(readOnly);
+        vClient.getVOSpaceClient().setNode(doiContainerNode);
+        /*
+        try {
+			ContainerNode testContainerNode = vClient.getContainerNode(doiSuffix);
+			String isWritable = testContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE);
+			log.info("alinga-- isWritable = " + isWritable);
+		} catch (NodeNotFoundException | URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+    }
+   
+    private void registerDOI(ContainerNode doiContainerNode) {
+    	// update the minting status
+    	// TODO: implement the code
+    	
+    	// add landing page to the DOI instance
+    	makeDOIFindable(doiContainerNode);
+    }
 
+    private void updateDataContainerNode(ContainerNode doiContainerNode) throws Exception {
+        ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
+        if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
+            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+            NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
+            dataContainerNode.getProperties().add(readOnly);
+            vClient.getVOSpaceClient().setNode(dataContainerNode);
+        }
+        
+    	// update the minting status
+        doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.REGISTERING.getValue());;
+        vClient.getVOSpaceClient().setNode(doiContainerNode);
+        
+        // register the DOI instance
+        registerDOI(doiContainerNode);
+    }
+    
+    private void mintDOI(ContainerNode doiContainerNode) throws Exception {
+        // perform one last update in case there are changes
+        Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+        String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
+        
+        // journalRefToMinto == null means we need to get journalRef from VOSpace
+        String journalRefToMint = journalRefFromUser;
+        if (journalRefFromUser == null) {
+            journalRefToMint = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+        } else {
+            journalRefToMint = updateJournalRef(journalRefFromUser);
+        }
+
+        // add final minting elements to the resource and update VOSpace
+        finalizeResource(resourceFromUser, journalRefToMint);
+        
+        // update the DOI container node properties
+        doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.MINTING.getValue());;
+        doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
+        doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
+        vClient.getVOSpaceClient().setNode(doiContainerNode);
+        
+        // update the data container node properties
+        updateDataContainerNode(doiContainerNode);
+    }
+    
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.MINT_ACTION)) {
-            // start minting process
-            
-            // perform one last update in case there are changes
-            Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-            String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
-            
-            // journalRefToMinto == null means we need to get journalRef from VOSpace
-            String journalRefToMint = journalRefFromUser;
+            // start minting process            
+        	// check minting status
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            if (journalRefFromUser == null) {
-                journalRefToMint = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-            } else {
-                journalRefToMint = updateJournalRef(journalRefFromUser);
+            MintingStatus mintingStatus = MintingStatus.toValue(doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
+            if (mintingStatus == MintingStatus.BEFORE_MINTING) {
+            	// perform minting for the first time                
+            	mintDOI(doiContainerNode);
+            } else if (mintingStatus == MintingStatus.MINTING) {
+            	// data container node may not have been updated
+            	updateDataContainerNode(doiContainerNode);
+            } else if (mintingStatus == MintingStatus.REGISTERING) {
+            	// register DOI to DataCite
+            	registerDOI(doiContainerNode);
+            } else if (mintingStatus == MintingStatus.MAKING_FINDABLE) {
+            	// add the landing page URL
+            	makeDOIFindable(doiContainerNode);
+            } else if (mintingStatus == MintingStatus.MINTED) {
+            	// ensure that the status has been set to "minted"
+            	if (!Status.MINTED.equals(doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP))) {
+            		doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
+                    NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
+                    doiContainerNode.getProperties().add(readOnly);
+                    vClient.getVOSpaceClient().setNode(doiContainerNode);
+            	} else {
+            		// ensure that the container node has been set to read only
+            		String readOnlyString = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE);
+            		if (readOnlyString == null) {
+                        NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_WRITABLE, "false");
+                        doiContainerNode.getProperties().add(readOnly);
+                        vClient.getVOSpaceClient().setNode(doiContainerNode);
+            		} else if (!readOnlyString.equals("false")) {
+                		doiContainerNode.findProperty(VOS.PROPERTY_URI_WRITABLE).setValue("false");
+                        vClient.getVOSpaceClient().setNode(doiContainerNode);
+            		}
+            	}
             }
-
-            // add final minting elements to the resource and update VOSpace
-            finalizeResource(resourceFromUser, journalRefToMint);
-            
-            // update the DOI container node properties
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTING.getValue());;
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
-            
-            // update the data container node properties
-            ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
-            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            vClient.getVOSpaceClient().setNode(dataContainerNode);
 
             // Done, send redirect to GET for the XML file just minted
             int lastPosition = syncInput.getRequestURI().lastIndexOf('/');
@@ -519,6 +600,10 @@ public class PostAction extends DoiAction {
         NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, DOI_VOS_STATUS_DRAFT);
         properties.add(doiStatus);
 
+        // Initialize transient minting status
+        NodeProperty transientMintingStatus = new NodeProperty(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP, MintingStatus.BEFORE_MINTING.getValue());
+        properties.add(transientMintingStatus);
+        
         // Should have come in as a parameter with the POST
         NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
         properties.add(journalRef);

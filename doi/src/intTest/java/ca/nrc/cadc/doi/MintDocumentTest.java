@@ -114,11 +114,7 @@ import ca.nrc.cadc.vos.client.VOSpaceClient;
 public class MintDocumentTest extends DocumentTest {
     private static final Logger log = Logger.getLogger(MintDocumentTest.class);
     
-    protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-
-    final VOSURI baseDataURI = new VOSURI(URI.create(DOI_BASE_VOSPACE));
+    final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
     final VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
     final Subject testSubject = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
@@ -150,11 +146,11 @@ public class MintDocumentTest extends DocumentTest {
         String mDoc = postDocument(mintURL, document, journalRef);
         Resource mResource = xmlReader.read(mDoc);
         
-        // verify the DOI status to be "minting"
+        // verify the DOI status to be "minted"
         DoiStatus doiStatus = getStatus(docURL);
         Assert.assertEquals("identifier from DOI status is different", expectedIdentifier,
                 doiStatus.getIdentifier().getText());
-        Assert.assertEquals("status is incorrect", Status.MINTING, doiStatus.getStatus());
+        Assert.assertEquals("status is incorrect", Status.MINTED, doiStatus.getStatus());
         return mResource;
     }
 
@@ -279,7 +275,7 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "false");
+                    Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
                     
                     // verify the DOI data containerNode properties
@@ -297,16 +293,19 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect status", doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP), Status.MINTING.getValue());
-                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "true");
+                    Assert.assertEquals("incorrect transient_status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
+                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    //Assert.assertEquals("incorrect writable property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE));
                     
                     // verify the DOI data containerNode properties
                     dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
                     Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+                    //Assert.assertEquals("incorrect writable property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE));
                 } finally {
                     // delete containing folder using doiadmin credentials
-                    deleteTestFolder(doiNumberParts[1]);
+                    //deleteTestFolder(vosClient, doiNumberParts[1]);
                 }
                 return resource;
             }
@@ -359,7 +358,7 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "false");
+                    Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
                     
                     // verify the DOI data containerNode properties
@@ -386,16 +385,19 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect status", doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP), Status.MINTING.getValue());
-                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "true");
+                    Assert.assertEquals("incorrect transient_status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
+                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    //Assert.assertEquals("incorrect writable property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE));
                     
                     // verify the DOI data containerNode properties
                     dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
                     Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+                    //Assert.assertEquals("incorrect writable property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE));
                 } finally {
                     // delete containing folder using doiadmin credentials
-                    deleteTestFolder(doiNumberParts[1]);
+                    //deleteTestFolder(vosClient, doiNumberParts[1]);
                 }
                 return resource;
             }
@@ -448,7 +450,7 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "false");
+                    Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
                     
                     // verify the DOI data containerNode properties
@@ -475,16 +477,19 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect status", doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP), Status.MINTING.getValue());
-                    Assert.assertEquals("incorrect isPublic property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC), "true");
+                    Assert.assertEquals("incorrect transient_status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
+                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    //Assert.assertEquals("incorrect writable property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE));
                     
                     // verify the DOI data containerNode properties
                     dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
                     Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+                    //Assert.assertEquals("incorrect writable property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_WRITABLE));
                 } finally {
                     // delete containing folder using doiadmin credentials
-                    deleteTestFolder(doiNumberParts[1]);
+                    //deleteTestFolder(vosClient, doiNumberParts[1]);
                 }
                 return resource;
             }

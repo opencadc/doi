@@ -182,7 +182,7 @@ public class CreateDocumentTest extends DocumentTest {
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
                 } finally {
                     // delete containing folder using doiadmin credentials
-                    deleteTestFolder(doiNumberParts[1]);
+                    deleteTestFolder(vosClient, doiNumberParts[1]);
                 }
                 return resource;
             }
@@ -241,7 +241,7 @@ public class CreateDocumentTest extends DocumentTest {
             Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
                 public Object run() throws Exception {
                     for (int i = 0; i < newDois.length; i++) {
-                        deleteTestFolder(newDois[i]);
+                        deleteTestFolder(vosClient, newDois[i]);
                     }
 
                     return null;

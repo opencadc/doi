@@ -86,16 +86,17 @@ public abstract class DoiAction extends RestAction {
     public static final String STATUS_ACTION = "status";
     public static final String MINT_ACTION = "mint";
    
-    protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
-    protected static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
-    protected static final String CADC_DOI_PREFIX = "10.11570";
-    protected static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
-    protected static final String JOURNALREF_PARAM = "journalref";
+    public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
+    public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
+    public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
+    public static final String CADC_DOI_PREFIX = "10.11570";
+    public static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
+    public static final String JOURNALREF_PARAM = "journalref";
     
-    protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
-    protected static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-    protected static final String DOI_VOS_JOURNAL_PROP = "ivo://cadc.nrc.ca/vospace/doi#journalref";
+    public static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
+    public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
+    public static final String DOI_VOS_TRANSIENT_STATUS_PROP = "doiTransientStatus";
+    public static final String DOI_VOS_JOURNAL_PROP = "ivo://cadc.nrc.ca/vospace/doi#journalref";
     protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
     protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
     
