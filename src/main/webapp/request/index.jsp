@@ -58,7 +58,15 @@
 
               <div class="doi-authenticated">
                 <div id="doi_metadata" class="panel panel-default doi-panel">
-                  <div class="panel-heading doi-panel-heading"><h4>DOI Metadata</h4>
+                  <div class="panel-heading doi-panel-heading">
+                    <nav class="navbar navbar-expand-sm doi-header-navbar" id="navbar-functions">
+                      <ul class="nav navbar-nav doi-header-navbar">
+                        <li class="nav-item"><h4>DOI Metadata</h4></li>
+                        <li class="nav-item pull-right doi-authenticated">
+                          <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New DOI</button>
+                        </li>
+                      </ul>
+                    </nav>
                   </div>
                   <div class="progress doi-progress-bar-container">
                     <div class="progress-bar progress-bar-success doi-progress-bar"
@@ -89,9 +97,20 @@
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_number" name="doiNumber"
                                    disabled="disabled" readonly />
                           </div>
-                          <div class="col-sm-3 doi-display doi-number hidden">
+                          <div class="col-sm-2 doi-display doi-number hidden">
                           </div>
-                          <div id="doi_minted" class="btn btn-success col-sm-2 doi-form-info hidden "><i>MINTED</i></div>
+                          <div class="col-sm-2 doi-status-badge hidden">
+                            <div class="doi-minted glyphicon glyphicon-lock doi-form-info hidden ">
+                              <i>MINTED</i>
+                            </div>
+                            <div class="doi-working glyphicon glyphicon-wrench doi-form-info hidden ">
+                              <i>WORKING</i>
+                            </div>
+                            <div class="doi-warning glyphicon glyphicon-exclamation-sign doi-form-info hidden ">
+                              <i>MINTING INCOMPLETE - Try again or contact a CADC administrator</i>
+                            </div>
+                          </div>
+
                         </div>
 
                         <!-- Publication Title -->
@@ -126,7 +145,7 @@
                         </div>
 
                       <div class="form-group">
-                          <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (Optional)</label>
+                        <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)</label>
                           <div class="col-sm-6">
                               <div id="doi_additional_authors"></div>
                               <div>
@@ -138,7 +157,7 @@
 
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
-                          <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Ref</label>
+                          <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Reference (<i>optional</i>) </label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_journal_ref" name="journalRef"
                                    placeholder="Journal  Reference" tabindex="3" required/>
@@ -171,8 +190,19 @@
                   <div class="panel-body doi-panel-body">
                     <div class="row">
                       <label for="doi_status" class="col-sm-3 control-label text-right " id="doi_status_label">Status</label>
-                      <div class="col-sm-9">
+                      <div class="col-sm-2 doi-status">
                         <span id="doi_status"></span>
+                      </div>
+                      <div class="col-sm-3 doi-status-badge hidden">
+                        <div class="doi-minted glyphicon glyphicon-lock hidden ">
+                          <i>MINTED</i>
+                        </div>
+                        <div class="doi-working glyphicon glyphicon-wrench hidden ">
+                          <i>WORKING</i>
+                        </div>
+                        <div class="doi-warning glyphicon glyphicon-exclamation-sign hidden ">
+                          <i>MINTING INCOMPLETE - Try again or contact a CADC administrator</i>
+                        </div>
                       </div>
                     </div>
 

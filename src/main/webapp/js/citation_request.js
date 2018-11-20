@@ -20,6 +20,7 @@
   function CitationRequest(inputs) {
     var doiDoc = new cadc.web.citation.DOIDocument()
     var page = new cadc.web.citation.CitationPage(inputs)
+    var ajaxCallStatus = ''  // minting, creating, updating
 
 
     // ------------ Page load functions ------------
@@ -41,11 +42,13 @@
 
     function attachListeners() {
       $('#doi_form_reset_button').click(handleFormReset)
+      $('#doi_request').click(handleNewDoiClick)
       $('#doi_form_delete_button').click(handleDOIDelete)
       $('#doi_form_mint_button').click(handleDoiMint)
       $('#doi_request_form').submit(handleDOIRequest)
 
       $('#doi_add_author').click(handleAddAuthor)
+
 
       page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
         parseUrl()
@@ -55,15 +58,45 @@
 
     // ------------ Page state management functions ------------
 
+    function setPageState(newState) {
+      if (newState === 'minted') {
+        setFormDisplayState('display')
+        setButtonState('minted')
+        $('.doi-minted').removeClass('hidden')
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-status').addClass('hidden')
+      } else if (newState === 'refresh') {
+        setFormDisplayState('form')
+        setButtonState('create')
+        $('.doi-status-badge').addClass('hidden')
+        $('.doi-status').removeClass('hidden')
+      } else { // 'working' state
+        setFormDisplayState('form')
+        setButtonState('update')
+        $('.doi-status-badge').addClass('hidden')
+        $('.doi-status').removeClass('hidden')
+      }
+    }
+
+    function handleNewDoiClick() {
+      // 'true' here will trigger the form to reset itself
+      handleFormReset(true)
+    }
+
     function handleFormReset(callFormReset) {
+      setPageState('refresh')
+
+      // Clear Related Information panel
       $('#doi_related').addClass('hidden')
       page.clearAjaxAlert()
       $('#doi_data_dir').html('')
       $('#doi_landing_page').html('')
+
       page.setProgressBar('okay')
-      setFormDisplayState('form')
-      setButtonState('create')
+      //setFormDisplayState('form')
+      //setButtonState('create')
       $('#doi_additional_authors').empty()
+      //setPageState('reset')
 
       // Do this only if explicitly asked
       // If this comes in from clicking the 'Clear' button, the data will be
@@ -85,23 +118,17 @@
 
     function setButtonState(mode) {
       if (mode === 'update') {
-        $('#doi_minted').addClass('hidden')
+        $('.button-group').removeClass('hidden')
         $('#doi_action_button').text('Update')
         $('#doi_form_delete_button').removeClass('hidden')
         $('#doi_form_mint_button').removeClass('hidden')
-
       } else if (mode === 'create') {
-        $('#doi_minted').addClass('hidden')
+        $('.button-group').removeClass('hidden')
         $('#doi_action_button').text('Create')
         $('#doi_form_delete_button').addClass('hidden')
         $('#doi_form_mint_button').addClass('hidden')
-
       } else if (mode === 'minted') {
-        // May consider setting form to read only as well.
-        $('#doi_minted').removeClass('hidden')
-        $('#doi_action_button').addClass('hidden')
-        $('#doi_form_delete_button').addClass('hidden')
-        $('#doi_form_mint_button').addClass('hidden')
+        $('.button-group').addClass('hidden')
       }
     }
 
@@ -338,6 +365,7 @@
     // Mint
     function handleDoiMint(event) {
       event.preventDefault()
+      ajaxCallStatus = 'minting'
       var multiPartData = gatherFormData()
 
       // Display message and set URL addition depending on whether
@@ -353,36 +381,36 @@
 
       setFormDisplayState('display')
 
-      //page.prepareCall().then(function(serviceURL) {
-      //
-      //  $.ajax({
-      //    xhrFields: { withCredentials: true },
-      //    url: serviceURL + urlAddition,
-      //    method: 'POST',
-      //    dataType: 'json',
-      //    cache: false,
-      //    data: multiPartData,
-      //    processData: false,
-      //    contentType: false
-      //  })
-      //  .success(function(data) {
-      //    // POST redirects to a get.
-      //    // Load the data returned into the local doiDocument to be accessed.
-      //    hideInfoModal()
-      //    page.setProgressBar('okay')
-      //    setButtonState('minted')
-      //
-      //    doiDoc.populateDoc(data)
-      //    populateForm()
-      //
-      //    // Kick off status call
-      //    getDoiStatus(doiSuffix)
-      //  })
-      //  .fail(function(message) {
-      //    hideInfoModal()
-      //    page.setAjaxFail(message)
-      //  })
-      //})
+      page.prepareCall().then(function(serviceURL) {
+
+        $.ajax({
+          xhrFields: { withCredentials: true },
+          url: serviceURL + urlAddition,
+          method: 'POST',
+          dataType: 'json',
+          cache: false,
+          data: multiPartData,
+          processData: false,
+          contentType: false
+        })
+        .success(function(data) {
+          // POST redirects to a get.
+          // Load the data returned into the local doiDocument to be accessed.
+          hideInfoModal()
+          page.setProgressBar('okay')
+          //setPageState('minted') // may be 'working'
+
+          doiDoc.populateDoc(data)
+          populateForm()
+
+          // Kick off status call to refresh lower panel
+          getDoiStatus(doiSuffix)
+        })
+        .fail(function(message) {
+          hideInfoModal()
+          page.setAjaxFail(message)
+        })
+      })
 
       return false
     }
@@ -404,10 +432,18 @@
         hideInfoModal()
         page.setProgressBar('okay')
         loadMetadata(data)
+
+        if (data.doistatus.status['$'] === 'minted') {
+          setPageState('minted')
+        } else if (data.doistatus.status['$'] === 'in progress') {
+          setPageState('working')
+        }
+
       })
       .fail(function(message) {
         hideInfoModal()
         page.setProgressBar('error')
+        //setPageState('warning')
         page.setAjaxFail(message)
       })
     })

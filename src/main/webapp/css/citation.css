@@ -130,6 +130,21 @@
   opacity: .8;
 }
 
+.doi-minted {
+  color: green;
+  margin-right: 10px;
+}
+
+.doi-working {
+  color: saddlebrown;
+  margin-right: 10px;
+}
+
+.doi-warning {
+  color: darkred;
+  margin-right: 10px;
+}
+
 .doi-delete {
   color: red;
   margin-right: 10px;
