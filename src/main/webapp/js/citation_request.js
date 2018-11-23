@@ -23,9 +23,54 @@
     var ajaxCallStatus = ''  // minting, creating, updating
 
 
+    // These reflect the states as returned from the doiservice status call
+    // TODO: how to make these states less breakable? String comparison isn't great...
+    const serviceState = {
+      START: 'start',
+      INPROGRESS: 'in progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
+      LOCKING_DATA: 'locking data directory',
+      REGISTERING: 'registering to DataCite',
+      MINTED: 'minted',
+      ERROR_REGISTERING: 'error registering to DataCite',
+      ERROR_LOCKING_DATA: "error locking data directory",
+      COMPLETE: 'complete'
+    }
+
+    const PLEASE_RETRY = ": please retry minting DOI"
+
+    const stateDisplayText = {
+      INPROGRESS: 'In progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
+      LOCKING_DATA: 'Locking data directory',
+      REGISTERING: 'Registering to DataCite',
+      MINTED: 'Minted',
+      ERROR_REGISTERING: 'Error registering DOI with DataCite',
+      ERROR_LOCKING_DATA: "Error locking data directory",
+      COMPLETE: 'DOI Complete'
+    }
+
+    // The UI state reflects what actions are available and how the metadata is displayed to the
+    // screen, what the user is able to update, etc.
+    const uiState = {
+      CREATE: 'create', // empty form - create action available
+      UPDATE: 'update', // populated form, update, delete available, mint disabled
+      MINT: 'mint', // populated form, update, delete, mint button enabled
+      MINT_RETRY: 'mint_retry', // when error occurs during minting: update button disabled? - mint_retry available
+      POLLING: 'polling', // loading spinner with modal - no actions available
+      REGISTER: 'register', // publication doi (and journal ref?) updatable - register_doi available
+      COMPLETE: 'complete' // no actions available
+    }
+
+    var curUIState = ''
+    var curServiceState = ''
+
+
     // ------------ Page load functions ------------
 
     function init() {
+      // Initialize ui and service states
+      curUIState = uiState.CREATE
+      curServiceState = serviceState.START
+
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
       page.checkAuthentication()
@@ -40,42 +85,174 @@
       }
     }
 
+    function buildBadgeSets() {
+      // Put a badge set in both panels
+      // TODO: do this and centralize the creation of the
+      // badges into the citation_page so they can be used
+      // on the landing and listing page as well
+    }
+
     function attachListeners() {
+      // Button listeners
       $('#doi_form_reset_button').click(handleFormReset)
-      $('#doi_request').click(handleNewDoiClick)
-      $('#doi_form_delete_button').click(handleDOIDelete)
-      $('#doi_form_mint_button').click(handleDoiMint)
+      $('#doi_delete_button').click(handleDOIDelete)
+      $('#doi_mint_button').click(handleDoiMint)
+      $('#doi_register_button').click(handleDoiRegister)
       $('#doi_request_form').submit(handleDOIRequest)
 
+      // Other page function listeners
+      $('#doi_request').click(handleNewDoiClick)
       $('#doi_add_author').click(handleAddAuthor)
-
 
       page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
         parseUrl()
       })
+
+
+      // Monitor changes in data in form: MINT function is not available
+      // if data has been updated.
+      $("input").keyup(function(){
+        if (curUIState === uiState.MINT) {
+          setButtonState(uiState.UPDATE)
+        }
+      });
     }
 
 
     // ------------ Page state management functions ------------
 
     function setPageState(newState) {
-      if (newState === 'minted') {
-        setFormDisplayState('display')
-        setButtonState('minted')
-        $('.doi-minted').removeClass('hidden')
-        $('.doi-status-badge').removeClass('hidden')
-        $('.doi-status').addClass('hidden')
-      } else if (newState === 'refresh') {
-        setFormDisplayState('form')
-        setButtonState('create')
-        $('.doi-status-badge').addClass('hidden')
-        $('.doi-status').removeClass('hidden')
-      } else { // 'working' state
-        setFormDisplayState('form')
-        setButtonState('update')
-        $('.doi-status-badge').addClass('hidden')
-        $('.doi-status').removeClass('hidden')
+      curServiceState = newState
+      switch(newState) {
+        case serviceState.START:
+          // Blank form
+          curUIState = uiState.CREATE
+          setButtonState(uiState.CREATE)
+          setFormDisplayState('form')
+          setBadgeState('off')
+          curUIState = uiState.CREATE
+          break
+        case serviceState.INPROGRESS:
+          // Update form
+          curUIState = uiState.MINT
+          setButtonState(uiState.MINT)
+          setFormDisplayState('form')
+          break
+        case serviceState.MINTED:
+          curUIState = uiState.REGISTER
+          setButtonState(uiState.REGISTER)
+          setFormDisplayState('display')
+          setBadgeState(newState)
+          break
+        case serviceState.ERROR_LOCKING_DATA:
+        case serviceState.ERROR_REGISTERING:
+          setButtonState(uiState.MINT_RETRY)
+          curUIState = uiState.MINT_RETRY
+          // assuming updating metadata is blocked at this point?
+          // if not this will be different than REGISTER_ERROR state
+          setFormDisplayState('display')
+          setBadgeState('warning')
+          break
+        case serviceState.COMPLETE:
+          curUIState = uiState.COMPLETE
+          setButtonState(uiState.COMPLETE)
+          setFormDisplayState('display')
+          break
       }
+    }
+
+    function setBadgeState(state) {
+      // TODO: badge states will come from citation_page later...
+      if (state == 'minted') {
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-minted').removeClass('hidden')
+        $('.doi-working').addClass('hidden')
+        $('.doi-warning').addClass('hidden')
+      } else if (state === 'warning') {
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-minted').addClass('hidden')
+        $('.doi-working').addClass('hidden')
+        $('.doi-warning').removeClass('hidden')
+      } else if (state === 'off') {
+        $('.doi-status-badge').addClass('hidden')
+      } else if (state === 'working') {
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-minted').addClass('hidden')
+        $('.doi-working').removeClass('hidden')
+        $('.doi-warning').addClass('hidden')
+      }
+    }
+
+    function setMintButton(state) {
+      // Disabled state supports emphasizing that Mint feature isn't available if
+      // current form data has been updated. Having the button disappear completely is more
+      // confusing than having the button be disabled with some helpful text...
+      if (state === 'on') {
+        $('#doi_mint_button').text('Mint')
+        $('#doi_mint_button').removeClass('hidden')
+        $('#doi_mint_button').prop('disabled', false)
+        $('.doi-mint-info').addClass('hidden')
+      } else if (state === 'disabled') {
+        $('#doi_mint_button').text('Mint')
+        $('#doi_mint_button').removeClass('hidden')
+        $('#doi_mint_button').prop('disabled', true)
+        $('.doi-mint-info').removeClass('hidden')
+      } else if (state === 'retry') {
+        $('#doi_mint_button').text('Mint Retry')
+        $('#doi_mint_button').removeClass('hidden')
+        $('#doi_mint_button').prop('disabled', false)
+        $('.doi-mint-info').addClass('hidden')
+      } else if (state === 'off') {
+        $('#doi_mint_button').addClass('hidden')
+        $('.doi-mint-info').addClass('hidden')
+      }
+    }
+
+    function setButtonState(curUiState) {
+      switch(curUiState){
+        case uiState.CREATE:
+          $('.button-group').removeClass('hidden')
+          $('#doi_action_button').text('Create')
+          $('#doi_action_button').removeClass('hidden')
+          $('#doi_form_reset_button').removeClass('hidden')
+          $('#doi_delete_button').addClass('hidden')
+          $('#doi_register_button').addClass('hidden')
+          setMintButton('off')
+          break
+        case uiState.UPDATE:
+          $('.button-group').removeClass('hidden')
+          $('#doi_action_button').text('Update')
+          $('#doi_action_button').removeClass('hidden')
+          $('#doi_form_reset_button').removeClass('hidden')
+          $('#doi_delete_button').removeClass('hidden')
+          $('#doi_register_button').addClass('hidden')
+          setMintButton('disabled')
+          break
+        case uiState.MINT:
+          $('.button-group').removeClass('hidden')
+          $('#doi_action_button').text('Update')
+          $('#doi_action_button').removeClass('hidden')
+          $('#doi_form_reset_button').removeClass('hidden')
+          $('#doi_delete_button').removeClass('hidden')
+          $('#doi_register_button').addClass('hidden')
+          setMintButton('on')
+          break
+        case uiState.MINT_RETRY:
+          $('.button-group').removeClass('hidden')
+          $('#doi_action_button').addClass('hidden')
+          $('#doi_form_reset_button').addClass('hidden')
+          $('#doi_delete_button').addClass('hidden')
+          $('#doi_register_button').addClass('hidden')
+          setMintButton('retry')
+          break
+        case uiState.REGISTER:
+          // TODO: with story to support registering the Publication DOI,
+          // this will change
+          $('.button-group').addClass('hidden')
+          setMintButton('off')
+          break
+      }
+
     }
 
     function handleNewDoiClick() {
@@ -84,7 +261,7 @@
     }
 
     function handleFormReset(callFormReset) {
-      setPageState('refresh')
+      setPageState(serviceState.START)
 
       // Clear Related Information panel
       $('#doi_related').addClass('hidden')
@@ -93,10 +270,8 @@
       $('#doi_landing_page').html('')
 
       page.setProgressBar('okay')
-      //setFormDisplayState('form')
-      //setButtonState('create')
       $('#doi_additional_authors').empty()
-      //setPageState('reset')
+
 
       // Do this only if explicitly asked
       // If this comes in from clicking the 'Clear' button, the data will be
@@ -116,21 +291,7 @@
       }
     }
 
-    function setButtonState(mode) {
-      if (mode === 'update') {
-        $('.button-group').removeClass('hidden')
-        $('#doi_action_button').text('Update')
-        $('#doi_form_delete_button').removeClass('hidden')
-        $('#doi_form_mint_button').removeClass('hidden')
-      } else if (mode === 'create') {
-        $('.button-group').removeClass('hidden')
-        $('#doi_action_button').text('Create')
-        $('#doi_form_delete_button').addClass('hidden')
-        $('#doi_form_mint_button').addClass('hidden')
-      } else if (mode === 'minted') {
-        $('.button-group').addClass('hidden')
-      }
-    }
+
 
     // Must be 1 to start
     var authorcount = 1
@@ -169,9 +330,40 @@
       $('#doi_' + elId + '_div').remove()
     }
 
+    function handleDoiRegister(event) {
+
+    }
+
+
+    // The polling function
+    function pollDoiStatus(fn, timeout, interval) {
+      var endTime = Number(new Date()) + (timeout || 2000);
+      interval = interval || 100;
+
+      var checkCondition = function(resolve, reject) {
+        // If the condition is met, we're done!
+        var result = fn();
+        if(result) {
+          resolve(result);
+        }
+        // If the condition isn't met but the timeout hasn't elapsed, go again
+        else if (Number(new Date()) < endTime) {
+          setTimeout(checkCondition, interval, resolve, reject);
+        }
+        // Didn't match and too much time, reject!
+        else {
+          reject(new Error('timed out for ' + fn + ': ' + arguments));
+        }
+      };
+
+      return new Promise(checkCondition);
+    }
+
+
+
     // ------------ HTTP/Ajax functions ------------
 
-    // Used in POST for Create, Update and Mint
+    // Used in POST for Create, Update and Mint (postDoiData and handleDoiMint)
     function gatherFormData() {
       var _formdata = $('#doi_request_form').serializeArray()
       // Disabled fields are not included in .serializeArray()...
@@ -220,8 +412,7 @@
 
       page.setProgressBar('busy')
 
-      // Set up the multi part data to be submitted to the
-      // doi web service
+      // Set up the multi part data to be submitted to the doi web service
       var multiPartData = new FormData()
       multiPartData.append( 'journalRef', journalRef)
 
@@ -234,7 +425,8 @@
       return multiPartData
     }
 
-    // POST
+    // ---------------- POST ------------------
+    // Create and Update
     function handleDOIRequest(event) {
       // Stop normal form submit
       event.preventDefault()
@@ -254,115 +446,55 @@
       else {
         modalMessage += 'Requesting new Data DOI...'
       }
-      page.setInfoModal('Please wait ', modalMessage, false)
+      page.setInfoModal('Please wait ', modalMessage, false, false)
 
-      page.prepareCall().then(function(serviceURL) {
-
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: serviceURL + urlAddition,
-          method: 'POST',
-          dataType: 'json',
-          cache: false,
-          data: multiPartData,
-          processData: false,
-          contentType: false
-        })
-        .success(function(data) {
-          // POST redirects to a get.
-          // Load the data returned into the local doiDocument to be
-          // accessed.
-          hideInfoModal()
-          page.setProgressBar('okay')
-          $('#doi_number').val(data.resource.identifier['$'])
-          var doiSuffix = data.resource.identifier['$'].split('/')[1]
-          setButtonState('update')
-
-          doiDoc.populateDoc(data)
-          populateForm()
-
-          // Kick off status call
-          getDoiStatus(doiSuffix)
-        })
-        .fail(function(message) {
-          hideInfoModal()
-          page.setAjaxFail(message)
-        })
-      })
-
-      return false
+      Promise.resolve(page.prepareCall())
+          .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
+              .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
+          )
+          .catch(message => handleAjaxError(message))
     }
 
-    //GET
-    function handleDOIGet(doiNumber) {
-      page.clearAjaxAlert()
+
+    function postDoiMetadata(serviceURL, doiData) {
       page.setProgressBar('busy')
-      page.setInfoModal('Please wait ', 'Fetching DOI ' + doiNumber + '...', true)
 
-      // Submit doc using ajax
-      page.prepareCall().then(function(serviceURL) {
-        var getUrl = serviceURL + '/' + doiNumber
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: getUrl,
-          method: 'GET',
-          dataType: 'json',
-          contentType: 'application/json'
-        })
-        .success(function(data) {
-          setButtonState('update')
+      return new Promise(function (resolve, reject) {
+        var request = new XMLHttpRequest()
 
-          var doiSuffix = data.resource.identifier['$'].split('/')[1]
-          // Populate javascript object behind form
-          doiDoc.populateDoc(data)
-          populateForm()
+        // 'load' is the XMLHttpRequest 'finished' event
+        request.addEventListener(
+            'load',
+            function () {
+              if (request.status == "200") {
+                // load metadata into the panel here before resolving promise
+                // Populate javascript object behind form
 
-          // Kick off status call
-          getDoiStatus(doiSuffix)
-        })
-        .fail(function(message) {
-          hideInfoModal()
-          page.setProgressBar('error')
-          page.setAjaxFail(message)
-        })
+                hideInfoModal()
+                page.setProgressBar('okay')
+                var jsonData = JSON.parse(request.responseText)
+                $('#doi_number').val(jsonData.resource.identifier['$'])
+                var doiSuffix = jsonData.resource.identifier['$'].split('/')[1]
+
+                doiDoc.populateDoc(jsonData)
+                // Load metadata into the panel here before resolving promise
+                populateForm()
+                resolve(doiSuffix)
+              } else {
+                reject(request)
+              }
+            },
+            false
+        )
+        request.overrideMimeType('application/json')
+        request.withCredentials = true
+        request.open('POST', serviceURL)
+        request.setRequestHeader('Accept', 'application/json')
+        request.send(doiData)
       })
-
-      return false
     }
 
-    // DELETE
-    function handleDOIDelete() {
-      // Get doi number from form...
-      var doiNumber = $('#doi_number')
-        .val()
-        .split('/')[1]
-      page.clearAjaxAlert()
-      page.setProgressBar('busy')
-      page.setInfoModal('Please wait ', 'Processing request...', true)
-
-      page.prepareCall().then(function(serviceURL) {
-        var getUrl = serviceURL + '/' + doiNumber
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: getUrl,
-          method: 'DELETE'
-        })
-        .success(function(data) {
-          hideInfoModal()
-          page.setProgressBar('okay')
-          handleFormReset(true)
-          page.setAjaxSuccess('DOI Deleted')
-        })
-        .fail(function(message) {
-          hideInfoModal()
-          page.setProgressBar('error')
-          page.setAjaxFail(message)
-        })
-      })
-      return false
-    }
-
-    // Mint
+    //  Mint
     function handleDoiMint(event) {
       event.preventDefault()
       ajaxCallStatus = 'minting'
@@ -376,79 +508,153 @@
 
       urlAddition = '/' + doiSuffix  + '/mint'
       modalMessage += 'Minting Data DOI ' + doiSuffix + '...'
-
-      page.setInfoModal('Please wait ', modalMessage, false)
-
+      page.setInfoModal('Please wait ', modalMessage, false, false)
       setFormDisplayState('display')
 
-      page.prepareCall().then(function(serviceURL) {
+      Promise.resolve(page.prepareCall())
+          .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
+              .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
+          )
+          .catch(message => handleAjaxError(message))
+    }
 
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: serviceURL + urlAddition,
-          method: 'POST',
-          dataType: 'json',
-          cache: false,
-          data: multiPartData,
-          processData: false,
-          contentType: false
-        })
-        .success(function(data) {
-          // POST redirects to a get.
-          // Load the data returned into the local doiDocument to be accessed.
-          hideInfoModal()
-          page.setProgressBar('okay')
-          //setPageState('minted') // may be 'working'
 
-          doiDoc.populateDoc(data)
-          populateForm()
+    // ---------------- GET ----------------
+    function handleDOIGet(doiNumber) {
+      page.clearAjaxAlert()
+      page.setProgressBar('busy')
+      page.setInfoModal('Please wait ', 'Fetching DOI ' + doiNumber + '...', false, true)
 
-          // Kick off status call to refresh lower panel
-          getDoiStatus(doiSuffix)
-        })
-        .fail(function(message) {
-          hideInfoModal()
-          page.setAjaxFail(message)
-        })
+      // Submit calls to get DOI metadata and status
+      // Run the registry lookup call prior to running the get and get status
+      // Get and get status can run in parallel
+
+      Promise.resolve(page.prepareCall())
+          .then(serviceURL =>  Promise.all([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
+          .catch(message => handleAjaxError(message))
+
+    }
+
+    function getDoi(serviceURL, doiNumber) {
+      return new Promise(function (resolve, reject) {
+        var getUrl = serviceURL + '/' + doiNumber
+        var request = new XMLHttpRequest()
+
+        // 'load' is the XMLHttpRequest 'finished' event
+        request.addEventListener(
+            'load',
+            function () {
+              if (request.status == "200") {
+                // Populate javascript object behind form
+                doiDoc.populateDoc(JSON.parse(request.responseText))
+                // Load metadata into the panel here before resolving promise
+                populateForm()
+                resolve(request)
+              } else {
+                reject(request)
+              }
+            },
+            false
+        )
+        request.overrideMimeType('application/json')
+        request.withCredentials = true
+        request.open('GET', getUrl)
+        request.setRequestHeader('Accept', 'application/json')
+        request.send(null)
       })
+    }
+
+    // GET
+    function getDoiStatus(serviceURL, doiName) {
+      page.setProgressBar('busy')
+
+      return new Promise(function (resolve, reject) {
+        var statusUrl = serviceURL + '/' + doiName + '/status'
+        var request = new XMLHttpRequest()
+
+        // 'load' is the XMLHttpRequest 'finished' event
+        request.addEventListener(
+            'load',
+            function () {
+              if (request.status == "200") {
+                // load metadata into the panel here before resolving promise
+                // Populate javascript object behind form
+                hideInfoModal()
+                page.setProgressBar('okay')
+                var jsonData = JSON.parse(request.responseText)
+                loadMetadata(jsonData)
+                curServiceState = jsonData.doistatus.status['$']
+                setPageState(curServiceState)
+                resolve(request)
+              } else {
+                reject(request)
+              }
+            },
+            false
+        )
+        request.overrideMimeType('application/json')
+        request.withCredentials = true
+        request.open('GET', statusUrl)
+        request.setRequestHeader('Accept', 'application/json')
+        request.send(null)
+      })
+    }
+
+
+    function handleAjaxError(message) {
+        hideInfoModal()
+        page.setProgressBar('error')
+        page.setAjaxFail(message)
+    }
+
+    // ---------------- DELETE ----------------
+    function handleDOIDelete() {
+      // Get doi number from form...
+      var doiNumber = $('#doi_number')
+        .val()
+        .split('/')[1]
+      page.clearAjaxAlert()
+      page.setProgressBar('busy')
+      page.setInfoModal('Please wait ', 'Processing request...', false, true)
+
+      Promise.resolve(page.prepareCall())
+          .then(serviceURL =>  deleteDoi(serviceURL, doiNumber))
+          .catch(message => handleAjaxError(message))
 
       return false
     }
 
-    // GET
-   function getDoiStatus(doiName) {
-     page.setProgressBar('busy')
+    function deleteDoi(serviceURL, doiNumber) {
+      return new Promise(function (resolve, reject) {
+        var deleteUrl = serviceURL + '/' + doiNumber
+        var request = new XMLHttpRequest()
 
-     page.prepareCall().then(function(serviceURL) {
-      var statusUrl = serviceURL + '/' + doiName + '/status'
-      $.ajax({
-        xhrFields: { withCredentials: true },
-        url: statusUrl,
-        method: 'GET',
-        dataType: 'json',
-        contentType: 'application/json'
+        // 'load' is the XMLHttpRequest 'finished' event
+        request.addEventListener(
+            'load',
+            function () {
+              if (request.status == "200") {
+                hideInfoModal()
+                page.setProgressBar('okay')
+                handleFormReset(true)
+                page.setAjaxSuccess('DOI Deleted')
+                resolve(request)
+              } else {
+                reject(request)
+              }
+            },
+            false
+        )
+        request.withCredentials = true
+        request.open('DELETE', deleteUrl)
+        request.send(null)
       })
-      .success(function(data) {
-        hideInfoModal()
-        page.setProgressBar('okay')
-        loadMetadata(data)
+    }
 
-        if (data.doistatus.status['$'] === 'minted') {
-          setPageState('minted')
-        } else if (data.doistatus.status['$'] === 'in progress') {
-          setPageState('working')
-        }
 
-      })
-      .fail(function(message) {
-        hideInfoModal()
-        page.setProgressBar('error')
-        //setPageState('warning')
-        page.setAjaxFail(message)
-      })
-    })
-    return false
-  }
+
+
+
 
     function loadMetadata(statusData) {
       // Performed after a successful GET for status
@@ -493,6 +699,31 @@
       $('body').removeClass('modal-open')
       $('.modal-backdrop').remove()
     }
+
+    // The polling function
+    function pollStatus(fn, timeout, interval) {
+      var endTime = Number(new Date()) + (timeout || 2000);
+      interval = interval || 100;
+
+      var checkCondition = function(resolve, reject) {
+        // If the condition is met, we're done!
+        var result = fn();
+        if(result) {
+          resolve(result);
+        }
+        // If the condition isn't met but the timeout hasn't elapsed, go again
+        else if (Number(new Date()) < endTime) {
+          setTimeout(checkCondition, interval, resolve, reject);
+        }
+        // Didn't match and too much time, reject!
+        else {
+          reject(new Error('timed out for ' + fn + ': ' + arguments));
+        }
+      };
+
+      return new Promise(checkCondition);
+    }
+
 
     $.extend(this, {
       init: init

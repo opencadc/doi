@@ -143,7 +143,6 @@
               </div>
 
               <!-- Info/Error Modal -->
-              <!-- Displayed when anything other than a 401 or 200 is returned -->
               <div class="modal fade" id="info_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
@@ -154,7 +153,7 @@
                       </button>
                     </div>
                     <div class="modal-body">
-                      <span class="info-span"></span>
+                      <span class="info-span"></span><span class="spinner-span"></span>
                     </div>
                     <div id="infoThanks" class="modal-footer">
                       <button type="button" class="btn btn-default" data-dismiss="modal">Thanks</button>

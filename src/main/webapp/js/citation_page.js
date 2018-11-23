@@ -40,7 +40,7 @@
 
     function clearAjaxAlert() {
       $('.alert-danger').addClass('hidden')
-      $('.alert-sucess').addClass('hidden')
+      $('.alert-success').addClass('hidden')
       setProgressBar('okay')
     }
 
@@ -82,8 +82,8 @@
     }
 
     function setAjaxSuccess(message) {
-      $('#error_msg').text(message.responseText)
-      $('.alert-sucess').removeClass('hidden')
+      $('#alert_msg').text(message)
+      $('.alert-success').removeClass('hidden')
       setProgressBar('okay')
       hideModals()
     }
@@ -137,21 +137,75 @@
           '</a>'
     }
 
-    function setInfoModal(title, msg, hideThanks) {
+    function setInfoModal(title, msg, hideSpinner, hideThanks) {
+
+      // Set titles and messages
       $('.info-span').html(msg)
       $('#infoModalLongTitle').html(title)
 
-      // Check if modal is already open
+      // Open modal if not already open
       if ($('#info_modal').data('bs.modal') === undefined ||
           $('#info_modal').data('bs.modal').isShown === false) {
         $('#info_modal').modal('show')
       }
 
+      // Toggle these elements as required
       if (hideThanks === true) {
         $('#infoThanks').addClass('d-none')
       } else {
         $('#infoThanks').removeClass('d-none')
       }
+
+      if (hideSpinner === true) {
+        $(".spinner-span").addClass('d-none');
+      } else {
+        $(".spinner-span").removeClass('d-none');
+      }
+
+    }
+
+
+
+
+    function setBadgeState(state, useText) {
+      // TODO: badge states will come from citation_page later...
+      if (state == 'minted') {
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-minted').removeClass('hidden')
+        $('.doi-working').addClass('hidden')
+        $('.doi-warning').addClass('hidden')
+      } else if (state === 'warning') {
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-minted').addClass('hidden')
+        $('.doi-working').addClass('hidden')
+        $('.doi-warning').removeClass('hidden')
+      } else if (state === 'off') {
+        $('.doi-status-badge').addClass('hidden')
+      } else if (state === 'working') {
+        $('.doi-status-badge').removeClass('hidden')
+        $('.doi-minted').addClass('hidden')
+        $('.doi-working').removeClass('hidden')
+        $('.doi-warning').addClass('hidden')
+      }
+    }
+
+    function setBadge(parentEl, badgeType) {
+
+
+
+
+    //<div class="col-sm-3 doi-status-badge hidden">
+    //      <div class="doi-minted glyphicon glyphicon-lock hidden ">
+    //      <i>MINTED</i>
+    //      </div>
+    //      <div class="doi-working glyphicon glyphicon-wrench hidden ">
+    //      <i>WORKING</i>
+    //      </div>
+    //      <div class="doi-warning glyphicon glyphicon-exclamation-sign hidden ">
+    //      <i>MINTING INCOMPLETE - Try again or contact a CADC administrator</i>
+    //  </div>
+    //  </div>
+    //  </div>
 
     }
 
@@ -192,6 +246,11 @@
       trigger(_selfCitationPage, cadc.web.citation.events.onAuthenticated, {})
     }
 
+
+    function mkSpinner() {
+      return $.parseHTML('<span id="doi_working_spinner" class="glyphicon glyphicon-refresh fast-right-spinner"></span>');
+    }
+
     function hideModals() {
       $('.modal-backdrop').remove()
     }
@@ -208,7 +267,8 @@
       checkAuthentication: checkAuthentication,
       subscribe: subscribe,
       trigger: trigger,
-      hideModals: hideModals
+      hideModals: hideModals,
+      setBadgeState: setBadgeState
     })
 
   }

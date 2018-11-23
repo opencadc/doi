@@ -99,7 +99,7 @@
                           </div>
                           <div class="col-sm-2 doi-display doi-number hidden">
                           </div>
-                          <div class="col-sm-2 doi-status-badge hidden">
+                          <div class="col-sm-4 doi-status-badge hidden">
                             <div class="doi-minted glyphicon glyphicon-lock doi-form-info hidden ">
                               <i>MINTED</i>
                             </div>
@@ -169,12 +169,17 @@
                         <!-- Buttons -->
                         <div class="form-group">
                           <div class="col-sm-offset-3 col-sm-10">
-                            <div class="button-group" role="group">
-                              <button type="submit" class="btn btn-primary doi-form" id="doi_action_button" tabindex="5">Request</button>
+                            <div class="button-group doi-button-group col-sm-4" role="group">
+                              <!-- Javascript changes text here to be 'Update' button where appropriate -->
+                              <button type="submit" class="btn btn-primary" id="doi_action_button" tabindex="5">Request</button>
+                              <!-- These buttons are toggled according to page state -->
                               <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Reset</button>
-                              <button type="mint" class="btn btn-success doi-button doi-form hidden" id="doi_form_mint_button">Mint</button>
-                              <button type="delete" class="btn btn-danger doi-button doi-form hidden" id="doi_form_delete_button">Delete</button>
-                            </div>
+                              <button type="delete" class="btn btn-danger doi-button hidden" id="doi_delete_button">Delete</button>
+                              <!-- Javascript changes text here to be 'Mint Retry' where appropriate -->
+                              <button type="mint" class="btn btn-success doi-button hidden" id="doi_mint_button">Mint</button>
+                              <button type="register" class="btn btn-primary doi-button hidden" id="doi_register_button">Register</button>
+                             </div>
+                            <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Mint function will be available when Update is complete</i></div>
                           </div>
                         </div>
                       </form>
@@ -189,7 +194,7 @@
                   </div>
                   <div class="panel-body doi-panel-body">
                     <div class="row">
-                      <label for="doi_status" class="col-sm-3 control-label text-right " id="doi_status_label">Status</label>
+                      <label for="doi_status" class="col-sm-4 control-label text-right " id="doi_status_label">Status</label>
                       <div class="col-sm-2 doi-status">
                         <span id="doi_status"></span>
                       </div>
@@ -201,16 +206,20 @@
                           <i>WORKING</i>
                         </div>
                         <div class="doi-warning glyphicon glyphicon-exclamation-sign hidden ">
-                          <i>MINTING INCOMPLETE - Try again or contact a CADC administrator</i>
+                          <i>MINTING INCOMPLETE - Please retry or contact a CADC administrator</i>
                         </div>
                       </div>
                     </div>
 
                     <div class="row">
-                      <label for="doi_data_dir" class="col-sm-3 control-label text-right " id="doi_data_dir_label">Data Directory</label>
+                      <label for="doi_data_dir" class="col-sm-3 control-label text-right" id="doi_data_dir_label">Data Directory</label>
                       <div class="col-sm-9">
                         <span id="doi_data_dir">data dir</span>
                       </div>
+                      <div class="doi-data-locked glyphicon glyphicon-lock hidden">
+                        <i>DATA LOCKED</i>
+                      </div>
+                    </div>
                     </div>
 
                     <div class="row">
@@ -235,6 +244,7 @@
                     </div>
                     <div class="modal-body">
                       <span class="info-span"></span>
+                      <span class="spinner-span glyphicon glyphicon-refresh fast-right-spinner"></span>
                     </div>
                     <div id="infoThanks" class="modal-footer">
                       <button type="button" class="btn btn-default" data-dismiss="modal">Thanks</button>

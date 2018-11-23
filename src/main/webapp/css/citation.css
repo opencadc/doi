@@ -42,6 +42,11 @@
   margin-left: 5px;
 }
 
+.doi-button-group {
+  /* because col-sm-* has padding that misaligns the buttons */
+  padding-left: 0px;
+}
+
 .doi-small-button {
   height: 22px;
   width: 22px;
@@ -126,6 +131,11 @@
   cursor: pointer;
 }
 
+.doi-mint-button:disabled {
+  opacity: .4;
+  color: gray;
+}
+
 .doi-mint:hover {
   opacity: .8;
 }
@@ -154,5 +164,40 @@
 .doi-delete:hover {
   opacity: .8;
 }
+
+.glyphicon.fast-right-spinner {
+  -webkit-animation: glyphicon-spin-r 1s infinite linear;
+  animation: glyphicon-spin-r 1s infinite linear;
+}
+
+@-webkit-keyframes glyphicon-spin-r {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes glyphicon-spin-r {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
+.spinner-span {
+  margin-left:50px;
+}
+
+
 
 
