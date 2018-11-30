@@ -285,6 +285,36 @@
         }
       }
     },
+    "/instances/{DOINum}/mint": {
+      "post": {
+        "tags": [
+          "instances"
+        ],
+        "summary": "Finalize a DOI instance",
+        "description": "A multi-step process that freezes the DOI data from further changes, registers the DOI to DataCite and makes the DOI findable from DataCite. The DOI status indicates the progress of the finalize process.",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "DOI minting request successful."
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "403": {
+            "description": "Not authorised"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
+          }
+        }
+      }
+    },
     "/instances/{DOINum}/status": {
       "get": {
         "tags": [
