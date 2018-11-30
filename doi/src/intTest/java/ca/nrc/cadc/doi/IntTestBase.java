@@ -129,7 +129,6 @@ public abstract class IntTestBase {
     protected void deleteTestFolder(VOSpaceClient vosClient, String doiSuffix) throws RuntimeException, MalformedURLException, NodeNotFoundException {
         // Clean up test folder
         // Set up DELETE
-        final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
         URL deleteUrl = new URL(baseURL + "/" + doiSuffix);
         log.info("Deleting folder: " + doiSuffix + " using URL: " + deleteUrl.getPath());
 

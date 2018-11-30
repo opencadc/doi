@@ -70,17 +70,15 @@
 package ca.nrc.cadc.doi;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -90,23 +88,21 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.DescriptionType;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiXmlReader;
-import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientAbortThread;
+import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 /**
@@ -140,93 +136,12 @@ public class MintDocumentTest extends DocumentTest {
         return statusReader.read(new StringReader(new String(baos.toByteArray(), "UTF-8")));
     }
 
-    private Resource executeMintTest(URL docURL, String document, String expectedIdentifier, String journalRef) 
+    private void executeMintTest(URL docURL, String document, String expectedIdentifier, String journalRef) 
         throws DoiParsingException, UnsupportedEncodingException, IOException {
         URL mintURL = new URL(docURL + "/" + DoiAction.MINT_ACTION);
-        String mDoc = postDocument(mintURL, document, journalRef);
-        Resource mResource = xmlReader.read(mDoc);
-        
-        // verify the DOI status to be "minted"
-        DoiStatus doiStatus = getStatus(docURL);
-        Assert.assertEquals("identifier from DOI status is different", expectedIdentifier,
-                doiStatus.getIdentifier().getText());
-        Assert.assertEquals("status is incorrect", Status.MINTED, doiStatus.getStatus());
-        return mResource;
-    }
-
-    private Resource getTemplateResource() {
-        Resource templateResource = null;
-        String templateFilename = null;
-
-        try {
-            templateFilename = "src/main/resources/" + PostAction.DOI_TEMPLATE_RESOURCE_41;
-            InputStream inputStream = new FileInputStream(templateFilename);
-            // read xml file
-            DoiXmlReader reader = new DoiXmlReader(true);
-            templateResource = reader.read(inputStream);
-        } catch (IOException fne) {
-            throw new RuntimeException("failed to load " + templateFilename);
-        } catch (DoiParsingException dpe) {
-            throw new RuntimeException("Structure of template file " + templateFilename + " failed validation");
-        }
-
-        return templateResource;
-    }
-
-    private Resource addDescription(Resource inProgressDoi, String journalRef) {
-        // Generate the description string
-        // Get first author's last name
-        String lastName = inProgressDoi.getCreators().get(0).familyName;
-        if (lastName == null) {
-            // Use full name in a pinch
-            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
-        }
-
-        String description = null;
-        if (StringUtil.hasText(journalRef)) {
-            description =  String.format(PostAction.DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName) + ", " + journalRef;
-        } else {
-            description =  String.format(PostAction.DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName);
-        }
-        
-        List<Description> descriptionList = new ArrayList<Description>();
-        Description newDescrip = new Description(inProgressDoi.language, description, DescriptionType.OTHER);
-        descriptionList.add(newDescrip);
-        inProgressDoi.descriptions = descriptionList;
-
-        return inProgressDoi;
+        postDocument(mintURL, document, journalRef);
     }
     
-    /**
-     * Add the CADC template material to the DOI during the minting step
-     */
-    private Resource addFinalElements(Resource inProgressDoi, String journalRef) {
-
-        // Build a resource using the template file
-        Resource cadcTemplate = getTemplateResource();
-
-        // Whitelist handling of fields users are allowed to provide information for.
-
-        if (cadcTemplate.contributors == null) {
-            throw new RuntimeException("contributors stanza missing from CADC template.");
-        } else {
-            inProgressDoi.contributors = cadcTemplate.contributors;
-        }
-
-        if (cadcTemplate.rightsList != null) {
-            throw new RuntimeException("rightslist stanza missing from CADC template.");
-        } else {
-            inProgressDoi.rightsList = cadcTemplate.rightsList;
-        }
-
-        // Generate the description string
-        if (journalRef != null) {
-            inProgressDoi = addDescription(inProgressDoi, journalRef);
-        }
-
-        return inProgressDoi;
-    }
-
     private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
@@ -236,9 +151,71 @@ public class MintDocumentTest extends DocumentTest {
         return (ContainerNode) vosClient.getNode(nodePath);
     }
 
-    // test minting DOI instance with no update
+    private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
+    		ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
+        // verify the DOI containerNode properties
+        Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
+        Assert.assertNotNull("should have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNotNull("should have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertNull("incorrect lock property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        
+        // verify the DOI data containerNode properties
+        Assert.assertTrue("should be public", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
+        Assert.assertNull("should not have group read", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertEquals("incorrect lock property", "true", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+       
+        // verify the DOI data subDir containerNode properties
+        Assert.assertTrue("should be public", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
+        Assert.assertNull("should not have group read", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertEquals("incorrect lock property", "true", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        
+        // verify the DOI data subSubDir containerNode properties
+        Assert.assertTrue("should be public", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
+        Assert.assertNull("should not have group read", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertEquals("incorrect lock property", "true", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+    }
+    
+    private ContainerNode createDataDirectory(String dir) throws URISyntaxException {
+        VOSURI dataDir = new VOSURI(new URI(DoiAction.DOI_BASE_VOSPACE + "/" + dir));
+        ContainerNode newDataFolder = new ContainerNode(dataDir);
+        return (ContainerNode) vosClient.createNode(newDataFolder);
+    }
+    
+    private void setDataNodeRecursively(final ContainerNode dataContainerNode) throws Exception {
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(dataContainerNode);
+                URL jobURL = recSetNode.getJobURL();
+
+                // this is an async operation
+                Thread abortThread = new ClientAbortThread(jobURL);
+                Runtime.getRuntime().addShutdownHook(abortThread);
+                recSetNode.setMonitor(true);
+                recSetNode.run();
+                Runtime.getRuntime().removeShutdownHook(abortThread);
+                
+        		recSetNode = new ClientRecursiveSetNode(jobURL, dataContainerNode, false);
+        		ExecutionPhase phase = recSetNode.getPhase();
+                while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
+                	TimeUnit.SECONDS.sleep(1);
+            		phase = recSetNode.getPhase();
+                }
+
+        		Assert.assertTrue("Failed to unlock test data directory, phase = " + phase, ExecutionPhase.COMPLETED == phase);
+        		return phase.getValue();
+            }
+        });
+    }
+    
+    // test minting DOI instance 
     @Test
-    public void testMintingDocumentWithNoUpdates() throws Throwable {
+    public void testMintingDocument() throws Throwable {
         this.buildInitialDocument();
         Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
 
@@ -252,23 +229,20 @@ public class MintDocumentTest extends DocumentTest {
                 // Create the test DOI document in VOSpace
                 String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
                 Resource resource = xmlReader.read(returnedDoc);
-                String returnedIdentifier = resource.getIdentifier().getText();
+                String expectedIdentifier = resource.getIdentifier().getText();
                 Assert.assertFalse("New identifier not received from doi service.",
-                        initialResource.getIdentifier().getText().equals(returnedIdentifier));
+                        initialResource.getIdentifier().getText().equals(expectedIdentifier));
 
                 // Pull the suffix from the identifier
-                String[] doiNumberParts = returnedIdentifier.split("/");
+                String[] doiNumberParts = expectedIdentifier.split("/");
 
                 try {
-                    // build a resource containing the CADC final elements
-                    Resource resourceFromTemplate = getTemplateResource();
-                    
                     // For DOI tests below
                     URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
 
                     // Verify that the DOI document was created successfully
                     DoiStatus doiStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
+                    Assert.assertEquals("identifier from DOI status is different", expectedIdentifier,
                             doiStatus.getIdentifier().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
@@ -277,222 +251,85 @@ public class MintDocumentTest extends DocumentTest {
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
                     Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
                     Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-                    
-                    // verify the DOI data containerNode properties
                     ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
                     Assert.assertNotNull("should have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
 
-                    // mint the document with no changes
-                    Resource resourceFromMinting = executeMintTest(docURL, returnedDoc, returnedIdentifier, null);
+                    // create subdirectories under the data directory
+                    String subDir = doiNumberParts[1] + "/data/subDir";
+                    ContainerNode dataSubDirContainerNode = createDataDirectory(subDir);
+                    String subSubDir = subDir + "/subsubDir";
+                    ContainerNode dataSubSubDirContainerNode = createDataDirectory(subSubDir);
                     
-                    // construct the expected resource
-                    Resource expectedResource = addFinalElements(resource, TEST_JOURNAL_REF);
-
-                    // verify the resource returned from the mint process
-                    compareResource(expectedResource, resourceFromMinting);
-                    
-                    // verify the DOI containerNode properties
+                    // mint the document, DRAFT ==> LOCKING_DATA
+                    executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
                     doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect transient_status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
-                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
-                    Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-                    Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-                    Assert.assertEquals("incorrect writable property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-                    
-                    // verify the DOI data containerNode properties
                     dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-                    //Assert.assertEquals("incorrect writable property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-                } finally {
-                    // delete containing folder using doiadmin credentials
-                    //deleteTestFolder(vosClient, doiNumberParts[1]);
-                }
-                return resource;
-            }
-        });
-    }
-
-    // test minting DOI instance with updates
-    @Test
-    public void testMintingDocumentWithUpdates() throws Throwable {
-        this.buildInitialDocument();
-        Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
-
-            private String generateDocument(Resource resource) throws IOException {
-                StringBuilder builder = new StringBuilder();
-                DoiXmlWriter writer = new DoiXmlWriter();
-                writer.write(resource, builder);
-                return builder.toString();
-            }
-
-            public Object run() throws Exception {
-                // post the job to create a document
-                URL postUrl = new URL(baseURL);
-
-                log.debug("baseURL: " + baseURL);
-                log.debug("posting to: " + postUrl);
-
-                // Create the test DOI document in VOSpace
-                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
-                Resource resource = xmlReader.read(returnedDoc);
-                String returnedIdentifier = resource.getIdentifier().getText();
-                Assert.assertFalse("New identifier not received from doi service.",
-                        initialResource.getIdentifier().getText().equals(returnedIdentifier));
-
-                // Pull the suffix from the identifier
-                String[] doiNumberParts = returnedIdentifier.split("/");
-
-                try {
-                    // build a resource containing the CADC final elements
-                    Resource resourceFromTemplate = getTemplateResource();
+                    dataSubDirContainerNode = getContainerNode(subDir);
+                    dataSubSubDirContainerNode = getContainerNode(subSubDir);
+                    Assert.assertEquals("incorrect status", Status.LOCKING_DATA.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
                     
-                    // For DOI tests below
-                    URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
+                    // mint the document, ERROR_LOCKING_DATA ==> LOCKING_DATA
+                    doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());
+                    vosClient.setNode(doiContainerNode);
+                    executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
+                    doiContainerNode = getContainerNode(doiNumberParts[1]);
+                    dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                    dataSubDirContainerNode = getContainerNode(subDir);
+                    dataSubSubDirContainerNode = getContainerNode(subSubDir);
+                    Assert.assertEquals("incorrect status", Status.LOCKING_DATA.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
 
-                    // Verify that the DOI document was created successfully
-                    DoiStatus doiStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
-                            doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
-                    Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
-                    
+                    // getStatus() changes LOCKING_DATA == > LOCKED_DATA
+                    doiStatus = getStatus(docURL);
+                    Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getText());
+                    Assert.assertEquals("status is incorrect", Status.LOCKED_DATA, doiStatus.getStatus());
+
+                    // mint the document, LOCKED_DATA == REGISTERING 
+                    executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
+                    doiContainerNode = getContainerNode(doiNumberParts[1]);
+                    dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                    dataSubDirContainerNode = getContainerNode(subDir);
+                    dataSubSubDirContainerNode = getContainerNode(subSubDir);
+                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
+
+                    // mint the document, ERROR_REGISTERING ==> REGISTERING
+                    doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
+                    vosClient.setNode(doiContainerNode);
+                    executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
+                    doiContainerNode = getContainerNode(doiNumberParts[1]);
+                    dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                    dataSubDirContainerNode = getContainerNode(subDir);
+                    dataSubSubDirContainerNode = getContainerNode(subSubDir);
+                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                    verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
+
+                    // getStatus() changes REGISTERING == > MINTED
+                    doiStatus = getStatus(docURL);
+                    Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getText());
+                    Assert.assertEquals("status is incorrect", Status.MINTED, doiStatus.getStatus());
+
                     // verify the DOI containerNode properties
+                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+                } finally {
+                    // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-                    Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
+                    vosClient.setNode(doiContainerNode);
                     
-                    // verify the DOI data containerNode properties
+                    // unlock the data directory and delete the DOI
                     ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    Assert.assertNotNull("should have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-                    
-                    // update titles and journalRef
-                    Title originalTitle = resource.getTitles().get(0);
-                    Title newTitle = new Title(originalTitle.getLang(), "new " + originalTitle.getText());
-                    newTitle.titleType = originalTitle.titleType;
-                    List<Title> newTitles = new ArrayList<Title>();
-                    newTitles.add(newTitle);
-                    resource.setTitles(newTitles);
-                    String newDocument = this.generateDocument(resource);
-
-                    // mint the document with changes
-                    Resource resourceFromMinting = executeMintTest(docURL, newDocument, returnedIdentifier, NEW_JOURNAL_REF);
-                    
-                    // construct the expected resource
-                    Resource expectedResource = addFinalElements(resource, NEW_JOURNAL_REF);
-
-                    // verify the resource returned from the mint process
-                    compareResource(expectedResource, resourceFromMinting);
-                    
-                    // verify the DOI containerNode properties
-                    doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect transient_status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
-                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
-                    Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-                    Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-                    Assert.assertEquals("incorrect writable property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-                    
-                    // verify the DOI data containerNode properties
-                    dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-                    //Assert.assertEquals("incorrect writable property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-                } finally {
-                    // delete containing folder using doiadmin credentials
-                    //deleteTestFolder(vosClient, doiNumberParts[1]);
+                    String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+                    if (StringUtil.hasText(isLocked)) {
+	                    dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);                    
+	                    setDataNodeRecursively(dataContainerNode);
+                    }
+                    deleteTestFolder(vosClient, doiNumberParts[1]);
                 }
                 return resource;
             }
         });
     }
 
-    // test minting DOI instance with updates
-    @Test
-    public void testMintingDocumentWithDeletedJournalRef() throws Throwable {
-        this.buildInitialDocument();
-        Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
-
-            private String generateDocument(Resource resource) throws IOException {
-                StringBuilder builder = new StringBuilder();
-                DoiXmlWriter writer = new DoiXmlWriter();
-                writer.write(resource, builder);
-                return builder.toString();
-            }
-
-            public Object run() throws Exception {
-                // post the job to create a document
-                URL postUrl = new URL(baseURL);
-
-                log.debug("baseURL: " + baseURL);
-                log.debug("posting to: " + postUrl);
-
-                // Create the test DOI document in VOSpace
-                String returnedDoc = postDocument(postUrl, initialDocument, TEST_JOURNAL_REF);
-                Resource resource = xmlReader.read(returnedDoc);
-                String returnedIdentifier = resource.getIdentifier().getText();
-                Assert.assertFalse("New identifier not received from doi service.",
-                        initialResource.getIdentifier().getText().equals(returnedIdentifier));
-
-                // Pull the suffix from the identifier
-                String[] doiNumberParts = returnedIdentifier.split("/");
-
-                try {
-                    // build a resource containing the CADC final elements
-                    Resource resourceFromTemplate = getTemplateResource();
-                    
-                    // For DOI tests below
-                    URL docURL = new URL(baseURL + "/" + doiNumberParts[1]);
-
-                    // Verify that the DOI document was created successfully
-                    DoiStatus doiStatus = getStatus(docURL);
-                    Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
-                            doiStatus.getIdentifier().getText());
-                    Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
-                    Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
-                    
-                    // verify the DOI containerNode properties
-                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-                    Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-                    
-                    // verify the DOI data containerNode properties
-                    ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    Assert.assertNotNull("should have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-                    
-                    // update titles and journalRef
-                    Title originalTitle = resource.getTitles().get(0);
-                    Title newTitle = new Title(originalTitle.getLang(), "new " + originalTitle.getText());
-                    newTitle.titleType = originalTitle.titleType;
-                    List<Title> newTitles = new ArrayList<Title>();
-                    newTitles.add(newTitle);
-                    resource.setTitles(newTitles);
-                    String newDocument = this.generateDocument(resource);
-
-                    // mint the document with changes
-                    Resource resourceFromMinting = executeMintTest(docURL, newDocument, returnedIdentifier, "");
-                    
-                    // construct the expected resource
-                    Resource expectedResource = addFinalElements(resource, "");
-
-                    // verify the resource returned from the mint process
-                    compareResource(expectedResource, resourceFromMinting);
-                    
-                    // verify the DOI containerNode properties
-                    doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect transient_status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
-                    Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
-                    Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-                    Assert.assertNull("should not have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-                    Assert.assertEquals("incorrect writable property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-                    
-                    // verify the DOI data containerNode properties
-                    dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-                    //Assert.assertEquals("incorrect writable property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-                } finally {
-                    // delete containing folder using doiadmin credentials
-                    //deleteTestFolder(vosClient, doiNumberParts[1]);
-                }
-                return resource;
-            }
-        });
-    }
 }

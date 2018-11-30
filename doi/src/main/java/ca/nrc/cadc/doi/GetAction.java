@@ -76,17 +76,25 @@ import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
 import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 
 import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
 
+import java.io.File;
+import java.net.URL;
 import java.security.AccessControlException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
@@ -136,7 +144,64 @@ public class GetAction extends DoiAction {
         return title;
     }
     
-
+    private String updateMintingStatus(final ContainerNode doiContainerNode, final String status) throws Exception {
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        String returnStatus = (String) Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+            	// update status based on the result of the minting service
+            	String localStatus = status;
+            	String jobURLString = doiContainerNode.getPropertyValue(DoiAction.JOB_URL);
+            	if (jobURLString != null) {
+            		URL jobURL = new URL(jobURLString);
+            		ClientRecursiveSetNode recSetNode = new ClientRecursiveSetNode(jobURL, doiContainerNode, false);
+            		ExecutionPhase phase = recSetNode.getPhase();
+            		switch (phase) {
+            			case COMPLETED:
+            			case ARCHIVED:
+            				// job finished, set corresponding status
+            				if (status.equals(Status.LOCKING_DATA.getValue())) {
+            					localStatus = Status.LOCKED_DATA.getValue();
+            				} else if (status.equals(Status.REGISTERING.getValue())) {
+            					localStatus = Status.MINTED.getValue();
+            				}
+            				
+            				// delete jobURL property
+            				doiContainerNode.findProperty(DoiAction.JOB_URL).setMarkedForDeletion(true);
+            				doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+            				vClient.getVOSpaceClient().setNode(doiContainerNode);
+            				break;
+            			case ERROR:
+            			case ABORTED:
+            			case UNKNOWN:
+            			case SUSPENDED:
+            			case HELD:
+            				// assume job resulted in error, set corresponding status
+            				if (status.equals(Status.LOCKING_DATA.getValue())) {
+            					localStatus = Status.ERROR_LOCKING_DATA.getValue();
+            				} else if (status.equals(Status.REGISTERING.getValue())) {
+            					localStatus = Status.ERROR_REGISTERING.getValue();
+            				}
+            				
+            				// delete jobURL property
+            				doiContainerNode.findProperty(DoiAction.JOB_URL).setMarkedForDeletion(true);
+            				doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+            				vClient.getVOSpaceClient().setNode(doiContainerNode);
+            				break;
+            			case PENDING:
+            			case QUEUED:
+            			case EXECUTING:
+            				// job is in progress, do nothing
+            				break;
+            		}
+            	}
+            	return localStatus;
+            }
+        });
+        return returnStatus;
+    }
+    
     private DoiStatus getDoiStatus(String doiSuffixString) throws Exception {
         DoiStatus doiStatus = null;
         ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffixString);
@@ -144,11 +209,13 @@ public class GetAction extends DoiAction {
         if (vClient.isCallerAllowed(doiContainerNode))
         {
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
-            log.info("node: " + doiContainerNode.getName() + ", status: " + status);
+            log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
             if (StringUtil.hasText(status))
             {
+            	// update status based on the result of the minting service
+            	status = updateMintingStatus(doiContainerNode, status);
+            	
                 String journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-
                 Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
                 Title title = getTitle(resource);
                 

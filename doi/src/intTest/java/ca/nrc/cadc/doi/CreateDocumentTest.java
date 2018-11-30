@@ -188,7 +188,7 @@ public class CreateDocumentTest extends DocumentTest {
             }
         });
     }
-
+    
     @Test
     public void testGetStatusList() throws Throwable {
         final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
@@ -243,7 +243,6 @@ public class CreateDocumentTest extends DocumentTest {
                     for (int i = 0; i < newDois.length; i++) {
                         deleteTestFolder(vosClient, newDois[i]);
                     }
-
                     return null;
                 }
             });

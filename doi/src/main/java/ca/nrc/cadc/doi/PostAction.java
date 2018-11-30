@@ -84,19 +84,22 @@ import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.NodeProperty;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.ClientAbortThread;
+import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
 import java.io.File;
@@ -105,7 +108,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
@@ -300,77 +302,130 @@ public class PostAction extends DoiAction {
         return inProgressDoi;
     }
     
-    private void makeDOIFindable(ContainerNode doiContainerNode) {
-    	// add the landing page URL
-    	// TODO: implement the code
+    private void postToDataCite(URL postURL, String content, String contentType, boolean redirect) throws IOException {
+    	log.debug("post to DataCite URL: " + postURL);
+    	log.debug("contentType: " + contentType);
     	
+    	// post to DataCite
+    	HttpPost postToDataCite = new HttpPost(postURL, content, contentType, true);
+    	postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(cistiUsername + ":" + cistiPassword));
+    	postToDataCite.run();
     	
-        doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.MINTED.getValue());;
-		doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
-        NodeProperty isLocked = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
-        doiContainerNode.getProperties().add(isLocked);
-        vClient.getVOSpaceClient().setNode(doiContainerNode);
-        
-        try {
-			ContainerNode testContainerNode = vClient.getContainerNode(doiSuffix);
-			String locked = testContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-			log.info("alinga-- locked = " + locked);
-		} catch (NodeNotFoundException | URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-    }
-   
-    private void registerDOI(ContainerNode doiContainerNode) {
-    	// update the minting status
-    	// TODO: implement the code
-    	
-    	// add landing page to the DOI instance
-    	makeDOIFindable(doiContainerNode);
-    }
+        final int responseCode = postToDataCite.getResponseCode();
+        log.debug("response code from DataCite: " + responseCode);
 
-    private void updateDataContainerNode(ContainerNode doiContainerNode) throws Exception {
-        ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
-        if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
-            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            //NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
-            //dataContainerNode.getProperties().add(readOnly);
-            vClient.getVOSpaceClient().setNode(dataContainerNode);
+        // Check that there was no exception thrown
+        if (postToDataCite.getThrowable() != null) {
+        	final String msg = postToDataCite.getThrowable().getMessage();
+        	if ((responseCode == 401) || (responseCode == 403)) {
+        		throw new AccessControlException(msg);
+        	} else {
+        		throw new RuntimeException(postToDataCite.getResponseBody() + ", " + postToDataCite.getThrowable());
+        	}
         }
         
-    	// update the minting status
-        doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.REGISTERING.getValue());;
-        vClient.getVOSpaceClient().setNode(doiContainerNode);
-        
-        // register the DOI instance
-        registerDOI(doiContainerNode);
+        // handle unsuccessful post without an exception
+        if (responseCode != 200 && responseCode != 201) {
+        	throw new IOException("HttpResponse (" + responseCode + ") - " + postToDataCite.getResponseBody());
+        }
     }
     
-    private void mintDOI(ContainerNode doiContainerNode) throws Exception {
-        // perform one last update in case there are changes
-        Resource resourceFromUser = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-        String journalRefFromUser = syncInput.getParameter(JOURNALREF_PARAM);
-        
-        // journalRefToMinto == null means we need to get journalRef from VOSpace
-        String journalRefToMint = journalRefFromUser;
-        if (journalRefFromUser == null) {
-            journalRefToMint = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-        } else {
-            journalRefToMint = updateJournalRef(journalRefFromUser);
-        }
+    private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
+    	// add the landing page URL
+    	String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
+    	String content = doiToMakeFindable + "\n" + "http://apps.canfar.net/citation/landing?doi=" + doiToMakeFindable;
+    	String contentType = "Content-Type:text/plain;charset=UTF-8";
+    	URL makeFindableURL = new URL("https://mds.test.datacite.org/doi/" + doiToMakeFindable);
+    	// TODO: uncomment when DataCite API issue has been addressed
+    	//postToDataCite(makeFindableURL, content, contentType, true);
+    }
+   
+    private String getDOIContent() throws Exception  {
+        Resource resource = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+        StringBuilder builder = new StringBuilder();
+        DoiXmlWriter writer = new DoiXmlWriter();
+        writer.write(resource, builder);
+        return builder.toString();
+    }
+    
+    private void registerDOI(ContainerNode doiContainerNode) throws Exception {
+    	try {
+	    	// update status
+	        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());;
+	        vClient.getVOSpaceClient().setNode(doiContainerNode);
 
-        // add final minting elements to the resource and update VOSpace
-        finalizeResource(resourceFromUser, journalRefToMint);
-        
-        // update the DOI container node properties
-        doiContainerNode.findProperty(DOI_VOS_TRANSIENT_STATUS_PROP).setValue(MintingStatus.MINTING.getValue());;
-        doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-        doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
-        vClient.getVOSpaceClient().setNode(doiContainerNode);
-        
-        // update the data container node properties
-        updateDataContainerNode(doiContainerNode);
+	        // register DOI to DataCite
+	    	String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
+	    	String content = getDOIContent();
+	    	String contentType = "Content-Type:application/xml;charset=UTF-8";
+	    	URL registerURL = new URL("https://mds.test.datacite.org/metadata/" + doiToRegister);
+	    	// TODO: uncomment when DataCite API issue has been addressed
+	    	//postToDataCite(registerURL, content, contentType, true);
+	        
+	    	// success, add landing page to the DOI instance
+	    	makeDOIFindable(doiContainerNode);
+	    	
+	    	// completed minting, update status
+			doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
+	        vClient.getVOSpaceClient().setNode(doiContainerNode);
+    	} catch (Exception ex) {
+	    	// update status
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());;
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            throw ex;
+    	}
+    }
+
+    private void lockData(ContainerNode doiContainerNode) throws Exception {        
+        try {
+	        ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
+	        
+	    	// update status
+	        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
+	        vClient.getVOSpaceClient().setNode(doiContainerNode);
+
+	        // lock data directory and subdirectories, make them public
+	        dataContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");	
+	        if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
+	            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
+	        }	
+	        
+	        if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
+	            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+	        }	
+	        
+	        // TODO: uncomment below
+            NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
+            dataContainerNode.getProperties().add(readOnly);
+	        vClient.getVOSpaceClient().setNode(dataContainerNode);
+            
+	        // get the job URL
+            ClientRecursiveSetNode recSetNode = vClient.getVOSpaceClient().setNodeRecursive(dataContainerNode);
+            URL jobURL = recSetNode.getJobURL();
+
+            // this is an async operation
+            Thread abortThread = new ClientAbortThread(jobURL);
+            Runtime.getRuntime().addShutdownHook(abortThread);
+            recSetNode.setMonitor(false);
+            recSetNode.run();
+            Runtime.getRuntime().removeShutdownHook(abortThread);
+            log.debug("invoked async call to recursively set the properties in the data directory " + doiSuffix + "/data");
+           
+            // save job URL
+            NodeProperty jobURLProp = new NodeProperty(DoiAction.JOB_URL, jobURL.toExternalForm());
+            doiContainerNode.getProperties().add(jobURLProp);
+	        vClient.getVOSpaceClient().setNode(doiContainerNode);
+        } catch (Exception ex) {
+	    	// update status
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());;
+            String jobURLString = doiContainerNode.getPropertyValue(DoiAction.JOB_URL);
+            if (jobURLString != null) {
+            	doiContainerNode.findProperty(DoiAction.JOB_URL).setMarkedForDeletion(true);
+            }
+            
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            throw ex;
+        }
     }
     
     private void performDoiAction() throws Exception {
@@ -378,38 +433,32 @@ public class PostAction extends DoiAction {
             // start minting process            
         	// check minting status
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            MintingStatus mintingStatus = MintingStatus.toValue(doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP));
-            if (mintingStatus == MintingStatus.BEFORE_MINTING) {
-            	// perform minting for the first time                
-            	mintDOI(doiContainerNode);
-            } else if (mintingStatus == MintingStatus.MINTING) {
-            	// data container node may not have been updated
-            	updateDataContainerNode(doiContainerNode);
-            } else if (mintingStatus == MintingStatus.REGISTERING) {
-            	// register DOI to DataCite
-            	registerDOI(doiContainerNode);
-            } else if (mintingStatus == MintingStatus.MAKING_FINDABLE) {
-            	// add the landing page URL
-            	makeDOIFindable(doiContainerNode);
-            } else if (mintingStatus == MintingStatus.MINTED) {
-            	// ensure that the status has been set to "minted"
-            	if (!Status.MINTED.equals(doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP))) {
-            		doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
-                    NodeProperty isLocked = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
-                    doiContainerNode.getProperties().add(isLocked);
-                    vClient.getVOSpaceClient().setNode(doiContainerNode);
-            	} else {
-            		// ensure that the container node has been set to read only
-            		String readOnlyString = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-            		if (readOnlyString == null) {
-                        NodeProperty isLocked = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
-                        doiContainerNode.getProperties().add(isLocked);
-                        vClient.getVOSpaceClient().setNode(doiContainerNode);
-            		} else if (!readOnlyString.equals("false")) {
-                		doiContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setValue("true");
-                        vClient.getVOSpaceClient().setNode(doiContainerNode);
-            		}
-            	}
+            Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+            switch (mintingStatus) {
+            	case DRAFT:
+            	case ERROR_LOCKING_DATA:
+                	lockData(doiContainerNode);
+                	break;
+            	case LOCKING_DATA:
+                	// locking data directory in progress, do nothing
+            		log.debug("doi " + doiSuffix + " status: " + Status.LOCKING_DATA);
+                	break;
+            	case LOCKED_DATA:
+            	case ERROR_REGISTERING:
+                	registerDOI(doiContainerNode);
+                	break;
+            	case REGISTERING:
+                	// registering doi to DataCite, do nothing
+            		log.debug("doi " + doiSuffix + " status: " + Status.REGISTERING);
+            		break;
+            	case MINTED:
+                	// minting finished, do nothing
+            		log.debug("doi " + doiSuffix + " status: " + Status.MINTED);
+            		break;
+            	case COMPLETED:
+                	// minting service should not have been called in this status, ignore
+            		log.debug("doi " + doiSuffix + " status: " + Status.COMPLETED);
+            		break;
             }
 
             // Done, send redirect to GET for the XML file just minted
@@ -516,6 +565,21 @@ public class PostAction extends DoiAction {
         }
     }
     
+    private void setPermissions(List<NodeProperty> properties, String guriString) {
+        // Before completion, directory is visible in AstroDataCitationDOI directory, but not readable
+        // except by doiadmin and calling user's group
+        NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
+        properties.add(isPublic);
+
+        // All folders will be only readable by requester
+        NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD, guriString);
+        properties.add(rGroup);
+        
+        // All folders will be only readable by requester
+        NodeProperty writeGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE, guriString);
+        properties.add(writeGroup);
+    }
+    
     private void createDOI() throws Exception {
         // Get the submitted form data, if it exists
         Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
@@ -556,8 +620,7 @@ public class PostAction extends DoiAction {
         // Create the DOI data folder
         VOSURI dataDir = new VOSURI(doiFolder.getUri().toString() + "/data");
         ContainerNode newDataFolder = new ContainerNode(dataDir);
-        NodeProperty writeGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE, guri.toString());
-        newDataFolder.getProperties().add(writeGroup);
+        setPermissions(newDataFolder.getProperties(), guri.toString());
         vClient.getVOSpaceClient().createNode(newDataFolder);
 
         // Done, send redirect to GET for the XML file just made
@@ -589,11 +652,9 @@ public class PostAction extends DoiAction {
         
         List<NodeProperty> properties = new ArrayList<>();
 
-        // This will change to become public on minting. While in DRAFT,
-        // directory is visible in AstroDataCitationDOI directory, but not readable
-        // except by doiadmin and calling user's group
-        NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
-        properties.add(isPublic);
+        // Before completion, directory is visible in AstroDataCitationDOI directory, 
+        // but not readable except by doiadmin and calling user's group
+        setPermissions(properties, guri.toString());
 
         // Get numeric id for setting doiRequestor property
         NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callingSubjectNumericID.toString());
@@ -601,18 +662,10 @@ public class PostAction extends DoiAction {
         
         NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, DOI_VOS_STATUS_DRAFT);
         properties.add(doiStatus);
-
-        // Initialize transient minting status
-        NodeProperty transientMintingStatus = new NodeProperty(DoiAction.DOI_VOS_TRANSIENT_STATUS_PROP, MintingStatus.BEFORE_MINTING.getValue());
-        properties.add(transientMintingStatus);
         
         // Should have come in as a parameter with the POST
         NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
         properties.add(journalRef);
-
-        // All folders will be only readable by requester
-        NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD, guri.toString());
-        properties.add(rGroup);
 
         String dataDirURI = DOI_BASE_VOSPACE + "/" + folderName;
 

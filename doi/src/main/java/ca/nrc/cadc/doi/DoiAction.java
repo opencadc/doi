@@ -70,10 +70,14 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 
+import java.net.InetAddress;
+import java.net.PasswordAuthentication;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -92,14 +96,17 @@ public abstract class DoiAction extends RestAction {
     public static final String CADC_DOI_PREFIX = "10.11570";
     public static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
     public static final String JOURNALREF_PARAM = "journalref";
+    public static final String JOB_URL = "jobURL";
     
     public static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
     public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-    public static final String DOI_VOS_TRANSIENT_STATUS_PROP = "doiTransientStatus";
     public static final String DOI_VOS_JOURNAL_PROP = "ivo://cadc.nrc.ca/vospace/doi#journalref";
     protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
     protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
     
+    // TODO: remove String constant when servops/.netrc is available
+    protected String cistiUsername = "CISTI_CADC"; 
+    protected String cistiPassword = "astroJAZZdog";
     
     protected static final String DOI_GROUP_PREFIX = "DOI-";
 
@@ -121,7 +128,20 @@ public abstract class DoiAction extends RestAction {
         return new DoiInlineContentHandler();
     }
     
-    protected void init(boolean authorize) throws URISyntaxException {
+    protected void init(boolean authorize) throws URISyntaxException, UnknownHostException {
+    	/*
+    	 * TODO: uncomment when servops/.netrc is available
+    	// read username and password from servops .netrc file
+    	NetrcFile netrcFile = new NetrcFile(true);
+    	PasswordAuthentication pa = netrcFile.getCredentials(InetAddress.getLocalHost().getHostName(), true);
+    	if (pa == null) {
+    		throw new RuntimeException("failed to read from netrc file");
+    	}
+    	cistiUsername = pa.getUserName();
+    	cistiPassword = pa.getUserName();
+    	*/
+    	
+    	// get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
         log.debug("subject: " + callingSubject);
         if (authorize) {
