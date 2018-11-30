@@ -11,8 +11,8 @@
     </creator>
   </creators>
   <titles>
-    <title xml:lang="en-US">Full DataCite XML Example</title>
-    <title xml:lang="en-US" >Demonstration of DataCite Properties.</title>
+    <title xml:lang="en-US">Test DOI title Full DataCite XML Example</title>
+    <title xml:lang="en-US" >Test DOI title Demonstration of DataCite Properties.</title>
   </titles>
   <publisher>DataCite</publisher>
   <publicationYear>2014</publicationYear>

@@ -11,8 +11,8 @@
     </creator>
   </creators>
   <titles>
-    <title xml:lang="en-US">Short DataCite XML Example</title>
-    <title xml:lang="en-US" titleType="Subtitle">Demonstration of DataCite Properties.</title>
+    <title xml:lang="en-US">Test DOI title Short DataCite XML Example</title>
+    <title xml:lang="en-US" titleType="Subtitle">Test DOI title Demonstration of DataCite Properties.</title>
   </titles>
   <language>en-US</language>
 </resource>

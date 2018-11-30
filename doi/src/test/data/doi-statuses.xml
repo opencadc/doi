@@ -2,21 +2,21 @@
 <doiStatuses>
   <doistatus>
     <identifier identifierType="DOI">10.5072/18.1001</identifier>
-    <title xml:lang="en-US">Title 1</title>
+    <title xml:lang="en-US">Test DOI title 1</title>
     <dataDirectory>AstroDataCitationDOI/CISTI.CANFAR/18.1001/data</dataDirectory>
     <status>minted</status>
     <journalRef>2018, ApJ 1000,100</journalRef>
   </doistatus>
   <doistatus>
     <identifier identifierType="DOI">10.5072/18.1002</identifier>
-    <title xml:lang="en-US">Title 2</title>
+    <title xml:lang="en-US">Test DOI title 2</title>
     <dataDirectory>AstroDataCitationDOI/CISTI.CANFAR/18.1002/data</dataDirectory>
     <status>minted</status>
     <journalRef>2018, ApJ 1001,100</journalRef>
   </doistatus>
   <doistatus>
     <identifier identifierType="DOI">10.5072/18.1003</identifier>
-    <title xml:lang="en-US">Title 3</title>
+    <title xml:lang="en-US">Test DOI title 3</title>
     <dataDirectory>AstroDataCitationDOI/CISTI.CANFAR/18.1003/data</dataDirectory>
     <status>minted</status>
     <journalRef>2018, ApJ 1002,100</journalRef>
