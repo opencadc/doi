@@ -394,7 +394,6 @@ public class PostAction extends DoiAction {
 	            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
 	        }	
 	        
-	        // TODO: uncomment below
             NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
             dataContainerNode.getProperties().add(readOnly);
 	        vClient.getVOSpaceClient().setNode(dataContainerNode);
