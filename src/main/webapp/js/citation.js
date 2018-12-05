@@ -63,8 +63,8 @@
         ],
         columnDefs: [
           { 'width': 20, 'targets': 0 },
-          { 'width': 75, 'targets': 1 },
-          { 'width': 20, 'targets': 5 }
+          { 'width': 100, 'targets': 1 },
+          { 'width': 200, 'targets': 5 }
         ],
         ordering: false,
         paging: false,
@@ -99,6 +99,14 @@
         $('body').removeClass('modal-open')
         $('.modal-backdrop').remove()
         handleDOIDelete($('#doi_delete_num').text())
+      })
+
+      // From mint modal
+      $('#mint_ok').click(function () {
+        $('#mint_modal').modal('hide')
+        $('body').removeClass('modal-open')
+        $('.modal-backdrop').remove()
+        handleDOIMint($('#doi_delete_num').text())
       })
     }
 
@@ -155,12 +163,16 @@
       $('#delete_modal').modal('show')
     }
 
+    function setMintModal(doiName) {
+      $('#doi_mint_num').html(doiName)
+      $('#mint_modal').modal('show')
+    }
+
     function hideInfoModal() {
       $('#info_modal').modal('hide')
       $('body').removeClass('modal-open')
       $('.modal-backdrop').remove()
     }
-
 
     // ------------ HTTP/Ajax functions ------------
 
@@ -243,11 +255,11 @@
       var newStatus = rowTemplate
       var doiName = doi.identifier['$']
       newStatus.doi_name = mkNameLink(doiName)
-      newStatus.status = doi.status['$']
+      newStatus.status = page.setStatusText(doi.status['$'])
       newStatus.data_dir = page.mkDataDirLink(doi.dataDirectory['$'])
       newStatus.landing_page = page.mkLandingPageLink(doi.identifier['$'].split("/")[1])
       newStatus.title = mkTitleLink(doi.title['$'], doiName)
-      newStatus.action = mkActionLinks(doiName)
+      newStatus.action = mkActionLinks(doiName, doi.status['$'])
 
       addRow(newStatus)
     }
@@ -328,20 +340,41 @@
 
     function mkActionLinks(doiName, status) {
       var actionLinkString = '';
-      if (status !== 'minted') {
-        actionLinkString = mkMintLink(doiName) + mkDeleteLink(doiName)
+      if (status !== page.serviceState.MINTED) {
+        switch(status) {
+          case page.serviceState.INPROGRESS:
+            actionLinkString = mkMintButton(doiName, 'Mint') + mkDeleteButton(doiName, false)
+            break
+          case page.serviceState.DATA_LOCKED:
+            actionLinkString = mkMintButton(doiName, 'Continue Mint')
+            break
+          case page.serviceState.ERROR_LOCKING_DATA:
+            actionLinkString = mkMsg(doiName, 'Contact Admin ')
+            break
+        }
       }
       return actionLinkString
     }
 
-    function mkDeleteLink(doiName) {
+    function mkDeleteButton(doiName) {
       var doiSuffix = parseDoiSuffix(doiName)
-      return '<span class="doi-delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
+      //return '<span class="doi-delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
+      var btnClass = 'btn btn-danger doi-button doi-listpage-header btn-sm doi-delete'
+      return '<button type="delete" class="' + btnClass + '" data-doiNum=' + doiSuffix + '>Delete</button>'
     }
 
-    function mkMintLink(doiName) {
+    function mkMintButton(doiName, text) {
       var doiSuffix = parseDoiSuffix(doiName)
-      return '<span class="doi-mint glyphicon glyphicon-lock" data-doiNum = ' + doiSuffix + '></span>'
+      var btnClass = 'btn btn-success doi-button doi-listpage-header btn-sm doi-mint'
+      //return '<span class="doi-mint glyphicon glyphicon-lock" data-doiNum = ' + doiSuffix + '></span>'
+      return '<button type="mint" class="' + btnClass + '" data-doiNum = ' + doiSuffix + '>' + text + '</button>'
+    }
+
+    function mkMsg(doiName, text) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      var btnClass = 'doi-button doi-listpage-header btn-sm doi-warning'
+      //return '<span class="doi-mint glyphicon glyphicon-lock" data-doiNum = ' + doiSuffix + '></span>'
+      return '<span class="' + btnClass + '" data-doiNum = ' + doiSuffix + '>' + text + '</span>'
     }
 
     $.extend(this, {

@@ -36,6 +36,20 @@
       resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
     })
 
+    // These reflect the states as returned from the doiservice status call
+    // TODO: how to make these states less breakable? String comparison isn't great...
+    const serviceState = {
+      START: 'start',
+      INPROGRESS: 'in progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
+      LOCKING_DATA: 'locking data directory',
+      DATA_LOCKED: 'locked data directory',
+      REGISTERING: 'registering to DataCite',
+      MINTED: 'minted',
+      ERROR_REGISTERING: 'error registering to DataCite',
+      ERROR_LOCKING_DATA: 'error locking data directory',
+      COMPLETE: 'complete'
+    }
+
     // ------------ Page state management functions ------------
 
     function clearAjaxAlert() {
@@ -164,49 +178,35 @@
 
     }
 
-
-
-
-    function setBadgeState(state, useText) {
-      // TODO: badge states will come from citation_page later...
-      if (state == 'minted') {
-        $('.doi-status-badge').removeClass('hidden')
-        $('.doi-minted').removeClass('hidden')
-        $('.doi-working').addClass('hidden')
-        $('.doi-warning').addClass('hidden')
-      } else if (state === 'warning') {
-        $('.doi-status-badge').removeClass('hidden')
-        $('.doi-minted').addClass('hidden')
-        $('.doi-working').addClass('hidden')
-        $('.doi-warning').removeClass('hidden')
-      } else if (state === 'off') {
-        $('.doi-status-badge').addClass('hidden')
-      } else if (state === 'working') {
-        $('.doi-status-badge').removeClass('hidden')
-        $('.doi-minted').addClass('hidden')
-        $('.doi-working').removeClass('hidden')
-        $('.doi-warning').addClass('hidden')
+    function setStatusText(svcState) {
+      var statusHtml = ''
+      switch(svcState) {
+        case serviceState.INPROGRESS:
+          statusHtml  = 'In progress'
+          break
+        case serviceState.LOCKING_DATA:
+          statusHtml  = 'Locking data directory'
+          break
+        case serviceState.DATA_LOCKED:
+          statusHtml  = 'Data directory locked'
+          break
+        case serviceState.REGISTERING:
+          statusHtml  = 'Registering DOI with DataCite'
+          break
+        case serviceState.MINTED:
+          statusHtml = '<div class="doi-minted">Minted</div>'
+          break
+        case serviceState.ERROR_LOCKING_DATA:
+          statusHtml = '<div class="doi-warning">Error locking data directory</div>'
+          break
+        case serviceState.ERROR_REGISTERING:
+          statusHtml = '<div class="doi-warning">Error registering DOI with DataCite </div>'
+          break
+        case serviceState.COMPLETE:
+          statusHtml = '<div class="doi-minted">DOI Complete</div>'
+          break
       }
-    }
-
-    function setBadge(parentEl, badgeType) {
-
-
-
-
-    //<div class="col-sm-3 doi-status-badge hidden">
-    //      <div class="doi-minted glyphicon glyphicon-lock hidden ">
-    //      <i>MINTED</i>
-    //      </div>
-    //      <div class="doi-working glyphicon glyphicon-wrench hidden ">
-    //      <i>WORKING</i>
-    //      </div>
-    //      <div class="doi-warning glyphicon glyphicon-exclamation-sign hidden ">
-    //      <i>MINTING INCOMPLETE - Try again or contact a CADC administrator</i>
-    //  </div>
-    //  </div>
-    //  </div>
-
+      return statusHtml
     }
 
 
@@ -256,6 +256,7 @@
     }
 
     $.extend(this, {
+      serviceState: serviceState,
       prepareCall: prepareCall,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
@@ -268,7 +269,7 @@
       subscribe: subscribe,
       trigger: trigger,
       hideModals: hideModals,
-      setBadgeState: setBadgeState
+      setStatusText: setStatusText
     })
 
   }

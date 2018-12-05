@@ -125,12 +125,6 @@
   margin-top: 8px;
 }
 
-.doi-mint {
-  color: green;
-  margin-right: 10px;
-  cursor: pointer;
-}
-
 .doi-mint-button:disabled {
   opacity: .4;
   color: gray;
@@ -155,11 +149,19 @@
   margin-right: 10px;
 }
 
-.doi-delete {
-  color: red;
-  margin-right: 10px;
-  cursor: pointer;
+.doi-retry {
+  color: mediumblue;
 }
+
+.doi-status-badge div {
+  margin-bottom: 0px;
+}
+
+.doi-msg-text {
+  text-align: center;
+  font-weight: bold;
+}
+.
 
 .doi-delete:hover {
   opacity: .8;
@@ -196,6 +198,10 @@
 
 .spinner-span {
   margin-left:50px;
+}
+
+.doi-data-locked {
+  margin-left: 20px;
 }
 
 

@@ -22,32 +22,6 @@
     var page = new cadc.web.citation.CitationPage(inputs)
     var ajaxCallStatus = ''  // minting, creating, updating
 
-
-    // These reflect the states as returned from the doiservice status call
-    // TODO: how to make these states less breakable? String comparison isn't great...
-    const serviceState = {
-      START: 'start',
-      INPROGRESS: 'in progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
-      LOCKING_DATA: 'locking data directory',
-      REGISTERING: 'registering to DataCite',
-      MINTED: 'minted',
-      ERROR_REGISTERING: 'error registering to DataCite',
-      ERROR_LOCKING_DATA: "error locking data directory",
-      COMPLETE: 'complete'
-    }
-
-    const PLEASE_RETRY = ": please retry minting DOI"
-
-    const stateDisplayText = {
-      INPROGRESS: 'In progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
-      LOCKING_DATA: 'Locking data directory',
-      REGISTERING: 'Registering to DataCite',
-      MINTED: 'Minted',
-      ERROR_REGISTERING: 'Error registering DOI with DataCite',
-      ERROR_LOCKING_DATA: "Error locking data directory",
-      COMPLETE: 'DOI Complete'
-    }
-
     // The UI state reflects what actions are available and how the metadata is displayed to the
     // screen, what the user is able to update, etc.
     const uiState = {
@@ -69,7 +43,7 @@
     function init() {
       // Initialize ui and service states
       curUIState = uiState.CREATE
-      curServiceState = serviceState.START
+      curServiceState = page.serviceState.START
 
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
@@ -85,19 +59,12 @@
       }
     }
 
-    function buildBadgeSets() {
-      // Put a badge set in both panels
-      // TODO: do this and centralize the creation of the
-      // badges into the citation_page so they can be used
-      // on the landing and listing page as well
-    }
 
     function attachListeners() {
       // Button listeners
       $('#doi_form_reset_button').click(handleFormReset)
       $('#doi_delete_button').click(handleDOIDelete)
       $('#doi_mint_button').click(handleDoiMint)
-      $('#doi_register_button').click(handleDoiRegister)
       $('#doi_request_form').submit(handleDOIRequest)
 
       // Other page function listeners
@@ -124,7 +91,7 @@
     function setPageState(newState) {
       curServiceState = newState
       switch(newState) {
-        case serviceState.START:
+        case page.serviceState.START:
           // Blank form
           curUIState = uiState.CREATE
           setButtonState(uiState.CREATE)
@@ -132,20 +99,34 @@
           setBadgeState('off')
           curUIState = uiState.CREATE
           break
-        case serviceState.INPROGRESS:
+        case page.serviceState.INPROGRESS:
           // Update form
           curUIState = uiState.MINT
           setButtonState(uiState.MINT)
           setFormDisplayState('form')
           break
-        case serviceState.MINTED:
+        case page.serviceState.LOCKING_DATA:
+          setButtonState(uiState.MINT_RETRY)
+          setMintButton('disabled')
+          curUIState = uiState.MINT_RETRY
+          setFormDisplayState('display')
+          setBadgeState('working')
+          break
+        case page.serviceState.DATA_LOCKED:
+          // XML can be updated
+          curUIState = uiState.MINT
+          setButtonState(uiState.MINT_RETRY)
+          setFormDisplayState('form')
+          setBadgeState("data_locked")
+          break
+        case page.serviceState.MINTED:
           curUIState = uiState.REGISTER
           setButtonState(uiState.REGISTER)
           setFormDisplayState('display')
           setBadgeState(newState)
           break
-        case serviceState.ERROR_LOCKING_DATA:
-        case serviceState.ERROR_REGISTERING:
+        case page.serviceState.ERROR_LOCKING_DATA:
+        case page.serviceState.ERROR_REGISTERING:
           setButtonState(uiState.MINT_RETRY)
           curUIState = uiState.MINT_RETRY
           // assuming updating metadata is blocked at this point?
@@ -153,7 +134,7 @@
           setFormDisplayState('display')
           setBadgeState('warning')
           break
-        case serviceState.COMPLETE:
+        case page.serviceState.COMPLETE:
           curUIState = uiState.COMPLETE
           setButtonState(uiState.COMPLETE)
           setFormDisplayState('display')
@@ -163,23 +144,48 @@
 
     function setBadgeState(state) {
       // TODO: badge states will come from citation_page later...
-      if (state == 'minted') {
-        $('.doi-status-badge').removeClass('hidden')
-        $('.doi-minted').removeClass('hidden')
-        $('.doi-working').addClass('hidden')
-        $('.doi-warning').addClass('hidden')
-      } else if (state === 'warning') {
-        $('.doi-status-badge').removeClass('hidden')
-        $('.doi-minted').addClass('hidden')
-        $('.doi-working').addClass('hidden')
-        $('.doi-warning').removeClass('hidden')
-      } else if (state === 'off') {
+
+      if (state === 'off') {
         $('.doi-status-badge').addClass('hidden')
-      } else if (state === 'working') {
+        $('.doi-data-locked').addClass('hidden')
+      } else {
         $('.doi-status-badge').removeClass('hidden')
-        $('.doi-minted').addClass('hidden')
-        $('.doi-working').removeClass('hidden')
-        $('.doi-warning').addClass('hidden')
+
+        switch (state) {
+          case 'working':
+            $('.doi-minted').addClass('hidden')
+            $('.doi-working').removeClass('hidden')
+            $('.doi-warning').addClass('hidden')
+            $('.doi-retry').addClass('hidden')
+            break
+          case 'retry':
+            $('.doi-minted').addClass('hidden')
+            $('.doi-working').addClass('hidden')
+            $('.doi-warning').addClass('hidden')
+            $('.doi-retry').removeClass('hidden')
+            break
+          case 'data_locked':
+            $('.doi-minted').addClass('hidden')
+            $('.doi-working').addClass('hidden')
+            $('.doi-warning').addClass('hidden')
+            $('.doi-retry').removeClass('hidden')
+            $('.doi-data-locked').removeClass('hidden')
+            break
+          case 'minted' :
+            $('.doi-minted').removeClass('hidden')
+            $('.doi-working').addClass('hidden')
+            $('.doi-warning').addClass('hidden')
+            $('.doi-retry').addClass('hidden')
+            $('.doi-data-locked').removeClass('hidden')
+            break
+          case 'warning' :
+            $('.doi-minted').addClass('hidden')
+            $('.doi-working').addClass('hidden')
+            $('.doi-warning').removeClass('hidden')
+            $('.doi-retry').addClass('hidden')
+            break
+
+        }
       }
     }
 
@@ -252,7 +258,6 @@
           setMintButton('off')
           break
       }
-
     }
 
     function handleNewDoiClick() {
@@ -261,7 +266,7 @@
     }
 
     function handleFormReset(callFormReset) {
-      setPageState(serviceState.START)
+      setPageState(page.serviceState.START)
 
       // Clear Related Information panel
       $('#doi_related').addClass('hidden')
@@ -290,7 +295,6 @@
         $('.doi-form').removeClass('hidden')
       }
     }
-
 
 
     // Must be 1 to start
@@ -329,36 +333,6 @@
       // Remove entire input-group
       $('#doi_' + elId + '_div').remove()
     }
-
-    function handleDoiRegister(event) {
-
-    }
-
-
-    // The polling function
-    function pollDoiStatus(fn, timeout, interval) {
-      var endTime = Number(new Date()) + (timeout || 2000);
-      interval = interval || 100;
-
-      var checkCondition = function(resolve, reject) {
-        // If the condition is met, we're done!
-        var result = fn();
-        if(result) {
-          resolve(result);
-        }
-        // If the condition isn't met but the timeout hasn't elapsed, go again
-        else if (Number(new Date()) < endTime) {
-          setTimeout(checkCondition, interval, resolve, reject);
-        }
-        // Didn't match and too much time, reject!
-        else {
-          reject(new Error('timed out for ' + fn + ': ' + arguments));
-        }
-      };
-
-      return new Promise(checkCondition);
-    }
-
 
 
     // ------------ HTTP/Ajax functions ------------
@@ -513,7 +487,9 @@
 
       Promise.resolve(page.prepareCall())
           .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
-              .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
+              .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix)
+                  .then(doiSuffix => pollDoiStatus(doiSuffix, 2000, 150))
+              )
           )
           .catch(message => handleAjaxError(message))
     }
@@ -532,7 +508,6 @@
       Promise.resolve(page.prepareCall())
           .then(serviceURL =>  Promise.all([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
           .catch(message => handleAjaxError(message))
-
     }
 
     function getDoi(serviceURL, doiNumber) {
@@ -652,16 +627,12 @@
     }
 
 
-
-
-
-
     function loadMetadata(statusData) {
       // Performed after a successful GET for status
       var dataDir = page.mkDataDirLink(statusData.doistatus.dataDirectory['$'])
       // Once the Mint function is completed, landing page will also be displayed
       $('#doi_related').removeClass('hidden')
-      $('#doi_status').html(statusData.doistatus.status['$'])
+      $('#doi_status').html(page.setStatusText(statusData.doistatus.status['$']))
       $('#doi_data_dir').html(dataDir)
       $('#doi_landing_page').html(page.mkLandingPageLink(statusData.doistatus.identifier['$'].split("/")[1]))
 
@@ -700,28 +671,33 @@
       $('.modal-backdrop').remove()
     }
 
-    // The polling function
-    function pollStatus(fn, timeout, interval) {
-      var endTime = Number(new Date()) + (timeout || 2000);
-      interval = interval || 100;
+// The polling function
+    // TODO: test this after talking about web sockets, etc. as possible other things to use...
+    function pollDoiStatus(doiNumber, timeout, interval) {
+      // Set a reasonable timeout
+      var endTime = Number(new Date()) + (timeout || 2000)
+      interval = interval || 100
 
       var checkCondition = function(resolve, reject) {
-        // If the condition is met, we're done!
-        var result = fn();
-        if(result) {
-          resolve(result);
-        }
-        // If the condition isn't met but the timeout hasn't elapsed, go again
-        else if (Number(new Date()) < endTime) {
-          setTimeout(checkCondition, interval, resolve, reject);
-        }
-        // Didn't match and too much time, reject!
-        else {
-          reject(new Error('timed out for ' + fn + ': ' + arguments));
-        }
-      };
+        page.prepareCall().then(serviceUrl => getDoiStatus(serviceUrl, doiNumber))
+            .then( function(response){
+          // If the condition is met, we're done!
+          if(response.data.var == true) {
+            // There's a few options here.
+            resolve(response.data.var)
+          }
+          // If the condition isn't met but the timeout hasn't elapsed, go again
+          else if (Number(new Date()) < endTime) {
+            setTimeout(checkCondition, interval, resolve, reject)
+          }
+          // Didn't match and too much time, reject!
+          else {
+            reject(new Error('timed out for ' + fn + ': ' + arguments))
+          }
+        })
+      }
 
-      return new Promise(checkCondition);
+      //return new Promise(checkCondition)
     }
 
 

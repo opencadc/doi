@@ -63,7 +63,10 @@
                       <ul class="nav navbar-nav doi-header-navbar">
                         <li class="nav-item"><h4>DOI Metadata</h4></li>
                         <li class="nav-item pull-right doi-authenticated">
-                          <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New DOI</button>
+                          <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New</button>
+                          <button type="delete" class="btn btn-danger doi-button doi-listpage-header btn-sm hidden" id="doi_delete_button">Delete</button>
+                          <%--<!-- Javascript changes text here to be 'Mint Retry' where appropriate -->--%>
+                          <button type="mint" class="btn btn-success doi-button doi-listpage-header btn-sm hidden" id="doi_mint_button">Mint</button>
                         </li>
                       </ul>
                     </nav>
@@ -99,19 +102,42 @@
                           </div>
                           <div class="col-sm-2 doi-display doi-number hidden">
                           </div>
-                          <div class="col-sm-4 doi-status-badge hidden">
-                            <div class="doi-minted glyphicon glyphicon-lock doi-form-info hidden ">
-                              <i>MINTED</i>
-                            </div>
-                            <div class="doi-working glyphicon glyphicon-wrench doi-form-info hidden ">
-                              <i>WORKING</i>
-                            </div>
-                            <div class="doi-warning glyphicon glyphicon-exclamation-sign doi-form-info hidden ">
-                              <i>MINTING INCOMPLETE - Try again or contact a CADC administrator</i>
-                            </div>
-                          </div>
+                          <div class="col-sm-4  doi-status-badge pull-right hidden">
 
-                        </div>
+                            <div class="panel panel-success doi-minted hidden">
+                              <div class="panel-body doi-panel-body ">
+                                <div class="doi-minted doi-msg-text ">
+                                  MINTED
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="panel panel-danger doi-warning hidden">
+                              <div class="panel-body doi-panel-body ">
+                                <div class="doi-warning doi-msg-text">
+                                  Minting Error - Retry or contact a CADC administrator
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="panel panel-warning doi-working hidden">
+                              <div class="panel-body doi-panel-body ">
+                                <div class="doi-working doi-msg-text ">
+                                  Minting in progress - Refresh page for new status
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="panel panel-primary doi-retry hidden">
+                              <div class="panel-body doi-panel-body ">
+                                <div class="doi-retry doi-msg-text">
+                                  Click Retry to continue minting process
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>  <!-- end doi-status-badge div -->
+                        </div>  <!-- end form group -->
 
                         <!-- Publication Title -->
                         <div class="form-group">
@@ -172,12 +198,7 @@
                             <div class="button-group doi-button-group col-sm-4" role="group">
                               <!-- Javascript changes text here to be 'Update' button where appropriate -->
                               <button type="submit" class="btn btn-primary" id="doi_action_button" tabindex="5">Request</button>
-                              <!-- These buttons are toggled according to page state -->
-                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Reset</button>
-                              <button type="delete" class="btn btn-danger doi-button hidden" id="doi_delete_button">Delete</button>
-                              <!-- Javascript changes text here to be 'Mint Retry' where appropriate -->
-                              <button type="mint" class="btn btn-success doi-button hidden" id="doi_mint_button">Mint</button>
-                              <button type="register" class="btn btn-primary doi-button hidden" id="doi_register_button">Register</button>
+                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Cancel</button>
                              </div>
                             <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Mint function will be available when Update is complete</i></div>
                           </div>
@@ -186,28 +207,18 @@
                     </div>
                   </div>
                 </div>
+              </div>
 
                 <!-- DOI Metadata panel -->
                 <div id="doi_related" class="panel panel-default doi-panel hidden">
                   <div class="panel-heading doi-panel-heading">
                     <h4>Related Information</h4>
                   </div>
-                  <div class="panel-body doi-panel-body">
+                  <div id="related_panel" class="panel-body doi-panel-body">
                     <div class="row">
-                      <label for="doi_status" class="col-sm-4 control-label text-right " id="doi_status_label">Status</label>
-                      <div class="col-sm-2 doi-status">
+                      <label for="doi_status" class="col-sm-3 control-label text-right " id="doi_status_label">Status</label>
+                      <div class="col-sm-5 doi-status">
                         <span id="doi_status"></span>
-                      </div>
-                      <div class="col-sm-3 doi-status-badge hidden">
-                        <div class="doi-minted glyphicon glyphicon-lock hidden ">
-                          <i>MINTED</i>
-                        </div>
-                        <div class="doi-working glyphicon glyphicon-wrench hidden ">
-                          <i>WORKING</i>
-                        </div>
-                        <div class="doi-warning glyphicon glyphicon-exclamation-sign hidden ">
-                          <i>MINTING INCOMPLETE - Please retry or contact a CADC administrator</i>
-                        </div>
                       </div>
                     </div>
 
@@ -215,15 +226,13 @@
                       <label for="doi_data_dir" class="col-sm-3 control-label text-right" id="doi_data_dir_label">Data Directory</label>
                       <div class="col-sm-9">
                         <span id="doi_data_dir">data dir</span>
+                        <div class="doi-data-locked glyphicon glyphicon-lock hidden">
+                        </div>
                       </div>
-                      <div class="doi-data-locked glyphicon glyphicon-lock hidden">
-                        <i>DATA LOCKED</i>
-                      </div>
-                    </div>
                     </div>
 
                     <div class="row">
-                      <label for="doi_landing_page" class="col-sm-3 control-label text-right " id="doi_landing_page_label">URL</label>
+                      <label for="doi_landing_page" class="col-sm-3 control-label text-right" id="doi_landing_page_label">URL</label>
                       <div class="col-sm-9">
                         <span id="doi_landing_page"><i>not available yet</i></span>
                       </div>
