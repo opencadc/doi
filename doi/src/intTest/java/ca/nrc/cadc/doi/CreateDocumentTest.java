@@ -92,6 +92,8 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.VOS;
 
 /**
  */
@@ -160,6 +162,10 @@ public class CreateDocumentTest extends DocumentTest {
                     Assert.assertNull("GET " + docURL.toString() + " in JSON failed. ", get.getThrowable());
                     Assert.assertEquals(JSON, get.getContentType());
 
+                    // should have runId property, only test DOI's have this property
+                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
+                    Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
+                   
                     // For DOI status test below
                     Title expectedTitle = resource.getTitles().get(0);
                     String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";

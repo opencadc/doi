@@ -142,7 +142,7 @@ public class VospaceDoiClient {
     public boolean isCallerAllowed(Node node) {
         boolean isRequesterNode = false;
         String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-        log.info("requester for node: " + requester);
+        log.debug("requester for node: " + requester);
         if (StringUtil.hasText(requester)) {
             isRequesterNode = requester.equals(this.callersNumericId.toString()) ||
                 callersDN.contains("doiadmin");

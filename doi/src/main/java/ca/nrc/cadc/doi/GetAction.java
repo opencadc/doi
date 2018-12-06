@@ -152,7 +152,7 @@ public class GetAction extends DoiAction {
             public String run() throws Exception {
             	// update status based on the result of the minting service
             	String localStatus = status;
-            	String jobURLString = doiContainerNode.getPropertyValue(DoiAction.JOB_URL);
+            	String jobURLString = doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_JOB_URL_PROP);
             	if (jobURLString != null) {
             		URL jobURL = new URL(jobURLString);
             		ClientRecursiveSetNode recSetNode = new ClientRecursiveSetNode(jobURL, doiContainerNode, false);
@@ -168,7 +168,7 @@ public class GetAction extends DoiAction {
             				}
             				
             				// delete jobURL property
-            				doiContainerNode.findProperty(DoiAction.JOB_URL).setMarkedForDeletion(true);
+            				doiContainerNode.findProperty(DoiAction.DOI_VOS_JOB_URL_PROP).setMarkedForDeletion(true);
             				doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
             				vClient.getVOSpaceClient().setNode(doiContainerNode);
             				break;
@@ -185,7 +185,7 @@ public class GetAction extends DoiAction {
             				}
             				
             				// delete jobURL property
-            				doiContainerNode.findProperty(DoiAction.JOB_URL).setMarkedForDeletion(true);
+            				doiContainerNode.findProperty(DoiAction.DOI_VOS_JOB_URL_PROP).setMarkedForDeletion(true);
             				doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
             				vClient.getVOSpaceClient().setNode(doiContainerNode);
             				break;

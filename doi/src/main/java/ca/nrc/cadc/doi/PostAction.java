@@ -85,6 +85,7 @@ import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
@@ -107,6 +108,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -118,6 +120,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -129,6 +132,10 @@ public class PostAction extends DoiAction {
 
     public static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
     public static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al.";
+    public static final String DATACITE_CREDENTIALS = "datacite.pass";
+    
+    private String dataCiteHost;
+    private String dataCiteURL;
 
     public PostAction() {
         super();
@@ -223,17 +230,21 @@ public class PostAction extends DoiAction {
         return journalRefFromUser;
     }
 
-    private Resource getTemplateResource() {
-        Resource templateResource = null;
-
-        try {
-            URL doiTemplateURL = DoiXmlReader.class.getClassLoader().getResource(DOI_TEMPLATE_RESOURCE_41);
+    private String getPath(String filename) {
+            URL doiTemplateURL = DoiXmlReader.class.getClassLoader().getResource(filename);
             if (doiTemplateURL == null) {
                 throw new MissingResourceException("Resource not found: " + DOI_TEMPLATE_RESOURCE_41, 
                     DoiXmlReader.class.getName(), DOI_TEMPLATE_RESOURCE_41);
             }
             
-            String doiTemplatePath = doiTemplateURL.getPath();
+            return doiTemplateURL.getPath();
+    }
+    
+    private Resource getTemplateResource() {
+        Resource templateResource = null;
+
+        try {
+            String doiTemplatePath = getPath(DOI_TEMPLATE_RESOURCE_41);
             log.debug("doiTemplatePath: " + doiTemplatePath);
             InputStream inputStream = new FileInputStream(doiTemplatePath);
             // read xml file
@@ -302,13 +313,27 @@ public class PostAction extends DoiAction {
         return inProgressDoi;
     }
     
+    private String getCredentials() {
+    	// datacite.pass contains the credentials and is in the doi.war file
+        String dataciteCredentialsPath = getPath(DATACITE_CREDENTIALS);
+        log.debug("datacite username/password file path: " + dataciteCredentialsPath);
+    	NetrcFile netrcFile = new NetrcFile(dataciteCredentialsPath);
+    	PasswordAuthentication pa = netrcFile.getCredentials(dataCiteHost, true);
+    	if (pa == null) {
+    		throw new RuntimeException("failed to read from " + dataciteCredentialsPath + " file");
+    	}
+
+    	return pa.getUserName() + ":" + pa.getPassword();
+    }
+    
     private void postToDataCite(URL postURL, String content, String contentType, boolean redirect) throws IOException {
     	log.debug("post to DataCite URL: " + postURL);
     	log.debug("contentType: " + contentType);
     	
     	// post to DataCite
-    	HttpPost postToDataCite = new HttpPost(postURL, content, contentType, true);
-    	postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(cistiUsername + ":" + cistiPassword));
+    	HttpPost postToDataCite = new HttpPost(postURL, content, contentType, redirect);
+    	postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
+    	/*
     	postToDataCite.run();
     	
         final int responseCode = postToDataCite.getResponseCode();
@@ -328,16 +353,16 @@ public class PostAction extends DoiAction {
         if (responseCode != 200 && responseCode != 201) {
         	throw new IOException("HttpResponse (" + responseCode + ") - " + postToDataCite.getResponseBody());
         }
+        */
     }
     
     private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
     	// add the landing page URL
     	String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
     	String content = doiToMakeFindable + "\n" + "http://apps.canfar.net/citation/landing?doi=" + doiToMakeFindable;
-    	String contentType = "Content-Type:text/plain;charset=UTF-8";
-    	URL makeFindableURL = new URL("https://mds.test.datacite.org/doi/" + doiToMakeFindable);
-    	// TODO: uncomment when DataCite API issue has been addressed
-    	//postToDataCite(makeFindableURL, content, contentType, true);
+    	String contentType = "Content-Type: text/plain;charset=UTF-8";
+    	URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
+    	postToDataCite(makeFindableURL, content, contentType, true);
     }
    
     private String getDOIContent() throws Exception  {
@@ -357,10 +382,9 @@ public class PostAction extends DoiAction {
 	        // register DOI to DataCite
 	    	String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
 	    	String content = getDOIContent();
-	    	String contentType = "Content-Type:application/xml;charset=UTF-8";
-	    	URL registerURL = new URL("https://mds.test.datacite.org/metadata/" + doiToRegister);
-	    	// TODO: uncomment when DataCite API issue has been addressed
-	    	//postToDataCite(registerURL, content, contentType, true);
+	    	String contentType = "Content-Type: application/xml;charset=UTF-8";
+	    	URL registerURL = new URL(dataCiteURL + "/metadata/" + doiToRegister);
+	    	postToDataCite(registerURL, content, contentType, true);
 	        
 	    	// success, add landing page to the DOI instance
 	    	makeDOIFindable(doiContainerNode);
@@ -411,15 +435,15 @@ public class PostAction extends DoiAction {
             log.debug("invoked async call to recursively set the properties in the data directory " + doiSuffix + "/data");
            
             // save job URL
-            NodeProperty jobURLProp = new NodeProperty(DoiAction.JOB_URL, jobURL.toExternalForm());
+            NodeProperty jobURLProp = new NodeProperty(DoiAction.DOI_VOS_JOB_URL_PROP, jobURL.toExternalForm());
             doiContainerNode.getProperties().add(jobURLProp);
 	        vClient.getVOSpaceClient().setNode(doiContainerNode);
         } catch (Exception ex) {
 	    	// update status
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());;
-            String jobURLString = doiContainerNode.getPropertyValue(DoiAction.JOB_URL);
+            String jobURLString = doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_JOB_URL_PROP);
             if (jobURLString != null) {
-            	doiContainerNode.findProperty(DoiAction.JOB_URL).setMarkedForDeletion(true);
+            	doiContainerNode.findProperty(DoiAction.DOI_VOS_JOB_URL_PROP).setMarkedForDeletion(true);
             }
             
             vClient.getVOSpaceClient().setNode(doiContainerNode);
@@ -427,8 +451,26 @@ public class PostAction extends DoiAction {
         }
     }
     
+    private boolean isTesting() {
+    	Set<String> paramNames = syncInput.getParameterNames();
+    	String runId = syncInput.getParameter("runId");
+    	return StringUtil.hasText(runId) && runId.equals("TEST");
+    }
+    
+    private void setDataCiteProperties() {
+    	if (isTesting()) {
+    		this.dataCiteHost = devHost;
+    		this.dataCiteURL = devURL;
+    	} else {
+    		this.dataCiteHost = prodHost;
+    		this.dataCiteURL = prodURL;
+    	}
+    }
+    
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.MINT_ACTION)) {
+        	setDataCiteProperties();
+        	
             // start minting process            
         	// check minting status
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
@@ -463,7 +505,7 @@ public class PostAction extends DoiAction {
             // Done, send redirect to GET for the XML file just minted
             int lastPosition = syncInput.getRequestURI().lastIndexOf('/');
             String redirectUrl = syncInput.getRequestURI().substring(0, lastPosition);
-            log.info("redirectUrl: " + redirectUrl);
+            log.debug("redirectUrl: " + redirectUrl);
             syncOutput.setHeader("Location", redirectUrl);
             syncOutput.setCode(303);
         } else {
@@ -593,6 +635,9 @@ public class PostAction extends DoiAction {
         //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
         VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
         String nextDoiSuffix = generateNextDOINumber(doiDataURI);
+        if (isTesting()) {
+        	nextDoiSuffix = nextDoiSuffix + ".test";
+        }
         log.debug("Next DOI suffix: " + nextDoiSuffix);
 
         // update the template with the new DOI number
@@ -665,6 +710,11 @@ public class PostAction extends DoiAction {
         // Should have come in as a parameter with the POST
         NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
         properties.add(journalRef);
+        
+        if (isTesting()) {
+            NodeProperty runIdTest = new NodeProperty(VOS.PROPERTY_URI_RUNID, RUNID_TEST);
+            properties.add(runIdTest);
+        }
 
         String dataDirURI = DOI_BASE_VOSPACE + "/" + folderName;
 
@@ -687,7 +737,7 @@ public class PostAction extends DoiAction {
         clientTransfer.run();
 
         if (clientTransfer.getThrowable() != null) {
-            log.info(clientTransfer.getThrowable().getMessage());
+            log.debug(clientTransfer.getThrowable().getMessage());
 
             if (clientTransfer.getThrowable() != null) {
                 log.debug(clientTransfer.getThrowable().getMessage());

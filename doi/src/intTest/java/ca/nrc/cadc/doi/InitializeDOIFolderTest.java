@@ -150,6 +150,8 @@ public class InitializeDOIFolderTest extends IntTestBase {
                 fc = new FileContent(builder.toString(), "text/xml");
                 params.put("doiMetadata", fc);
                 params.put("journalref", "2018, Journal ref. ApJ 1000,100");
+                // inform the DOI web service that this is a test
+                params.put("runId", "TEST"); 
                 log.info("url: " + postUrl.getPath());
 
                 HttpPost httpPost = new HttpPost(postUrl, params, false);

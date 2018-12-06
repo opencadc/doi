@@ -72,6 +72,8 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.net.FileContent;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
@@ -102,11 +104,19 @@ import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.NodeNotFoundException;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 /**
  */
 public class DocumentTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(DocumentTest.class);
+
+    final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
+    final VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
     static final String JSON = "application/json";
     static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
@@ -124,6 +134,15 @@ public class DocumentTest extends IntTestBase {
 
     public DocumentTest() {
     };
+    
+    protected ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
+        String nodePath = baseDataURI.getPath();
+        if (StringUtil.hasText(path)) {
+            nodePath = nodePath + "/" + path;
+        }
+
+        return (ContainerNode) vosClient.getNode(nodePath);
+    }
 
     protected void buildInitialDocument() throws IOException, DoiParsingException {
         // read test xml file
@@ -152,6 +171,9 @@ public class DocumentTest extends IntTestBase {
                 params.put("journalref", "");
             }
         }
+        // inform the DOI web service that this is a test
+        params.put("runId", "TEST");
+        
         HttpPost httpPost = new HttpPost(postUrl, params, true);
         httpPost.run();
 

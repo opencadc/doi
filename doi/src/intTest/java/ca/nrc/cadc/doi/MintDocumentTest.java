@@ -110,8 +110,6 @@ import ca.nrc.cadc.vos.client.VOSpaceClient;
 public class MintDocumentTest extends DocumentTest {
     private static final Logger log = Logger.getLogger(MintDocumentTest.class);
     
-    final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
-    final VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
     final Subject testSubject = SSLUtil.createSubject(CADCAUTHTEST_CERT);
 
     static final String JSON = "application/json";
@@ -141,19 +139,11 @@ public class MintDocumentTest extends DocumentTest {
         URL mintURL = new URL(docURL + "/" + DoiAction.MINT_ACTION);
         postDocument(mintURL, document, journalRef);
     }
-    
-    private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
-        String nodePath = baseDataURI.getPath();
-        if (StringUtil.hasText(path)) {
-            nodePath = nodePath + "/" + path;
-        }
-
-        return (ContainerNode) vosClient.getNode(nodePath);
-    }
 
     private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
     		ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
         // verify the DOI containerNode properties
+        Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
         Assert.assertNotNull("should have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
         Assert.assertNotNull("should have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));

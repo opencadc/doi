@@ -70,12 +70,10 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.doi.status.Status;
-import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import ca.nrc.cadc.util.PropertiesReader;
 
-import java.net.InetAddress;
-import java.net.PasswordAuthentication;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
@@ -84,38 +82,38 @@ import org.apache.log4j.Logger;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
-
-    public static final String DATACITE_URL = "https://www.datacite.org";
     
     public static final String STATUS_ACTION = "status";
     public static final String MINT_ACTION = "mint";
-   
+    public static final String TEST_SUFFIX = "test";
     public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
     public static final String CADC_DOI_PREFIX = "10.11570";
     public static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
     public static final String JOURNALREF_PARAM = "journalref";
-    public static final String JOB_URL = "jobURL";
+    public static final String RUNID_TEST = "TEST";
     
+    public static final String DOI_VOS_JOB_URL_PROP = "ivo://cadc.nrc.ca/vospace/doi#joburl";
     public static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
     public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
     public static final String DOI_VOS_JOURNAL_PROP = "ivo://cadc.nrc.ca/vospace/doi#journalref";
     protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
     protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
     
-    // TODO: remove String constant when servops/.netrc is available
-    protected String cistiUsername = "CISTI_CADC"; 
-    protected String cistiPassword = "astroJAZZdog";
+    protected static final String DOI_CONFIG_FILE = "doi.properties";
     
     protected static final String DOI_GROUP_PREFIX = "DOI-";
-
+    
     protected Subject callingSubject;
     protected Integer callingSubjectNumericID;
-    
     protected String doiSuffix;
     protected String doiAction;
     protected VospaceDoiClient vClient = null;
+    protected String prodHost = null;
+    protected String devHost = null;
+    protected String prodURL = null;
+    protected String devURL = null;
 
     public DoiAction() { }
 
@@ -128,18 +126,9 @@ public abstract class DoiAction extends RestAction {
         return new DoiInlineContentHandler();
     }
     
-    protected void init(boolean authorize) throws URISyntaxException, UnknownHostException {
-    	/*
-    	 * TODO: uncomment when servops/.netrc is available
-    	// read username and password from servops .netrc file
-    	NetrcFile netrcFile = new NetrcFile(true);
-    	PasswordAuthentication pa = netrcFile.getCredentials(InetAddress.getLocalHost().getHostName(), true);
-    	if (pa == null) {
-    		throw new RuntimeException("failed to read from netrc file");
-    	}
-    	cistiUsername = pa.getUserName();
-    	cistiPassword = pa.getUserName();
-    	*/
+    protected void init(boolean authorize) throws URISyntaxException, UnknownHostException { 
+    	// load doi properties
+    	loadConfig();
     	
     	// get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
@@ -155,6 +144,17 @@ public abstract class DoiAction extends RestAction {
         parsePath();
     }
 
+    private void loadConfig() {
+    	PropertiesReader pr = new PropertiesReader(DOI_CONFIG_FILE);
+    	this.prodHost = pr.getFirstPropertyValue("PROD_HOST");
+    	this.devHost = pr.getFirstPropertyValue("DEV_HOST");
+    	this.prodURL = pr.getFirstPropertyValue("PROD_URL");
+    	this.devURL = pr.getFirstPropertyValue("DEV_URL");
+    	if (this.prodHost == null || this.devHost == null || this.prodHost == null || this.devURL == null) {
+    		throw new RuntimeException("Failed to load properties from config file " + DOI_CONFIG_FILE);
+    	}
+    }
+    
     private void authorizeUser(Subject s) {
         // authorization, for now, is defined as having a set of principals
         if (s == null || s.getPrincipals().isEmpty()) {
@@ -176,7 +176,7 @@ public abstract class DoiAction extends RestAction {
                 if (parts.length > 1) {
                     doiAction = parts[1];
                     if (parts.length > 2) {
-                        log.info("DOI ACTION BAD REQUEST: " + path);
+                        log.debug("DOI ACTION BAD REQUEST: " + path);
                         throw new IllegalArgumentException("Bad smelly request: " + path);
                     }
                 }
