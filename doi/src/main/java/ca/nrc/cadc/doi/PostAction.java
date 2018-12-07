@@ -360,7 +360,7 @@ public class PostAction extends DoiAction {
     	// add the landing page URL
     	String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
     	String content = doiToMakeFindable + "\n" + "http://apps.canfar.net/citation/landing?doi=" + doiToMakeFindable;
-    	String contentType = "Content-Type: text/plain;charset=UTF-8";
+    	String contentType = "text/plain;charset=UTF-8";
     	URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
     	postToDataCite(makeFindableURL, content, contentType, true);
     }
@@ -382,7 +382,7 @@ public class PostAction extends DoiAction {
 	        // register DOI to DataCite
 	    	String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
 	    	String content = getDOIContent();
-	    	String contentType = "Content-Type: application/xml;charset=UTF-8";
+	    	String contentType = "application/xml;charset=UTF-8";
 	    	URL registerURL = new URL(dataCiteURL + "/metadata/" + doiToRegister);
 	    	postToDataCite(registerURL, content, contentType, true);
 	        
