@@ -123,13 +123,22 @@ public class VospaceDoiClient {
         return this.baseDataURI;
     }
 
-    public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
+    public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException, AccessControlException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
         }
+        ContainerNode requestedNode = null;
 
-        return (ContainerNode) vosClient.getNode(nodePath);
+        try {
+            requestedNode =  (ContainerNode) vosClient.getNode(nodePath);
+        } catch (NodeNotFoundException | AccessControlException ef) {
+            throw ef;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return requestedNode;
     }
 
     public Resource getResource(String doiSuffixString, String doiFilename) throws Exception {
@@ -164,6 +173,9 @@ public class VospaceDoiClient {
         if (clientTransfer.getThrowable() != null) {
             log.debug(clientTransfer.getThrowable().getMessage());
             String message = clientTransfer.getThrowable().getMessage();
+            if (clientTransfer.getThrowable() instanceof IOException) {
+                throw new IOException(message);
+            }
             if (message.contains("NodeNotFound")) {
                 throw new ResourceNotFoundException(message);
             }
