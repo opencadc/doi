@@ -100,11 +100,11 @@ public class DoiStatusWriter {
         ret.addContent(identifierElement);
 
         // add title element
-        Element titlesElement = getTitleElement(doiStatus.getTitle());
+        Element titlesElement = getTitleElement(doiStatus.title);
         ret.addContent(titlesElement);
 
         // add data directory element
-        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
+        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.dataDirectory);
         ret.addContent(dataDirectoryElement);
 
         // add status element

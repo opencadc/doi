@@ -118,7 +118,9 @@ public class DoiStatusReader {
         }
 
         Status status = Status.toValue(root.getChild("status").getText());
-        DoiStatus ds = new DoiStatus(id, title, dataDirectory, status);
+        DoiStatus ds = new DoiStatus(id, status);
+        ds.dataDirectory = dataDirectory;
+        ds.title = title;
 
         // optional element
         if (root.getChild("journalRef") != null) {

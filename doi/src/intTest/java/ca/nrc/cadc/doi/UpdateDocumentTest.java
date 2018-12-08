@@ -212,7 +212,7 @@ public class UpdateDocumentTest extends DocumentTest {
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
                             doiStatus.getIdentifier().getText());
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(),
-                            doiStatus.getTitle().getText());
+                            doiStatus.title.getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
 

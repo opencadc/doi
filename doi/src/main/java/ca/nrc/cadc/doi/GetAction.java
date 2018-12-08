@@ -79,8 +79,9 @@ import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
+import ca.nrc.cadc.doi.datacite.DoiReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
-
+import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -202,39 +203,48 @@ public class GetAction extends DoiAction {
         return returnStatus;
     }
     
-    private DoiStatus getDoiStatus(String doiSuffixString) throws Exception {
+    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
         DoiStatus doiStatus = null;
-        ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffixString);
-
         if (vClient.isCallerAllowed(doiContainerNode))
         {
+        	// get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
             if (StringUtil.hasText(status))
             {
             	// update status based on the result of the minting service
             	status = updateMintingStatus(doiContainerNode, status);
+            } else {
+            	status = Status.ERROR.getValue();
+            }
             	
-                String journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-                Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
-                Title title = getTitle(resource);
-                
-                // get the data directory
-                String dataDirectory = null;
-                List<Node> doiContainedNodes = doiContainerNode.getNodes();
-                for (Node node : doiContainedNodes)
+            // get title and construct DoiStatus instance
+            Title title = null;
+        	Identifier id = null;
+            try {
+	            Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
+	            title = getTitle(resource);
+                doiStatus = new DoiStatus(resource.getIdentifier(), Status.toValue(status));
+            } catch (Exception ex) {
+            	id = new Identifier("DOI");
+            	DoiReader.assignIdentifier(id, doiSuffixString);
+                doiStatus = new DoiStatus(id, Status.toValue(status));
+            }
+            
+	        // set journalRef
+	        doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+            
+            // get the data directory
+            String dataDirectory = null;
+            List<Node> doiContainedNodes = doiContainerNode.getNodes();
+            for (Node node : doiContainedNodes)
+            {
+                if (node.getName().equals("data"))
                 {
-                    if (node.getName().equals("data"))
-                    {
-                        dataDirectory = node.getUri().getPath();
-                        break;
-                    }
+                    dataDirectory = node.getUri().getPath();
+                    doiStatus.dataDirectory = dataDirectory;
+                    break;
                 }
-                
-                // construct the DOI status
-                doiStatus = new DoiStatus(resource.getIdentifier(), title,
-                        dataDirectory, Status.toValue(status));
-                doiStatus.journalRef = journalRef;
             }
         }
         else
@@ -266,11 +276,12 @@ public class GetAction extends DoiAction {
             // Verify this is a container node before continuing
             if (node instanceof ContainerNode) {
                 try {
-                    DoiStatus doiStatus = getDoiStatus(node.getName());
+            		ContainerNode doiContainerNode = vClient.getContainerNode(node.getName());
+                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
                     if (doiStatus != null) {
                         doiStatusList.add(doiStatus);
                     }
-                } catch (AccessControlException ex) {
+                } catch (Exception ex) {
                     // skip
                     log.debug(ex);
                 }
@@ -320,7 +331,8 @@ public class GetAction extends DoiAction {
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.STATUS_ACTION))
         {
-            DoiStatus doiStatus = getDoiStatus(doiSuffix);
+            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode);
 
             String docFormat = this.syncInput.getHeader("Accept");
             log.debug("'Accept' value in header is " + docFormat);

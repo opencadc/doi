@@ -181,9 +181,9 @@ public class CreateDocumentTest extends DocumentTest {
                     Assert.assertEquals("identifier from DOI status is different", returnedIdentifier,
                             doiStatus.getIdentifier().getText());
                     Assert.assertEquals("dataDirectory from DOI status is different", expectedDataDirectory,
-                            doiStatus.getDataDirectory());
+                            doiStatus.dataDirectory);
                     Assert.assertEquals("title from DOI status is different", expectedTitle.getText(),
-                            doiStatus.getTitle().getText());
+                            doiStatus.title.getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
                 } finally {
@@ -226,7 +226,7 @@ public class CreateDocumentTest extends DocumentTest {
                         Assert.assertEquals("Status of DOI " + doiParts[1] + " is incorrect", Status.DRAFT, status);
 
                         // verify data directory
-                        String actualDataDirectory = doiStatus.getDataDirectory();
+                        String actualDataDirectory = doiStatus.dataDirectory;
                         String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + newDois[j] + "/data";
                         Assert.assertEquals("Data directories are different", expectedDataDirectory,
                                 actualDataDirectory);

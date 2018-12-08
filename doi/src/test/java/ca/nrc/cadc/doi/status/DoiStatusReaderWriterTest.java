@@ -158,8 +158,8 @@ public class DoiStatusReaderWriterTest
     private void compareDoiStatus(DoiStatus s1, DoiStatus s2)
     {
         compareIdentifier(s1.getIdentifier(), s2.getIdentifier());
-        compareTitle(s1.getTitle(), s2.getTitle());
-        compareDataDir(s1.getDataDirectory(), s2.getDataDirectory());
+        compareTitle(s1.title, s2.title);
+        compareDataDir(s1.dataDirectory, s2.dataDirectory);
         compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
         compareJournalRef(s1.journalRef, s2.journalRef);
     }

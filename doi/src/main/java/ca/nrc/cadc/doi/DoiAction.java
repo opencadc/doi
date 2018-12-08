@@ -73,10 +73,13 @@ import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.PropertiesReader;
+import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
+import java.util.Set;
+
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -119,6 +122,12 @@ public abstract class DoiAction extends RestAction {
 
     /**
      * Parse input documents
+     * When parameter runId="TEST" is present, the service treats the request as a test. 
+     * For DOI creation, the service will append '.test' to the suffix of the created DOI.
+     * For DOI minting, the service will use the DataCite test system to register the DOI
+     * and to make the DOI findable. 
+     * For DOI deletion, the service could delete the DOI irrespective of its status. 
+     * However this has not been implemented.
      * @return
      */
     @Override
@@ -142,6 +151,12 @@ public abstract class DoiAction extends RestAction {
         this.vClient = new VospaceDoiClient(callingSubject);
 
         parsePath();
+    }
+    
+    protected boolean isTesting() {
+    	Set<String> paramNames = syncInput.getParameterNames();
+    	String runId = syncInput.getParameter("runId");
+    	return StringUtil.hasText(runId) && runId.equals("TEST");
     }
 
     private void loadConfig() {

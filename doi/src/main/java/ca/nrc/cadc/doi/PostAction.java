@@ -105,6 +105,7 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -313,6 +314,9 @@ public class PostAction extends DoiAction {
         return inProgressDoi;
     }
     
+    /*
+     * 
+     */
     private String getCredentials() {
     	// datacite.pass contains the credentials and is in the doi.war file
         String dataciteCredentialsPath = getPath(DATACITE_CREDENTIALS);
@@ -449,12 +453,6 @@ public class PostAction extends DoiAction {
             vClient.getVOSpaceClient().setNode(doiContainerNode);
             throw ex;
         }
-    }
-    
-    private boolean isTesting() {
-    	Set<String> paramNames = syncInput.getParameterNames();
-    	String runId = syncInput.getParameter("runId");
-    	return StringUtil.hasText(runId) && runId.equals("TEST");
     }
     
     private void setDataCiteProperties() {

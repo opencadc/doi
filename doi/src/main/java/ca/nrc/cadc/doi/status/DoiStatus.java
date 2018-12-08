@@ -75,7 +75,6 @@ package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.util.StringUtil;
 
 import org.apache.log4j.Logger;
 
@@ -89,20 +88,18 @@ public class DoiStatus {
     private static Logger log = Logger.getLogger(DoiStatus.class);
 
     private Identifier identifier;
-    private Title title;
-    private String dataDirectory;
     private Status status;
+    public Title title;
+    public String dataDirectory;
     public String journalRef;
 
-    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) {
-        if (identifier == null || title == null || !StringUtil.hasText(dataDirectory) || status == null) {
-            String msg = "identifier, title, dataDirectory and status must be specified.";
+    public DoiStatus(Identifier identifier, Status status) {
+        if (identifier == null || status == null) {
+            String msg = "identifier and status must be specified.";
             throw new IllegalArgumentException(msg);
         }
 
         this.identifier = identifier;
-        this.title = title;
-        this.dataDirectory = dataDirectory;
         this.status = status;
     }
 
@@ -110,16 +107,7 @@ public class DoiStatus {
         return this.identifier;
     }
 
-    public Title getTitle() {
-        return this.title;
-    }
-
-    public String getDataDirectory() {
-        return this.dataDirectory;
-    }
-
     public Status getStatus() {
         return this.status;
     }
-
 }
