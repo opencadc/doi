@@ -123,7 +123,8 @@ public abstract class DoiAction extends RestAction {
     /**
      * Parse input documents
      * When parameter runId="TEST" is present, the service treats the request as a test. 
-     * For DOI creation, the service will append '.test' to the suffix of the created DOI.
+     * For DOI creation, the service will append '.test' to the suffix of the created DOI
+     * and add a VOS.PROPERTY_URI_RUNID node property to DOI container node.
      * For DOI minting, the service will use the DataCite test system to register the DOI
      * and to make the DOI findable. 
      * For DOI deletion, the service could delete the DOI irrespective of its status. 
@@ -159,6 +160,11 @@ public abstract class DoiAction extends RestAction {
     	return StringUtil.hasText(runId) && runId.equals("TEST");
     }
 
+    /*
+     * The config file doi.properties contains the DataCite host and URL for both 
+     * production and testing/development. In a test VM, production host and URL 
+     * are set to testing host and URL.
+     */
     private void loadConfig() {
     	PropertiesReader pr = new PropertiesReader(DOI_CONFIG_FILE);
     	this.prodHost = pr.getFirstPropertyValue("PROD_HOST");

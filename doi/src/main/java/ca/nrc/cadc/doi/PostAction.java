@@ -234,8 +234,8 @@ public class PostAction extends DoiAction {
     private String getPath(String filename) {
             URL doiTemplateURL = DoiXmlReader.class.getClassLoader().getResource(filename);
             if (doiTemplateURL == null) {
-                throw new MissingResourceException("Resource not found: " + DOI_TEMPLATE_RESOURCE_41, 
-                    DoiXmlReader.class.getName(), DOI_TEMPLATE_RESOURCE_41);
+                throw new MissingResourceException("Resource not found: " + filename, 
+                    DoiXmlReader.class.getName(), filename);
             }
             
             return doiTemplateURL.getPath();
