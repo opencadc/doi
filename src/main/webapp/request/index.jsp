@@ -170,16 +170,16 @@
                             <div class="col-sm-3 doi-form doi-form-info"><i>format: family name, given name</i></div>
                         </div>
 
-                      <div class="form-group">
-                        <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)</label>
-                          <div class="col-sm-6">
-                              <div id="doi_additional_authors"></div>
-                              <div>
-                              <label for="doi_add_author" class="col-sm-2 control-label doi-form doi-vertical-align"><i>add author</i></label>
-                              <button type="button" class="btn btn-default doi-small-button doi-form glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
-                              </div>
-                          </div>
-                      </div>
+                        <div class="form-group">
+                          <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)</label>
+                            <div class="col-sm-6">
+                                <div id="doi_additional_authors"></div>
+                                <div>
+                                <label for="doi_add_author" class="col-sm-2 control-label doi-form doi-vertical-align"><i>add author</i></label>
+                                <button type="button" class="btn btn-default doi-small-button doi-form glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
@@ -269,22 +269,15 @@
       </div>
     </div>
 
-    <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
-    <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
-    <script type="text/javascript" src="http://apps.canfar.net/canfar/javascript/cadc.user.js"></script>
-    <script type="text/javascript" src="//apps.canfar.net/cadcJS/javascript/cadc.registry-client.js"></script>
-    <script type="text/javascript" src="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/bootstrap/js/cadc.user.js"></script>
-    <script type="text/javascript" src="//www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/bootstrap/js/login.js"></script>
+
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_request.js" />"></script>
 
     <script type="application/javascript">
       $(document).ready(function() {
-
         // Set up controller for Data Citation Request page
         request_js = new cadc.web.citation.CitationRequest({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
         request_js.init()
-
       });
 
     </script>

@@ -39,8 +39,8 @@ import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 
 public class DataCitationRequestPage extends DataCitationAbstractPage {
-    private static final By DOI_DELETE_BY = By.id("doi_form_delete_button");
-    private static final By DOI_MINT_BY = By.id("doi_form_mint_button");
+    private static final By DOI_DELETE_BY = By.id("doi_delete_button");
+    private static final By DOI_MINT_BY = By.id("doi_mint_button");
     private static final By DOI_MINTED_BADGE = By.className("doi-status-badge");
     private static final By DOI_DATA_DIR_BY = By.id("doi_data_dir");
     private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_action_button");

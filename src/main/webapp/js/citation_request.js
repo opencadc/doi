@@ -505,9 +505,21 @@
       // Run the registry lookup call prior to running the get and get status
       // Get and get status can run in parallel
 
+      // Fires both calls
+      //Promise.resolve(page.prepareCall())
+      //    .then(serviceURL =>  Promise.all([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
+      //    .catch(message => handleAjaxError(message))
+
       Promise.resolve(page.prepareCall())
-          .then(serviceURL =>  Promise.all([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
+          .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
           .catch(message => handleAjaxError(message))
+
+      // still fires both calls
+      //page.prepareCall()
+      //  .then( serviceURL =>  getDoi(serviceURL, doiNumber) )
+      //  .then( page.prepareCall().then(serviceURL => getDoiStatus(serviceURL, doiNumber))  )
+      //  .catch(message => handleAjaxError(message))
+
     }
 
     function getDoi(serviceURL, doiNumber) {
