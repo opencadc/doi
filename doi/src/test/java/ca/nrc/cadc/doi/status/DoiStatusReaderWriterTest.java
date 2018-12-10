@@ -135,9 +135,13 @@ public class DoiStatusReaderWriterTest
     
     private void compareTitle(Title t1, Title t2)
     {
-        Assert.assertEquals("langs are different", t1.getLang(), t2.getLang());
-        Assert.assertEquals("titles are different", t1.getText(), t2.getText());
-        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
+    	if (t1 == null) {
+    		Assert.assertNull("expected title is null, actual title is not null: " + t2);
+    	} else {
+	        Assert.assertEquals("langs are different", t1.getLang(), t2.getLang());
+	        Assert.assertEquals("titles are different", t1.getText(), t2.getText());
+	        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
+    	}
     }
     
     private void compareJournalRef(String p1, String p2)
@@ -152,14 +156,18 @@ public class DoiStatusReaderWriterTest
 
     private void compareDataDir(String s1, String s2)
     {
-        Assert.assertEquals("data directories are different", s1, s2);
+    	if (s1 == null) {
+    		Assert.assertNull("expected dataDirectory is null, actual dataDirectory is not null: ", s2);
+    	} else {
+	        Assert.assertEquals("data directories are different", s1, s2);
+    	}
     }
 
     private void compareDoiStatus(DoiStatus s1, DoiStatus s2)
     {
         compareIdentifier(s1.getIdentifier(), s2.getIdentifier());
-        compareTitle(s1.title, s2.title);
-        compareDataDir(s1.dataDirectory, s2.dataDirectory);
+        compareTitle(s1.getTitle(), s2.getTitle());
+        compareDataDir(s1.getDataDirectory(), s2.getDataDirectory());
         compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
         compareJournalRef(s1.journalRef, s2.journalRef);
     }

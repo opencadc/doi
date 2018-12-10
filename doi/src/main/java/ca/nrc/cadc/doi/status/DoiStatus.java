@@ -89,18 +89,27 @@ public class DoiStatus {
 
     private Identifier identifier;
     private Status status;
-    public Title title;
-    public String dataDirectory;
+    private Title title;
+    private String dataDirectory;
     public String journalRef;
 
-    public DoiStatus(Identifier identifier, Status status) {
+    public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) {
         if (identifier == null || status == null) {
             String msg = "identifier and status must be specified.";
             throw new IllegalArgumentException(msg);
         }
 
+        // title and dataDirectory can be null when status == Status.ERROR
+        // this allows errored DOI's to be displayed when listing DOI statuses
+        if (status != Status.ERROR && (title == null || dataDirectory == null)) {
+            String msg = "title and dataDirectory must be specified.";
+            throw new IllegalArgumentException(msg);
+        }
+        
         this.identifier = identifier;
         this.status = status;
+        this.title = title;
+        this.dataDirectory = dataDirectory;
     }
 
     public Identifier getIdentifier() {
@@ -110,4 +119,12 @@ public class DoiStatus {
     public Status getStatus() {
         return this.status;
     }
+    
+	public Title getTitle() {
+		return this.title;
+	}
+
+	public String getDataDirectory() {
+	    	return this.dataDirectory;
+	}
 }

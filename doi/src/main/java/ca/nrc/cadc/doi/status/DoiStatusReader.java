@@ -103,24 +103,23 @@ public class DoiStatusReader {
 
     public DoiStatus buildStatus(Element root) throws DoiParsingException {
         Identifier id = buildIdentifier(root);
-        Title title = buildTitle(root);
-
-        if (root.getChild("dataDirectory") == null) {
-            String msg = "dataDirectory not found in doi status element.";
-            throw new DoiParsingException(msg);
-        }
-
-        String dataDirectory = root.getChild("dataDirectory").getText();
-
+        
         if (root.getChild("status") == null) {
             String msg = "status not found in doi status element.";
             throw new DoiParsingException(msg);
+        }        
+        Status status = Status.toValue(root.getChild("status").getText());
+        
+        // title and dataDirectory can be null, refer to DoiStatus constructor
+        Title title = buildTitle(root);
+
+        // dataDirectory can be null, refer to DoiStatus constructor
+        String dataDirectory = null;
+        if (root.getChild("dataDirectory") != null) {
+            dataDirectory = root.getChild("dataDirectory").getText();
         }
 
-        Status status = Status.toValue(root.getChild("status").getText());
-        DoiStatus ds = new DoiStatus(id, status);
-        ds.dataDirectory = dataDirectory;
-        ds.title = title;
+        DoiStatus ds = new DoiStatus(id, title, dataDirectory, status);
 
         // optional element
         if (root.getChild("journalRef") != null) {
@@ -142,27 +141,30 @@ public class DoiStatusReader {
     }
 
     protected Title buildTitle(Element root) throws DoiParsingException {
+        Title title = null;
         Element titleElement = root.getChild("title");
-        // get the title text
-        String text = titleElement.getText();
-        String lang = null;
-        String titleType = null;
-
-        // get the attributes and build a title instance
-        List<Attribute> attributes = titleElement.getAttributes();
-        for (Attribute attr : attributes) {
-            String key = attr.getName();
-            if ("lang".equals(key)) {
-                lang = attr.getValue();
-            } else {
-                titleType = attr.getValue();
-            }
-        }
-
-        // the titleType attribute is optional
-        Title title = new Title(lang, text);
-        if (titleType != null) {
-            title.titleType = TitleType.toValue(titleType);
+        if (titleElement != null) {
+	        // get the title text
+	        String text = titleElement.getText();
+	        String lang = null;
+	        String titleType = null;
+	
+	        // get the attributes and build a title instance
+	        List<Attribute> attributes = titleElement.getAttributes();
+	        for (Attribute attr : attributes) {
+	            String key = attr.getName();
+	            if ("lang".equals(key)) {
+	                lang = attr.getValue();
+	            } else {
+	                titleType = attr.getValue();
+	            }
+	        }
+	
+	        // the titleType attribute is optional
+	        title = new Title(lang, text);
+	        if (titleType != null) {
+	            title.titleType = TitleType.toValue(titleType);
+	        }
         }
 
         return title;

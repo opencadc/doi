@@ -100,12 +100,14 @@ public class DoiStatusWriter {
         ret.addContent(identifierElement);
 
         // add title element
-        Element titlesElement = getTitleElement(doiStatus.title);
+        Element titlesElement = getTitleElement(doiStatus.getTitle());
         ret.addContent(titlesElement);
 
         // add data directory element
-        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.dataDirectory);
-        ret.addContent(dataDirectoryElement);
+        Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
+        if (dataDirectoryElement != null) {
+	        ret.addContent(dataDirectoryElement);
+        }
 
         // add status element
         Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
@@ -129,21 +131,26 @@ public class DoiStatusWriter {
     }
 
     protected Element getTitleElement(Title title) {
-        Element ret = new Element("title");
-        ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
-        ret.setText(title.getText());
-
-        if (title.titleType != null) {
-            // set title type attribute
-            ret.setAttribute("titleType", title.titleType.getValue());
+        Element ret = null;
+        if (title != null) {
+            ret = new Element("title");
+            ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
+	        ret.setText(title.getText());
+	        if (title.titleType != null) {
+	            // set title type attribute
+	            ret.setAttribute("titleType", title.titleType.getValue());
+	        }
         }
 
         return ret;
     }
 
     protected Element getDataDirectoryElement(String dataDirectory) {
-        Element ret = new Element("dataDirectory");
-        ret.setText(dataDirectory);
+        Element ret = null;
+        if (dataDirectory != null) {
+            ret = new Element("dataDirectory");
+	        ret.setText(dataDirectory);
+        }
         return ret;
     }
 

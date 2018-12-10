@@ -210,29 +210,13 @@ public class GetAction extends DoiAction {
         	// get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
-            if (StringUtil.hasText(status))
+            if (StringUtil.hasText(status) && !status.equals(Status.ERROR.getValue()))
             {
             	// update status based on the result of the minting service
             	status = updateMintingStatus(doiContainerNode, status);
             } else {
             	status = Status.ERROR.getValue();
             }
-            	
-            // get title and construct DoiStatus instance
-            Title title = null;
-        	Identifier id = null;
-            try {
-	            Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
-	            title = getTitle(resource);
-                doiStatus = new DoiStatus(resource.getIdentifier(), Status.toValue(status));
-            } catch (Exception ex) {
-            	id = new Identifier("DOI");
-            	DoiReader.assignIdentifier(id, doiSuffixString);
-                doiStatus = new DoiStatus(id, Status.toValue(status));
-            }
-            
-	        // set journalRef
-	        doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
             
             // get the data directory
             String dataDirectory = null;
@@ -242,10 +226,24 @@ public class GetAction extends DoiAction {
                 if (node.getName().equals("data"))
                 {
                     dataDirectory = node.getUri().getPath();
-                    doiStatus.dataDirectory = dataDirectory;
                     break;
                 }
             }
+            	
+            // get title and construct DoiStatus instance
+            Title title = null;
+            try {
+	            Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
+	            title = getTitle(resource);
+                doiStatus = new DoiStatus(resource.getIdentifier(), title, dataDirectory, Status.toValue(status));
+            } catch (Exception ex) {
+            	Identifier id = new Identifier("DOI");
+            	DoiReader.assignIdentifier(id, doiSuffixString);
+                doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
+            }
+            
+	        // set journalRef
+	        doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
         }
         else
         {

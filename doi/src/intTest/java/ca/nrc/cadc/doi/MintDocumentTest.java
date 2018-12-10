@@ -98,12 +98,10 @@ import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientAbortThread;
 import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 /**
  */
