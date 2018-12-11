@@ -110,7 +110,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
         // Return to the /citation/request page...
         requestPage = goTo(endpoint,
-            "?doi=" + doiSuffix,
+            "&doi=" + doiSuffix,
             DataCitationRequestPage.class
         );
 
@@ -147,7 +147,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
         // Return to the /citation/request page...
         requestPage = goTo(endpoint,
-            "?doi=" + doiSuffix,
+            "&doi=" + doiSuffix,
             DataCitationRequestPage.class
         );
 
@@ -274,7 +274,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     public void getInvalidDoi() throws Exception {
         DataCitationRequestPage requestPage;
 
-        requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
+        requestPage = goTo(endpoint + "&doi=99.9999", null, DataCitationRequestPage.class);
 
         requestPage.pageLoadLogin();
         requestPage.waitForGetFailed();

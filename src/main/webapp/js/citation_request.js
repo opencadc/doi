@@ -53,10 +53,24 @@
     function parseUrl() {
       var query = window.location.search
 
-      if (query !== '') {
-        // perform GET and display for form
-        handleDOIGet(query.split('=')[1])
+      if (query.match("runid")) {
+        page.parseUrl()
       }
+
+      if (query !== '') {
+        // Parse key/value pairs
+        var queryPairs = query.split('&')
+
+        for (var i=0; i<queryPairs.length; i++) {
+          var keyVal = queryPairs[i].split('=')
+          if (keyVal[0].match('doi')) {
+            handleDOIGet(keyVal[1])
+            break;
+          }
+        }
+      }
+
+
     }
 
 
@@ -390,6 +404,11 @@
       var multiPartData = new FormData()
       multiPartData.append( 'journalRef', journalRef)
 
+      var _runid = page.getRunid()
+      if (_runid !== '') {
+        multiPartData.append('runId', _runid)
+      }
+
       // 'Blob' type is requred to have the 'filename="blob" parameter added
       // to the multipart section, and have the Content-type header added
       multiPartData.append('doiMeta', new Blob([JSON.stringify(doiDoc.getDoc())], {
@@ -505,21 +524,9 @@
       // Run the registry lookup call prior to running the get and get status
       // Get and get status can run in parallel
 
-      // Fires both calls
-      //Promise.resolve(page.prepareCall())
-      //    .then(serviceURL =>  Promise.all([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
-      //    .catch(message => handleAjaxError(message))
-
       Promise.resolve(page.prepareCall())
           .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
           .catch(message => handleAjaxError(message))
-
-      // still fires both calls
-      //page.prepareCall()
-      //  .then( serviceURL =>  getDoi(serviceURL, doiNumber) )
-      //  .then( page.prepareCall().then(serviceURL => getDoiStatus(serviceURL, doiNumber))  )
-      //  .catch(message => handleAjaxError(message))
-
     }
 
     function getDoi(serviceURL, doiNumber) {

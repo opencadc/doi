@@ -57,7 +57,7 @@ public abstract class AbstractDataCitationIntegrationTest extends AbstractWebApp
 {
     private static final Logger log = Logger.getLogger(AbstractDataCitationIntegrationTest.class);
 
-    private static final String DEFAULT_ENDPOINT = "/citation/request";
+    private static final String DEFAULT_ENDPOINT = "/citation/request?runid=TEST";
     protected static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
     protected static File CADCAUTHTEST_CERT;
     protected static File DOIADMIN_CERT;

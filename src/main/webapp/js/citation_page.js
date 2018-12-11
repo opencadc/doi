@@ -36,6 +36,8 @@
       resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
     })
 
+    var _runid = ''
+
     // These reflect the states as returned from the doiservice status call
     // TODO: how to make these states less breakable? String comparison isn't great...
     const serviceState = {
@@ -51,6 +53,23 @@
     }
 
     // ------------ Page state management functions ------------
+
+    function parseUrl() {
+      var query = window.location.search
+
+      if (query !== '') {
+        // Parse key/value pairs
+        var queryPairs = query.split('&')
+
+        for (var i=0; i<queryPairs.length; i++) {
+          var keyVal = queryPairs[i].split('=')
+          if (keyVal[0].match('runid')) {
+            _runid = keyVal[1]
+            break;
+          }
+        }
+      }
+    }
 
     function clearAjaxAlert() {
       $('.alert-danger').addClass('hidden')
@@ -246,16 +265,22 @@
       trigger(_selfCitationPage, cadc.web.citation.events.onAuthenticated, {})
     }
 
-
-    function mkSpinner() {
-      return $.parseHTML('<span id="doi_working_spinner" class="glyphicon glyphicon-refresh fast-right-spinner"></span>');
-    }
+    //
+    //function mkSpinner() {
+    //  return $.parseHTML('<span id="doi_working_spinner" class="glyphicon glyphicon-refresh fast-right-spinner"></span>');
+    //}
 
     function hideModals() {
       $('.modal-backdrop').remove()
     }
 
+
+    function getRunid() {
+      return _runid
+    }
+
     $.extend(this, {
+      parseUrl: parseUrl,
       serviceState: serviceState,
       prepareCall: prepareCall,
       setAjaxSuccess: setAjaxSuccess,
@@ -269,7 +294,8 @@
       subscribe: subscribe,
       trigger: trigger,
       hideModals: hideModals,
-      setStatusText: setStatusText
+      setStatusText: setStatusText,
+      getRunid: getRunid
     })
 
   }
