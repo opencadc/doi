@@ -58,11 +58,7 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
-
-            // return the node in xml format
-            NodeWriter nodeWriter = new NodeWriter();
-            return new NodeActionResult(new N
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -73,111 +69,68 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import java.util.List;
+import java.net.URI;
 
 import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
-import org.springframework.util.StringUtils;
+
+import ca.nrc.cadc.util.StringUtil;
 
 /**
- * Root business object for DOI metadata.
+ * An identifier of related resources. These must be globally unique identifiers..
  * 
  * @author yeunga
- *
  */
-public class Resource {
-    private static Logger log = Logger.getLogger(Resource.class);
+public class RelatedIdentifier {
 
-    private static String RIGHTS_STMT = "Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.";
-    // first %s is the publication title,
-    // second %2 is last name of first author
-    // third %s is the journal reference
-    private static String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s ' by %s et al., %s ";
+    private static Logger log = Logger.getLogger(RelatedIdentifier.class);
 
-    // define boundaries for the publicationYear
-    public static final Integer PUBLICATION_YEAR_LOWER_LIMIT = 1900;
-    public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
-    public static final String PUBLISHER = "CADC";
-    public static final ResourceType RESOURCE_TYPE = ResourceType.toValue("Dataset");
+    private String text;
+    private RelatedIdentifierType relatedIdentifierType;
+    private RelationType relationType;
+    public ResourceType resourceTypeGeneral;
+    // relatedMetadataScheme example: "citeproc+json"
+    public String relatedMetadataScheme; 
+    // The URI of the relatedMetadataScheme
+    public URI schemeURI;
+    // The type of the relatedMetadataScheme, linked with the schemeURI, e.g. XSD
+    public String schemeType;
 
-    private Namespace namespace;
-    private Identifier identifier;
-    private List<Creator> creators;
-    private List<Title> titles;
-    private DoiResourceType resourceType;
-    private String publicationYear;
-    public List<Rights> rightsList;
-    public List<Contributor> contributors;
-    public List<DoiDate> dates;
-    public List<Description> descriptions;
-    public String language;
-    public List<RelatedIdentifier> relatedIdentifiers;
-
-    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles,
-            String publicationYear) {
-        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty()
-                || !StringUtils.hasText(publicationYear)) {
-            String msg = "namespace, identifier, creator, title AND publicationYear must be specified.";
+    /**
+     * RelatedIdentifier constructor.
+     * 
+     * @param text relatedIdentifier text
+     * @param relatedIdentifierType related identifier type, e.g. DOI
+     * @param relationType type of relationship between the related resources
+     */
+    public RelatedIdentifier(String text, RelatedIdentifierType relatedIdentifierType, RelationType relationType) {
+        if (!StringUtil.hasText(text) || relatedIdentifierType == null || relationType == null) {
+            String msg = "text, relatedIdentifierType and relationTYpe must be specified.";
             throw new IllegalArgumentException(msg);
         }
 
-        this.namespace = namespace;
-        this.identifier = identifier;
-        this.creators = creators;
-        this.titles = titles;
-        this.resourceType = new DoiResourceType(RESOURCE_TYPE);
-        validatePublicationYear(publicationYear);
-        this.publicationYear = publicationYear;
+        this.text = text;
+        this.relatedIdentifierType = relatedIdentifierType;
+        this.relationType = relationType;
     }
 
-    public Namespace getNamespace() {
-        return this.namespace;
+    /**
+     * @return relatedIdentifier text.
+     */
+    public String getText() {
+        return this.text;
     }
 
-    public Identifier getIdentifier() {
-        return this.identifier;
+    /**
+     * @return type of RelatedIdentifier.
+     */
+    public RelatedIdentifierType getRelatedIdentifierType() {
+        return this.relatedIdentifierType;
     }
 
-    public List<Creator> getCreators() {
-        return this.creators;
-    }
-
-    public void setCreators(List<Creator> creators) {
-        this.creators = creators;
-    }
-
-    public String getPublisher() {
-        return PUBLISHER;
-    }
-
-    public String getPublicationYear() {
-        return this.publicationYear;
-    }
-
-    public void setPublicationYear(String newYear) {
-        this.publicationYear = newYear;
-    }
-
-    public DoiResourceType getResourceType() {
-        return this.resourceType;
-    }
-
-    public List<Title> getTitles() {
-        return titles;
-    }
-
-    public void setTitles(List<Title> titles) {
-        this.titles = titles;
-    }
-
-    private void validatePublicationYear(String pYear) {
-        try {
-            Integer year = Integer.valueOf(pYear);
-            if (year > PUBLICATION_YEAR_UPPER_LIMIT || year < PUBLICATION_YEAR_LOWER_LIMIT) {
-                throw new IllegalArgumentException("publicationYear is not a recent year");
-            }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("publicationYear is not a number");
-        }
+    /**
+     * @return description of the relationship of the related resources
+     */
+    public RelationType getRelationType() {
+        return this.relationType;
     }
 }

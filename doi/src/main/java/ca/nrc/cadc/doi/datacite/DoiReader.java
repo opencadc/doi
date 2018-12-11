@@ -142,6 +142,7 @@ public class DoiReader {
         resource.dates = buildDates(root);
         resource.descriptions = buildDescriptions(root);
         resource.language = buildLanguage(root);
+        resource.relatedIdentifiers = buildRelatedIdentifiers(root);
         return resource;
     }
 
@@ -442,5 +443,59 @@ public class DoiReader {
             text = languageElement.getText();
         }
         return text;
+    }
+    
+    protected List<RelatedIdentifier> buildRelatedIdentifiers(Element root) {
+    	List<RelatedIdentifier> relatedIdentifiers = null;
+    	
+        Namespace ns = root.getNamespace();
+    	if (root.getChild("relatedIdentifiers", ns) != null) {
+    		relatedIdentifiers = new ArrayList<RelatedIdentifier>();
+    		List<Element> relatedIdentifierElements = root.getChild("relatedIdentifiers", ns).getChildren();
+    		for (Element relatedIdentifierElement : relatedIdentifierElements) {
+    			// relatedIdentifier text is mandatory
+    			String text = relatedIdentifierElement.getText();
+    			
+                // relatedIdentifierType attribute is mandatory
+                String relatedIdentifierTypeString = relatedIdentifierElement.getAttributeValue("relatedIdentifierType");
+                RelatedIdentifierType relatedIdentifierType = RelatedIdentifierType.toValue(relatedIdentifierTypeString);
+
+                // relationType attribute is mandatory
+                String relationTypeString = relatedIdentifierElement.getAttributeValue("relationType");
+                RelationType relationType = RelationType.toValue(relationTypeString);
+                
+                // instantiate a RelatedIdentifier
+                RelatedIdentifier relatedIdentifier = new RelatedIdentifier(text, relatedIdentifierType, relationType);
+
+                // resourceTypeGeneral attribute is optional
+                String resourceTypeString = relatedIdentifierElement.getAttributeValue("resourceTypeGeneral");
+                if (resourceTypeString != null) {
+                    ResourceType resourceTypeGeneral = ResourceType.toValue(resourceTypeString);
+                    relatedIdentifier.resourceTypeGeneral = resourceTypeGeneral;
+                }
+                
+                // relatedMetadataScheme is optional
+                String relatedMetadataScheme = relatedIdentifierElement.getAttributeValue("relatedMetadataScheme");
+                if (relatedMetadataScheme != null) {
+                	relatedIdentifier.relatedMetadataScheme = relatedMetadataScheme;
+                }
+
+                // schemeURI is optional
+                String schemeURI = relatedIdentifierElement.getAttributeValue("schemeURI");
+                if (schemeURI != null) {
+                	relatedIdentifier.schemeURI = URI.create(schemeURI);
+                }
+                
+                // schemeType is optional
+                String schemeType = relatedIdentifierElement.getAttributeValue("schemeType");
+                if (schemeType != null) {
+                	relatedIdentifier.schemeType = schemeType;
+                }
+                
+                relatedIdentifiers.add(relatedIdentifier);
+    		}
+    	}
+    	
+    	return relatedIdentifiers;
     }
 }

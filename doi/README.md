@@ -48,6 +48,7 @@ The following top level DOI metadata are supported:
   - descriptions
   - sizes
   - language 
+  - relatedIdentifiers 
 
 ### User editable DOI metadata:
 Among the supported the DOI metadata, the following are user editable:

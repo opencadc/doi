@@ -73,111 +73,51 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import java.util.List;
-
-import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
-import org.springframework.util.StringUtils;
-
 /**
- * Root business object for DOI metadata.
+ * The type of the RelatedIdentifier.
  * 
  * @author yeunga
  *
  */
-public class Resource {
-    private static Logger log = Logger.getLogger(Resource.class);
+public enum RelatedIdentifierType {
+    ARK("ARK"), 
+    ARXIV("arXiv"), 
+    BIDCODE("bibcode"), 
+    DOI("DOI"), 
+    EAN13("EAN13"), 
+    EISSN("EISSN"), 
+    HANDLE("Handle"), 
+    IGSN("IGSN"), 
+    ISBN("ISBN"), 
+    ISSN("ISSN"), 
+    ISTC("ISTC"), 
+    LISSN("LISSN"), 
+    LSID("LSID"), 
+    PMID("PMID"), 
+    PURL("PURL"),
+    UPC("UPC"), 
+    URL("URL"), 
+    URN("URN"); 
 
-    private static String RIGHTS_STMT = "Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.";
-    // first %s is the publication title,
-    // second %2 is last name of first author
-    // third %s is the journal reference
-    private static String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s ' by %s et al., %s ";
+    private final String value;
 
-    // define boundaries for the publicationYear
-    public static final Integer PUBLICATION_YEAR_LOWER_LIMIT = 1900;
-    public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
-    public static final String PUBLISHER = "CADC";
-    public static final ResourceType RESOURCE_TYPE = ResourceType.toValue("Dataset");
-
-    private Namespace namespace;
-    private Identifier identifier;
-    private List<Creator> creators;
-    private List<Title> titles;
-    private DoiResourceType resourceType;
-    private String publicationYear;
-    public List<Rights> rightsList;
-    public List<Contributor> contributors;
-    public List<DoiDate> dates;
-    public List<Description> descriptions;
-    public String language;
-    public List<RelatedIdentifier> relatedIdentifiers;
-
-    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles,
-            String publicationYear) {
-        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty()
-                || !StringUtils.hasText(publicationYear)) {
-            String msg = "namespace, identifier, creator, title AND publicationYear must be specified.";
-            throw new IllegalArgumentException(msg);
-        }
-
-        this.namespace = namespace;
-        this.identifier = identifier;
-        this.creators = creators;
-        this.titles = titles;
-        this.resourceType = new DoiResourceType(RESOURCE_TYPE);
-        validatePublicationYear(publicationYear);
-        this.publicationYear = publicationYear;
+    private RelatedIdentifierType(String value) {
+        this.value = value;
     }
 
-    public Namespace getNamespace() {
-        return this.namespace;
+    public static RelatedIdentifierType toValue(String s) {
+        for (RelatedIdentifierType type : values())
+            if (type.value.equals(s))
+                return type;
+        throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public Identifier getIdentifier() {
-        return this.identifier;
+    public String getValue() {
+        return value;
     }
 
-    public List<Creator> getCreators() {
-        return this.creators;
-    }
-
-    public void setCreators(List<Creator> creators) {
-        this.creators = creators;
-    }
-
-    public String getPublisher() {
-        return PUBLISHER;
-    }
-
-    public String getPublicationYear() {
-        return this.publicationYear;
-    }
-
-    public void setPublicationYear(String newYear) {
-        this.publicationYear = newYear;
-    }
-
-    public DoiResourceType getResourceType() {
-        return this.resourceType;
-    }
-
-    public List<Title> getTitles() {
-        return titles;
-    }
-
-    public void setTitles(List<Title> titles) {
-        this.titles = titles;
-    }
-
-    private void validatePublicationYear(String pYear) {
-        try {
-            Integer year = Integer.valueOf(pYear);
-            if (year > PUBLICATION_YEAR_UPPER_LIMIT || year < PUBLICATION_YEAR_LOWER_LIMIT) {
-                throw new IllegalArgumentException("publicationYear is not a recent year");
-            }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("publicationYear is not a number");
-        }
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + value + "]";
     }
 }

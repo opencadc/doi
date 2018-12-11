@@ -157,6 +157,12 @@ public class DoiWriter {
             ret.addContent(languageElement);
         }
 
+        // add optional relatedIdentifiers
+        if (resource.relatedIdentifiers != null && resource.relatedIdentifiers.size() > 0) {
+            Element relatedIdentifiersElement = getRelatedIdentifiersElement(resource.relatedIdentifiers, ns);
+            ret.addContent(relatedIdentifiersElement);
+        }
+
         return ret;
     }
 
@@ -425,5 +431,39 @@ public class DoiWriter {
         Element languageEl = new Element("language", ns);
         languageEl.setText(language);
         return languageEl;
+    }
+    
+    protected Element getRelatedIdentifiersElement(List<RelatedIdentifier> relatedIdentifiers, Namespace ns) {
+    	Element ret = new Element("relatedIdentifiers", ns);
+    	for (RelatedIdentifier relatedIdentifier : relatedIdentifiers) {
+    		Element relatedIdentifierElement = new Element("relatedIdentifier", ns);
+    		relatedIdentifierElement.setAttribute("relatedIdentifierType", relatedIdentifier.getRelatedIdentifierType().getValue());
+    		relatedIdentifierElement.setAttribute("relationType", relatedIdentifier.getRelationType().getValue());
+    		relatedIdentifierElement.setText(relatedIdentifier.getText());
+    		
+    		// add optional resourceTypeGeneral attribute
+    		if (relatedIdentifier.resourceTypeGeneral != null) {
+    			relatedIdentifierElement.setAttribute("resourceTypeGeneral", relatedIdentifier.resourceTypeGeneral.getValue());
+    		}
+    		
+    		// add optional relatedMetadataScheme attribute
+    		if (StringUtil.hasText(relatedIdentifier.relatedMetadataScheme)) {
+    			relatedIdentifierElement.setAttribute("relatedMetadataScheme", relatedIdentifier.relatedMetadataScheme);
+    		}
+    		
+    		// add optional scheme URI
+    		if (relatedIdentifier.schemeURI != null) {
+    			relatedIdentifierElement.setAttribute("schemeURI", relatedIdentifier.schemeURI.toString());
+    		}
+    		
+    		// add optional schemeType
+    		if (StringUtil.hasText(relatedIdentifier.schemeType)) {
+    			relatedIdentifierElement.setAttribute("schemeType", relatedIdentifier.schemeType);
+    		}
+    		
+    		ret.addContent(relatedIdentifierElement);
+    	}
+    	
+    	return ret;
     }
 }
