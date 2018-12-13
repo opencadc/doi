@@ -100,8 +100,7 @@ public class Creator {
     /**
      * Creator constructor.
      * 
-     * @param name
-     *            Name of creator
+     * @param creatorName Name of creator
      */
     public Creator(CreatorName creatorName) {
         if (creatorName == null) {

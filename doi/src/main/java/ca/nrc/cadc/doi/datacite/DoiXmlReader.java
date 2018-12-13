@@ -98,7 +98,6 @@ public class DoiXmlReader extends DoiReader {
     static final String DOI_SCHEMA_RESOURCE_41 = "DoiMetadata-4.1.xsd";
 
     protected Map<String, String> schemaMap;
-    protected Namespace xsiNamespace;
 
     /**
      * Constructor. XML Schema validation is enabled by default.
@@ -133,8 +132,7 @@ public class DoiXmlReader extends DoiReader {
     /**
      * Construct a DOM document from an XML String source.
      *
-     * @param xml
-     *            String of the XML.
+     * @param xml String of the XML.
      * @return Resource object containing all doi metadata.
      * @throws DoiParsingException
      *             if there is an error parsing the XML.
@@ -153,11 +151,10 @@ public class DoiXmlReader extends DoiReader {
     /**
      * Construct a DOM document from a InputStream.
      *
-     * @param in
-     *            InputStream.
+     * @param in InputStream.
      * @return Resource object containing all doi metadata.
-     * @throws DoiParsingException
-     *             if there is an error parsing the XML.
+     * @throws IOException  input stream is null.
+     * @throws DoiParsingException if there is an error parsing the XML.
      */
     public Resource read(InputStream in) throws IOException, DoiParsingException {
         if (in == null)
@@ -172,11 +169,10 @@ public class DoiXmlReader extends DoiReader {
     /**
      * Construct a DOM document from a Reader.
      *
-     * @param reader
-     *            Reader.
+     * @param reader Reader.
      * @return Resource object containing all doi metadata.
-     * @throws NodeParsingException
-     *             if there is an error parsing the XML.
+     * @throws IOException  when an I/O error prevents a document from being fully parsed
+     * @throws NodeParsingException if there is an error parsing the XML.
      */
     public Resource read(Reader reader) throws DoiParsingException, IOException {
         if (reader == null)

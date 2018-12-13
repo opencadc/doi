@@ -205,7 +205,6 @@ public class InitializeDOIFolderTest extends IntTestBase {
                 // Test that cadcRegtest1 CAN'T write to the same folder
 
                 final String writeFile = dataNodeName + "/doi-test-write-file-2.txt";
-                final String testFilename = "doi-test-write-file-2.txt";
 
                 // Try to write to data directory as regtest
                 Subject.doAs(cadcregtest_sub, new PrivilegedExceptionAction<Object>() {

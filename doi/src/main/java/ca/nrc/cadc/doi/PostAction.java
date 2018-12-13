@@ -68,8 +68,10 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.Group;
+import ca.nrc.cadc.ac.GroupAlreadyExistsException;
 import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.ac.User;
+import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.DateType;
@@ -105,7 +107,6 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -121,7 +122,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.Set;
 
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -634,7 +634,7 @@ public class PostAction extends DoiAction {
         VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
         String nextDoiSuffix = generateNextDOINumber(doiDataURI);
         if (isTesting()) {
-        	nextDoiSuffix = nextDoiSuffix + ".test";
+        	nextDoiSuffix = nextDoiSuffix + DoiAction.TEST_SUFFIX;
         }
         log.debug("Next DOI suffix: " + nextDoiSuffix);
 
@@ -684,7 +684,17 @@ public class PostAction extends DoiAction {
         member.getIdentities().addAll(callingSubject.getPrincipals());
         doiRWGroup.getUserMembers().add(member);
         doiRWGroup.getUserAdmins().add(member);
-        gmsClient.createGroup(doiRWGroup);
+        
+        try {
+        	gmsClient.createGroup(doiRWGroup);
+        } catch (GroupAlreadyExistsException gaeex) {
+        	// expose it as a server error
+        	throw new RuntimeException(gaeex);
+        } catch (UserNotFoundException unfex) {
+        	// expose it as a server error
+        	throw new RuntimeException(unfex);
+        }
+        
         log.debug("doi group created: " + guri);
         return guri;
     }

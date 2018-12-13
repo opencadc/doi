@@ -73,7 +73,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -122,7 +121,7 @@ public class MintDocumentTest extends DocumentTest {
     }
 
     private DoiStatus getStatus(URL docURL)
-            throws UnsupportedEncodingException, DoiParsingException, IOException {
+            throws DoiParsingException, IOException {
         URL statusURL = new URL(docURL + "/" + DoiAction.STATUS_ACTION);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         HttpDownload getStatus = new HttpDownload(statusURL, baos);
@@ -133,7 +132,7 @@ public class MintDocumentTest extends DocumentTest {
     }
 
     private void executeMintTest(URL docURL, String document, String expectedIdentifier, String journalRef) 
-        throws DoiParsingException, UnsupportedEncodingException, IOException {
+        throws DoiParsingException, IOException {
         URL mintURL = new URL(docURL + "/" + DoiAction.MINT_ACTION);
         postDocument(mintURL, document, journalRef);
     }

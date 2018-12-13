@@ -78,7 +78,6 @@ import ca.nrc.cadc.util.StringUtil;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
-import java.util.Set;
 
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -88,7 +87,7 @@ public abstract class DoiAction extends RestAction {
     
     public static final String STATUS_ACTION = "status";
     public static final String MINT_ACTION = "mint";
-    public static final String TEST_SUFFIX = "test";
+    public static final String TEST_SUFFIX = ".test";
     public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
@@ -155,7 +154,6 @@ public abstract class DoiAction extends RestAction {
     }
     
     protected boolean isTesting() {
-    	Set<String> paramNames = syncInput.getParameterNames();
     	String runId = syncInput.getParameter("runId");
     	return StringUtil.hasText(runId) && runId.equals("TEST");
     }
@@ -198,7 +196,7 @@ public abstract class DoiAction extends RestAction {
                     doiAction = parts[1];
                     if (parts.length > 2) {
                         log.debug("DOI ACTION BAD REQUEST: " + path);
-                        throw new IllegalArgumentException("Bad smelly request: " + path);
+                        throw new IllegalArgumentException("Bad request: " + path);
                     }
                 }
             }

@@ -87,8 +87,7 @@ public class DoiResourceType {
     /**
      * ResourceType constructor.
      * 
-     * @param resourceTypeGeneral
-     *            type of this resource
+     * @param resourceType type of this resource
      */
     public DoiResourceType(ResourceType resourceType) {
         if (resourceType == null) {

@@ -195,6 +195,8 @@ public class GetAction extends DoiAction {
             			case EXECUTING:
             				// job is in progress, do nothing
             				break;
+            			default:
+            				// do nothing
             		}
             	}
             	return localStatus;

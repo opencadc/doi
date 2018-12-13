@@ -66,44 +66,6 @@
           }
         }
       },
-      "put": {
-        "tags": [
-          "instances"
-        ],
-        "summary": "Not Yet Implemented",
-        "description": "Update an existing unminted DOI",
-        "operationId": "updateDOI",
-        "consumes": [
-          "application/json",
-          "application/xml"
-        ],
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "DOI object details... ",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/DOIMeta"
-            }
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorised"
-          },
-          "403": {
-            "description": "User not authenticated for this DOI"
-          },
-          "404": {
-            "description": "DOI not found"
-          }
-        }
-      },
       "get": {
         "tags": [
           "instances"
@@ -292,9 +254,15 @@
         ],
         "summary": "Finalize a DOI instance",
         "description": "A multi-step process that freezes the DOI data from further changes, registers the DOI to DataCite and makes the DOI findable from DataCite. The DOI status indicates the progress of the finalize process.",
-        "produces": [
-          "application/xml",
-          "application/json"
+        "operationId": "mintDOI",
+        "parameters": [
+          {
+            "name": "DOINum",
+            "in": "path",
+            "description": "DOI to be minted",
+            "required": true,
+            "type": "string"
+          }
         ],
         "responses": {
           "200": {
@@ -565,11 +533,132 @@
         },
         "publisher": {
           "type": "string",
-          "example": "DataCite"
+          "example": "CADC"
         },
         "publicationYear": {
           "type": "string",
           "example": "2014"
+        },
+        "contributors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "contributor": {
+                "type": "object",
+                "properties": {
+                  "contributorType": {
+                    "type": "string",
+                    "example": "ProjectLeader",
+                    "xml": {
+                      "attribute": true
+                    }
+                  },
+                  "contributorName": {
+                    "type": "string",
+                    "example": "Starr, Joan"
+                  },
+                  "givenName": {
+                    "type": "string",
+                    "example": "Joan"
+                  },
+                  "familyName": {
+                    "type": "string",
+                    "example": "Starr"
+                  },
+                  "nameIdentifier": {
+                    "type": "object",
+                    "example": "0000-0002-7285-027X",
+                    "properties": {
+                      "nameIdentifierScheme": {
+                        "type": "string",
+                        "example": "ORCID",
+                        "xml": {
+                          "attribute": true
+                        }
+                      },
+                      "schemeURI": {
+                        "type": "string",
+                        "example": "http://orcid.org/",
+                        "xml": {
+                          "attribute": true
+                        }
+                      }
+                    }
+                  },
+                  "affiliation": {
+                    "type": "string",
+                    "example": "California Digital Library"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "dates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "object",
+                "example": "2018-12-10",
+                "properties": {
+                  "dateType": {
+                    "type": "string",
+                    "example": "Created",
+                    "xml": {
+                      "attribute": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "resourceType": {
+          "type": "object",
+          "properties": {
+            "resourceTypeGeneral": {
+              "type": "string",
+              "example": "Dataset",
+              "xml": {
+                "attribute": true
+              }
+            }
+          }
+        },
+        "descriptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "object",
+                "example": "XML example of all DataCite Metadata Schema v4.1 properties.",
+                "properties": {
+                  "xml:lang": {
+                    "type": "string",
+                    "example": "en-US",
+                    "xml": {
+                      "attribute": true
+                    }
+                  },
+                  "descriptionType": {
+                    "type": "string",
+                    "example": "Abstract",
+                    "xml": {
+                      "attribute": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "language": {
+          "type": "string",
+          "example": "en-US"
         }
       },
       "xml": {

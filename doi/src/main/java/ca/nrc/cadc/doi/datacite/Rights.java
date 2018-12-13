@@ -94,10 +94,8 @@ public class Rights {
     /**
      * Title constructor.
      * 
-     * @param lang
-     *            language used, e.g. en-US
-     * @param title
-     *            title text
+     * @param lang language used, e.g. en-US
+     * @param rights rights text
      */
     public Rights(String lang, String rights) {
         if (!StringUtils.hasText(lang) || !StringUtils.hasText(rights)) {

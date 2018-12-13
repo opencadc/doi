@@ -72,7 +72,6 @@ package ca.nrc.cadc.doi;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -107,8 +106,6 @@ import ca.nrc.cadc.util.Log4jInit;
 public class UpdateDocumentTest extends DocumentTest {
     private static final Logger log = Logger.getLogger(UpdateDocumentTest.class);
 
-    static final String JSON = "application/json";
-
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
@@ -127,7 +124,7 @@ public class UpdateDocumentTest extends DocumentTest {
         Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
 
             private DoiStatus getStatus(URL docURL)
-                    throws UnsupportedEncodingException, DoiParsingException, IOException {
+                    throws DoiParsingException, IOException {
                 URL statusURL = new URL(docURL + "/status");
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 HttpDownload getStatus = new HttpDownload(statusURL, baos);
@@ -146,7 +143,7 @@ public class UpdateDocumentTest extends DocumentTest {
 
             private Resource executeTest(URL docURL, String document, List<Creator> expectedCreators,
                     List<Title> expectedTitles, String expectedIdentifier, String expectedJournalRef,
-                    String newJournalRef) throws DoiParsingException, UnsupportedEncodingException, IOException {
+                    String newJournalRef) throws DoiParsingException, IOException {
                 String uDoc = postDocument(docURL, document, newJournalRef);
                 Resource uResource = xmlReader.read(uDoc);
                 compareCreators(expectedCreators, uResource.getCreators());
@@ -168,7 +165,7 @@ public class UpdateDocumentTest extends DocumentTest {
             }
 
             private Resource executeUpdateLanguageTest(URL docURL, String document, String expectedLanguage)
-                    throws DoiParsingException, UnsupportedEncodingException, IOException {
+                    throws DoiParsingException, IOException {
                 String uDoc = postDocument(docURL, document, null);
                 Resource uResource = xmlReader.read(uDoc);
                 compareStrings(expectedLanguage, uResource.language, "language");
@@ -177,7 +174,7 @@ public class UpdateDocumentTest extends DocumentTest {
 
             private Resource executeUpdatePublicationYearTest(URL docURL, String document,
                     String expectedPublicationYear)
-                    throws DoiParsingException, UnsupportedEncodingException, IOException {
+                    throws DoiParsingException, IOException {
                 String uDoc = postDocument(docURL, document, null);
                 Resource uResource = xmlReader.read(uDoc);
                 compareStrings(expectedPublicationYear, uResource.getPublicationYear(), "publicationYear");

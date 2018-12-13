@@ -88,8 +88,7 @@ public class ContributorName {
     /**
      * Constructor.
      * 
-     * @param name
-     *            of contributor
+     * @param contributorName name of contributor
      */
     public ContributorName(String contributorName) {
         if (!StringUtils.hasText(contributorName)) {

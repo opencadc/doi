@@ -94,6 +94,8 @@ import org.junit.BeforeClass;
 public abstract class IntTestBase {
     private static final Logger log = Logger.getLogger(IntTestBase.class);
 
+    public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
+    
     protected static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
     protected static File CADCAUTHTEST_CERT;
     protected static File CADCREGTEST_CERT;

@@ -95,8 +95,7 @@ public class DoiStatusListJsonReader extends DoiStatusListReader {
     /**
      * Construct a list of DoiStatus instances from a JSON String source.
      *
-     * @param xml
-     *            String of the JSON.
+     * @param json String of the JSON.
      * @return List of DoiStatus objects containing the status of each DOI instance.
      * @throws DoiParsingException
      *             if there is an error parsing the JSON.

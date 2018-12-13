@@ -92,8 +92,7 @@ public class DoiJsonReader extends DoiReader {
     /**
      * Construct a Resource instance from a JSON String source.
      *
-     * @param xml
-     *            String of the JSON.
+     * @param json String of the JSON.
      * @return Resource object containing all doi metadata.
      * @throws DoiParsingException
      *             if there is an error parsing the JSON.

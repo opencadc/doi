@@ -109,9 +109,9 @@ public class DoiReader {
             f.setAccessible(true);
             f.set(ce, identifier);
         } catch (NoSuchFieldException fex) {
-            throw new RuntimeException("BUG", fex);
+            throw new RuntimeException("Identifier class is missing the text field", fex);
         } catch (IllegalAccessException bug) {
-            throw new RuntimeException("BUG", bug);
+            throw new RuntimeException("No access to Identifier text field", bug);
         }
     }
 

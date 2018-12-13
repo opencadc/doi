@@ -102,8 +102,7 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
     /**
      * Construct a list of DoiStatus from an XML String source.
      *
-     * @param xml
-     *            String of the XML.
+     * @param xml String of the XML.
      * @return List of DoiStatus object .
      * @throws DoiParsingException
      *             if there is an error parsing the XML.
@@ -122,11 +121,9 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
     /**
      * Construct a list of DoiStatus from a InputStream.
      *
-     * @param in
-     *            InputStream.
+     * @param in InputStream.
      * @return List of DoiStatus object .
-     * @throws DoiParsingException
-     *             if there is an error parsing the XML.
+     * @throws DoiParsingException if there is an error parsing the XML.
      */
     public List<DoiStatus> read(InputStream in) throws IOException, DoiParsingException {
         if (in == null)
@@ -141,11 +138,9 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
     /**
      * Construct a list of DoiStatus from a Reader.
      *
-     * @param reader
-     *            Reader.
+     * @param reader Reader.
      * @return List of DoiStatus object containing the status of the specified DOI.
-     * @throws NodeParsingException
-     *             if there is an error parsing the XML.
+     * @throws DoiParsingException if there is an error parsing the XML.
      */
     public List<DoiStatus> read(Reader reader) throws DoiParsingException, IOException {
         if (reader == null)

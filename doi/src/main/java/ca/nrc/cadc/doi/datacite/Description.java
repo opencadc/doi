@@ -91,10 +91,9 @@ public class Description {
     /**
      * Title constructor.
      * 
-     * @param lang
-     *            language used, e.g. en-US
-     * @param title
-     *            title text
+     * @param lang language used, e.g. en-US
+     * @param br text
+     * @param descriptionType type of description, e.g. Abstract
      */
     public Description(String lang, String br, DescriptionType descriptionType) {
         if (!StringUtils.hasText(lang) || !StringUtils.hasText(br) || descriptionType == null) {

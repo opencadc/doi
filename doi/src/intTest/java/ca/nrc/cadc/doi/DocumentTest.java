@@ -470,19 +470,4 @@ public class DocumentTest extends IntTestBase {
             }
         }
     }
-    
-    protected void compareResource(Resource eR, Resource aR) {
-        compareNamespace(eR.getNamespace(), aR.getNamespace());
-        compareIdentifier(eR.getIdentifier(), aR.getIdentifier());
-        compareCreators(eR.getCreators(), aR.getCreators());
-        compareStrings(eR.getPublisher(), aR.getPublisher(), "publisher");
-        compareStrings(eR.getPublicationYear(), aR.getPublicationYear(), "publicationyear");
-        compareResourceType(eR.getResourceType(), aR.getResourceType(), "resourceType");
-        compareTitles(eR.getTitles(), aR.getTitles());
-        compareRightsList(eR.rightsList, aR.rightsList);
-        compareContributors(eR.contributors, aR.contributors);
-        compareDates(eR.dates, aR.dates);
-        compareDescriptions(eR.descriptions, aR.descriptions);
-        compareStrings(eR.language, aR.language, "language");
-    }
 }

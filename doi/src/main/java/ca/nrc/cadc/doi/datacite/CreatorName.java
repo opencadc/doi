@@ -88,8 +88,7 @@ public class CreatorName {
     /**
      * Constructor.
      * 
-     * @param name
-     *            of creator
+     * @param creatorName name of creator
      */
     public CreatorName(String creatorName) {
         if (!StringUtils.hasText(creatorName)) {

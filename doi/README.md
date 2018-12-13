@@ -26,7 +26,7 @@ At this point the metadata and the data sub-directory are available to the user 
   - update metadata using the GUI
 
 ### Finalizing the DOI
-After all data files have been uploaded and the metadata have been updated, the user can finalize the DOI using the GUI. On reception of the finalize request, the DOI service performs the following:
+After all data files have been uploaded and the metadata have been updated, the user can finalize the DOI using the GUI. The process to finalize a DOI is a bit involved. Please refer to the status table below for the possible status transitions. Finalizing a DOI results in the following work to be performed.
   - change the following to read only and make them publicly accessible:
     - data sub-directory
     - all directories and their sub-directories, and data files contained in the data sub-directory

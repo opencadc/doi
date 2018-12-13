@@ -90,10 +90,8 @@ public class NameIdentifier {
     /**
      * NameIdentifier constructor.
      * 
-     * @param nameIdentifierSchem
-     *            scheme of this name identifier
-     * @param nameIdentifier
-     *            value of this name identifier
+     * @param nameIdentifierScheme scheme of this name identifier
+     * @param nameIdentifier value of this name identifier
      */
     public NameIdentifier(String nameIdentifierScheme, String nameIdentifier) {
         if (!StringUtils.hasText(nameIdentifierScheme) || !StringUtils.hasText(nameIdentifier)) {
