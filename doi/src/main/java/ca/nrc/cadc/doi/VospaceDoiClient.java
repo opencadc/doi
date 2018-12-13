@@ -105,6 +105,7 @@ public class VospaceDoiClient {
     private String callersDN;
     private VOSpaceClient vosClient = null;
     private VOSURI baseDataURI = null;
+    private String xmlFilename = "";
 
     public VospaceDoiClient(Subject callingSubject) throws URISyntaxException {
         this.baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
@@ -165,6 +166,7 @@ public class VospaceDoiClient {
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
         protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
         Transfer transfer = new Transfer(dataNode.getURI(), Direction.pullFromVoSpace, protocols);
+        xmlFilename = dataNode.getPath();
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiInputStream doiStream = new DoiInputStream();
         clientTransfer.setInputStreamWrapper(doiStream);
@@ -172,17 +174,16 @@ public class VospaceDoiClient {
 
         if (clientTransfer.getThrowable() != null) {
             log.debug(clientTransfer.getThrowable().getMessage());
+            // Get the message from the cause as it has far more context than
+            // the throwable itself
             String message = clientTransfer.getThrowable().getMessage();
-            if (clientTransfer.getThrowable() instanceof IOException) {
-                throw new IOException(message);
-            }
             if (message.contains("NodeNotFound")) {
-                throw new ResourceNotFoundException(message);
+                throw new ResourceNotFoundException(message, clientTransfer.getThrowable());
             }
             if (message.contains("PermissionDenied")) {
                 throw new AccessControlException(message);
             }
-            throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
+            throw new RuntimeException(clientTransfer.getThrowable());
         }
 
         return doiStream.getResource();
@@ -199,7 +200,7 @@ public class VospaceDoiClient {
                 DoiXmlReader reader = new DoiXmlReader(true);
                 resource = reader.read(in);
             } catch (DoiParsingException dpe) {
-                throw new IOException(dpe);
+                throw new IOException("Error parsing " + xmlFilename + ": ", dpe);
             }
         }
 
