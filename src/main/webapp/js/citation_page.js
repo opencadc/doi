@@ -439,14 +439,34 @@
           ]
     }
 
-    function getAuthorList() {
-      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
+
+    function getAuthorList(listSize) {
       var authorList = new Array()
       for (var ix = 0; ix < listSize; ix++) {
         authorList.push(_selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName['$'])
       }
       return authorList
     }
+
+
+    function getAuthorListString() {
+      var aList = new Array()
+      var authorListStr = ''
+      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
+
+      if (listSize > 3) {
+        aList = getAuthorList(1)
+        authorListStr = aList[0] + ' et al.'
+      } else {
+        aList = getAuthorList(listSize)
+        for (var i=0; i< aList.length; i++ ){
+          authorListStr += aList[i] + '; '
+        }
+      }
+
+      return authorListStr
+    }
+
 
     function getDOINumber() {
       return _selfDoc._badgerfishDoc.resource.identifier['$']
@@ -504,6 +524,7 @@
       setLanguage: setLanguage,
       getAuthorFullname: getAuthorFullname,
       getAuthorList: getAuthorList,
+      getAuthorListString: getAuthorListString,
       getDOINumber: getDOINumber,
       getDOISuffix: getDOISuffix,
       getTitle: getTitle,

@@ -104,18 +104,19 @@
       var dataDir = page.mkDataDirLink(statusData.doistatus.dataDirectory['$'])
 
       $('#doi_number').html(doiName)
-      $('#doi_status').html(statusData.doistatus.status['$'])
+      $('#doi_status').html(page.setStatusText(statusData.doistatus.status['$']))
       $('#doi_data_dir').html(dataDir)
-      $('#doi_journal_ref').html(statusData.doistatus.journalRef['$'])
+      if (statusData.doistatus.journalRef['$'] !== '') {
+        $('#doi_journal_ref').html(statusData.doistatus.journalRef['$'])
+        $('.doi-journal-ref').removeClass('hidden')
+      } else {
+        $('.doi-journal-ref').addClass('hidden')
+      }
+
     }
 
     function displayMetadata() {
-      var authorList = doiDoc.getAuthorList()
-      var authorListString = ''
-      for (var i=0; i< authorList.length; i++ ){
-        authorListString += authorList[i] + ' '
-      }
-      $('#doi_creator_list').text(authorListString)
+      $('#doi_creator_list').text(doiDoc.getAuthorListString())
       $('#doi_title').text(doiDoc.getTitle())
       $('#publication_doi').text(doiDoc.getRelatedDOI())
     }

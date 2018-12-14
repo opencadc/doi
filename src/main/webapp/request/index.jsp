@@ -141,7 +141,7 @@
 
                         <!-- Publication Title -->
                         <div class="form-group">
-                          <label for="doi_title" class="col-sm-3 control-label" id="doi_title_label">Title</label>
+                          <label for="doi_title" class="col-sm-3 control-label" id="doi_title_label">Publication Title</label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_title" name="title"
                                    placeholder="Title" tabindex="1" required/>

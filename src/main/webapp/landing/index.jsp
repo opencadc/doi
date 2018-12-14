@@ -87,8 +87,9 @@
                                     </div>
 
                                     <!-- Display starts -->
-                                    <!-- Data DOI Number -->
+
                                     <div class="container">
+                                        <!-- Data DOI Number -->
                                         <div class="row">
                                             <label for="doi_number" class="doi-landing text-right col-sm-3 control-label">
                                                 Data DOI Ref
@@ -96,12 +97,22 @@
                                             <div id="doi_number" class="col-sm-3 doi-landing doi-landing-text"></div>
                                         </div>
 
+
                                         <!-- Publication Title -->
                                         <div class="row">
                                             <label for="doi_title" class="col-sm-3 doi-landing text-right control-label">
-                                                Title
+                                                Publication Title
                                             </label>
-                                            <div id="doi_title" class="col-sm-6 doi-landing doi-landing-text"></div>
+                                            <div id="doi_title" class="col-sm-8 doi-landing doi-landing-text"></div>
+                                        </div>
+
+                                        <!-- Publication DOI   -->
+                                        <!-- todo: consider hiding this if not present -->
+                                        <div class="row">
+                                            <label for="publication_doi" class="col-sm-3 doi-landing text-right control-label">
+                                                Publication DOI
+                                            </label>
+                                            <div id="publication_doi" class="col-sm-3 doi-landing doi-landing-text"><i>not available yet</i></div>
                                         </div>
 
                                         <!-- Author List -->
@@ -113,11 +124,19 @@
                                         </div>
 
                                         <!-- Journal Reference -->
-                                        <div class="row">
+                                        <div class="doi-journal-ref row">
                                             <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">
                                                 Journal Ref
                                             </label>
                                             <div id="doi_journal_ref" class="col-sm-6 doi-landing doi-landing-text"></div>
+                                        </div>
+
+                                        <!-- Status   -->
+                                        <div class="row">
+                                            <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">
+                                                Status
+                                            </label>
+                                            <div id="doi_status" class="col-sm-3 doi-landing doi-landing-text"></div>
                                         </div>
 
                                         <!-- Data Directory -->
@@ -128,22 +147,7 @@
                                             <div id="doi_data_dir" class="col-sm-6 doi-landing doi-landing-text"></div>
                                         </div>
 
-                                        <!-- Publication DOI   -->
-                                        <!-- todo: consider hiding this if not present -->
-                                        <div class="row">
-                                            <label for="publication_doi" class="col-sm-3 doi-landing text-right control-label">
-                                                Publication DOI
-                                            </label>
-                                            <div id="publication_doi" class="col-sm-3 doi-landing doi-landing-text"></div>
-                                        </div>
 
-                                        <!-- Status   -->
-                                        <div class="row">
-                                            <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">
-                                                Status
-                                            </label>
-                                            <div id="doi_status" class="col-sm-3 doi-landing doi-landing-text"></div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
