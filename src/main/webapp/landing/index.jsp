@@ -128,6 +128,15 @@
                                             <div id="doi_data_dir" class="col-sm-6 doi-landing doi-landing-text"></div>
                                         </div>
 
+                                        <!-- Publication DOI   -->
+                                        <!-- todo: consider hiding this if not present -->
+                                        <div class="row">
+                                            <label for="publication_doi" class="col-sm-3 doi-landing text-right control-label">
+                                                Publication DOI
+                                            </label>
+                                            <div id="publication_doi" class="col-sm-3 doi-landing doi-landing-text"></div>
+                                        </div>
+
                                         <!-- Status   -->
                                         <div class="row">
                                             <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">

@@ -474,6 +474,23 @@
       return language
     }
 
+    function getRelatedDOI() {
+      var relatedDOI = ''
+      if (typeof _selfDoc._badgerfishDoc.resource.relatedIdentifiers !== 'undefined') {
+        var listSize = _selfDoc._badgerfishDoc.resource.relatedIdentifiers['$'].length
+
+        for (var ix = 0; ix < listSize; ix++) {
+          var curIdentifier = _selfDoc._badgerfishDoc.resource.relatedIdentifiers['$'][ix].relatedIdentifier
+          if (curIdentifier['@relatedIdentifierType'].match('DOI')) {
+            relatedDOI = curIdentifier['$']
+            break
+          }
+        }
+      }
+
+      return relatedDOI
+    }
+
     initDoc()
 
     $.extend(this, {
@@ -490,7 +507,8 @@
       getDOINumber: getDOINumber,
       getDOISuffix: getDOISuffix,
       getTitle: getTitle,
-      getLanguage: getLanguage
+      getLanguage: getLanguage,
+      getRelatedDOI: getRelatedDOI
     })
   }
 

@@ -117,6 +117,7 @@
       }
       $('#doi_creator_list').text(authorListString)
       $('#doi_title').text(doiDoc.getTitle())
+      $('#publication_doi').text(doiDoc.getRelatedDOI())
     }
 
     function hideInfoModal() {
