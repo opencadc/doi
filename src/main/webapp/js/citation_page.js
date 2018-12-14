@@ -49,7 +49,7 @@
       MINTED: 'minted',
       ERROR_REGISTERING: 'error registering to DataCite',
       ERROR_LOCKING_DATA: 'error locking data directory',
-      COMPLETE: 'complete'
+      COMPLETED: 'completed'
     }
 
     // ------------ Page state management functions ------------
@@ -108,7 +108,7 @@
 
     function setAjaxFail(message) {
       $('#status_code').text(message.status)
-      $('#error_msg').text(message.responseText)
+      $('#error_msg').text(getRcDisplayText(message))
       $('.alert-danger').removeClass('hidden')
       setProgressBar('error')
       hideModals()
@@ -196,6 +196,7 @@
       }
 
     }
+// ------------ Service Status parsing & display functions ------------
 
     function setStatusText(svcState) {
       var statusHtml = ''
@@ -221,11 +222,33 @@
         case serviceState.ERROR_REGISTERING:
           statusHtml = '<div class="doi-warning">Error registering DOI with DataCite </div>'
           break
-        case serviceState.COMPLETE:
-          statusHtml = '<div class="doi-minted">DOI Complete</div>'
+        case serviceState.COMPLETED:
+          statusHtml = '<div class="doi-minted">Complete</div>'
           break
       }
       return statusHtml
+    }
+
+    function getRcDisplayText(request) {
+      // 500 (Runtime) errors from DOI Service will have a stack trace
+      // included in them. In order to have more user-friendly messages,
+      // the message associated with the 500 status code needs to be
+      // parsed out.
+
+      var displayText = ''
+      switch(request.status) {
+        case 500:
+            displayText = "Server Error: can not access DOI metadata"
+          break
+        case 400:
+          displayText = "Error getting DOI status"
+          break
+        default:
+          displayText = request.responseText;
+          break;
+      }
+
+      return displayText
     }
 
 
@@ -265,11 +288,6 @@
       trigger(_selfCitationPage, cadc.web.citation.events.onAuthenticated, {})
     }
 
-    //
-    //function mkSpinner() {
-    //  return $.parseHTML('<span id="doi_working_spinner" class="glyphicon glyphicon-refresh fast-right-spinner"></span>');
-    //}
-
     function hideModals() {
       $('.modal-backdrop').remove()
     }
@@ -295,6 +313,7 @@
       trigger: trigger,
       hideModals: hideModals,
       setStatusText: setStatusText,
+      getRcDisplayText: getRcDisplayText,
       getRunid: getRunid
     })
 

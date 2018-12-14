@@ -445,7 +445,9 @@
           .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
               .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
           )
-          .catch(message => handleAjaxError(message))
+          .catch(request => handleAjaxError(request))
+      // TODO: the above 'request' was 'message'... trying to parse the
+      // return codes in handleAjaxError...
     }
 
 
@@ -595,10 +597,10 @@
     }
 
 
-    function handleAjaxError(message) {
+    function handleAjaxError(request) {
         hideInfoModal()
         page.setProgressBar('error')
-        page.setAjaxFail(message)
+        page.setAjaxFail(page.getRcDisplayText(request))
     }
 
     // ---------------- DELETE ----------------
