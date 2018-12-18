@@ -31,7 +31,7 @@
       MINT_RETRY: 'mint_retry', // when error occurs during minting: update button disabled? - mint_retry available
       POLLING: 'polling', // loading spinner with modal - no actions available
       REGISTER: 'register', // publication doi (and journal ref?) updatable - register_doi available
-      COMPLETE: 'complete' // no actions available
+      COMPLETED: 'complete' // no actions available
     }
 
     var curUIState = ''
@@ -148,17 +148,16 @@
           setFormDisplayState('display')
           setBadgeState('warning')
           break
-        case page.serviceState.COMPLETE:
-          curUIState = uiState.COMPLETE
-          setButtonState(uiState.COMPLETE)
+        case page.serviceState.COMPLETED:
+          curUIState = uiState.COMPLETED
+          setButtonState(uiState.COMPLETED)
           setFormDisplayState('display')
+          setBadgeState('completed')
           break
       }
     }
 
     function setBadgeState(state) {
-      // TODO: badge states will come from citation_page later...
-
       if (state === 'off') {
         $('.doi-status-badge').addClass('hidden')
         $('.doi-data-locked').addClass('hidden')
@@ -190,6 +189,15 @@
             $('.doi-working').addClass('hidden')
             $('.doi-warning').addClass('hidden')
             $('.doi-retry').addClass('hidden')
+            $('#green_badge').text('MINTED')
+            $('.doi-data-locked').removeClass('hidden')
+            break
+          case 'completed' :
+            $('.doi-minted').removeClass('hidden')
+            $('.doi-working').addClass('hidden')
+            $('.doi-warning').addClass('hidden')
+            $('.doi-retry').addClass('hidden')
+            $('#green_badge').text('COMPLETE')
             $('.doi-data-locked').removeClass('hidden')
             break
           case 'warning' :
@@ -266,6 +274,7 @@
           setMintButton('retry')
           break
         case uiState.REGISTER:
+        case uiState.COMPLETED:
           // TODO: with story to support registering the Publication DOI,
           // this will change
           $('.button-group').addClass('hidden')
@@ -303,9 +312,11 @@
     function setFormDisplayState(mode) {
       if (mode === 'display') {
         $('.doi-display').removeClass('hidden')
+        $('#doi_additional_authors_display').removeClass('hidden')
         $('.doi-form').addClass('hidden')
       } else {
         $('.doi-display').addClass('hidden')
+        $('#doi_additional_authors_display').addClass('hidden')
         $('.doi-form').removeClass('hidden')
       }
     }
@@ -323,12 +334,20 @@
       var elementId = 'doi_' + elementName
       var parentElementId = 'doi_' + elementName + '_div'
 
+      //var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
+      //    '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
+      //    '"placeholder="family name, given name" id="' + elementId + '" />' +
+      //    '<div class="input-group-addon doi-form ">' +
+      //    '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
+      //    '</div><div class="mb-3 doi-display ' + elementId + ' hidden"></div></div></div>'
+
       var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
           '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
           '"placeholder="family name, given name" id="' + elementId + '" />' +
           '<div class="input-group-addon doi-form ">' +
           '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
-          '</div><div class="mb-3 doi-display ' + elementId + ' hidden"></div></div></div>'
+          '</div></div></div>'
+
 
       $('#doi_additional_authors').append(inputHtml)
       $('#' + elementName).bind('click', handleRemoveAuthor)
@@ -338,7 +357,7 @@
     function addAuthorStanza(authorName) {
       var elementName = buildAuthorInput(authorcount++)
       $('#doi_' + elementName).val(authorName)
-      $('.doi_' + elementName).html(authorName)
+      //$('.doi_' + elementName).html(authorName)
     }
 
     function handleRemoveAuthor(event) {
@@ -658,8 +677,14 @@
       $('#doi_landing_page').html(page.mkLandingPageLink(statusData.doistatus.identifier['$'].split("/")[1]))
 
       // This happens to be an input element in the form, so 'val' is preferred
-      $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
-      $('.doi-journal-ref').html(statusData.doistatus.journalRef['$'])
+      if (typeof statusData.doistatus.journalRef === "undefined") {
+        $('#doi_journal_ref').val('not available')
+        $('.doi-journal-ref').html('<i>not availabile</i>')
+      } else {
+        $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
+        $('.doi-journal-ref').html(statusData.doistatus.journalRef['$'])
+      }
+
     }
 
     function populateForm() {
@@ -669,11 +694,17 @@
       $('#doi_author').val(authorList[0])
       $('.doi-author').html(authorList[0])
 
+      // Build additional author list
+      var addtlAuthorString = ''
       // Additional authors may be present in the doiDoc
       $('#doi_additional_authors').empty()
       for (var i=1; i<authorList.length; i++) {
         addAuthorStanza(authorList[i])
+        addtlAuthorString += authorList[i] + "; "
       }
+
+      addtlAuthorString = addtlAuthorString.slice(0, -2)
+      $('#doi_additional_authors_display').text(addtlAuthorString)
       $('#doi_title').val(doiDoc.getTitle())
       $('.doi-title').html(doiDoc.getTitle())
 

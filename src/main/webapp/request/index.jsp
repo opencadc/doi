@@ -106,7 +106,7 @@
 
                             <div class="panel panel-success doi-minted hidden">
                               <div class="panel-body doi-panel-body ">
-                                <div class="doi-minted doi-msg-text ">
+                                <div id="green_badge" class="doi-minted doi-msg-text">
                                   MINTED
                                 </div>
                               </div>
@@ -171,12 +171,13 @@
                         </div>
 
                         <div class="form-group">
-                          <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)</label>
+                          <label for="doi_additional_authors doi-form" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)</label>
                             <div class="col-sm-6">
-                                <div id="doi_additional_authors"></div>
-                                <div>
-                                <label for="doi_add_author" class="col-sm-2 control-label doi-form doi-vertical-align"><i>add author</i></label>
-                                <button type="button" class="btn btn-default doi-small-button doi-form glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
+                                <div id="doi_additional_authors doi-form"></div>
+                                <div id="doi_additional_authors_display" class="hidden"></div>
+                                <div class="doi-form">
+                                  <label for="doi_add_author" class="col-sm-2 control-label doi-vertical-align"><i>add author</i></label>
+                                  <button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-plus" id="doi_add_author" tabindex="5"></button>
                                 </div>
                             </div>
                         </div>

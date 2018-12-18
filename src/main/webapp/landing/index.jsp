@@ -112,7 +112,7 @@
                                             <label for="publication_doi" class="col-sm-3 doi-landing text-right control-label">
                                                 Publication DOI
                                             </label>
-                                            <div id="publication_doi" class="col-sm-3 doi-landing doi-landing-text"><i>not available yet</i></div>
+                                            <div id="publication_doi" class="col-sm-3 doi-landing doi-landing-text"></div>
                                         </div>
 
                                         <!-- Author List -->
@@ -128,7 +128,7 @@
                                             <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">
                                                 Journal Ref
                                             </label>
-                                            <div id="doi_journal_ref" class="col-sm-6 doi-landing doi-landing-text"></div>
+                                            <div id="doi_journal_ref" class="col-sm-6 doi-landing doi-landing-text"><i>not available</i></div>
                                         </div>
 
                                         <!-- Status   -->

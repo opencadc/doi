@@ -18,7 +18,9 @@
     function init() {
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
-      page.checkAuthentication()
+      // landing page is anonymous...
+      //page.checkAuthentication()
+      parseUrl()
     }
 
    function parseUrl() {
@@ -79,7 +81,7 @@
     // GET Status
     function getDoiStatus(doiName) {
       page.prepareCall().then(function(serviceURL) {
-        var statusUrl = serviceURL + '/' + doiName + '/status'
+        var statusUrl = serviceURL + '/' + doiName + '/status/public'
         $.ajax({
           xhrFields: { withCredentials: true },
           url: statusUrl,
@@ -118,7 +120,7 @@
     function displayMetadata() {
       $('#doi_creator_list').text(doiDoc.getAuthorListString())
       $('#doi_title').text(doiDoc.getTitle())
-      $('#publication_doi').text(doiDoc.getRelatedDOI())
+      $('#publication_doi').html(doiDoc.getRelatedDOI())
     }
 
     function hideInfoModal() {

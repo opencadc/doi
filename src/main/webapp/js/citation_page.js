@@ -439,8 +439,7 @@
           ]
     }
 
-
-    function getAuthorList(listSize) {
+    function buildAuthorList(listSize) {
       var authorList = new Array()
       for (var ix = 0; ix < listSize; ix++) {
         authorList.push(_selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName['$'])
@@ -449,19 +448,28 @@
     }
 
 
-    function getAuthorListString() {
+    function getAuthorList() {
+      var authorList = new Array()
+      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
+      return buildAuthorList(listSize)
+    }
+
+
+    function getAuthorListString(isShort) {
       var aList = new Array()
       var authorListStr = ''
       var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
 
-      if (listSize > 3) {
-        aList = getAuthorList(1)
+      if ((isShort === 'true') && (listSize > 3)) {
+        aList = buildAuthorList(1)
         authorListStr = aList[0] + ' et al.'
       } else {
-        aList = getAuthorList(listSize)
+        aList = buildAuthorList(listSize)
         for (var i=0; i< aList.length; i++ ){
           authorListStr += aList[i] + '; '
         }
+        // trim off trailing '; '
+        authorListStr = authorListStr.slice(0,-2)
       }
 
       return authorListStr
@@ -508,7 +516,7 @@
         }
       }
 
-      return relatedDOI
+      return relatedDOI === '' ? 'not available yet' : relatedDOI
     }
 
     initDoc()
