@@ -111,6 +111,7 @@ public abstract class DoiAction extends RestAction {
     protected Integer callingSubjectNumericID;
     protected String doiSuffix;
     protected String doiAction;
+    protected Boolean includePublic = false;
     protected VospaceDoiClient vClient = null;
     protected String prodHost = null;
     protected String devHost = null;
@@ -145,12 +146,12 @@ public abstract class DoiAction extends RestAction {
         if (authorize) {
             authorizeUser(callingSubject);
         }
-        
-        ACIdentityManager acIdentMgr = new ACIdentityManager();
-        this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
-        this.vClient = new VospaceDoiClient(callingSubject);
 
         parsePath();
+
+        ACIdentityManager acIdentMgr = new ACIdentityManager();
+        this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
+        this.vClient = new VospaceDoiClient(callingSubject, this.includePublic);
     }
     
     protected boolean isTesting() {
@@ -189,15 +190,20 @@ public abstract class DoiAction extends RestAction {
             String[] parts = path.split("/");
             // Parse the request path to see if a DOI suffix has been provided
             // A full DOI number for CANFAR will be: 10.11570/<DOISuffix>
+            if (parts.length > 3) {
+                log.debug("DOI ACTION BAD REQUEST: " + path);
+                throw new IllegalArgumentException("Bad request: " + path);
+            }
             if (parts.length > 0) {
                 doiSuffix = parts[0];
                 log.debug("DOI Number: " + doiSuffix);
                 if (parts.length > 1) {
                     doiAction = parts[1];
-                    if (parts.length > 2) {
-                        log.debug("DOI ACTION BAD REQUEST: " + path);
-                        throw new IllegalArgumentException("Bad request: " + path);
-                    }
+                }
+                // For status requests for individual DOIs, there is need to check
+                // to see if the DOI is public in order to provide access.
+                if (parts.length > 2 && (parts[2].equals("public"))) {
+                    includePublic = true;
                 }
             }
         }

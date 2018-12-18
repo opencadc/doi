@@ -205,47 +205,49 @@ public class GetAction extends DoiAction {
         return returnStatus;
     }
     
-    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
+    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, Boolean includePublicDois) throws Exception {
         DoiStatus doiStatus = null;
+        boolean includePublic = true;
+        if (includePublicDois != null) {
+            includePublic = includePublicDois;
+        }
         if (vClient.isCallerAllowed(doiContainerNode))
         {
-        	// get status
+            // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
-            if (StringUtil.hasText(status) && !status.equals(Status.ERROR.getValue()))
-            {
-            	// update status based on the result of the minting service
-            	status = updateMintingStatus(doiContainerNode, status);
+            if (StringUtil.hasText(status) && !status.equals(Status.ERROR.getValue())) {
+                // update status based on the result of the minting service
+                status = updateMintingStatus(doiContainerNode, status);
             } else {
-            	status = Status.ERROR.getValue();
+                status = Status.ERROR.getValue();
             }
-            
+
             // get the data directory
             String dataDirectory = null;
             List<Node> doiContainedNodes = doiContainerNode.getNodes();
-            for (Node node : doiContainedNodes)
-            {
-                if (node.getName().equals("data"))
-                {
+            for (Node node : doiContainedNodes) {
+                if (node.getName().equals("data")) {
                     dataDirectory = node.getUri().getPath();
                     break;
                 }
             }
-            	
+
             // get title and construct DoiStatus instance
             Title title = null;
             try {
-	            Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
-	            title = getTitle(resource);
+                Resource resource = vClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
+                title = getTitle(resource);
                 doiStatus = new DoiStatus(resource.getIdentifier(), title, dataDirectory, Status.toValue(status));
             } catch (Exception ex) {
-            	Identifier id = new Identifier("DOI");
-            	DoiReader.assignIdentifier(id, doiSuffixString);
+                Identifier id = new Identifier("DOI");
+                DoiReader.assignIdentifier(id, doiSuffixString);
                 doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
             }
-            
-	        // set journalRef
-	        doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+
+            // set journalRef
+            doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+
         }
         else
         {
@@ -277,7 +279,7 @@ public class GetAction extends DoiAction {
             if (node instanceof ContainerNode) {
                 try {
             		ContainerNode doiContainerNode = vClient.getContainerNode(node.getName());
-                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
+                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode, false);
                     if (doiStatus != null) {
                         doiStatusList.add(doiStatus);
                     }
@@ -332,7 +334,7 @@ public class GetAction extends DoiAction {
         if (doiAction.equals(DoiAction.STATUS_ACTION))
         {
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode);
+            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode, true);
 
             String docFormat = this.syncInput.getHeader("Accept");
             log.debug("'Accept' value in header is " + docFormat);

@@ -106,14 +106,19 @@ public class VospaceDoiClient {
     private VOSpaceClient vosClient = null;
     private VOSURI baseDataURI = null;
     private String xmlFilename = "";
+    private boolean includePublicNodes = false;
 
-    public VospaceDoiClient(Subject callingSubject) throws URISyntaxException {
+    public VospaceDoiClient(Subject callingSubject, Boolean includePublicNodes) throws URISyntaxException {
         this.baseDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE));
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Integer) acIdentMgr.toOwner(callingSubject);
         this.callersDN = acIdentMgr.toOwnerString(callingSubject);
+
+        if (includePublicNodes != null) {
+            this.includePublicNodes = includePublicNodes;
+        }
     }
 
     public VOSpaceClient getVOSpaceClient() {
@@ -151,13 +156,29 @@ public class VospaceDoiClient {
     //  doi admin should have access as well
     public boolean isCallerAllowed(Node node) {
         boolean isRequesterNode = false;
-        String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-        log.debug("requester for node: " + requester);
-        if (StringUtil.hasText(requester)) {
-            isRequesterNode = requester.equals(this.callersNumericId.toString()) ||
-                callersDN.contains("doiadmin");
+
+        if (this.includePublicNodes == true && isPublicNode(node)) {
+            isRequesterNode = true;
+        } else {
+            String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
+            log.debug("requester for node: " + requester);
+            if (StringUtil.hasText(requester)) {
+                isRequesterNode = requester.equals(this.callersNumericId.toString()) ||
+                    callersDN.contains("doiadmin");
+            }
         }
         return isRequesterNode;
+    }
+
+    public boolean isPublicNode(Node node) {
+        String isPublicStr = node.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC);
+        boolean isPublic = true;
+
+        if (isPublicStr.equals("false")) {
+            isPublic = false;
+        }
+
+        return isPublic;
     }
 
     private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {
