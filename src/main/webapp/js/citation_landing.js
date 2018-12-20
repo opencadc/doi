@@ -30,8 +30,12 @@
         var doiSuffix = query.split('=')[1]
         // Kick off 2 parallel ajax calls.
         // Doesn't matter which one comes back frist
-        handleDOIGet(doiSuffix)
-        getDoiStatus(doiSuffix)
+        //handleDOIGet(doiSuffix)
+        //getDoiStatus(doiSuffix)
+        Promise.resolve(page.prepareCall())
+            .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiSuffix), getDoiStatus(serviceURL, doiSuffix)]))
+            .catch(message => page.setAjaxFail(message))
+
 
       } else {
         page.setInfoModal('Not Found', 'Landing page not found.', false)
@@ -48,57 +52,130 @@
       })
     }
 
+    function handleAjaxError(request) {
+      hideInfoModal()
+      page.setProgressBar('error')
+      page.setAjaxFail(page.getRcDisplayText(request))
+    }
+
+
     // ------------ HTTP/Ajax functions ------------
 
     //GET DOI Metadata
-    function handleDOIGet(doiNumber) {
-      page.clearAjaxAlert()
-      page.setInfoModal('Please wait ', 'Processing request...', true)
+    //function handleDOIGet(doiNumber) {
+    //  page.clearAjaxAlert()
+    //  page.setInfoModal('Please wait ', 'Processing request...', true)
+    //
+    //  // Submit doc using ajax
+    //  page.prepareCall().then(function(serviceURL) {
+    //    var getUrl = serviceURL + '/' + doiNumber
+    //    $.ajax({
+    //      xhrFields: { withCredentials: true },
+    //      url: getUrl,
+    //      method: 'GET',
+    //      dataType: 'json',
+    //      contentType: 'application/json'
+    //    })
+    //    .success(function(data) {
+    //      hideInfoModal()
+    //      doiDoc.populateDoc(data)
+    //      displayMetadata()
+    //    })
+    //    .fail(function(message) {
+    //      page.setAjaxFail(message)
+    //    })
+    //  })
+    //
+    //  return false
+    //}
 
-      // Submit doc using ajax
-      page.prepareCall().then(function(serviceURL) {
+    function getDoi(serviceURL, doiNumber) {
+      return new Promise(function (resolve, reject) {
         var getUrl = serviceURL + '/' + doiNumber
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: getUrl,
-          method: 'GET',
-          dataType: 'json',
-          contentType: 'application/json'
-        })
-        .success(function(data) {
-          hideInfoModal()
-          doiDoc.populateDoc(data)
-          displayMetadata()
-        })
-        .fail(function(message) {
-          page.setAjaxFail(message)
-        })
-      })
+        var request = new XMLHttpRequest()
 
-      return false
+        // 'load' is the XMLHttpRequest 'finished' event
+        request.addEventListener(
+            'load',
+            function () {
+              if (request.status == '200') {
+                // Populate javascript object behind form
+                doiDoc.populateDoc(JSON.parse(request.responseText))
+                // Load metadata into the panel here before resolving promise
+                displayMetadata()
+                resolve(request)
+              } else {
+                reject(request)
+              }
+            },
+            false
+        )
+        request.overrideMimeType('application/json')
+        request.withCredentials = true
+        request.open('GET', getUrl)
+        request.setRequestHeader('Accept', 'application/json')
+        request.send(null)
+      })
     }
 
-    // GET Status
-    function getDoiStatus(doiName) {
-      page.prepareCall().then(function(serviceURL) {
+    //
+    //// GET Status
+    //function getDoiStatus(doiName) {
+    //  page.prepareCall().then(function(serviceURL) {
+    //    var statusUrl = serviceURL + '/' + doiName + '/status/public'
+    //    $.ajax({
+    //      xhrFields: { withCredentials: true },
+    //      url: statusUrl,
+    //      method: 'GET',
+    //      dataType: 'json',
+    //      contentType: 'application/json'
+    //    })
+    //    .success(function(data) {
+    //      hideInfoModal()
+    //      displayDoiStatus(data)
+    //    })
+    //    .fail(function(message) {
+    //      page.setAjaxFail(message)
+    //    })
+    //  })
+    //  return false
+    //}
+
+
+    // GET
+    function getDoiStatus(serviceURL, doiName) {
+      page.setProgressBar('busy')
+
+      return new Promise(function (resolve, reject) {
         var statusUrl = serviceURL + '/' + doiName + '/status/public'
-        $.ajax({
-          xhrFields: { withCredentials: true },
-          url: statusUrl,
-          method: 'GET',
-          dataType: 'json',
-          contentType: 'application/json'
-        })
-        .success(function(data) {
-          hideInfoModal()
-          displayDoiStatus(data)
-        })
-        .fail(function(message) {
-          page.setAjaxFail(message)
-        })
+        var request = new XMLHttpRequest()
+
+        // 'load' is the XMLHttpRequest 'finished' event
+        request.addEventListener(
+            'load',
+            function () {
+              if (request.status == '200') {
+                // load metadata into the panel here before resolving promise
+                // Populate javascript object behind form
+                hideInfoModal()
+                page.setProgressBar('okay')
+                var jsonData = JSON.parse(request.responseText)
+                displayDoiStatus(jsonData)
+                resolve(request)
+              } else {
+                reject(request)
+              }
+            },
+            false
+        )
+        request.overrideMimeType('application/json')
+        request.withCredentials = true
+        request.open('GET', statusUrl)
+        request.setRequestHeader('Accept', 'application/json')
+        request.send(null)
       })
-      return false
     }
+
 
     function displayDoiStatus(statusData) {
       // Performed after a successful GET for status

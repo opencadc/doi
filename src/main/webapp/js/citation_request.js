@@ -53,7 +53,7 @@
     function parseUrl() {
       var query = window.location.search
 
-      if (query.match("runid")) {
+      if (query.match('runid')) {
         page.parseUrl()
       }
 
@@ -65,7 +65,7 @@
           var keyVal = queryPairs[i].split('=')
           if (keyVal[0].match('doi')) {
             handleDOIGet(keyVal[1])
-            break;
+            break
           }
         }
       }
@@ -92,11 +92,11 @@
 
       // Monitor changes in data in form: MINT function is not available
       // if data has been updated.
-      $("input").keyup(function(){
+      $('input').keyup(function(){
         if (curUIState === uiState.MINT) {
           setButtonState(uiState.UPDATE)
         }
-      });
+      })
     }
 
 
@@ -131,7 +131,7 @@
           curUIState = uiState.MINT
           setButtonState(uiState.MINT_RETRY)
           setFormDisplayState('form')
-          setBadgeState("data_locked")
+          setBadgeState('data_locked')
           break
         case page.serviceState.MINTED:
           curUIState = uiState.REGISTER
@@ -334,20 +334,12 @@
       var elementId = 'doi_' + elementName
       var parentElementId = 'doi_' + elementName + '_div'
 
-      //var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
-      //    '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
-      //    '"placeholder="family name, given name" id="' + elementId + '" />' +
-      //    '<div class="input-group-addon doi-form ">' +
-      //    '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
-      //    '</div><div class="mb-3 doi-display ' + elementId + ' hidden"></div></div></div>'
-
       var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
           '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
           '"placeholder="family name, given name" id="' + elementId + '" />' +
           '<div class="input-group-addon doi-form ">' +
           '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
           '</div></div></div>'
-
 
       $('#doi_additional_authors').append(inputHtml)
       $('#' + elementName).bind('click', handleRemoveAuthor)
@@ -480,7 +472,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == "200") {
+              if (request.status == '200') {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
 
@@ -559,7 +551,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == "200") {
+              if (request.status == '200') {
                 // Populate javascript object behind form
                 doiDoc.populateDoc(JSON.parse(request.responseText))
                 // Load metadata into the panel here before resolving promise
@@ -584,14 +576,14 @@
       page.setProgressBar('busy')
 
       return new Promise(function (resolve, reject) {
-        var statusUrl = serviceURL + '/' + doiName + '/status'
+        var statusUrl = serviceURL + '/' + doiName + '/status/public'
         var request = new XMLHttpRequest()
 
         // 'load' is the XMLHttpRequest 'finished' event
         request.addEventListener(
             'load',
             function () {
-              if (request.status == "200") {
+              if (request.status == '200') {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
                 hideInfoModal()
@@ -648,7 +640,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == "200") {
+              if (request.status == '200') {
                 hideInfoModal()
                 page.setProgressBar('okay')
                 handleFormReset(true)
@@ -674,10 +666,10 @@
       $('#doi_related').removeClass('hidden')
       $('#doi_status').html(page.setStatusText(statusData.doistatus.status['$']))
       $('#doi_data_dir').html(dataDir)
-      $('#doi_landing_page').html(page.mkLandingPageLink(statusData.doistatus.identifier['$'].split("/")[1]))
+      $('#doi_landing_page').html(page.mkLandingPageLink(statusData.doistatus.identifier['$'].split('/')[1]))
 
       // This happens to be an input element in the form, so 'val' is preferred
-      if (typeof statusData.doistatus.journalRef === "undefined") {
+      if (typeof statusData.doistatus.journalRef === 'undefined') {
         $('#doi_journal_ref').val('not available')
         $('.doi-journal-ref').html('<i>not availabile</i>')
       } else {
@@ -700,7 +692,7 @@
       $('#doi_additional_authors').empty()
       for (var i=1; i<authorList.length; i++) {
         addAuthorStanza(authorList[i])
-        addtlAuthorString += authorList[i] + "; "
+        addtlAuthorString += authorList[i] + '; '
       }
 
       addtlAuthorString = addtlAuthorString.slice(0, -2)

@@ -20,7 +20,7 @@
    *
    * @constructor
    * @param {{}} inputs   Input configuration.
-   * @param {String} [inputs.resourceCapabilitiesEndPoint='http://apps.canfar.net/reg/resource-caps'] URL of the resource capability document.
+   * @param {String} [inputs.resourceCapabilitiesEndPoint='http://www.canfar.net/reg/resource-caps'] URL of the resource capability document.
    */
   function CitationPage(inputs) {
 
@@ -28,7 +28,7 @@
     var resourceCapabilitiesEndPoint =
             inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
                 ? inputs.resourceCapabilitiesEndPoint
-                : 'http://apps.canfar.net/reg/resource-caps'
+                : 'http://www.canfar.net/reg/resource-caps'
 
     // NOTE: for deployment to production, this constructor should have no parameters.
     // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
@@ -65,7 +65,7 @@
           var keyVal = queryPairs[i].split('=')
           if (keyVal[0].match('runid')) {
             _runid = keyVal[1]
-            break;
+            break
           }
         }
       }
@@ -190,9 +190,9 @@
       }
 
       if (hideSpinner === true) {
-        $(".spinner-span").addClass('d-none');
+        $('.spinner-span').addClass('d-none')
       } else {
-        $(".spinner-span").removeClass('d-none');
+        $('.spinner-span').removeClass('d-none')
       }
 
     }
@@ -238,14 +238,14 @@
       var displayText = ''
       switch(request.status) {
         case 500:
-            displayText = "Server Error: can not access DOI metadata"
+            displayText = 'Server Error: can not access DOI metadata'
           break
         case 400:
-          displayText = "Error getting DOI status"
+          displayText = 'Error getting DOI status'
           break
         default:
-          displayText = request.responseText;
-          break;
+          displayText = request.responseText
+          break
       }
 
       return displayText
