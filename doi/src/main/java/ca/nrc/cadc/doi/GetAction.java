@@ -205,12 +205,8 @@ public class GetAction extends DoiAction {
         return returnStatus;
     }
     
-    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, Boolean includePublicDois) throws Exception {
+    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
         DoiStatus doiStatus = null;
-        boolean includePublic = true;
-        if (includePublicDois != null) {
-            includePublic = includePublicDois;
-        }
         if (vClient.isCallerAllowed(doiContainerNode))
         {
             // get status
@@ -279,7 +275,7 @@ public class GetAction extends DoiAction {
             if (node instanceof ContainerNode) {
                 try {
             		ContainerNode doiContainerNode = vClient.getContainerNode(node.getName());
-                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode, false);
+                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
                     if (doiStatus != null) {
                         doiStatusList.add(doiStatus);
                     }
@@ -334,7 +330,7 @@ public class GetAction extends DoiAction {
         if (doiAction.equals(DoiAction.STATUS_ACTION))
         {
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode, true);
+            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode);
 
             String docFormat = this.syncInput.getHeader("Accept");
             log.debug("'Accept' value in header is " + docFormat);
