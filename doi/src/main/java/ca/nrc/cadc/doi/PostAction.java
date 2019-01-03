@@ -366,7 +366,7 @@ public class PostAction extends DoiAction {
     	log.debug("makeFindable endpoint: " + makeFindableURL);
     	
     	// add the landing page URL
-    	String content = "doi=" + doiToMakeFindable + "\nurl=http://apps.canfar.net/citation/landing?doi=" + doiSuffix;
+    	String content = "doi=" + doiToMakeFindable + "\nurl=" + this.landingPageURL + "?doi=" + doiSuffix;
     	log.debug("content: " + content);    	
     	InputStream inputStream = new ByteArrayInputStream(content.getBytes());
     	

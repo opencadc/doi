@@ -117,6 +117,7 @@ public abstract class DoiAction extends RestAction {
     protected String devHost = null;
     protected String prodURL = null;
     protected String devURL = null;
+    protected String landingPageURL = null;
 
     public DoiAction() { }
 
@@ -170,6 +171,7 @@ public abstract class DoiAction extends RestAction {
     	this.devHost = pr.getFirstPropertyValue("DEV_HOST");
     	this.prodURL = pr.getFirstPropertyValue("PROD_URL");
     	this.devURL = pr.getFirstPropertyValue("DEV_URL");
+    	this.landingPageURL = pr.getFirstPropertyValue("LANDING_PAGE_URL");
     	if (this.prodHost == null || this.devHost == null || this.prodHost == null || this.devURL == null) {
     		throw new RuntimeException("Failed to load properties from config file " + DOI_CONFIG_FILE);
     	}
