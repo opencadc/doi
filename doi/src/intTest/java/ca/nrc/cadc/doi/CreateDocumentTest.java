@@ -206,6 +206,7 @@ public class CreateDocumentTest extends DocumentTest {
         }
 
         // invoke the doi list service
+        System.out.print("made dois");
         List<DoiStatus> doiStatusList = getDoiStatusList(s);
         DoiStatus[] doiStatusArray = doiStatusList.toArray(new DoiStatus[doiStatusList.size()]);
 

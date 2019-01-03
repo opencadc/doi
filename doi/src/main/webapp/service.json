@@ -328,6 +328,52 @@
           }
         }
       }
+    },
+    "/instances/{DOINum}/status/public": {
+      "get": {
+        "tags": [
+          "instances"
+        ],
+        "summary": "Get the status of a DOI instance",
+        "description": "Get the status of the specified DOI. Include access to public DOIs.",
+        "operationId": "getDOIStatus",
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "DOINum",
+            "in": "path",
+            "description": "Digital Object Identifier number to retrieve status",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DOIStatus"
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorised"
+          },
+          "404": {
+            "description": "DOI not found"
+          },
+          "500": {
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "description": "Temporarily unavailable"
+          }
+        }
+      }
     }
   },
   "definitions": {
