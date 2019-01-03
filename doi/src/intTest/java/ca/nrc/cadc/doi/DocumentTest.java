@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.List;
@@ -162,7 +163,7 @@ public class DocumentTest extends IntTestBase {
     protected String postDocument(URL postUrl, String document, String journalRef) {
         log.info("url: " + postUrl.getPath());
         Map<String, Object> params = new HashMap<String, Object>();
-        FileContent fc = new FileContent(document, "text/xml");
+        FileContent fc = new FileContent(document, "text/xml", Charset.forName("UTF-8"));
         params.put("doiMetadata", fc);
         if (journalRef != null) {
             if (journalRef.length() > 0) {

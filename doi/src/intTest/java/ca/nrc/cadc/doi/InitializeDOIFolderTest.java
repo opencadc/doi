@@ -82,6 +82,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 
@@ -147,7 +148,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
 
                 Map<String, Object> params = new HashMap<String, Object>();
                 FileContent fc;
-                fc = new FileContent(builder.toString(), "text/xml");
+                fc = new FileContent(builder.toString(), "text/xml", Charset.forName("UTF-8"));
                 params.put("doiMetadata", fc);
                 params.put("journalref", "2018, Journal ref. ApJ 1000,100");
                 // inform the DOI web service that this is a test

@@ -87,6 +87,7 @@ import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -105,6 +106,7 @@ import ca.nrc.cadc.vos.client.ClientAbortThread;
 import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -327,46 +329,66 @@ public class PostAction extends DoiAction {
     		throw new RuntimeException("failed to read from " + dataciteCredentialsPath + " file");
     	}
 
-    	return pa.getUserName() + ":" + pa.getPassword();
+    	return pa.getUserName() + ":" + String.valueOf(pa.getPassword());
     }
     
-    private void postToDataCite(URL postURL, String content, String contentType, boolean redirect) throws IOException {
+    private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg) throws IOException {
+        log.debug("response code from DataCite: " + responseCode);
+
+        // check if an exception was thrown
+        if (throwable != null) {
+        	if ((responseCode == 401) || (responseCode == 403)) {
+        		throw new AccessControlException(throwable.getMessage());
+        	} else {
+        		throw new RuntimeException(responseBody + ", " + throwable);
+        	}
+        }
+        
+        // no exception thrown, check response code
+    	if (responseCode == 200 || responseCode == 201) {
+    		log.debug(msg);
+    		return;
+    	} else {
+        	throw new IOException("HttpResponse (" + responseCode + ") - " + responseBody);
+    	}
+
+    }
+    
+    private void registerDOI(URL postURL, String content, String contentType, boolean redirect) throws IOException {
     	log.debug("post to DataCite URL: " + postURL);
     	log.debug("contentType: " + contentType);
     	
     	// post to DataCite
     	HttpPost postToDataCite = new HttpPost(postURL, content, contentType, redirect);
-    	postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
-    	/*
+    	postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));    	
     	postToDataCite.run();
-    	
-        final int responseCode = postToDataCite.getResponseCode();
-        log.debug("response code from DataCite: " + responseCode);
 
-        // Check that there was no exception thrown
-        if (postToDataCite.getThrowable() != null) {
-        	final String msg = postToDataCite.getThrowable().getMessage();
-        	if ((responseCode == 401) || (responseCode == 403)) {
-        		throw new AccessControlException(msg);
-        	} else {
-        		throw new RuntimeException(postToDataCite.getResponseBody() + ", " + postToDataCite.getThrowable());
-        	}
-        }
-        
-        // handle unsuccessful post without an exception
-        if (responseCode != 200 && responseCode != 201) {
-        	throw new IOException("HttpResponse (" + responseCode + ") - " + postToDataCite.getResponseBody());
-        }
-        */
+        // process response
+        String msg = "Successfully registered DOI " + doiSuffix;
+        processResponse(postToDataCite.getThrowable(), postToDataCite.getResponseCode(), postToDataCite.getResponseBody(), msg);
     }
     
     private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
-    	// add the landing page URL
+    	// form the upload endpoint
     	String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
-    	String content = doiToMakeFindable + "\n" + "http://apps.canfar.net/citation/landing?doi=" + doiToMakeFindable;
-    	String contentType = "text/plain;charset=UTF-8";
     	URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
-    	postToDataCite(makeFindableURL, content, contentType, true);
+    	log.debug("makeFindable endpoint: " + makeFindableURL);
+    	
+    	// add the landing page URL
+    	String content = "doi=" + doiToMakeFindable + "\nurl=http://apps.canfar.net/citation/landing?doi=" + doiSuffix;
+    	log.debug("content: " + content);    	
+    	InputStream inputStream = new ByteArrayInputStream(content.getBytes());
+    	
+    	// upload
+    	HttpUpload put = new HttpUpload(inputStream, makeFindableURL);
+    	put.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
+    	put.setBufferSize(64 * 1024);
+    	put.setContentType("text/plain;charset=UTF-8");
+    	put.run();
+    	
+    	// process response
+        String msg = "Successfully made DOI " + doiSuffix + " findable";
+    	processResponse(put.getThrowable(), put.getResponseCode(), put.getResponseBody(), msg);
     }
    
     private String getDOIContent() throws Exception  {
@@ -377,7 +399,7 @@ public class PostAction extends DoiAction {
         return builder.toString();
     }
     
-    private void registerDOI(ContainerNode doiContainerNode) throws Exception {
+    private void register(ContainerNode doiContainerNode) throws Exception {
     	try {
 	    	// update status
 	        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());;
@@ -388,7 +410,7 @@ public class PostAction extends DoiAction {
 	    	String content = getDOIContent();
 	    	String contentType = "application/xml;charset=UTF-8";
 	    	URL registerURL = new URL(dataCiteURL + "/metadata/" + doiToRegister);
-	    	postToDataCite(registerURL, content, contentType, true);
+	    	registerDOI(registerURL, content, contentType, true);
 	        
 	    	// success, add landing page to the DOI instance
 	    	makeDOIFindable(doiContainerNode);
@@ -484,14 +506,14 @@ public class PostAction extends DoiAction {
                 	break;
             	case LOCKED_DATA:
             	case ERROR_REGISTERING:
-                	registerDOI(doiContainerNode);
+                	register(doiContainerNode);
                 	break;
             	case REGISTERING:
                 	// registering doi to DataCite, do nothing
             		log.debug("doi " + doiSuffix + " status: " + Status.REGISTERING);
             		break;
             	case MINTED:
-                	// minting finished, do nothing
+                	// minting finished, do nothingregisterDOI
             		log.debug("doi " + doiSuffix + " status: " + Status.MINTED);
             		break;
             	case COMPLETED:
