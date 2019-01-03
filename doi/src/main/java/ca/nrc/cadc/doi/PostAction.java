@@ -196,15 +196,6 @@ public class PostAction extends DoiAction {
         return updatedResource;
     }
     
-    private void finalizeResource(Resource resourceFromUser, String journalRefToMint) throws Exception {
-        Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
-        Resource updatedResource = merge(resourceFromUser, resourceFromVos);
-        Resource resourceToMint = addFinalElements(updatedResource, journalRefToMint);
-        VOSURI docDataURI = new VOSURI(
-                vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
-        this.uploadDOIDocument(resourceToMint, new DataNode(docDataURI));
-    }
-    
     private String updateJournalRef(String journalRefFromUser) throws Exception {
         // update journal reference 
         if (journalRefFromUser != null) {
