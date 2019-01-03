@@ -18,8 +18,6 @@
     function init() {
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
-      // landing page is anonymous...
-      //page.checkAuthentication()
       parseUrl()
     }
 
@@ -29,9 +27,8 @@
       if (query !== '') {
         var doiSuffix = query.split('=')[1]
         // Kick off 2 parallel ajax calls.
-        // Doesn't matter which one comes back frist
-        //handleDOIGet(doiSuffix)
-        //getDoiStatus(doiSuffix)
+        // Doesn't matter which one comes back first. The first one to fail
+        // will report it's error to the UI
         Promise.resolve(page.prepareCall())
             .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiSuffix), getDoiStatus(serviceURL, doiSuffix)]))
             .catch(message => page.setAjaxFail(message))
@@ -61,34 +58,6 @@
 
     // ------------ HTTP/Ajax functions ------------
 
-    //GET DOI Metadata
-    //function handleDOIGet(doiNumber) {
-    //  page.clearAjaxAlert()
-    //  page.setInfoModal('Please wait ', 'Processing request...', true)
-    //
-    //  // Submit doc using ajax
-    //  page.prepareCall().then(function(serviceURL) {
-    //    var getUrl = serviceURL + '/' + doiNumber
-    //    $.ajax({
-    //      xhrFields: { withCredentials: true },
-    //      url: getUrl,
-    //      method: 'GET',
-    //      dataType: 'json',
-    //      contentType: 'application/json'
-    //    })
-    //    .success(function(data) {
-    //      hideInfoModal()
-    //      doiDoc.populateDoc(data)
-    //      displayMetadata()
-    //    })
-    //    .fail(function(message) {
-    //      page.setAjaxFail(message)
-    //    })
-    //  })
-    //
-    //  return false
-    //}
-
     function getDoi(serviceURL, doiNumber) {
       return new Promise(function (resolve, reject) {
         var getUrl = serviceURL + '/' + doiNumber
@@ -117,30 +86,6 @@
         request.send(null)
       })
     }
-
-    //
-    //// GET Status
-    //function getDoiStatus(doiName) {
-    //  page.prepareCall().then(function(serviceURL) {
-    //    var statusUrl = serviceURL + '/' + doiName + '/status/public'
-    //    $.ajax({
-    //      xhrFields: { withCredentials: true },
-    //      url: statusUrl,
-    //      method: 'GET',
-    //      dataType: 'json',
-    //      contentType: 'application/json'
-    //    })
-    //    .success(function(data) {
-    //      hideInfoModal()
-    //      displayDoiStatus(data)
-    //    })
-    //    .fail(function(message) {
-    //      page.setAjaxFail(message)
-    //    })
-    //  })
-    //  return false
-    //}
-
 
     // GET
     function getDoiStatus(serviceURL, doiName) {
