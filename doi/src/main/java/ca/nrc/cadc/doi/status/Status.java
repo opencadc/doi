@@ -87,8 +87,7 @@ public enum Status {
     REGISTERING("registering to DataCite"),
     ERROR_REGISTERING("error registering to DataCite"),
     MINTED("minted"),
-    COMPLETED("completed"),
-    ERROR("error");
+    COMPLETED("completed");
 
     private final String value;
 

@@ -216,11 +216,11 @@ public class GetAction extends DoiAction {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
-            if (StringUtil.hasText(status) && !status.equals(Status.ERROR.getValue())) {
+            if (StringUtil.hasText(status) && 
+            		!status.equals(Status.ERROR_REGISTERING.getValue()) &&
+            		!status.equals(Status.ERROR_LOCKING_DATA.getValue())) {
                 // update status based on the result of the minting service
                 status = updateMintingStatus(doiContainerNode, status);
-            } else {
-                status = Status.ERROR.getValue();
             }
 
             // get the data directory
