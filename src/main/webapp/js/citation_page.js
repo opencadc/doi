@@ -235,7 +235,7 @@
       // the message associated with the 500 status code needs to be
       // parsed out.
 
-      var displayText = ''
+      var displayText
       switch(request.status) {
         case 500:
             displayText = 'Server Error: can not access DOI metadata'
@@ -261,7 +261,7 @@
       userManager.subscribe(cadc.web.events.onUserLoad,
           function (event, data) {
             // Check to see if user is logged in or not
-            if (typeof(data.error) != 'undefined') {
+            if (typeof(data.error) !== 'undefined') {
               setNotAuthenticated()
             } else {
               setAuthenticated()
@@ -465,7 +465,7 @@
         authorListStr = aList[0] + ' et al.'
       } else {
         aList = buildAuthorList(listSize)
-        for (var i=0; i< aList.length; i++ ){
+        for (var i=0, al=aList.length; i< al; i++ ){
           authorListStr += aList[i] + '; '
         }
         // trim off trailing '; '

@@ -61,7 +61,7 @@
         // Parse key/value pairs
         var queryPairs = query.split('&')
 
-        for (var i=0; i<queryPairs.length; i++) {
+        for (var i=0, qpl=queryPairs.length; i<qpl; i++) {
           var keyVal = queryPairs[i].split('=')
           if (keyVal[0].match('doi')) {
             handleDOIGet(keyVal[1])
@@ -349,7 +349,6 @@
     function addAuthorStanza(authorName) {
       var elementName = buildAuthorInput(authorcount++)
       $('#doi_' + elementName).val(authorName)
-      //$('.doi_' + elementName).html(authorName)
     }
 
     function handleRemoveAuthor(event) {
@@ -472,7 +471,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == '200') {
+              if (request.status === 200) {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
 
@@ -551,7 +550,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == '200') {
+              if (request.status === 200) {
                 // Populate javascript object behind form
                 doiDoc.populateDoc(JSON.parse(request.responseText))
                 // Load metadata into the panel here before resolving promise
@@ -583,7 +582,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == '200') {
+              if (request.status === 200) {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
                 hideInfoModal()
@@ -640,7 +639,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == '200') {
+              if (request.status === 200) {
                 hideInfoModal()
                 page.setProgressBar('okay')
                 handleFormReset(true)

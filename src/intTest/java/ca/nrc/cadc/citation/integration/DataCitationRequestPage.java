@@ -54,6 +54,9 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
     @FindBy(id = "doi_number")
     WebElement doiNumberInput;
 
+    @FindBy(className = "doi-number")
+    WebElement doiNumberDisplay;
+
     @FindBy(id = "doi_title")
     WebElement doiTitleInput;
 
@@ -72,7 +75,12 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
     }
 
     public String getDoiNumber() {
-        return doiNumberInput.getAttribute("value");
+        String doiNumberStr = doiNumberInput.getAttribute("value");
+
+        if (doiNumberStr.isEmpty()) {
+            doiNumberStr = doiNumberDisplay.getText();
+        }
+        return doiNumberStr;
     }
 
     public String getDoiTitle() {

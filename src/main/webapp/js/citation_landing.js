@@ -67,7 +67,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == '200') {
+              if (request.status === 200) {
                 // Populate javascript object behind form
                 doiDoc.populateDoc(JSON.parse(request.responseText))
                 // Load metadata into the panel here before resolving promise
@@ -99,7 +99,7 @@
         request.addEventListener(
             'load',
             function () {
-              if (request.status == '200') {
+              if (request.status === 200) {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
                 hideInfoModal()
@@ -147,7 +147,7 @@
 
     function hideInfoModal() {
       _ajaxCallCount--
-      if (_ajaxCallCount == 0) {
+      if (_ajaxCallCount === 0) {
         $('#info_modal').modal('hide')
         $('body').removeClass('modal-open')
         $('.modal-backdrop').remove()

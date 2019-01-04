@@ -31,18 +31,15 @@
 
 package ca.nrc.cadc.citation.integration;
 
+
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientAbortThread;
 import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import java.io.File;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
@@ -59,13 +56,10 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
 
-    final VOSURI baseDataURI = new VOSURI(URI.create(DOI_BASE_VOSPACE));
-    final VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
     final Subject testSubject = SSLUtil.createSubject(DOIADMIN_CERT);
 
     // Used to get the doiNumber into the subject.doAs that will delete minted DOIs
     String doiNumber = "";
-
 
     public DataCitationTest() throws Exception {
         super();
@@ -165,6 +159,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         // Manual clean up includes: removing the parent directory from vospace, and
         // removing the user group set up.
         DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
+        doiNumber = "";
 
         try {
             requestPage.pageLoadLogin();
@@ -178,6 +173,8 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
             // Wait for create to complete
             requestPage.waitForJournalRefLoaded();
             Assert.assertTrue(requestPage.isStateOkay());
+
+
 
             // Update the journal reference and title
             // one is an XML file change, one is a vospace attribute change
@@ -196,43 +193,53 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
             doiNumber = requestPage.getDoiNumber();
 
             Assert.assertTrue(requestPage.isStateMinted());
+            System.out.println("minted");
         } catch (Exception e) {
 
+            Assert.fail("Failed minting DOI test");
+            throw e;
+
         } finally {
+            // Attempt cleanup of any DOIs careated
 
-            Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
-                @Override
-                public String run() throws Exception {
+            if (!doiNumber.equals("")) {
 
+                Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
+                    @Override
+                    public String run() throws Exception {
 
-                    String doiNumberParts[] = doiNumber.split("/");
-                    // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
-                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    // the Status enum is in the war file for doiservice, not in a library that can be included in this test,
-                    // so we're stuck with hard coding the values.
-                    doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue("in progress");
-                    vosClient.setNode(doiContainerNode);
+                        String doiNumberParts[] = doiNumber.split("/");
+                        // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
 
-                    // unlock the data directory and delete the DOI
-                    ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-                    if (StringUtil.hasText(isLocked)) {
-                        dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
-                        setDataNodeRecursively(dataContainerNode);
+                        ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
+                        // the Status enum is in the war file for doiservice, not in a library that can be included in this test,
+                        // so we're stuck with hard coding the values.
+                        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue("in progress");
+                        vosClient.setNode(doiContainerNode);
+
+                        // unlock the data directory and delete the DOI
+                        ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                        String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+                        if (StringUtil.hasText(isLocked)) {
+                            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
+                            setDataNodeRecursively(dataContainerNode);
+                        }
+                        deleteTestFolder(vosClient, doiNumberParts[1]);
+
+                        return null;
                     }
-                    deleteTestFolder(vosClient, doiNumberParts[1]);
 
-                    return null;
-                }
-
-            });
+                });
+            }
         }
 
         System.out.println("testDoiWorkflow test complete.");
     }
 
+
+
     private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
-        String nodePath = baseDataURI.getPath();
+        String nodePath = astroDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
         }
@@ -241,9 +248,8 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     }
 
     private void setDataNodeRecursively(final ContainerNode dataContainerNode) throws Exception {
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+        // testSubject is doiadmin subject.
+        Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
                 ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(dataContainerNode);

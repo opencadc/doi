@@ -84,8 +84,6 @@
       })
 
       page.subscribe(_selfCitationController, cadc.web.citation.events.onDoiDeleted, function(e, data) {
-        //       TODO: ideally removeRow would be called but there's a bug in it
-        //removeRow(data.doiSuffix)
         loadDoiList()
       })
 
@@ -295,7 +293,7 @@
 
     function removeRow(rowNum) {
       doiTable.rows().nodes().each(function(a,b) {
-        if($(a).children().eq(0).text() == rowNum){
+        if($(a).children().eq(0).text() === rowNum){
           doiTable.rows(a).remove()
         }
       } )
@@ -339,7 +337,7 @@
     }
 
     function mkActionLinks(doiName, status) {
-      var actionLinkString = '';
+      var actionLinkString
       if (status !== page.serviceState.MINTED) {
         switch(status) {
           case page.serviceState.INPROGRESS:
@@ -351,6 +349,8 @@
           case page.serviceState.ERROR_LOCKING_DATA:
             actionLinkString = mkMsg(doiName, 'Contact Admin ')
             break
+          default:
+            actionLinkString = ''
         }
       }
       return actionLinkString
