@@ -504,7 +504,7 @@ public class PostAction extends DoiAction {
             		log.debug("doi " + doiSuffix + " status: " + Status.REGISTERING);
             		break;
             	case MINTED:
-                	// minting finished, do nothingregisterDOI
+                	// minting finished, do nothing
             		log.debug("doi " + doiSuffix + " status: " + Status.MINTED);
             		break;
             	case COMPLETED:
