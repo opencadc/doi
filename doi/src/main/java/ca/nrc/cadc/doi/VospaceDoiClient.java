@@ -171,8 +171,7 @@ public class VospaceDoiClient {
     }
 
     public boolean isPublicNode(Node node) {
-        String isPublicStr = node.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC);
-        return isPublicStr.equals("true");
+        return node.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true");
     }
 
     private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {
