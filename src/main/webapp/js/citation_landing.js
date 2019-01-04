@@ -140,7 +140,7 @@
     }
 
     function displayMetadata() {
-      $('#doi_creator_list').text(doiDoc.getAuthorListString())
+      $('#doi_creator_list').text(doiDoc.getAuthorListString(true))
       $('#doi_title').text(doiDoc.getTitle())
       $('#publication_doi').html(doiDoc.getRelatedDOI())
     }

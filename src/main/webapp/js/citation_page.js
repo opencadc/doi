@@ -460,7 +460,7 @@
       var authorListStr = ''
       var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
 
-      if ((isShort === 'true') && (listSize > 3)) {
+      if ((isShort === true) && (listSize > 3)) {
         aList = buildAuthorList(1)
         authorListStr = aList[0] + ' et al.'
       } else {
