@@ -39,7 +39,9 @@ import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 
 public class DataCitationRequestPage extends DataCitationAbstractPage {
-    private static final By DOI_DELETE_BY = By.id("doi_form_delete_button");
+    private static final By DOI_DELETE_BY = By.id("doi_delete_button");
+    private static final By DOI_MINT_BY = By.id("doi_mint_button");
+    private static final By DOI_MINTED_BADGE = By.className("doi-status-badge");
     private static final By DOI_DATA_DIR_BY = By.id("doi_data_dir");
     private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_action_button");
     private static final By DOI_NUMBER_BY = By.id("doi_number");
@@ -51,6 +53,9 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
 
     @FindBy(id = "doi_number")
     WebElement doiNumberInput;
+
+    @FindBy(className = "doi-number")
+    WebElement doiNumberDisplay;
 
     @FindBy(id = "doi_title")
     WebElement doiTitleInput;
@@ -70,7 +75,12 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
     }
 
     public String getDoiNumber() {
-        return doiNumberInput.getAttribute("value");
+        String doiNumberStr = doiNumberInput.getAttribute("value");
+
+        if (doiNumberStr.isEmpty()) {
+            doiNumberStr = doiNumberDisplay.getText();
+        }
+        return doiNumberStr;
     }
 
     public String getDoiTitle() {
@@ -117,6 +127,16 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
         waitForElementVisible(DOI_REQUEST_SUBMIT_BY);
     }
 
+    public void mintDoi() throws Exception {
+        // metadata panel should be displayed
+        // form should be in 'display' mode
+        waitForElementVisible(DOI_DATA_DIR_BY);
+        WebElement db = find(DOI_MINT_BY);
+        click(db);
+        // If mint has worked, button bar will not be visible
+        waitForElementInvisible(DOI_REQUEST_SUBMIT_BY);
+    }
+
     public void waitForJournalRefLoaded() throws Exception {
         waitUntil(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver d) {
@@ -139,6 +159,11 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
 
     public void waitForGetFailed() throws Exception  {
         waitForElementVisible(DOI_ERRORMSG_BY);
+    }
+
+    public boolean isStateMinted() throws Exception {
+        WebElement badge = find(DOI_MINTED_BADGE);
+        return !badge.getAttribute("class").contains("hidden");
     }
 
 }

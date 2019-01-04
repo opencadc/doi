@@ -33,6 +33,7 @@
       'status' : '',
       'title' : '',
       'data_dir' : '',
+      'landing_page' : '',
       'action' : ''
     }
 
@@ -57,12 +58,13 @@
           {'data' : 'status'},
           {'data' : 'title'},
           {'data' : 'data_dir'},
+          {'data' : 'landing_page'},
           {'data' : 'action'}
         ],
         columnDefs: [
           { 'width': 20, 'targets': 0 },
-          { 'width': 75, 'targets': 1 },
-          { 'width': 20, 'targets': 4 }
+          { 'width': 100, 'targets': 1 },
+          { 'width': 200, 'targets': 5 }
         ],
         ordering: false,
         paging: false,
@@ -82,8 +84,6 @@
       })
 
       page.subscribe(_selfCitationController, cadc.web.citation.events.onDoiDeleted, function(e, data) {
-        //       TODO: ideally removeRow would be called but there's a bug in it
-        //removeRow(data.doiSuffix)
         loadDoiList()
       })
 
@@ -97,6 +97,14 @@
         $('body').removeClass('modal-open')
         $('.modal-backdrop').remove()
         handleDOIDelete($('#doi_delete_num').text())
+      })
+
+      // From mint modal
+      $('#mint_ok').click(function () {
+        $('#mint_modal').modal('hide')
+        $('body').removeClass('modal-open')
+        $('.modal-backdrop').remove()
+        handleDOIMint($('#doi_delete_num').text())
       })
     }
 
@@ -139,8 +147,9 @@
       page.setProgressBar('okay')
       hideInfoModal()
 
-      // attach listeners to delete icons.
-      $('.doi_delete').click(confirmDOIDelete)
+      // attach listeners to action icons.
+      $('.doi-delete').click(confirmDOIDelete)
+      $('.doi-mint').click(loadRequestPage)
     }
 
     function setTableStatus(displayText) {
@@ -152,18 +161,27 @@
       $('#delete_modal').modal('show')
     }
 
+    function setMintModal(doiName) {
+      $('#doi_mint_num').html(doiName)
+      $('#mint_modal').modal('show')
+    }
+
     function hideInfoModal() {
       $('#info_modal').modal('hide')
       $('body').removeClass('modal-open')
       $('.modal-backdrop').remove()
     }
 
-
     // ------------ HTTP/Ajax functions ------------
 
     function confirmDOIDelete(event) {
       var doiSuffix = event.currentTarget.dataset.doinum
       setDeleteModal(doiSuffix)
+    }
+
+    function loadRequestPage(event) {
+      var doiSuffix = event.currentTarget.dataset.doinum
+      window.open('/citation/request?doi=' + doiSuffix, '_blank');
     }
 
     // DELETE
@@ -235,10 +253,11 @@
       var newStatus = rowTemplate
       var doiName = doi.identifier['$']
       newStatus.doi_name = mkNameLink(doiName)
-      newStatus.status = doi.status['$']
+      newStatus.status = page.setStatusText(doi.status['$'])
       newStatus.data_dir = page.mkDataDirLink(doi.dataDirectory['$'])
+      newStatus.landing_page = page.mkLandingPageLink(doi.identifier['$'].split("/")[1])
       newStatus.title = mkTitleLink(doi.title['$'], doiName)
-      newStatus.action = mkDeleteLink(doiName)
+      newStatus.action = mkActionLinks(doiName, doi.status['$'])
 
       addRow(newStatus)
     }
@@ -274,7 +293,7 @@
 
     function removeRow(rowNum) {
       doiTable.rows().nodes().each(function(a,b) {
-        if($(a).children().eq(0).text() == rowNum){
+        if($(a).children().eq(0).text() === rowNum){
           doiTable.rows(a).remove()
         }
       } )
@@ -294,7 +313,7 @@
         doiSuffix = doiName.split('/')[1]
       }
       else {
-        doiSuffix = doiName
+        doiSuffix = doiNam
       }
       return doiSuffix
     }
@@ -317,9 +336,45 @@
               '</a>'
     }
 
-    function mkDeleteLink(doiName) {
+    function mkActionLinks(doiName, status) {
+      var actionLinkString
+      if (status !== page.serviceState.MINTED) {
+        switch(status) {
+          case page.serviceState.INPROGRESS:
+            actionLinkString = mkMintButton(doiName, 'Mint') + mkDeleteButton(doiName, false)
+            break
+          case page.serviceState.DATA_LOCKED:
+            actionLinkString = mkMintButton(doiName, 'Continue Mint')
+            break
+          case page.serviceState.ERROR_LOCKING_DATA:
+            actionLinkString = mkMsg(doiName, 'Contact Admin ')
+            break
+          default:
+            actionLinkString = ''
+        }
+      }
+      return actionLinkString
+    }
+
+    function mkDeleteButton(doiName) {
       var doiSuffix = parseDoiSuffix(doiName)
-      return '<span class="doi_delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
+      //return '<span class="doi-delete glyphicon glyphicon-remove" data-doiNum = ' + doiSuffix + '></span>'
+      var btnClass = 'btn btn-danger doi-button doi-listpage-header btn-sm doi-delete'
+      return '<button type="delete" class="' + btnClass + '" data-doiNum=' + doiSuffix + '>Delete</button>'
+    }
+
+    function mkMintButton(doiName, text) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      var btnClass = 'btn btn-success doi-button doi-listpage-header btn-sm doi-mint'
+      //return '<span class="doi-mint glyphicon glyphicon-lock" data-doiNum = ' + doiSuffix + '></span>'
+      return '<button type="mint" class="' + btnClass + '" data-doiNum = ' + doiSuffix + '>' + text + '</button>'
+    }
+
+    function mkMsg(doiName, text) {
+      var doiSuffix = parseDoiSuffix(doiName)
+      var btnClass = 'doi-button doi-listpage-header btn-sm doi-warning'
+      //return '<span class="doi-mint glyphicon glyphicon-lock" data-doiNum = ' + doiSuffix + '></span>'
+      return '<span class="' + btnClass + '" data-doiNum = ' + doiSuffix + '>' + text + '</span>'
     }
 
     $.extend(this, {

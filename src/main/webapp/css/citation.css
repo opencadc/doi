@@ -42,6 +42,11 @@
   margin-left: 5px;
 }
 
+.doi-button-group {
+  /* because col-sm-* has padding that misaligns the buttons */
+  padding-left: 0px;
+}
+
 .doi-small-button {
   height: 22px;
   width: 22px;
@@ -87,10 +92,6 @@
   margin-right: 15px;
 }
 
-.doi_delete {
-  cursor: pointer;
-}
-
 .doi-form-input {
   height: 36px;
 }
@@ -119,5 +120,90 @@
 .doi-remove-author {
   padding-bottom: 5px;
 }
+
+.doi-display {
+  margin-top: 8px;
+}
+
+.doi-mint-button:disabled {
+  opacity: .4;
+  color: gray;
+}
+
+.doi-mint:hover {
+  opacity: .8;
+}
+
+.doi-minted {
+  color: green;
+  margin-right: 10px;
+}
+
+.doi-working {
+  color: saddlebrown;
+  margin-right: 10px;
+}
+
+.doi-warning {
+  color: darkred;
+  margin-right: 10px;
+}
+
+.doi-retry {
+  color: mediumblue;
+}
+
+.doi-status-badge div {
+  margin-bottom: 0px;
+}
+
+.doi-msg-text {
+  text-align: center;
+  font-weight: bold;
+}
+.
+
+.doi-delete:hover {
+  opacity: .8;
+}
+
+.glyphicon.fast-right-spinner {
+  -webkit-animation: glyphicon-spin-r 1s infinite linear;
+  animation: glyphicon-spin-r 1s infinite linear;
+}
+
+@-webkit-keyframes glyphicon-spin-r {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes glyphicon-spin-r {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
+.spinner-span {
+  margin-left:50px;
+}
+
+.doi-data-locked {
+  margin-left: 20px;
+}
+
+
 
 

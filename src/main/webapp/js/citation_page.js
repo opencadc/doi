@@ -20,7 +20,7 @@
    *
    * @constructor
    * @param {{}} inputs   Input configuration.
-   * @param {String} [inputs.resourceCapabilitiesEndPoint='http://apps.canfar.net/reg/resource-caps'] URL of the resource capability document.
+   * @param {String} [inputs.resourceCapabilitiesEndPoint='http://www.canfar.net/reg/resource-caps'] URL of the resource capability document.
    */
   function CitationPage(inputs) {
 
@@ -28,7 +28,7 @@
     var resourceCapabilitiesEndPoint =
             inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
                 ? inputs.resourceCapabilitiesEndPoint
-                : 'http://apps.canfar.net/reg/resource-caps'
+                : 'http://www.canfar.net/reg/resource-caps'
 
     // NOTE: for deployment to production, this constructor should have no parameters.
     // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
@@ -36,11 +36,44 @@
       resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
     })
 
+    var _runid = ''
+
+    // These reflect the states as returned from the doiservice status call
+    // TODO: how to make these states less breakable? String comparison isn't great...
+    const serviceState = {
+      START: 'start',
+      INPROGRESS: 'in progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
+      LOCKING_DATA: 'locking data directory',
+      DATA_LOCKED: 'locked data directory',
+      REGISTERING: 'registering to DataCite',
+      MINTED: 'minted',
+      ERROR_REGISTERING: 'error registering to DataCite',
+      ERROR_LOCKING_DATA: 'error locking data directory',
+      COMPLETED: 'completed'
+    }
+
     // ------------ Page state management functions ------------
+
+    function parseUrl() {
+      var query = window.location.search
+
+      if (query !== '') {
+        // Parse key/value pairs
+        var queryPairs = query.split('&')
+
+        for (var i=0; i<queryPairs.length; i++) {
+          var keyVal = queryPairs[i].split('=')
+          if (keyVal[0].match('runid')) {
+            _runid = keyVal[1]
+            break
+          }
+        }
+      }
+    }
 
     function clearAjaxAlert() {
       $('.alert-danger').addClass('hidden')
-      $('.alert-sucess').addClass('hidden')
+      $('.alert-success').addClass('hidden')
       setProgressBar('okay')
     }
 
@@ -75,15 +108,15 @@
 
     function setAjaxFail(message) {
       $('#status_code').text(message.status)
-      $('#error_msg').text(message.responseText)
+      $('#error_msg').text(getRcDisplayText(message))
       $('.alert-danger').removeClass('hidden')
       setProgressBar('error')
       hideModals()
     }
 
     function setAjaxSuccess(message) {
-      $('#error_msg').text(message.responseText)
-      $('.alert-sucess').removeClass('hidden')
+      $('#alert_msg').text(message)
+      $('.alert-success').removeClass('hidden')
       setProgressBar('okay')
       hideModals()
     }
@@ -129,22 +162,93 @@
           '</a>'
     }
 
-    function setInfoModal(title, msg, hideThanks) {
+    function mkLandingPageLink(doiSuffix) {
+      return '<a href="/citation/landing?doi=' +
+          doiSuffix +
+          '" target="_blank">/citation/landing?doi=' +
+          doiSuffix +
+          '</a>'
+    }
+
+    function setInfoModal(title, msg, hideSpinner, hideThanks) {
+
+      // Set titles and messages
       $('.info-span').html(msg)
       $('#infoModalLongTitle').html(title)
 
-      // Check if modal is already open
+      // Open modal if not already open
       if ($('#info_modal').data('bs.modal') === undefined ||
           $('#info_modal').data('bs.modal').isShown === false) {
         $('#info_modal').modal('show')
       }
 
+      // Toggle these elements as required
       if (hideThanks === true) {
         $('#infoThanks').addClass('d-none')
       } else {
         $('#infoThanks').removeClass('d-none')
       }
 
+      if (hideSpinner === true) {
+        $('.spinner-span').addClass('d-none')
+      } else {
+        $('.spinner-span').removeClass('d-none')
+      }
+
+    }
+// ------------ Service Status parsing & display functions ------------
+
+    function setStatusText(svcState) {
+      var statusHtml = ''
+      switch(svcState) {
+        case serviceState.INPROGRESS:
+          statusHtml  = 'In progress'
+          break
+        case serviceState.LOCKING_DATA:
+          statusHtml  = 'Locking data directory'
+          break
+        case serviceState.DATA_LOCKED:
+          statusHtml  = 'Data directory locked'
+          break
+        case serviceState.REGISTERING:
+          statusHtml  = 'Registering DOI with DataCite'
+          break
+        case serviceState.MINTED:
+          statusHtml = '<div class="doi-minted">Minted</div>'
+          break
+        case serviceState.ERROR_LOCKING_DATA:
+          statusHtml = '<div class="doi-warning">Error locking data directory</div>'
+          break
+        case serviceState.ERROR_REGISTERING:
+          statusHtml = '<div class="doi-warning">Error registering DOI with DataCite </div>'
+          break
+        case serviceState.COMPLETED:
+          statusHtml = '<div class="doi-minted">Complete</div>'
+          break
+      }
+      return statusHtml
+    }
+
+    function getRcDisplayText(request) {
+      // 500 (Runtime) errors from DOI Service will have a stack trace
+      // included in them. In order to have more user-friendly messages,
+      // the message associated with the 500 status code needs to be
+      // parsed out.
+
+      var displayText
+      switch(request.status) {
+        case 500:
+            displayText = 'Server Error: can not access DOI metadata'
+          break
+        case 400:
+          displayText = 'Error getting DOI status'
+          break
+        default:
+          displayText = request.responseText
+          break
+      }
+
+      return displayText
     }
 
 
@@ -157,7 +261,7 @@
       userManager.subscribe(cadc.web.events.onUserLoad,
           function (event, data) {
             // Check to see if user is logged in or not
-            if (typeof(data.error) != 'undefined') {
+            if (typeof(data.error) !== 'undefined') {
               setNotAuthenticated()
             } else {
               setAuthenticated()
@@ -188,7 +292,14 @@
       $('.modal-backdrop').remove()
     }
 
+
+    function getRunid() {
+      return _runid
+    }
+
     $.extend(this, {
+      parseUrl: parseUrl,
+      serviceState: serviceState,
       prepareCall: prepareCall,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
@@ -196,10 +307,14 @@
       clearAjaxAlert: clearAjaxAlert,
       setInfoModal: setInfoModal,
       mkDataDirLink: mkDataDirLink,
+      mkLandingPageLink: mkLandingPageLink,
       checkAuthentication: checkAuthentication,
       subscribe: subscribe,
       trigger: trigger,
-      hideModals: hideModals
+      hideModals: hideModals,
+      setStatusText: setStatusText,
+      getRcDisplayText: getRcDisplayText,
+      getRunid: getRunid
     })
 
   }
@@ -324,14 +439,42 @@
           ]
     }
 
-    function getAuthorList() {
-      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
+    function buildAuthorList(listSize) {
       var authorList = new Array()
       for (var ix = 0; ix < listSize; ix++) {
         authorList.push(_selfDoc._badgerfishDoc.resource.creators['$'][ix].creator.creatorName['$'])
       }
       return authorList
     }
+
+
+    function getAuthorList() {
+      var authorList = new Array()
+      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
+      return buildAuthorList(listSize)
+    }
+
+
+    function getAuthorListString(isShort) {
+      var aList = new Array()
+      var authorListStr = ''
+      var listSize = _selfDoc._badgerfishDoc.resource.creators['$'].length
+
+      if ((isShort === true) && (listSize > 3)) {
+        aList = buildAuthorList(1)
+        authorListStr = aList[0] + ' et al.'
+      } else {
+        aList = buildAuthorList(listSize)
+        for (var i=0, al=aList.length; i< al; i++ ){
+          authorListStr += aList[i] + '; '
+        }
+        // trim off trailing '; '
+        authorListStr = authorListStr.slice(0,-2)
+      }
+
+      return authorListStr
+    }
+
 
     function getDOINumber() {
       return _selfDoc._badgerfishDoc.resource.identifier['$']
@@ -359,6 +502,23 @@
       return language
     }
 
+    function getRelatedDOI() {
+      var relatedDOI = ''
+      if (typeof _selfDoc._badgerfishDoc.resource.relatedIdentifiers !== 'undefined') {
+        var listSize = _selfDoc._badgerfishDoc.resource.relatedIdentifiers['$'].length
+
+        for (var ix = 0; ix < listSize; ix++) {
+          var curIdentifier = _selfDoc._badgerfishDoc.resource.relatedIdentifiers['$'][ix].relatedIdentifier
+          if (curIdentifier['@relatedIdentifierType'].match('DOI')) {
+            relatedDOI = curIdentifier['$']
+            break
+          }
+        }
+      }
+
+      return relatedDOI === '' ? 'not available yet' : relatedDOI
+    }
+
     initDoc()
 
     $.extend(this, {
@@ -372,10 +532,12 @@
       setLanguage: setLanguage,
       getAuthorFullname: getAuthorFullname,
       getAuthorList: getAuthorList,
+      getAuthorListString: getAuthorListString,
       getDOINumber: getDOINumber,
       getDOISuffix: getDOISuffix,
       getTitle: getTitle,
-      getLanguage: getLanguage
+      getLanguage: getLanguage,
+      getRelatedDOI: getRelatedDOI
     })
   }
 

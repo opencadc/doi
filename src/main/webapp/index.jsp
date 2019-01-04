@@ -107,6 +107,7 @@
                           <th>Status</th>
                           <th>Title</th>
                           <th>Data Directory</th>
+                          <th>Landing Page</th>
                           <th class="no-sort">Actions</th>
                         </tr>
                         </thead>
@@ -141,8 +142,28 @@
                 </div>
               </div>
 
+              <div id="mint_modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Confirm Mint</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <div>Do you want to mint DOI <span id="doi_mint_num"></span>?</div>
+                      <div>Minting will lock your VOSpace data directory and DOI metadata. You will no longer be able to update either. Please verify metadata is correct before continuing.</div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" id="mint_ok" class="btn btn-primary">OK</button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Info/Error Modal -->
-              <!-- Displayed when anything other than a 401 or 200 is returned -->
               <div class="modal fade" id="info_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
@@ -153,7 +174,7 @@
                       </button>
                     </div>
                     <div class="modal-body">
-                      <span class="info-span"></span>
+                      <span class="info-span"></span><span class="spinner-span"></span>
                     </div>
                     <div id="infoThanks" class="modal-footer">
                       <button type="button" class="btn btn-default" data-dismiss="modal">Thanks</button>
@@ -169,10 +190,6 @@
       </div>
     </div>
 
-
-
-    <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/org.opencadc.js"></script>
-    <script type="text/javascript" src="http://apps.canfar.net/cadcJS/javascript/cadc.uri.js"></script>
 
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/datatables.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>

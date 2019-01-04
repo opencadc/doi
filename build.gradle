@@ -20,11 +20,12 @@ dependencies {
 
     runtime 'jstl:jstl:1.+'
 
+
     testCompile 'junit:junit:4.+'
     testCompile 'org.skyscreamer:jsonassert:1.+'
     testCompile 'org.easymock:easymock:3.+'
     testCompile 'org.apache.commons:commons-text:[1.3,)'
-
+    compile 'org.opencadc:cadc-vos:[1.1.2,)'
 
     testCompile 'ca.nrc.cadc:web-test:[2.0, )'
     testCompile 'org.seleniumhq.selenium:selenium-java:3.+'
@@ -32,7 +33,7 @@ dependencies {
 
 sourceCompatibility = '1.7'
 group = 'ca.nrc.cadc'
-version = '1004'
+version = '1005'
 
 ext {
     intTest_user_name = 'CADCtest'
@@ -58,8 +59,34 @@ war {
 }
 
 sourceSets {
-    intTest
+    intTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/intTest/java')
+        }
+
+        // set the intTest resource directory
+        resources.srcDir file('src/intTest/resources')
+
+        // also grab the resources from the test source set
+        // resources.srcDirs += file('src/test/resources')
+        resources.srcDirs += new File(System.getenv('A') + '/test-certificates/')
+    }
 }
+
+
+tasks.withType(Test) {
+    // reset the report destinations so that intTests go to their
+    // own page
+    //reports.html.destination = file("${reporting.baseDir}/${name}")
+//    reports.html.destination = file(reporting.baseDir.getAbsolutePath() + '/' + name)
+
+    // Assign all Java system properties from
+    // the command line to the tests
+    systemProperties System.properties
+}
+
 
 configurations {
     intTestCompile
@@ -86,6 +113,27 @@ idea {
             intTestCompile 'ca.nrc.cadc:web-test:2.+'
             intTestCompile 'org.seleniumhq.selenium:selenium-java:3.+'
         }
+
+        // set the configuration context
+        testClassesDir = sourceSets.intTest.output.classesDir
+        classpath = sourceSets.intTest.runtimeClasspath
+
+        // run the tests always
+        outputs.upToDateWhen { false }
+
+        copy {
+            from System.getenv('A') + '/etc/'
+            into 'build/resources/intTest'
+            include 'DelegationTokenKey.priv'
+            rename 'DelegationTokenKey.priv', 'RsaSignaturePriv.key'
+        }
+        copy {
+            from System.getenv('A') + '/etc/'
+            into 'build/resources/intTest'
+            include 'DelegationTokenKey.pub'
+            rename 'DelegationTokenKey.pub', 'RsaSignaturePub.key'
+        }
+
 
         systemProperty "driver", "${driver}"
 

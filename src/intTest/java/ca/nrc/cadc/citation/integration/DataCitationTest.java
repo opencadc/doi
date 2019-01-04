@@ -31,10 +31,35 @@
 
 package ca.nrc.cadc.citation.integration;
 
+
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.uws.ExecutionPhase;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.NodeNotFoundException;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.client.ClientAbortThread;
+import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.TimeUnit;
+import javax.security.auth.Subject;
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class DataCitationTest extends AbstractDataCitationIntegrationTest {
+    private static final Logger log = Logger.getLogger(DataCitationTest.class);
+
+    public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
+    public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
+    public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
+
+    final Subject testSubject = SSLUtil.createSubject(DOIADMIN_CERT);
+
+    // Used to get the doiNumber into the subject.doAs that will delete minted DOIs
+    String doiNumber = "";
 
     public DataCitationTest() throws Exception {
         super();
@@ -79,7 +104,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
         // Return to the /citation/request page...
         requestPage = goTo(endpoint,
-            "?doi=" + doiSuffix,
+            "&doi=" + doiSuffix,
             DataCitationRequestPage.class
         );
 
@@ -116,7 +141,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
         // Return to the /citation/request page...
         requestPage = goTo(endpoint,
-            "?doi=" + doiSuffix,
+            "&doi=" + doiSuffix,
             DataCitationRequestPage.class
         );
 
@@ -128,10 +153,134 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     }
 
     @Test
+    public void testMinting() throws Exception {
+        // NOTE: This test requires manual clean up, as minted DOIs
+        // can't be removed by the doi service.
+        // Manual clean up includes: removing the parent directory from vospace, and
+        // removing the user group set up.
+        DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
+        doiNumber = "";
+
+        try {
+            requestPage.pageLoadLogin();
+            requestPage.waitForCreateStateReady();
+
+            requestPage.setDoiTitle("Test publication title");
+            requestPage.setDoiAuthorList("Warbler, Yellow");
+            requestPage.setJournalRef("2018, Nature, ApJ, 1000, 100");
+            requestPage.submitForm();
+
+            // Wait for create to complete
+            requestPage.waitForJournalRefLoaded();
+            Assert.assertTrue(requestPage.isStateOkay());
+
+
+
+            // Update the journal reference and title
+            // one is an XML file change, one is a vospace attribute change
+            String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
+            String newDoiTitle = "Birdsong in the Afternoon - TEST DOI";
+            requestPage.setDoiTitle(newDoiTitle);
+            requestPage.setJournalRef(newJournalRef);
+
+            requestPage.submitForm();
+            requestPage.waitForDOIGetDone();
+
+            Assert.assertTrue(requestPage.isStateOkay());
+
+            // Mint DOI just created
+            requestPage.mintDoi();
+            doiNumber = requestPage.getDoiNumber();
+
+            Assert.assertTrue(requestPage.isStateMinted());
+            System.out.println("minted");
+        } catch (Exception e) {
+
+            Assert.fail("Failed minting DOI test");
+            throw e;
+
+        } finally {
+            // Attempt cleanup of any DOIs careated
+
+            if (!doiNumber.equals("")) {
+
+                Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
+                    @Override
+                    public String run() throws Exception {
+
+                        String doiNumberParts[] = doiNumber.split("/");
+                        // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
+
+                        ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
+                        // the Status enum is in the war file for doiservice, not in a library that can be included in this test,
+                        // so we're stuck with hard coding the values.
+                        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue("in progress");
+                        vosClient.setNode(doiContainerNode);
+
+                        // unlock the data directory and delete the DOI
+                        ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                        String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+                        if (StringUtil.hasText(isLocked)) {
+                            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
+                            setDataNodeRecursively(dataContainerNode);
+                        }
+                        deleteTestFolder(vosClient, doiNumberParts[1]);
+
+                        return null;
+                    }
+
+                });
+            }
+        }
+
+        System.out.println("testDoiWorkflow test complete.");
+    }
+
+
+
+    private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
+        String nodePath = astroDataURI.getPath();
+        if (StringUtil.hasText(path)) {
+            nodePath = nodePath + "/" + path;
+        }
+
+        return (ContainerNode) vosClient.getNode(nodePath);
+    }
+
+    private void setDataNodeRecursively(final ContainerNode dataContainerNode) throws Exception {
+        // testSubject is doiadmin subject.
+        Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(dataContainerNode);
+                URL jobURL = recSetNode.getJobURL();
+
+                // this is an async operation
+                Thread abortThread = new ClientAbortThread(jobURL);
+                Runtime.getRuntime().addShutdownHook(abortThread);
+                recSetNode.setMonitor(true);
+                recSetNode.run();
+                Runtime.getRuntime().removeShutdownHook(abortThread);
+
+                recSetNode = new ClientRecursiveSetNode(jobURL, dataContainerNode, false);
+                ExecutionPhase phase = recSetNode.getPhase();
+                while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
+                    TimeUnit.SECONDS.sleep(1);
+                    phase = recSetNode.getPhase();
+                }
+
+                Assert.assertTrue("Failed to unlock test data directory, phase = " + phase, ExecutionPhase.COMPLETED == phase);
+                return phase.getValue();
+            }
+        });
+    }
+
+
+    @Test
     public void getInvalidDoi() throws Exception {
         DataCitationRequestPage requestPage;
 
-        requestPage = goTo(endpoint + "?doi=99.9999", null, DataCitationRequestPage.class);
+        requestPage = goTo(endpoint + "&doi=99.9999", null, DataCitationRequestPage.class);
 
         requestPage.pageLoadLogin();
         requestPage.waitForGetFailed();
