@@ -549,12 +549,12 @@ public class PostAction extends DoiAction {
             Namespace expected = s2.getNamespace();
             Namespace actual = s1.getNamespace();
             String msg = "namespace update is not allowed, expected = " + expected + ", actual = " + actual;
-            throw new IllegalStateException(msg);
+            throw new IllegalArgumentException(msg);
         } else if (!s1.getPublisher().equals(s2.getPublisher())) {
             String expected = s2.getPublisher();
             String actual = s1.getPublisher();
             String msg = "software error, publisher is different, expected = " + expected + ", actual = " + actual;
-            throw new IllegalStateException(msg);
+            throw new IllegalArgumentException(msg);
         } else {
             verifyIdentifier(s1.getIdentifier(), s2.getIdentifier());
             verifyResourceType(s1.getResourceType(), s2.getResourceType());
@@ -568,7 +568,7 @@ public class PostAction extends DoiAction {
         {
             if (!s1.equals(s2)) {
                 String msg = field + " update is not allowed, expected = " + s2 + ", actual = " + s1;
-                throw new IllegalStateException(msg);
+                throw new IllegalArgumentException(msg);
             }
         }
     }
@@ -579,14 +579,14 @@ public class PostAction extends DoiAction {
         {
             if (o2 != null) {
                 String msg = field + " update is not allowed, expected = " + o2 + ", actual = null";
-                throw new IllegalStateException(msg);
+                throw new IllegalArgumentException(msg);
             }
         } 
         else
         {
             if (o2 == null) {
                 String msg = field + " update is not allowed, expected = null, actual = " + o1;
-                throw new IllegalStateException(msg);
+                throw new IllegalArgumentException(msg);
             }
         }
     }
@@ -596,12 +596,12 @@ public class PostAction extends DoiAction {
             String expected = id2.getText();
             String actual = id1.getText();
             String msg = "identifier update is not allowed, expected = " + expected + ", actual = " + actual;
-            throw new IllegalStateException(msg);
+            throw new IllegalArgumentException(msg);
         } else if (!id1.getIdentifierType().equals(id2.getIdentifierType())) {
             String expected = id2.getIdentifierType();
             String actual = id1.getIdentifierType();
             String msg = "identifierType update is not allowed, expected = " + expected + ", actual = " + actual;
-            throw new IllegalStateException(msg);
+            throw new IllegalArgumentException(msg);
         }
     }
     
@@ -611,7 +611,7 @@ public class PostAction extends DoiAction {
             String expected = rt2.getResourceTypeGeneral().getValue();
             String actual = rt1.getResourceTypeGeneral().getValue();
             String msg = "resourceType update is not allowed, expected = " + expected + ", actual = " + actual;
-            throw new IllegalStateException(msg);
+            throw new IllegalArgumentException(msg);
         } else {
             verifyString(rt1.text, rt2.text, "resourceTYpe text");
         }
