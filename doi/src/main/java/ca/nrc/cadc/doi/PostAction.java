@@ -437,6 +437,9 @@ public class PostAction extends DoiAction {
 
             NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
             dataContainerNode.getProperties().add(readOnly);
+            // clear all children in the dataContainerNode, otherwise the XML file may be
+            // too long resulting in (413) Request Entity Too Large
+            dataContainerNode.setNodes(new ArrayList<Node>());
             vClient.getVOSpaceClient().setNode(dataContainerNode);
             
             // get the job URL

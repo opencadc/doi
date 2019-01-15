@@ -77,6 +77,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
@@ -97,6 +98,8 @@ import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.ClientAbortThread;
@@ -169,6 +172,19 @@ public class MintDocumentTest extends DocumentTest {
         VOSURI dataDir = new VOSURI(new URI(DoiAction.DOI_BASE_VOSPACE + "/" + dir));
         ContainerNode newDataFolder = new ContainerNode(dataDir);
         return (ContainerNode) vosClient.createNode(newDataFolder);
+    }
+    
+    private DataNode createData(String filename) throws URISyntaxException {
+        VOSURI file = new VOSURI(new URI(DoiAction.DOI_BASE_VOSPACE + "/" + filename));
+        DataNode newFile = new DataNode(file);
+        return (DataNode) vosClient.createNode(newFile);
+    }
+
+    private void createFilesWithLongNames(String dir) throws URISyntaxException {
+        String baseFilename = dir + "50chars_1234567890_1234567890_1234567890_1234567890_file";
+        for (int i = 0; i < 20; i++) {
+            createData(baseFilename + i + ".txt");
+        }
     }
     
     private void setDataNodeRecursively(final ContainerNode dataContainerNode) throws Exception {
@@ -244,6 +260,7 @@ public class MintDocumentTest extends DocumentTest {
                     // create subdirectories under the data directory
                     String subDir = doiNumberParts[1] + "/data/subDir";
                     ContainerNode dataSubDirContainerNode = createDataDirectory(subDir);
+                    createFilesWithLongNames(subDir);
                     String subSubDir = subDir + "/subsubDir";
                     ContainerNode dataSubSubDirContainerNode = createDataDirectory(subSubDir);
                     
@@ -309,7 +326,8 @@ public class MintDocumentTest extends DocumentTest {
                     ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
                     String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
                     if (StringUtil.hasText(isLocked)) {
-	                    dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);                    
+	                    dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
+	                    dataContainerNode.setNodes(new ArrayList<Node>());
 	                    setDataNodeRecursively(dataContainerNode);
                     }
                     deleteTestFolder(vosClient, doiNumberParts[1]);
