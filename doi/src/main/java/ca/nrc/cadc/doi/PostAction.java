@@ -264,9 +264,9 @@ public class PostAction extends DoiAction {
 
         String description = null;
         if (StringUtil.hasText(journalRef)) {
-	        description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName) + ", " +journalRef;
+            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName) + ", " +journalRef;
         } else {
-	        description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName);
+            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName);
         }
         
         List<Description> descriptionList = new ArrayList<Description>();
@@ -311,16 +311,16 @@ public class PostAction extends DoiAction {
      * 
      */
     private String getCredentials() {
-    	// datacite.pass contains the credentials and is in the doi.war file
+        // datacite.pass contains the credentials and is in the doi.war file
         String dataciteCredentialsPath = getPath(DATACITE_CREDENTIALS);
         log.debug("datacite username/password file path: " + dataciteCredentialsPath);
-    	NetrcFile netrcFile = new NetrcFile(dataciteCredentialsPath);
-    	PasswordAuthentication pa = netrcFile.getCredentials(dataCiteHost, true);
-    	if (pa == null) {
-    		throw new RuntimeException("failed to read from " + dataciteCredentialsPath + " file");
-    	}
+        NetrcFile netrcFile = new NetrcFile(dataciteCredentialsPath);
+        PasswordAuthentication pa = netrcFile.getCredentials(dataCiteHost, true);
+        if (pa == null) {
+            throw new RuntimeException("failed to read from " + dataciteCredentialsPath + " file");
+            }
 
-    	return pa.getUserName() + ":" + String.valueOf(pa.getPassword());
+        return pa.getUserName() + ":" + String.valueOf(pa.getPassword());
     }
     
     private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg) throws IOException {
@@ -328,31 +328,31 @@ public class PostAction extends DoiAction {
 
         // check if an exception was thrown
         if (throwable != null) {
-        	if ((responseCode == 401) || (responseCode == 403)) {
-        		throw new AccessControlException(throwable.getMessage());
-        	} else {
-        		throw new RuntimeException(responseBody + ", " + throwable);
-        	}
+            if ((responseCode == 401) || (responseCode == 403)) {
+                throw new AccessControlException(throwable.getMessage());
+            } else {
+                throw new RuntimeException(responseBody + ", " + throwable);
+            }
         }
         
         // no exception thrown, check response code
-    	if (responseCode == 200 || responseCode == 201) {
-    		log.debug(msg);
-    		return;
-    	} else {
-        	throw new IOException("HttpResponse (" + responseCode + ") - " + responseBody);
-    	}
+        if (responseCode == 200 || responseCode == 201) {
+            log.debug(msg);
+            return;
+        } else {
+            throw new IOException("HttpResponse (" + responseCode + ") - " + responseBody);
+        }
 
     }
     
     private void registerDOI(URL postURL, String content, String contentType, boolean redirect) throws IOException {
-    	log.debug("post to DataCite URL: " + postURL);
-    	log.debug("contentType: " + contentType);
-    	
-    	// post to DataCite
-    	HttpPost postToDataCite = new HttpPost(postURL, content, contentType, redirect);
-    	postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));    	
-    	postToDataCite.run();
+        log.debug("post to DataCite URL: " + postURL);
+        log.debug("contentType: " + contentType);
+
+        // post to DataCite
+        HttpPost postToDataCite = new HttpPost(postURL, content, contentType, redirect);
+        postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));    	
+        postToDataCite.run();
 
         // process response
         String msg = "Successfully registered DOI " + doiSuffix;
@@ -360,26 +360,26 @@ public class PostAction extends DoiAction {
     }
     
     private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
-    	// form the upload endpoint
-    	String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
-    	URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
-    	log.debug("makeFindable endpoint: " + makeFindableURL);
-    	
-    	// add the landing page URL
-    	String content = "doi=" + doiToMakeFindable + "\nurl=" + this.landingPageURL + "?doi=" + doiSuffix;
-    	log.debug("content: " + content);    	
-    	InputStream inputStream = new ByteArrayInputStream(content.getBytes());
-    	
-    	// upload
-    	HttpUpload put = new HttpUpload(inputStream, makeFindableURL);
-    	put.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
-    	put.setBufferSize(64 * 1024);
-    	put.setContentType("text/plain;charset=UTF-8");
-    	put.run();
-    	
-    	// process response
+        // form the upload endpoint
+        String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
+        URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
+        log.debug("makeFindable endpoint: " + makeFindableURL);
+
+        // add the landing page URL
+        String content = "doi=" + doiToMakeFindable + "\nurl=" + this.landingPageURL + "?doi=" + doiSuffix;
+        log.debug("content: " + content);    	
+        InputStream inputStream = new ByteArrayInputStream(content.getBytes());
+
+        // upload
+        HttpUpload put = new HttpUpload(inputStream, makeFindableURL);
+        put.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
+        put.setBufferSize(64 * 1024);
+        put.setContentType("text/plain;charset=UTF-8");
+        put.run();
+
+        // process response
         String msg = "Successfully made DOI " + doiSuffix + " findable";
-    	processResponse(put.getThrowable(), put.getResponseCode(), put.getResponseBody(), msg);
+        processResponse(put.getThrowable(), put.getResponseCode(), put.getResponseBody(), msg);
     }
    
     private String getDOIContent() throws Exception  {
@@ -391,55 +391,55 @@ public class PostAction extends DoiAction {
     }
     
     private void register(ContainerNode doiContainerNode) throws Exception {
-    	try {
-	    	// update status
-	        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());;
-	        vClient.getVOSpaceClient().setNode(doiContainerNode);
+        try {
+            // update status
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());;
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
 
-	        // register DOI to DataCite
-	    	String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
-	    	String content = getDOIContent();
-	    	String contentType = "application/xml;charset=UTF-8";
-	    	URL registerURL = new URL(dataCiteURL + "/metadata/" + doiToRegister);
-	    	registerDOI(registerURL, content, contentType, true);
-	        
-	    	// success, add landing page to the DOI instance
-	    	makeDOIFindable(doiContainerNode);
-	    	
-	    	// completed minting, update status
-			doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
-	        vClient.getVOSpaceClient().setNode(doiContainerNode);
-    	} catch (Exception ex) {
-	    	// update status
+            // register DOI to DataCite
+            String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
+            String content = getDOIContent();
+            String contentType = "application/xml;charset=UTF-8";
+            URL registerURL = new URL(dataCiteURL + "/metadata/" + doiToRegister);
+            registerDOI(registerURL, content, contentType, true);
+
+            // success, add landing page to the DOI instance
+            makeDOIFindable(doiContainerNode);
+
+            // completed minting, update status
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
+        } catch (Exception ex) {
+            // update status
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());;
             vClient.getVOSpaceClient().setNode(doiContainerNode);
             throw ex;
-    	}
+        }
     }
 
     private void lockData(ContainerNode doiContainerNode) throws Exception {        
         try {
-	        ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
-	        
-	    	// update status
-	        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
-	        vClient.getVOSpaceClient().setNode(doiContainerNode);
+            ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
 
-	        // lock data directory and subdirectories, make them public
-	        dataContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");	
-	        if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
-	            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-	        }	
-	        
-	        if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
-	            dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-	        }	
-	        
+            // update status
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
+
+            // lock data directory and subdirectories, make them public
+            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");	
+            if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
+                dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
+            }
+
+            if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
+                dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+            }
+
             NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
             dataContainerNode.getProperties().add(readOnly);
-	        vClient.getVOSpaceClient().setNode(dataContainerNode);
+            vClient.getVOSpaceClient().setNode(dataContainerNode);
             
-	        // get the job URL
+            // get the job URL
             ClientRecursiveSetNode recSetNode = vClient.getVOSpaceClient().setNodeRecursive(dataContainerNode);
             URL jobURL = recSetNode.getJobURL();
 
@@ -454,9 +454,9 @@ public class PostAction extends DoiAction {
             // save job URL
             NodeProperty jobURLProp = new NodeProperty(DoiAction.DOI_VOS_JOB_URL_PROP, jobURL.toExternalForm());
             doiContainerNode.getProperties().add(jobURLProp);
-	        vClient.getVOSpaceClient().setNode(doiContainerNode);
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
         } catch (Exception ex) {
-	    	// update status
+            // update status
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());;
             String jobURLString = doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_JOB_URL_PROP);
             if (jobURLString != null) {
@@ -469,48 +469,48 @@ public class PostAction extends DoiAction {
     }
     
     private void setDataCiteProperties() {
-    	if (isTesting()) {
-    		this.dataCiteHost = devHost;
-    		this.dataCiteURL = devURL;
-    	} else {
-    		this.dataCiteHost = prodHost;
-    		this.dataCiteURL = prodURL;
-    	}
+        if (isTesting()) {
+            this.dataCiteHost = devHost;
+            this.dataCiteURL = devURL;
+        } else {
+            this.dataCiteHost = prodHost;
+            this.dataCiteURL = prodURL;
+        }
     }
     
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.MINT_ACTION)) {
-        	setDataCiteProperties();
-        	
+            setDataCiteProperties();
+
             // start minting process            
-        	// check minting status
+            // check minting status
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
             Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
             switch (mintingStatus) {
-            	case DRAFT:
-            	case ERROR_LOCKING_DATA:
-                	lockData(doiContainerNode);
-                	break;
-            	case LOCKING_DATA:
-                	// locking data directory in progress, do nothing
-            		log.debug("doi " + doiSuffix + " status: " + Status.LOCKING_DATA);
-                	break;
-            	case LOCKED_DATA:
-            	case ERROR_REGISTERING:
-                	register(doiContainerNode);
-                	break;
-            	case REGISTERING:
-                	// registering doi to DataCite, do nothing
-            		log.debug("doi " + doiSuffix + " status: " + Status.REGISTERING);
-            		break;
-            	case MINTED:
-                	// minting finished, do nothing
-            		log.debug("doi " + doiSuffix + " status: " + Status.MINTED);
-            		break;
-            	case COMPLETED:
-                	// minting service should not have been called in this status, ignore
-            		log.debug("doi " + doiSuffix + " status: " + Status.COMPLETED);
-            		break;
+                case DRAFT:
+                case ERROR_LOCKING_DATA:
+                    lockData(doiContainerNode);
+                    break;
+                case LOCKING_DATA:
+                    // locking data directory in progress, do nothing
+                    log.debug("doi " + doiSuffix + " status: " + Status.LOCKING_DATA);
+                    break;
+                case LOCKED_DATA:
+                case ERROR_REGISTERING:
+                    register(doiContainerNode);
+                    break;
+                case REGISTERING:
+                    // registering doi to DataCite, do nothing
+                    log.debug("doi " + doiSuffix + " status: " + Status.REGISTERING);
+                    break;
+                case MINTED:
+                    // minting finished, do nothing
+                    log.debug("doi " + doiSuffix + " status: " + Status.MINTED);
+                    break;
+                case COMPLETED:
+                    // minting service should not have been called in this status, ignore
+                    log.debug("doi " + doiSuffix + " status: " + Status.COMPLETED);
+                    break;
             }
 
             // Done, send redirect to GET for the XML file just minted
@@ -699,13 +699,13 @@ public class PostAction extends DoiAction {
         doiRWGroup.getUserAdmins().add(member);
         
         try {
-        	gmsClient.createGroup(doiRWGroup);
+            gmsClient.createGroup(doiRWGroup);
         } catch (GroupAlreadyExistsException gaeex) {
-        	// expose it as a server error
-        	throw new RuntimeException(gaeex);
+            // expose it as a server error
+            throw new RuntimeException(gaeex);
         } catch (UserNotFoundException unfex) {
-        	// expose it as a server error
-        	throw new RuntimeException(unfex);
+            // expose it as a server error
+            throw new RuntimeException(unfex);
         }
         
         log.debug("doi group created: " + guri);
