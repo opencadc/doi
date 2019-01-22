@@ -336,7 +336,7 @@
 
       var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
           '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
-          '"placeholder="family name, given name" id="' + elementId + '" />' +
+          '" id="' + elementId + '" />' +
           '<div class="input-group-addon doi-form ">' +
           '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
           '</div></div></div>'
@@ -456,8 +456,6 @@
               .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
           )
           .catch(request => handleAjaxError(request))
-      // TODO: the above 'request' was 'message'... trying to parse the
-      // return codes in handleAjaxError...
     }
 
 
@@ -477,7 +475,7 @@
 
                 hideInfoModal()
                 page.setProgressBar('okay')
-                var jsonData = JSON.parse(request.responseText)
+                var jsonData = page.parseJSONStr(request.responseText)
                 $('#doi_number').val(jsonData.resource.identifier['$'])
                 var doiSuffix = jsonData.resource.identifier['$'].split('/')[1]
 
@@ -552,7 +550,7 @@
             function () {
               if (request.status === 200) {
                 // Populate javascript object behind form
-                doiDoc.populateDoc(JSON.parse(request.responseText))
+                doiDoc.populateDoc(page.parseJSONStr(request.responseText))
                 // Load metadata into the panel here before resolving promise
                 populateForm()
                 resolve(request)
@@ -587,7 +585,7 @@
                 // Populate javascript object behind form
                 hideInfoModal()
                 page.setProgressBar('okay')
-                var jsonData = JSON.parse(request.responseText)
+                var jsonData = page.parseJSONStr(request.responseText)
                 loadMetadata(jsonData)
                 curServiceState = jsonData.doistatus.status['$']
                 setPageState(curServiceState)

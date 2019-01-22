@@ -297,6 +297,21 @@
       return _runid
     }
 
+    function parseJSONStr(data) {
+      var escapedStr = '';
+      // This will escape any single backslashes so the JSON.parse passes.
+      // Mostly to capture elements like \msun, etc.
+      // Could definitely be more bomb-proof than it is, but it's a start
+      // to capture known issues with titles and author names
+      if (data.indexOf("\"") > 0) {
+        escapedStr = (data + '').replace(/[\\]/g, '\\$&').replace(/\u0000/g, '\\0')
+      } else {
+        escapedStr = data
+      }
+
+      return JSON.parse(escapedStr)
+    }
+
     $.extend(this, {
       parseUrl: parseUrl,
       serviceState: serviceState,
@@ -314,7 +329,8 @@
       hideModals: hideModals,
       setStatusText: setStatusText,
       getRcDisplayText: getRcDisplayText,
-      getRunid: getRunid
+      getRunid: getRunid,
+      parseJSONStr: parseJSONStr
     })
 
   }
@@ -377,34 +393,12 @@
     }
 
     function makeCreatorStanza(personalInfo) {
-      var nameParts
-      if (personalInfo.match(',')) {
-        nameParts = personalInfo.split(',').filter(Boolean)
-      } else {
-        nameParts = personalInfo
-      }
-
-      var givenName
-      var familyName
-
-      if (nameParts.length > 1) {
-        // clean up the ', ' format that might not have been done
-        // in the input box, so that output is consistent and format
-        // in the XML file is consistent
-        givenName = nameParts[1].trim()
-        familyName = nameParts[0].trim()
-      } else {
-        givenName = ''
-        familyName = nameParts[0]
-      }
 
       var creatorObject = {
         creatorName: {
           '@nameType': 'Personal',
-          $: familyName  + ', ' + givenName
-        },
-        givenName: { $: givenName },
-        familyName: { $: familyName }
+          $: personalInfo
+        }
       }
 
       return { creator: creatorObject }
@@ -537,7 +531,8 @@
       getDOISuffix: getDOISuffix,
       getTitle: getTitle,
       getLanguage: getLanguage,
-      getRelatedDOI: getRelatedDOI
+      getRelatedDOI: getRelatedDOI,
+
     })
   }
 

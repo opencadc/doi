@@ -80,8 +80,9 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
 
         Assert.assertTrue(requestPage.getDoiTitle().equals(""));
 
-        requestPage.setDoiTitle("Real publication title");
-        requestPage.setDoiAuthorList("Warbler, Yellow");
+        requestPage.setDoiTitle("TEST publication title");
+        // Change format to something non-standard that is similar to a group name
+        requestPage.setDoiAuthorList("Yellow Warbler Jamboree");
         requestPage.setJournalRef("2018, Nature, ApJ, 1000, 100");
 
         requestPage.submitForm();
@@ -113,7 +114,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         // Update the journal reference and title
         // one is an XML file change, one is a vospace attribute change
         String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
-        String newDoiTitle = "Birdsong in the Afternoon";
+        String newDoiTitle = "Birdsong in the Afternoon: AUTOMATED TEST DOI";
         requestPage.setDoiTitle(newDoiTitle);
         requestPage.setJournalRef(newJournalRef);
 
@@ -179,7 +180,7 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
             // Update the journal reference and title
             // one is an XML file change, one is a vospace attribute change
             String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
-            String newDoiTitle = "Birdsong in the Afternoon - TEST DOI";
+            String newDoiTitle = "Birdsong in the Afternoon";
             requestPage.setDoiTitle(newDoiTitle);
             requestPage.setJournalRef(newJournalRef);
 
