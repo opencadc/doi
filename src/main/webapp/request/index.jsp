@@ -163,11 +163,11 @@
                           <label for="doi_author" class="col-sm-3 control-label" id="doi_first_name_label">First Author</label>
                             <div class="col-sm-6">
                               <input type="text" class="form-control doi-form doi-form-input" id="doi_author" name="firstAuthor"
-                                     placeholder="family name, given name" tabindex="1" required/>
+                                    tabindex="2" required/>
                               <div class="doi-display doi-author hidden">
                               </div>
                             </div>
-                            <div class="col-sm-3 doi-form doi-form-info"><i>format: family name, given name</i></div>
+                            <%--<div class="col-sm-3 doi-form doi-form-info"><i>format: family name, given name</i></div>--%>
                         </div>
 
                         <div class="form-group">
