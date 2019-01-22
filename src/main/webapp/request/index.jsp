@@ -167,7 +167,6 @@
                               <div class="doi-display doi-author hidden">
                               </div>
                             </div>
-                            <%--<div class="col-sm-3 doi-form doi-form-info"><i>format: family name, given name</i></div>--%>
                         </div>
 
                         <div class="form-group">
