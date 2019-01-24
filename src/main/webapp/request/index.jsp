@@ -163,7 +163,7 @@
                           <label for="doi_author" class="col-sm-3 control-label" id="doi_first_name_label">First Author</label>
                             <div class="col-sm-6">
                               <input type="text" class="form-control doi-form doi-form-input" id="doi_author" name="firstAuthor"
-                                    tabindex="2" required/>
+                                     placeholder="Author or Group Name" tabindex="2" required/>
                               <div class="doi-display doi-author hidden">
                               </div>
                             </div>
@@ -186,7 +186,7 @@
                           <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Reference (<i>optional</i>) </label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_journal_ref" name="journalRef"
-                                   placeholder="Journal  Reference" tabindex="3" required/>
+                                   placeholder="Journal  Reference" tabindex="3"/>
                             <div class="doi-display doi-journal-ref hidden">
                             </div>
                           </div>

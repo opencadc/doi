@@ -336,7 +336,7 @@
 
       var inputHtml = '<div class="input-group mb-3 doi-remove-author" id="' + parentElementId + '" >' +
           '<input type="text" class="form-control doi-form doi-form-input"  name="' + elementName +
-          '" id="' + elementId + '" />' +
+          '" placeholder="Author or Group Name" id="' + elementId + '" />' +
           '<div class="input-group-addon doi-form ">' +
           '<button type="button" class="btn btn-default doi-small-button glyphicon glyphicon-minus" id="' + elementName + '" ></button>' +
           '</div></div></div>'
