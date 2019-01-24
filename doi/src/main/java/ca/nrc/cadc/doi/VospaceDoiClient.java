@@ -76,6 +76,7 @@ import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
+import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Node;
 import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.Protocol;
@@ -138,6 +139,24 @@ public class VospaceDoiClient {
 
         try {
             requestedNode =  (ContainerNode) vosClient.getNode(nodePath);
+        } catch (NodeNotFoundException | AccessControlException ef) {
+            throw ef;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return requestedNode;
+    }
+
+    public DataNode getDataNode(String path) throws URISyntaxException, NodeNotFoundException, AccessControlException {
+        String nodePath = baseDataURI.getPath();
+        if (StringUtil.hasText(path)) {
+            nodePath = nodePath + "/" + path;
+        }
+        DataNode requestedNode = null;
+
+        try {
+            requestedNode =  (DataNode) vosClient.getNode(nodePath);
         } catch (NodeNotFoundException | AccessControlException ef) {
             throw ef;
         } catch (Exception e) {

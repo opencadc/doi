@@ -389,12 +389,37 @@ public class PostAction extends DoiAction {
         writer.write(resource, builder);
         return builder.toString();
     }
-    
+
+
     private void register(ContainerNode doiContainerNode) throws Exception {
         try {
             // update status
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());;
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());
             vClient.getVOSpaceClient().setNode(doiContainerNode);
+
+            // Mmke parent container and XML file public, remove group properties
+            // This is required for the landing page to be available to doi.org for
+            // anonymous access
+            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
+            if (StringUtil.hasText(doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
+                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
+            }
+            if (StringUtil.hasText(doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
+                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+            }
+
+            DataNode xmlFile = vClient.getDataNode(doiSuffix + "/"+ getDoiFilename(doiSuffix));
+            xmlFile.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
+            if (StringUtil.hasText(xmlFile.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
+                xmlFile.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
+            }
+            if (StringUtil.hasText(xmlFile.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
+                xmlFile.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+            }
+
+            // update both nodes
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            vClient.getVOSpaceClient().setNode(xmlFile);
 
             // register DOI to DataCite
             String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
@@ -408,10 +433,10 @@ public class PostAction extends DoiAction {
 
             // completed minting, update status
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+
         } catch (Exception ex) {
-            // update status
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());;
+            // update status to flag error state
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
             vClient.getVOSpaceClient().setNode(doiContainerNode);
             throw ex;
         }
@@ -419,14 +444,14 @@ public class PostAction extends DoiAction {
 
     private void lockData(ContainerNode doiContainerNode) throws Exception {        
         try {
-            ContainerNode dataContainerNode= vClient.getContainerNode(doiSuffix + "/data");
+            ContainerNode dataContainerNode = vClient.getContainerNode(doiSuffix + "/data");
 
             // update status
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
             vClient.getVOSpaceClient().setNode(doiContainerNode);
 
             // lock data directory and subdirectories, make them public
-            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");	
+            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
             if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
                 dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
             }
