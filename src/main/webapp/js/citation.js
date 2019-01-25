@@ -352,6 +352,8 @@
           default:
             actionLinkString = ''
         }
+      } else {
+        actionLinkString = ''
       }
       return actionLinkString
     }
