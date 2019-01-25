@@ -188,7 +188,7 @@
     function handleDOIDelete(doiSuffix) {
       page.clearAjaxAlert()
       page.setProgressBar('busy')
-      page.setInfoModal('Please wait ', 'Deleting DOI ' + doiSuffix, true)
+      page.setInfoModal('Please wait ', 'Deleting DOI ' + doiSuffix, false, true)
 
       page.prepareCall().then(function(serviceURL) {
         var getUrl = serviceURL + '/' + doiSuffix
@@ -218,7 +218,7 @@
       clearTable()
       page.setProgressBar('busy')
       setTableStatus('Loading...')
-      page.setInfoModal('Please wait ', 'Processing request... (may take up to 10 seconds)', true)
+      page.setInfoModal('Please wait ', 'Fetching current DOI list... (may take up to 10 seconds)', false, true)
 
       page.prepareCall().then(function(serviceURL) {
         $.ajax({

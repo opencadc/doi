@@ -13,11 +13,11 @@
   function CitationLanding(inputs) {
     var doiDoc = new cadc.web.citation.DOIDocument()
     var page = new cadc.web.citation.CitationPage(inputs)
-    var _ajaxCallCount = 2
 
     function init() {
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
+      page.setAjaxCount(2)
       parseUrl()
     }
 
@@ -29,13 +29,15 @@
         // Kick off 2 parallel ajax calls.
         // Doesn't matter which one comes back first. The first one to fail
         // will report it's error to the UI
+
+        page.setInfoModal('Please wait ', 'Fetching Landing page for DOI ' + doiSuffix + '...', false, true)
+
         Promise.resolve(page.prepareCall())
             .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiSuffix), getDoiStatus(serviceURL, doiSuffix)]))
             .catch(message => page.setAjaxFail(message))
 
-
       } else {
-        page.setInfoModal('Not Found', 'Landing page not found.', false)
+        page.setInfoModal('Not Found', 'Landing page for DOI \' + doiSuffix + \'...\'not found.', true, false)
       }
     }
 
@@ -50,7 +52,7 @@
     }
 
     function handleAjaxError(request) {
-      hideInfoModal()
+      page.hideInfoModal(true)
       page.setProgressBar('error')
       page.setAjaxFail(page.getRcDisplayText(request))
     }
@@ -72,6 +74,7 @@
                 doiDoc.populateDoc(JSON.parse(request.responseText))
                 // Load metadata into the panel here before resolving promise
                 displayMetadata()
+                page.hideInfoModal()
                 resolve(request)
               } else {
                 reject(request)
@@ -102,7 +105,7 @@
               if (request.status === 200) {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
-                hideInfoModal()
+                page.hideInfoModal()
                 page.setProgressBar('okay')
                 var jsonData = JSON.parse(request.responseText)
                 displayDoiStatus(jsonData)
@@ -143,15 +146,6 @@
       $('#doi_creator_list').text(doiDoc.getAuthorListString(true))
       $('#doi_title').text(doiDoc.getTitle())
       $('#publication_doi').html(doiDoc.getRelatedDOI())
-    }
-
-    function hideInfoModal() {
-      _ajaxCallCount--
-      if (_ajaxCallCount === 0) {
-        $('#info_modal').modal('hide')
-        $('body').removeClass('modal-open')
-        $('.modal-backdrop').remove()
-      }
     }
 
     $.extend(this, {

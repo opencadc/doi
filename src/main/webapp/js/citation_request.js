@@ -69,8 +69,6 @@
           }
         }
       }
-
-
     }
 
 
@@ -88,7 +86,6 @@
       page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
         parseUrl()
       })
-
 
       // Monitor changes in data in form: MINT function is not available
       // if data has been updated.
@@ -300,7 +297,6 @@
       page.setProgressBar('okay')
       $('#doi_additional_authors').empty()
 
-
       // Do this only if explicitly asked
       // If this comes in from clicking the 'Clear' button, the data will be
       // the event itself.
@@ -320,7 +316,6 @@
         $('.doi-form').removeClass('hidden')
       }
     }
-
 
     // Must be 1 to start
     var authorcount = 1
@@ -444,13 +439,14 @@
       var doiSuffix = doiDoc.getDOISuffix()
       if (doiSuffix !== '') {
         urlAddition = '/' + doiSuffix
-        modalMessage += ' Updating Data DOI ' + doiSuffix + '...'
+        modalMessage += 'Updating Data DOI ' + doiSuffix + '...'
       }
       else {
         modalMessage += 'Requesting new Data DOI...'
       }
-      page.setInfoModal('Please wait ', modalMessage, false, false)
+      page.setInfoModal('Please wait ', modalMessage, false, true)
 
+      page.setAjaxCount(2)
       Promise.resolve(page.prepareCall())
           .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
               .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
@@ -473,7 +469,7 @@
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
 
-                hideInfoModal()
+                page.hideInfoModal()
                 page.setProgressBar('okay')
                 var jsonData = page.parseJSONStr(request.responseText)
                 $('#doi_number').val(jsonData.resource.identifier['$'])
@@ -514,6 +510,7 @@
       page.setInfoModal('Please wait ', modalMessage, false, false)
       setFormDisplayState('display')
 
+      page.setAjaxCount(2)
       Promise.resolve(page.prepareCall())
           .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
               .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix)
@@ -553,6 +550,7 @@
                 doiDoc.populateDoc(page.parseJSONStr(request.responseText))
                 // Load metadata into the panel here before resolving promise
                 populateForm()
+                page.hideInfoModal()
                 resolve(request)
               } else {
                 reject(request)
@@ -583,12 +581,12 @@
               if (request.status === 200) {
                 // load metadata into the panel here before resolving promise
                 // Populate javascript object behind form
-                hideInfoModal()
                 page.setProgressBar('okay')
                 var jsonData = page.parseJSONStr(request.responseText)
                 loadMetadata(jsonData)
                 curServiceState = jsonData.doistatus.status['$']
                 setPageState(curServiceState)
+                page.hideInfoModal()
                 resolve(request)
               } else {
                 reject(request)
@@ -604,11 +602,10 @@
       })
     }
 
-
     function handleAjaxError(request) {
-        hideInfoModal()
+        page.hideInfoModal(true)
         page.setProgressBar('error')
-        page.setAjaxFail(page.getRcDisplayText(request))
+        page.setAjaxFail(request)
     }
 
     // ---------------- DELETE ----------------
@@ -638,7 +635,7 @@
             'load',
             function () {
               if (request.status === 200) {
-                hideInfoModal()
+                page.hideInfoModal()
                 page.setProgressBar('okay')
                 handleFormReset(true)
                 page.setAjaxSuccess('DOI Deleted')
@@ -706,13 +703,8 @@
       }
     }
 
-    function hideInfoModal() {
-      $('#info_modal').modal('hide')
-      $('body').removeClass('modal-open')
-      $('.modal-backdrop').remove()
-    }
 
-// The polling function
+  // The polling function
     // TODO: test this after talking about web sockets, etc. as possible other things to use...
     function pollDoiStatus(doiNumber, timeout, interval) {
       // Set a reasonable timeout
@@ -740,7 +732,6 @@
 
       //return new Promise(checkCondition)
     }
-
 
     $.extend(this, {
       init: init
