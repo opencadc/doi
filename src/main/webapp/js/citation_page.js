@@ -37,6 +37,7 @@
     })
 
     var _runid = ''
+    var _ajaxCallCount = 1
 
     // These reflect the states as returned from the doiservice status call
     // TODO: how to make these states less breakable? String comparison isn't great...
@@ -151,6 +152,10 @@
           })
     }
 
+    function setAjaxCount(count) {
+      _ajaxCallCount = count
+    }
+
 
     // ------------ Rendering & display functions ------------
 
@@ -171,7 +176,6 @@
     }
 
     function setInfoModal(title, msg, hideSpinner, hideThanks) {
-
       // Set titles and messages
       $('.info-span').html(msg)
       $('#infoModalLongTitle').html(title)
@@ -179,7 +183,12 @@
       // Open modal if not already open
       if ($('#info_modal').data('bs.modal') === undefined ||
           $('#info_modal').data('bs.modal').isShown === false) {
-        $('#info_modal').modal('show')
+        //$('#info_modal').modal('show')
+
+        $('#info_modal').modal({
+          backdrop: 'static',
+          keyboard: false
+        })
       }
 
       // Toggle these elements as required
@@ -196,6 +205,17 @@
       }
 
     }
+
+
+    function hideInfoModal(clearAll) {
+      _ajaxCallCount--
+      if (_ajaxCallCount === 0 || clearAll === true) {
+        $('#info_modal').modal('hide')
+        $('body').removeClass('modal-open')
+        $('.modal-backdrop').remove()
+      }
+    }
+
 // ------------ Service Status parsing & display functions ------------
 
     function setStatusText(svcState) {
@@ -238,10 +258,20 @@
       var displayText
       switch(request.status) {
         case 500:
+          if (request.response.match("NodeNotFound") !== null )  {
+            displayText = 'DOI not found'
+          } else {
             displayText = 'Server Error: can not access DOI metadata'
+          }
           break
         case 400:
           displayText = 'Error getting DOI status'
+          break
+        case 404:
+          displayText = 'DOI not found'
+          break
+        case 403:
+          displayText = 'Unauthorized'
           break
         default:
           displayText = request.responseText
@@ -273,7 +303,17 @@
     // #auth_modal is in /canfar/includes/_application_header.shtml
     // the other items are expected to be in the doi index.jsp
     function setNotAuthenticated() {
-      $('#auth_modal').modal('show')
+      $('#auth_modal').modal({
+        backdrop: 'static',
+        keyboard: false
+      })
+
+      // hide and disable the close button on the authentication
+      // modal because authentication
+      // is required for using this page
+      $('#auth_modal button.close').addClass('disabled')
+      $('#auth_modal button.close').addClass('hidden')
+
       $('.doi-form-body').addClass('hidden')
       $('.doi_not_authenticated').removeClass('hidden')
 
@@ -316,11 +356,13 @@
       parseUrl: parseUrl,
       serviceState: serviceState,
       prepareCall: prepareCall,
+      setAjaxCount: setAjaxCount,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
       setProgressBar: setProgressBar,
       clearAjaxAlert: clearAjaxAlert,
       setInfoModal: setInfoModal,
+      hideInfoModal: hideInfoModal,
       mkDataDirLink: mkDataDirLink,
       mkLandingPageLink: mkLandingPageLink,
       checkAuthentication: checkAuthentication,

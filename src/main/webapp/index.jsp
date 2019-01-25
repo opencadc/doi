@@ -169,15 +169,12 @@
                   <div class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title" id="infoModalLongTitle"></h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
                     </div>
                     <div class="modal-body">
-                      <span class="info-span"></span><span class="spinner-span"></span>
+                      <span class="info-span"></span>
+                      <span class="spinner-span glyphicon glyphicon-refresh fast-right-spinner"></span>
                     </div>
                     <div id="infoThanks" class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Thanks</button>
                     </div>
                   </div>
                 </div>
