@@ -99,6 +99,7 @@ public abstract class IntTestBase {
     protected static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
     protected static File CADCAUTHTEST_CERT;
     protected static File CADCREGTEST_CERT;
+    protected static File DOIADMIN_CERT;
     protected static String baseURL;
     protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
     protected static VOSpaceClient vosClient;
@@ -118,6 +119,8 @@ public abstract class IntTestBase {
         // CadcRegtest1 will only have read access
         CADCAUTHTEST_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", IntTestBase.class);
         CADCREGTEST_CERT = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", IntTestBase.class);
+        DOIADMIN_CERT = FileUtil.getFileFromResource("doiadmin.pem", IntTestBase.class);
+
 
         rc = new RegistryClient();
         URL doi = rc.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);

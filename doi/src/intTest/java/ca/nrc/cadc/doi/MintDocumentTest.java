@@ -111,6 +111,11 @@ public class MintDocumentTest extends DocumentTest {
     private static final Logger log = Logger.getLogger(MintDocumentTest.class);
     
     final Subject testSubject = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+    final Subject doiadminSubject = SSLUtil.createSubject(DOIADMIN_CERT);
+
+    private String[] doiNumberParts;
+    private ContainerNode doiParentNode;
+
 
     static final String JSON = "application/json";
 
@@ -140,6 +145,27 @@ public class MintDocumentTest extends DocumentTest {
         postDocument(mintURL, document, journalRef);
     }
 
+    private void verifyDataDirNodeProperties(ContainerNode dataContainerNode,
+                                             ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
+        // verify the DOI data containerNode properties
+        Assert.assertTrue("should be public", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
+        Assert.assertNull("should not have group read", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertEquals("incorrect lock property", "true", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+
+        // verify the DOI data subDir containerNode properties
+        Assert.assertTrue("should be public", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
+        Assert.assertNull("should not have group read", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertEquals("incorrect lock property", "true", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+
+        // verify the DOI data subSubDir containerNode properties
+        Assert.assertTrue("should be public", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
+        Assert.assertNull("should not have group read", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertEquals("incorrect lock property", "true", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+    }
+
     private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
     		ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
         // verify the DOI containerNode properties
@@ -148,25 +174,33 @@ public class MintDocumentTest extends DocumentTest {
         Assert.assertNotNull("should have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
         Assert.assertNotNull("should have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
         Assert.assertNull("incorrect lock property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-        
-        // verify the DOI data containerNode properties
-        Assert.assertTrue("should be public", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
-        Assert.assertNull("should not have group read", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertEquals("incorrect lock property", "true", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-       
-        // verify the DOI data subDir containerNode properties
-        Assert.assertTrue("should be public", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
-        Assert.assertNull("should not have group read", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertEquals("incorrect lock property", "true", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
-        
-        // verify the DOI data subSubDir containerNode properties
-        Assert.assertTrue("should be public", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
-        Assert.assertNull("should not have group read", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertEquals("incorrect lock property", "true", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+
+        verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
     }
+
+    private void verifyLockedDataPropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
+                                                 ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
+        // verify the DOI containerNode properties
+        Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
+        Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
+        Assert.assertNotNull("should have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNotNull("should have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertNull("incorrect lock property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+
+        verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
+    }
+
+    private void verifyMintedStatePropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
+                                                  ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
+        // verify the DOI containerNode properties
+        Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
+        Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
+        Assert.assertNull("should not have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+        Assert.assertNull("should not have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+
+        verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
+    }
+
     
     private ContainerNode createDataDirectory(String dir) throws URISyntaxException {
         VOSURI dataDir = new VOSURI(new URI(DoiAction.DOI_BASE_VOSPACE + "/" + dir));
@@ -237,7 +271,7 @@ public class MintDocumentTest extends DocumentTest {
                         initialResource.getIdentifier().getText().equals(expectedIdentifier));
 
                 // Pull the suffix from the identifier
-                String[] doiNumberParts = expectedIdentifier.split("/");
+                doiNumberParts = expectedIdentifier.split("/");
 
                 try {
                     // For DOI tests below
@@ -288,6 +322,7 @@ public class MintDocumentTest extends DocumentTest {
                     doiStatus = getStatus(docURL);
                     Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getText());
                     Assert.assertEquals("status is incorrect", Status.LOCKED_DATA, doiStatus.getStatus());
+                    verifyLockedDataPropertyChanges(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
 
                     // mint the document, LOCKED_DATA == REGISTERING 
                     executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
@@ -296,18 +331,28 @@ public class MintDocumentTest extends DocumentTest {
                     dataSubDirContainerNode = getContainerNode(subDir);
                     dataSubSubDirContainerNode = getContainerNode(subSubDir);
                     Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
-                    verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
+                    verifyMintedStatePropertyChanges(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
 
                     // mint the document, ERROR_REGISTERING ==> REGISTERING
+                    // the doiContainerNode doesn't have group read & write anymore, and is owned
+                    // by doiadmin, so changes to it must be done with that cert.
                     doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
-                    vosClient.setNode(doiContainerNode);
+                    doiParentNode = doiContainerNode;
+                    Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                        @Override
+                        public String run() throws Exception {
+                            vosClient.setNode(doiParentNode);
+                            return null;
+                        }
+                    });
+
                     executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
                     doiContainerNode = getContainerNode(doiNumberParts[1]);
                     dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
                     dataSubDirContainerNode = getContainerNode(subDir);
                     dataSubSubDirContainerNode = getContainerNode(subSubDir);
                     Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
-                    verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
+                    verifyMintedStatePropertyChanges(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
 
                     // getStatus() changes REGISTERING == > MINTED
                     doiStatus = getStatus(docURL);
@@ -318,19 +363,31 @@ public class MintDocumentTest extends DocumentTest {
                     Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
                 } finally {
                     // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
-                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
-                    vosClient.setNode(doiContainerNode);
-                    
-                    // unlock the data directory and delete the DOI
-                    ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-                    if (StringUtil.hasText(isLocked)) {
-	                    dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
-	                    dataContainerNode.setNodes(new ArrayList<Node>());
-	                    setDataNodeRecursively(dataContainerNode);
-                    }
-                    deleteTestFolder(vosClient, doiNumberParts[1]);
+                    // node owner is doiadmin, and after minting the group permissions are removed, so
+                    // cleanup needs to be done as doiadmin, not the test subject
+
+                    Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                        @Override
+                        public String run() throws Exception {
+
+                            ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
+                            doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
+                            vosClient.setNode(doiContainerNode);
+
+                            // unlock the data directory and delete the DOI
+                            ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                            String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+                            if (StringUtil.hasText(isLocked)) {
+                                dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
+                                dataContainerNode.setNodes(new ArrayList<Node>());
+                                setDataNodeRecursively(dataContainerNode);
+                            }
+                            deleteTestFolder(vosClient, doiNumberParts[1]);
+
+                            return null;
+                        }
+
+                    });
                 }
                 return resource;
             }
