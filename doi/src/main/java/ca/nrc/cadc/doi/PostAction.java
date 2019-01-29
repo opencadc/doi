@@ -418,16 +418,6 @@ public class PostAction extends DoiAction {
             // make parent container and XML file public, remove group properties.
             // this is required for the landing page to be available to doi.org for
             // anonymous access
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
-            groupRead = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD);
-            if (StringUtil.hasText(groupRead)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-            }
-            groupWrite = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE);
-            if (StringUtil.hasText(groupWrite)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            }
-
             xmlFile = vClient.getDataNode(xmlFilename);
             xmlFile.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
             if (StringUtil.hasText(xmlFile.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
@@ -437,22 +427,22 @@ public class PostAction extends DoiAction {
                 xmlFile.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
             }
 
-            // update both nodes
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
             vClient.getVOSpaceClient().setNode(xmlFile);
 
+            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
+            groupRead = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD);
+            if (StringUtil.hasText(groupRead)) {
+                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
+            }
+            groupWrite = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE);
+            if (StringUtil.hasText(groupWrite)) {
+                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
+            }
+            vClient.getVOSpaceClient().setNode(doiContainerNode);
 
         } catch (Exception ex) {
             // update status to flag error state, and original properties of
             // container node and xml file
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("false");
-            if (StringUtil.hasText(groupRead)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setValue(groupRead);
-            }
-            if (StringUtil.hasText(groupWrite)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setValue(groupRead);
-            }
 
             if (xmlFile != null) {
                 xmlFile.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("false");
@@ -463,11 +453,20 @@ public class PostAction extends DoiAction {
                     xmlFile.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setValue(groupRead);
                 }
             }
+            vClient.getVOSpaceClient().setNode(xmlFile);
+
+            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
+            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("false");
+            if (StringUtil.hasText(groupRead)) {
+                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setValue(groupRead);
+            }
+            if (StringUtil.hasText(groupWrite)) {
+                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setValue(groupRead);
+            }
 
             // update both nodes
             // This will work unless vospace is failing
             vClient.getVOSpaceClient().setNode(doiContainerNode);
-            vClient.getVOSpaceClient().setNode(xmlFile);
 
             throw ex;
         }
