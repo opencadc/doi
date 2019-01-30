@@ -40,20 +40,15 @@ import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.client.ClientAbortThread;
 import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.TimeUnit;
 import javax.security.auth.Subject;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class DataCitationTest extends AbstractDataCitationIntegrationTest {
-    private static final Logger log = Logger.getLogger(DataCitationTest.class);
+public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest {
 
-    public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
     public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
 
     final Subject testSubject = SSLUtil.createSubject(DOIADMIN_CERT);
@@ -61,96 +56,8 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
     // Used to get the doiNumber into the subject.doAs that will delete minted DOIs
     String doiNumber = "";
 
-    public DataCitationTest() throws Exception {
+    public DataCitationMintingTest() throws Exception {
         super();
-    }
-
-    @Test
-    public void testDoiWorkflow() throws Exception {
-        DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
-
-        requestPage.pageLoadLogin();
-        requestPage.waitForCreateStateReady();
-
-        requestPage.setDoiTitle("DOI PUBLICATION TITLE");
-        requestPage.setDoiAuthorList("Flintstone, Fred");
-        requestPage.setJournalRef("2018, Astronomy Today, ApJ, 3000, 300");
-
-        requestPage.resetForm();
-
-        Assert.assertTrue(requestPage.getDoiTitle().equals(""));
-
-        requestPage.setDoiTitle("TEST publication title");
-        // Change format to something non-standard that is similar to a group name
-        requestPage.setDoiAuthorList("Yellow Warbler Jamboree");
-        requestPage.setJournalRef("2018, Nature, ApJ, 1000, 100");
-
-        requestPage.submitForm();
-
-        Assert.assertTrue(requestPage.isStateOkay());
-
-        // Check that landing page for this DOI renders as exepcted
-        requestPage.waitForJournalRefLoaded();
-        String doiNumber = requestPage.getDoiNumber();
-        System.out.println(doiNumber);
-        String doiSuffix = doiNumber.split("/")[1];
-        System.out.println("doi suffix: " + doiSuffix);
-
-        DataCitationLandingPage landingPage = goTo("/citation/landing",
-            "?doi=" + doiSuffix,
-            DataCitationLandingPage.class
-        );
-
-        Assert.assertEquals("doi number incorrect on landing page", landingPage.getDoiNumber(), doiNumber);
-
-        // Return to the /citation/request page...
-        requestPage = goTo(endpoint,
-            "&doi=" + doiSuffix,
-            DataCitationRequestPage.class
-        );
-
-        requestPage.waitForJournalRefLoaded();
-
-        // Update the journal reference and title
-        // one is an XML file change, one is a vospace attribute change
-        String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
-        String newDoiTitle = "Birdsong in the Afternoon: AUTOMATED TEST DOI";
-        requestPage.setDoiTitle(newDoiTitle);
-        requestPage.setJournalRef(newJournalRef);
-
-        requestPage.submitForm();
-        requestPage.waitForDOIGetDone();
-
-        Assert.assertTrue(requestPage.isStateOkay());
-
-        // Go back to landing page and verify the title and journal reference have changed
-        landingPage = goTo("/citation/landing",
-            "?doi=" + doiSuffix,
-            DataCitationLandingPage.class
-        );
-
-        if (newDoiTitle.equals(landingPage.getDoiTitle())) {
-            Assert.assertEquals("DOI title update didn't succeed", newDoiTitle, landingPage.getDoiTitle());
-        } else {
-            // reload the page - sometimes the update is slow
-            landingPage = goTo("/citation/landing",
-                "?doi=" + doiSuffix,
-                DataCitationLandingPage.class
-            );
-        }
-        Assert.assertEquals("DOI Journal ref update didn't succeed", newJournalRef, landingPage.getDoiJournalRef());
-
-        // Return to the /citation/request page...
-        requestPage = goTo(endpoint,
-            "&doi=" + doiSuffix,
-            DataCitationRequestPage.class
-        );
-
-        // Delete DOI just created
-        requestPage.deleteDoi();
-        Assert.assertTrue(requestPage.isStateOkay());
-
-        System.out.println("testDoiWorkflow test complete.");
     }
 
     @Test
@@ -176,11 +83,10 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
             Assert.assertTrue(requestPage.isStateOkay());
 
 
-
             // Update the journal reference and title
             // one is an XML file change, one is a vospace attribute change
             String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
-            String newDoiTitle = "Birdsong in the Afternoon";
+            String newDoiTitle = "Birdsong in the - Afternoon";
             requestPage.setDoiTitle(newDoiTitle);
             requestPage.setJournalRef(newJournalRef);
 
@@ -234,12 +140,12 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
             }
         }
 
+        requestPage.logout();
         System.out.println("testDoiWorkflow test complete.");
     }
 
 
-
-    private ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
+    private ContainerNode getContainerNode(String path) throws NodeNotFoundException {
         String nodePath = astroDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -276,31 +182,4 @@ public class DataCitationTest extends AbstractDataCitationIntegrationTest {
         });
     }
 
-
-    @Test
-    public void getInvalidDoi() throws Exception {
-        DataCitationRequestPage requestPage;
-
-        requestPage = goTo(endpoint + "&doi=99.9999", null, DataCitationRequestPage.class);
-
-        requestPage.pageLoadLogin();
-        requestPage.waitForGetFailed();
-
-        Assert.assertFalse(requestPage.isStateOkay());
-
-        requestPage.logout();
-
-        System.out.println("getInvalidDoi test complete.");
-    }
-
-    @Test
-    public void testListPage() throws Exception {
-        DataCitationPage citationPage = goTo("/citation", null, DataCitationPage.class);
-
-        citationPage.pageLoadLogin();
-        citationPage.waitForCreateStateReady();
-        Assert.assertTrue(citationPage.isStateOkay());
-
-        System.out.println("testListPage test complete.");
-    }
 }

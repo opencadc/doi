@@ -82,6 +82,7 @@ public abstract class DataCitationAbstractPage extends AbstractTestWebPage {
     }
 
     protected void logout() throws Exception {
+        waitForElementClickable(userActionDropdown);
         click(userActionDropdown);
         waitForElementPresent(DOI_LOGOUT_BY);
         click(logout);

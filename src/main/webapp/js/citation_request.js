@@ -617,6 +617,7 @@
       page.clearAjaxAlert()
       page.setProgressBar('busy')
       page.setInfoModal('Please wait ', 'Processing request...', false, true)
+      page.setAjaxCount(1)
 
       Promise.resolve(page.prepareCall())
           .then(serviceURL =>  deleteDoi(serviceURL, doiNumber))

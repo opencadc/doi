@@ -161,16 +161,12 @@
       $('#delete_modal').modal('show')
     }
 
-    function setMintModal(doiName) {
-      $('#doi_mint_num').html(doiName)
-      $('#mint_modal').modal('show')
-    }
-
     function hideInfoModal() {
       $('#info_modal').modal('hide')
       $('body').removeClass('modal-open')
       $('.modal-backdrop').remove()
     }
+
 
     // ------------ HTTP/Ajax functions ------------
 
@@ -198,7 +194,7 @@
           method: 'DELETE'
         })
           .success(function(data) {
-            //hideInfoModal()
+            hideInfoModal()
             page.setProgressBar('okay')
             page.trigger(_selfCitationController, cadc.web.citation.events.onDoiDeleted, {
               doiSuffix: doiSuffix,
