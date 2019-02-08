@@ -110,7 +110,11 @@
                                                                               data-contentkey="data_doi_number"
                                                                               data-title="Data DOI Number"></div></label>
                           <div class="col-sm-3 doi-form">
-                            <input type="text" class="form-control doi-form doi-form-input" id="doi_number" name="doiNumber"
+                            <input type="text"
+                                   class="form-control doi-form doi-form-input"
+                                   id="doi_number"
+                                   name="doiNumber"
+                                   placeholder="Assigned when DOI requested"
                                    disabled="disabled" readonly />
                           </div>
                           <div class="col-sm-2 doi-display doi-number hidden">
@@ -154,10 +158,12 @@
 
                         <!-- Publication Title -->
                         <div class="form-group">
-                          <label for="doi_title" class="col-sm-3 control-label" id="doi_title_label">Publication Title <div id="publication_title"
-                                                                                                                            class="citation-tooltip"
-                                                                                                                            data-contentkey="publication_title"
-                                                                                                                            data-title="Publication Title"></div>
+                          <label for="doi_title"
+                                 class="col-sm-3 control-label"
+                                 id="doi_title_label">Publication Title <div id="publication_title"
+                                                                            class="citation-tooltip"
+                                                                            data-contentkey="publication_title"
+                                                                            data-title="Publication Title"></div>
                           </label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_title" name="title"

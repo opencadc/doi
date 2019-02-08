@@ -92,7 +92,7 @@
                                         <!-- Data DOI Number -->
                                         <div class="row">
                                             <label for="doi_number" class="doi-landing text-right col-sm-3 control-label">
-                                                Data DOI Ref
+                                                Data DOI
                                             </label>
                                             <div id="doi_number" class="col-sm-3 doi-landing doi-landing-text"></div>
                                         </div>
@@ -126,7 +126,7 @@
                                         <!-- Journal Reference -->
                                         <div class="doi-journal-ref row">
                                             <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">
-                                                Journal Ref
+                                                Journal Reference
                                             </label>
                                             <div id="doi_journal_ref" class="col-sm-6 doi-landing doi-landing-text"><i>not available</i></div>
                                         </div>
@@ -134,7 +134,7 @@
                                         <!-- Status   -->
                                         <div class="row">
                                             <label for="doi_number" class="col-sm-3 doi-landing text-right control-label">
-                                                Status
+                                                DOI Status
                                             </label>
                                             <div id="doi_status" class="col-sm-3 doi-landing doi-landing-text"></div>
                                         </div>
