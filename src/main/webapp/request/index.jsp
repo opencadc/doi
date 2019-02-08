@@ -318,7 +318,7 @@
     </div>
 
 
-    <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/canfar_tooltip.js" />"></script>
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/canfar/javascript/cadc.tooltip.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_request.js" />"></script>
 
