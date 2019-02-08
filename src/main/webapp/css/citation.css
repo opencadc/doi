@@ -204,6 +204,39 @@
   margin-left: 20px;
 }
 
+.citation-tooltip {
+  display: inline-block;
+  margin-left: 5px;
+}
+
+
+/* Bootstrap Glyphicon and Popover styling */
+/* todo: move this to canfar-root when canfar_tooltip.js goes over */
+
+.popover-blue {
+  color:mediumblue;
+}
+
+.popover-right {
+  float:right;
+}
+
+.popover {
+  max-width: 200px;
+  min-width: 200px;
+}
+
+.popover-info {
+  margin-top:10px;
+  margin-bottom:10px;
+  color:mediumblue;
+}
+
+.glyphicon-question-sign, .glyphicon-remove-circle:hover
+{
+  cursor: pointer;
+}
+
 
 
 

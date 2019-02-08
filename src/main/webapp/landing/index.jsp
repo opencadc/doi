@@ -42,7 +42,7 @@
     <!--[if lt IE 9]>
     <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>Data Citation</title>
+    <title>Data Publication</title>
 </head>
 
 <body>
@@ -53,16 +53,16 @@
             <div class="inner fill">
                 <section id="main_content" class="fill">
 
-                    <h2 class="doi-page-header">
+                    <h3 class="doi-page-header">
                         <a id="canfar-doi" class="anchor" href="#canfar-doi" aria-hidden="true">
                             <span aria-hidden="true" class="octicon octicon-link"></span>
-                        </a>Data Citation
-                    </h2>
+                        </a>Data Publication
+                    </h3>
 
                     <div >
                         <div class="panel panel-default doi-panel">
                             <div class="panel-heading doi-panel-heading">
-                                <h4>Data DOI Landing Page</h4>
+                                <h4>DOI Information</h4>
                             </div>
                             <div class="progress doi-progress-bar-container">
                                 <div class="progress-bar progress-bar-success doi-progress-bar"
@@ -180,6 +180,7 @@
     </div>
 </div>
 
+<script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/canfar_tooltip.js" />"></script>
 <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
 <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_landing.js" />"></script>
 

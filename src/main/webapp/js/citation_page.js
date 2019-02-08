@@ -40,7 +40,8 @@
     var _ajaxCallCount = 1
 
     // These reflect the states as returned from the doiservice status call
-    // TODO: how to make these states less breakable? String comparison isn't great...
+    // TODO: how to make these states less breakable? String comparison isn't great, but it's
+    // a reflection of what the service returns currently.
     const serviceState = {
       START: 'start',
       INPROGRESS: 'in progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
@@ -52,6 +53,19 @@
       ERROR_LOCKING_DATA: 'error locking data directory',
       COMPLETED: 'completed'
     }
+
+    // use default tooltips file
+    var _tooltipOptions = {
+      contentFile: 'tooltips_en.json',
+      className: 'citation-tooltip',
+      buttonClassname: 'citation-tooltip-btn'
+    }
+    var _tooltips = new cadc.web.CanfarTooltip(_tooltipOptions)
+
+    _tooltips.subscribe(_tooltips, cadc.web.events.onMapLoad, function (e, data) {
+      _tooltips.getTooltips()
+    })
+
 
     // ------------ Page state management functions ------------
 
@@ -216,6 +230,17 @@
       }
     }
 
+// ------------ Tooltip display functions ------------
+
+    function loadTooltips() {
+      _tooltips.getTooltips()
+    }
+
+    function setBtnTooltip(domEl, contentKey) {
+      _tooltips.setTooltipContent(domEl, contentKey)
+    }
+
+
 // ------------ Service Status parsing & display functions ------------
 
     function setStatusText(svcState) {
@@ -372,7 +397,9 @@
       setStatusText: setStatusText,
       getRcDisplayText: getRcDisplayText,
       getRunid: getRunid,
-      parseJSONStr: parseJSONStr
+      parseJSONStr: parseJSONStr,
+      loadTooltips: loadTooltips,
+      setBtnTooltip: setBtnTooltip
     })
 
   }
