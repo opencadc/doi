@@ -222,8 +222,6 @@ public class MintDocumentTest extends DocumentTest {
     }
     
     private void setDataNodeRecursively(final ContainerNode dataContainerNode) throws Exception {
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
