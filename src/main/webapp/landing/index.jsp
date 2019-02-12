@@ -180,7 +180,7 @@
     </div>
 </div>
 
-<script type="application/javascript" src="<c:out value=" ${baseURL}/canfar/javascript/cadc.tooltip.js" />"></script>
+<script type="application/javascript" src="<c:out value=" ${baseURL}/canfar/javascript/cadc.contexthelp.js" />"></script>
 <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
 <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_landing.js" />"></script>
 

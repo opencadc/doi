@@ -125,8 +125,8 @@
       page.setProgressBar('okay')
       hideInfoModal()
 
-      // attach tooltips to buttons
-      page.loadTooltips()
+      // attach context help to buttons
+      page.loadContextHelp()
     }
 
     function setTableStatus(displayText) {

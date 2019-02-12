@@ -54,18 +54,16 @@
       COMPLETED: 'completed'
     }
 
-    // use default tooltips file
-    var _tooltipOptions = {
-      contentFile: 'tooltips_en.json',
-      className: 'citation-tooltip',
-      buttonClassname: 'citation-tooltip-btn'
+    // Initialize the context help, kick off
+    // loading the content file, and load the popovers
+    var _chOptions = {
+      contentFile: 'contexthelp_en.json',
+      clickClassname: 'citation-tooltip',
+      hoverClassname: 'citation-tooltip-btn'
     }
-    var _tooltips = new cadc.web.CanfarTooltip(_tooltipOptions)
+    var _contextHelp = new cadc.web.CadcContextHelp(_chOptions)
 
-    _tooltips.subscribe(_tooltips, cadc.web.events.onMapLoad, function (e, data) {
-      _tooltips.getTooltips()
-    })
-
+    _contextHelp.init()
 
     // ------------ Page state management functions ------------
 
@@ -230,16 +228,6 @@
       }
     }
 
-// ------------ Tooltip display functions ------------
-
-    function loadTooltips() {
-      _tooltips.getTooltips()
-    }
-
-    function setBtnTooltip(domEl, contentKey) {
-      _tooltips.setTooltipContent(domEl, contentKey)
-    }
-
 
 // ------------ Service Status parsing & display functions ------------
 
@@ -397,9 +385,7 @@
       setStatusText: setStatusText,
       getRcDisplayText: getRcDisplayText,
       getRunid: getRunid,
-      parseJSONStr: parseJSONStr,
-      loadTooltips: loadTooltips,
-      setBtnTooltip: setBtnTooltip
+      parseJSONStr: parseJSONStr
     })
 
   }

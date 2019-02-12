@@ -52,7 +52,6 @@
       // Listen for the (CitationPage) onAuthenticated call
       attachListeners()
       page.checkAuthentication()
-      page.loadTooltips()
     }
 
     function parseUrl() {
@@ -90,7 +89,6 @@
 
       page.subscribe(page, cadc.web.citation.events.onAuthenticated, function (e, data) {
         parseUrl()
-        page.loadTooltips()
       })
 
       // Monitor changes in data in form: MINT function is not available
@@ -710,25 +708,9 @@
       }
 
       if (_initialLoad === true) {
-        page.loadTooltips()
         _initialLoad = false
       }
     }
-
-    //// ---------- Event Handling Functions ----------
-    //
-    //function subscribe(target, event, eHandler) {
-    //  $(target).on(event.type, eHandler)
-    //}
-    //
-    //function unsubscribe(target, event) {
-    //  $(target).unbind(event.type)
-    //}
-    //
-    //function trigger(target, event, eventData) {
-    //  $(target).trigger(event, eventData)
-    //}
-
 
 
     // The polling function
