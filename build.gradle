@@ -42,8 +42,7 @@ ext {
     docker_image_name = 'mach378.cadc.dao.nrc.ca:5000/citation'
 
     // Change this value to test other locations, such as Production or RC.
-//    intTest_default_web_app_url = 'http://rc.canfar.net'
-    intTest_default_web_app_url = 'http://jeevesh.cadc.dao.nrc.ca'
+    intTest_default_web_app_url = 'http://rc.canfar.net'
     intTest_default_web_app_endpoint = '/citation'
 }
 
