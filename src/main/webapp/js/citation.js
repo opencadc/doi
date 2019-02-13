@@ -85,24 +85,6 @@
       })
 
     }
-    //
-    //function setNotAuthenticated(errorMsg) {
-    //  // modal is in _application_header.shtml, code found in canfar-root repository (ROOT.war)
-    //  $('#auth_modal').modal('show')
-    //  $('.doi-not-authenticated').removeClass('hidden')
-    //  $('.doi-authenticated').addClass('hidden')
-    //
-    //  $('.doi-not-authenticated').click(function() {
-    //    $('#auth_modal').modal('show')}
-    //  )
-    //}
-    //
-    //function setAuthenticated() {
-    //  $('.doi_authenticated').removeClass('hidden')
-    //  $('.doi-not-authenticated').addClass('hidden')
-    //  initializeDoiTable()
-    //  attachListeners()
-    //}
 
     // ------------ Page state management functions ------------
 

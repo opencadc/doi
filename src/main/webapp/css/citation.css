@@ -232,8 +232,7 @@
   color:mediumblue;
 }
 
-.glyphicon-question-sign, .glyphicon-remove-circle:hover
-{
+.glyphicon-question-sign, .glyphicon-remove-circle:hover {
   cursor: pointer;
 }
 
