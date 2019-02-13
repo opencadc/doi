@@ -39,7 +39,7 @@
     <!--[if lt IE 9]>
         <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>Data Citation</title>
+    <title>Data Publication</title>
   </head>
 
   <body>
@@ -50,23 +50,31 @@
           <div class="inner fill">
             <section id="main_content" class="fill">
 
-              <h2 class="doi-page-header">
+              <h3 class="doi-page-header">
                 <a id="canfar-doi" class="anchor" href="#canfar-doi" aria-hidden="true">
                   <span aria-hidden="true" class="octicon octicon-link"></span>
-                </a>Data Citation
-              </h2>
+                </a>Data Publication
+              </h3>
 
               <div class="doi-authenticated">
                 <div id="doi_metadata" class="panel panel-default doi-panel">
                   <div class="panel-heading doi-panel-heading">
                     <nav class="navbar navbar-expand-sm doi-header-navbar" id="navbar-functions">
                       <ul class="nav navbar-nav doi-header-navbar">
-                        <li class="nav-item"><h4>DOI Metadata</h4></li>
+                        <li class="nav-item"><h4>DOI Information</h4></li>
                         <li class="nav-item pull-right doi-authenticated">
-                          <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New</button>
-                          <button type="delete" class="btn btn-danger doi-button doi-listpage-header btn-sm hidden" id="doi_delete_button">Delete</button>
+                          <button id="doi_request"
+                                  class="citation-tooltip-btn btn btn-primary doi-listpage-header btn-sm"
+                                  data-contentkey="new_doi">New</button>
+                          <button type="delete"
+                                  class="citation-tooltip-btn btn btn-danger doi-button doi-listpage-header btn-sm hidden"
+                                  id="doi_delete_button"
+                                  data-contentkey="delete_doi">Delete</button>
                           <%--<!-- Javascript changes text here to be 'Mint Retry' where appropriate -->--%>
-                          <button type="mint" class="btn btn-success doi-button doi-listpage-header btn-sm hidden" id="doi_mint_button">Mint</button>
+                          <button type="mint"
+                                  class="citation-tooltip-btn btn btn-success doi-button doi-listpage-header btn-sm hidden"
+                                  id="doi_mint_button"
+                                  data-contentkey="mint_doi">Mint</button>
                         </li>
                       </ul>
                     </nav>
@@ -95,9 +103,18 @@
                       <form id="doi_request_form" class="form-horizontal">
                         <!-- Data DOI Number -->
                         <div class="form-group doi-form-group">
-                          <label for="doi_number" class="col-sm-3 control-label" id="doi_number_label">Data DOI Reference</label>
+                          <label for="doi_number"
+                                 class="col-sm-3 control-label"
+                                 id="doi_number_label">Data DOI Reference<div id="data_doi_number"
+                                                                              class="citation-tooltip"
+                                                                              data-contentkey="data_doi_number"
+                                                                              data-title="Data DOI Number"></div></label>
                           <div class="col-sm-3 doi-form">
-                            <input type="text" class="form-control doi-form doi-form-input" id="doi_number" name="doiNumber"
+                            <input type="text"
+                                   class="form-control doi-form doi-form-input"
+                                   id="doi_number"
+                                   name="doiNumber"
+                                   placeholder="Assigned when DOI requested"
                                    disabled="disabled" readonly />
                           </div>
                           <div class="col-sm-2 doi-display doi-number hidden">
@@ -141,7 +158,13 @@
 
                         <!-- Publication Title -->
                         <div class="form-group">
-                          <label for="doi_title" class="col-sm-3 control-label" id="doi_title_label">Publication Title</label>
+                          <label for="doi_title"
+                                 class="col-sm-3 control-label"
+                                 id="doi_title_label">Publication Title <div id="publication_title"
+                                                                            class="citation-tooltip"
+                                                                            data-contentkey="publication_title"
+                                                                            data-title="Publication Title"></div>
+                          </label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_title" name="title"
                                    placeholder="Title" tabindex="1" required/>
@@ -160,7 +183,13 @@
                         </div>
 
                         <div class="form-group">
-                          <label for="doi_author" class="col-sm-3 control-label" id="doi_first_name_label">First Author</label>
+                          <label for="doi_author"
+                                 class="col-sm-3 control-label"
+                                 id="doi_first_name_label">First Author <div id="first_author"
+                                                                             class="citation-tooltip"
+                                                                             data-contentkey="first_author"
+                                                                             data-title="First Author"></div>
+                          </label>
                             <div class="col-sm-6">
                               <input type="text" class="form-control doi-form doi-form-input" id="doi_author" name="firstAuthor"
                                      placeholder="Author or Group Name" tabindex="2" required/>
@@ -170,7 +199,12 @@
                         </div>
 
                         <div class="form-group">
-                          <label for="doi_additional_authors" class="col-sm-3 control-label" id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)</label>
+                          <label for="doi_additional_authors"
+                                 class="col-sm-3 control-label"
+                                 id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)<div id="additional_authors"
+                                                                                                       class="citation-tooltip"
+                                                                                                       data-contentkey="additional_authors"
+                                                                                                       data-title="Additional Authors"></div></label>
                             <div class="col-sm-6">
                                 <div id="doi_additional_authors" class="doi-form"></div>
                                 <div id="doi_additional_authors_display" class="hidden"></div>
@@ -183,7 +217,12 @@
 
                         <!-- Journal Reference - will appear on landing page -->
                         <div class="form-group">
-                          <label for="doi_journal_ref" class="col-sm-3 control-label" id="doi_journal_ref_label">Journal Reference (<i>optional</i>) </label>
+                          <label for="doi_journal_ref"
+                                 class="col-sm-3 control-label"
+                                 id="doi_journal_ref_label">Journal Reference (<i>optional</i>) <div id="journal_reference"
+                                                                                                     class="citation-tooltip"
+                                                                                                     data-contentkey="journal_reference"
+                                                                                                     data-title="Journal Reference"></div></label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_journal_ref" name="journalRef"
                                    placeholder="Journal  Reference" tabindex="3"/>
@@ -197,7 +236,15 @@
                           <div class="col-sm-offset-3 col-sm-10">
                             <div class="button-group doi-button-group col-sm-4" role="group">
                               <!-- Javascript changes text here to be 'Update' button where appropriate -->
-                              <button type="submit" class="btn btn-primary" id="doi_action_button" tabindex="5">Request</button>
+                              <button type="submit"
+                                      class="doi_action_button citation-tooltip-btn btn btn-primary"
+                                      id="doi_action_button"
+                                      tabindex="5"
+                                      data-contentkey="request_doi">Request</button>
+                                <button type="submit"
+                                        class="doi_action_button citation-tooltip-btn btn btn-primary hidden"
+                                        tabindex="5"
+                                        data-contentkey="update_doi">Update</button>
                               <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Cancel</button>
                              </div>
                             <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Mint function will be available when Update is complete</i></div>
@@ -223,7 +270,11 @@
                     </div>
 
                     <div class="row">
-                      <label for="doi_data_dir" class="col-sm-3 control-label text-right" id="doi_data_dir_label">Data Directory</label>
+                      <label for="doi_data_dir"
+                             class="col-sm-3 control-label text-right"
+                             id="doi_data_dir_label">Data Directory<div id="data_directory"
+                                                                        class="citation-tooltip"
+                                                                        data-contentkey="data_directory"></div></label>
                       <div class="col-sm-9">
                         <span id="doi_data_dir">data dir</span>
                         <div class="doi-data-locked glyphicon glyphicon-lock hidden">
@@ -267,6 +318,7 @@
     </div>
 
 
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/canfar/javascript/cadc.contexthelp.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_request.js" />"></script>
 

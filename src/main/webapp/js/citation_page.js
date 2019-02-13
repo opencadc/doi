@@ -40,7 +40,8 @@
     var _ajaxCallCount = 1
 
     // These reflect the states as returned from the doiservice status call
-    // TODO: how to make these states less breakable? String comparison isn't great...
+    // TODO: how to make these states less breakable? String comparison isn't great, but it's
+    // a reflection of what the service returns currently.
     const serviceState = {
       START: 'start',
       INPROGRESS: 'in progress', /// may be called 'DRAFT' in doi service. Different from DataCite 'DRAFT'
@@ -52,6 +53,17 @@
       ERROR_LOCKING_DATA: 'error locking data directory',
       COMPLETED: 'completed'
     }
+
+    // Initialize the context help, kick off
+    // loading the content file, and load the popovers
+    var _chOptions = {
+      contentFile: 'contexthelp_en.json',
+      clickClassname: 'citation-tooltip',
+      hoverClassname: 'citation-tooltip-btn'
+    }
+    var _contextHelp = new cadc.web.CadcContextHelp(_chOptions)
+
+    _contextHelp.init()
 
     // ------------ Page state management functions ------------
 
@@ -215,6 +227,7 @@
         $('.modal-backdrop').remove()
       }
     }
+
 
 // ------------ Service Status parsing & display functions ------------
 

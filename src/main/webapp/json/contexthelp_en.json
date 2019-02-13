@@ -1,0 +1,67 @@
+{
+  "data_doi_number": {
+    "tipHTML": "This box will be automatically filled in by the system. It will be the actual DOI that will be issued.",
+    "placement": "top",
+    "title": "Data DOI Reference"
+  },
+  "publication_title": {
+    "tipHTML": "The title of the journal publication that this data is associated with. It should be complete and accurate.",
+    "placement": "top",
+    "title": "Publication Title"
+  },
+  "first_author": {
+    "tipHTML": " First Author name as is appears in the publication. A team or group name is acceptable if that matches what appears in the journal.",
+    "placement": "top",
+    "title": "First Author"
+  },
+  "additional_authors": {
+    "tipHTML": "Please list all authors if this is practical. A team or group name is acceptable.",
+    "placement": "top",
+    "title": "Additional Authors"
+  },
+  "journal_reference": {
+    "tipHTML": "The complete and accurate reference to the journal article that the data is associated with.",
+    "placement": "top",
+    "title": "Journal Reference"
+  },
+  "data_directory": {
+    "tipHTML": "The data folder that is being published needs to be moved into this folder.",
+    "placement": "right",
+    "title": "Data Directory"
+  },
+  "new_doi": {
+    "tipHTML": "Press this button if you wish to discard all your input and start over with a new DOI and journal reference.",
+    "placement": "auto",
+    "title": "New DOI"
+  },
+  "new_doi_simple": {
+    "tipHTML": "This will take you to a form where you can request a new DOI.",
+    "placement": "auto",
+    "title": "New DOI"
+  },
+  "delete_doi": {
+    "tipHTML": "This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself.  You will start from scratch.",
+    "placement": "auto",
+    "title": "Delete DOI"
+  },
+  "mint_doi": {
+    "tipHTML": "<em>Caution</em>: The MINT button will register the DOI in the DataCite database and will lock the data directory so that no further changes can be made. The process is final although some information can be added later if necessary. Be sure that data folder is complete and final, refereeing is complete, and publication information is complete (if available).",
+    "placement": "auto",
+    "title": "Mint DOI"
+  },
+  "request_doi": {
+    "tipHTML": "Request that a DOI be assigned. The DOI is <em>NOT</em> minted (registered with DataCite) at this point.",
+    "placement": "auto",
+    "title": "Request DOI"
+  },
+  "update_doi": {
+    "tipHTML": "This will update the DOI information on this page.",
+    "placement": "auto",
+    "title": "Update DOI"
+  },
+  "verify_doi": {
+    "tipHTML": "This will take you to the Request page so you can validate the DOI information before continuing the minting process.",
+    "placement": "auto",
+    "title": "Mint DOI"
+  }
+}

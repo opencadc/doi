@@ -43,7 +43,7 @@
     <!--[if lt IE 9]>
         <script src="/html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>Data Citation</title>
+    <title>Data Publication</title>
   </head>
 
   <body>
@@ -54,11 +54,11 @@
           <div class="inner fill">
             <section id="main_content" class="fill">
 
-              <h2 class="doi-page-header">
+              <h3 class="doi-page-header">
                 <a id="canfar-doi" class="anchor" href="#canfar-doi" aria-hidden="true">
                   <span aria-hidden="true" class="octicon octicon-link"></span>
-                </a>Data Citation
-              </h2>
+                </a>Data Publication
+              </h3>
 
               <div >
                 <div class="panel panel-default doi-panel">
@@ -71,7 +71,9 @@
                           <button class="btn btn-default doi_refresh doi-listpage-header btn-sm">Refresh list</button>
                         </li>
                         <li class="nav-item pull-right doi-authenticated">
-                          <button id="doi_request" class="btn btn-primary doi-listpage-header btn-sm">New DOI</button>
+                          <button id="doi_request"
+                                  class="citation-tooltip-btn btn btn-primary doi-listpage-header btn-sm"
+                                  data-contentkey="new_doi_simple">New DOI</button>
                         </li>
                       </ul>
                     </nav>
@@ -108,7 +110,6 @@
                           <th>Title</th>
                           <th>Data Directory</th>
                           <th>Landing Page</th>
-                          <th class="no-sort">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -118,50 +119,8 @@
                     </div>
                   </div>
                 </div>
-
-
               </div>
 
-              <div id="delete_modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Confirm Delete</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      Do you want to delete DOI <span id="doi_delete_num"></span> ?
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" id="delete_ok" class="btn btn-primary">OK</button>
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div id="mint_modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">Confirm Mint</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <div>Do you want to mint DOI <span id="doi_mint_num"></span>?</div>
-                      <div>Minting will lock your VOSpace data directory and DOI metadata. You will no longer be able to update either. Please verify metadata is correct before continuing.</div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" id="mint_ok" class="btn btn-primary">OK</button>
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <!-- Info/Error Modal -->
               <div class="modal fade" id="info_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
@@ -189,6 +148,7 @@
 
 
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/datatables.js" />"></script>
+    <script type="application/javascript" src="<c:out value=" ${baseURL}/canfar/javascript/cadc.contexthelp.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation_page.js" />"></script>
     <script type="application/javascript" src="<c:out value=" ${baseURL}/citation/js/citation.js" />"></script>
 

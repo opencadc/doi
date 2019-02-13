@@ -4,7 +4,10 @@
     cadc: {
       web: {
         citation: {
-          CitationRequest: CitationRequest
+          CitationRequest: CitationRequest,
+          events: {
+            onDoiLoad: new jQuery.Event('doi:onDoiLoad')
+          }
         }
       }
     }
@@ -36,6 +39,7 @@
 
     var curUIState = ''
     var curServiceState = ''
+    var _initialLoad = true
 
 
     // ------------ Page load functions ------------
@@ -237,8 +241,8 @@
       switch(curUiState){
         case uiState.CREATE:
           $('.button-group').removeClass('hidden')
-          $('#doi_action_button').text('Create')
-          $('#doi_action_button').removeClass('hidden')
+          $('.doi_action_button[data-contentkey="request_doi"]').removeClass('hidden')
+          $('.doi_action_button[data-contentkey="update_doi"]').addClass('hidden')
           $('#doi_form_reset_button').removeClass('hidden')
           $('#doi_delete_button').addClass('hidden')
           $('#doi_register_button').addClass('hidden')
@@ -246,8 +250,8 @@
           break
         case uiState.UPDATE:
           $('.button-group').removeClass('hidden')
-          $('#doi_action_button').text('Update')
-          $('#doi_action_button').removeClass('hidden')
+          $('.doi_action_button[data-contentkey="request_doi"]').addClass('hidden')
+          $('.doi_action_button[data-contentkey="update_doi"]').removeClass('hidden')
           $('#doi_form_reset_button').removeClass('hidden')
           $('#doi_delete_button').removeClass('hidden')
           $('#doi_register_button').addClass('hidden')
@@ -255,8 +259,8 @@
           break
         case uiState.MINT:
           $('.button-group').removeClass('hidden')
-          $('#doi_action_button').text('Update')
-          $('#doi_action_button').removeClass('hidden')
+          $('.doi_action_button[data-contentkey="request_doi"]').addClass('hidden')
+          $('.doi_action_button[data-contentkey="update_doi"]').removeClass('hidden')
           $('#doi_form_reset_button').removeClass('hidden')
           $('#doi_delete_button').removeClass('hidden')
           $('#doi_register_button').addClass('hidden')
@@ -264,7 +268,7 @@
           break
         case uiState.MINT_RETRY:
           $('.button-group').removeClass('hidden')
-          $('#doi_action_button').addClass('hidden')
+          $('.doi_action_button').addClass('hidden')
           $('#doi_form_reset_button').addClass('hidden')
           $('#doi_delete_button').addClass('hidden')
           $('#doi_register_button').addClass('hidden')
@@ -702,10 +706,14 @@
       if (doiDoc.getLanguage() !== '') {
         var languageEl = $('input:radio[name=doiLanguage][value=' + doiDoc.getLanguage() + ']').click()
       }
+
+      if (_initialLoad === true) {
+        _initialLoad = false
+      }
     }
 
 
-  // The polling function
+    // The polling function
     // TODO: test this after talking about web sockets, etc. as possible other things to use...
     function pollDoiStatus(doiNumber, timeout, interval) {
       // Set a reasonable timeout
