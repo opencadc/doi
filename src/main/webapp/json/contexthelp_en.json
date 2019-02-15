@@ -50,18 +50,38 @@
     "title": "Mint DOI"
   },
   "request_doi": {
-    "tipHTML": "Request that a DOI be assigned. The DOI is <em>NOT</em> minted (registered with DataCite) at this point.",
+    "tipHTML": "<b>Request</b></br>Use the current DOI information to draft a DOI. The DOI number will be reserved, a vospace data directory will be created, and user groups will be generated to control access to the data directory. The DOI is <b>NOT</b> minted (registered with DataCite) at this point.",
     "placement": "auto",
     "title": "Request DOI"
   },
   "update_doi": {
-    "tipHTML": "This will update the DOI information on this page.",
+    "tipHTML": "<b>Update</b></br>Update the DOI information.",
     "placement": "auto",
     "title": "Update DOI"
   },
-  "verify_doi": {
-    "tipHTML": "This will take you to the Request page so you can validate the DOI information before continuing the minting process.",
+  "new_only_buttonbar": {
+    "tipHTML": "<b>New</b></br>Press this button if you wish to discard all your input and start over with a new DOI and journal reference.",
     "placement": "auto",
-    "title": "Mint DOI"
+    "title": "DOI Publication Help"
+  },
+  "update_buttonbar": {
+    "tipHTML": "<p><b>New</b></br>Discard all your input and start over with a new DOI and journal reference.</p><p><b>Delete</b></br>This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself.  You will start from scratch.</p><p><b>Mint</b></br><b>Caution</b>: The MINT button will lock the data directory so that no further changes can be made. The process is final although some information can be added later if necessary. Be sure that data folder is complete and final, refereeing is complete, and publication information is complete (if available).</p>",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "minted_buttonbar": {
+    "tipHTML": "<b>New</b></br>Begin a new DOI.",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "locked_data_buttonbar": {
+    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Continue Mint</b></br>Register the DOI displayed and it's related landing page with DataCite. The vospace data directory is already populated and locked.</p>",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "completed_buttonbar": {
+    "tipHTML": "<b>New</b></br>Begin a new DOI.",
+    "placement": "auto",
+    "title": "DOI Publication Help"
   }
 }
