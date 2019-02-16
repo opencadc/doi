@@ -399,8 +399,10 @@
   function DOIDocument() {
     var _selfDoc = this
     this._badgerfishDoc = {}
+    var _isEmpty = true
 
     function initDoc() {
+      _isEmpty = true
       // build initial badgerfish version of metadata doc to start.
       _selfDoc._badgerfishDoc = {
         resource: {
@@ -443,7 +445,12 @@
       }
     }
 
+    function isEmpty() {
+      return _isEmpty
+    }
+
     function populateDoc(serviceData) {
+      _isEmpty = false
       _selfDoc._badgerfishDoc = serviceData
     }
 
@@ -574,6 +581,7 @@
       initDoc: initDoc,
       getDoc: getDoc,
       clearDoc: clearDoc,
+      isEmpty: isEmpty,
       populateDoc: populateDoc,
       setAuthorList: setAuthorList,
       setDOINumber: setDOINumber,
@@ -587,7 +595,6 @@
       getTitle: getTitle,
       getLanguage: getLanguage,
       getRelatedDOI: getRelatedDOI,
-
     })
   }
 

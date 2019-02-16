@@ -65,7 +65,7 @@
     "title": "DOI Publication Help"
   },
   "update_buttonbar": {
-    "tipHTML": "<p><b>New</b></br>Discard all your input and start over with a new DOI and journal reference.</p><p><b>Delete</b></br>This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself.  You will start from scratch.</p><p><b>Mint</b></br><b>Caution</b>: The MINT button will lock the data directory so that no further changes can be made. The process is final although some information can be added later if necessary. Be sure that data folder is complete and final, refereeing is complete, and publication information is complete (if available).</p>",
+    "tipHTML": "<p><b>New</b></br>Discard all your input and start over with a new DOI and journal reference.</p><p><b>Delete</b></br>This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself.  You will start from scratch.</p><p><b>Lock Data Directory</b></br>The first step in Minting a DOI. </br><b>Caution</b>: The data directory will be locked so that no further changes can be made. Be sure that data folder is complete and final.</p>",
     "placement": "auto",
     "title": "DOI Publication Help"
   },
@@ -75,7 +75,7 @@
     "title": "DOI Publication Help"
   },
   "locked_data_buttonbar": {
-    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Continue Mint</b></br>Register the DOI displayed and it's related landing page with DataCite. The vospace data directory is already populated and locked.</p>",
+    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Register</b></br>The second step of Minting a DOI. Register this DOI and it's related landing page with DataCite. The vospace data directory is already populated and locked. Be sure refereeing is complete, and publication information is complete (if available). </br><em>Note:</em>Related publication information can be added manually after this step. (Contact support.)</p>",
     "placement": "auto",
     "title": "DOI Publication Help"
   },

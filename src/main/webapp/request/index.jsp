@@ -64,7 +64,7 @@
                         <li class="nav-item"><h4>DOI Information</h4></li>
                         <li class="nav-item pull-right doi-authenticated">
                           <button id="doi_request"
-                                  class="btn btn-primary doi-listpage-header btn-sm hidden" >New</button>
+                                  class="btn btn-primary doi-listpage-header btn-sm hidden">New</button>
                           <button type="delete"
                                   class="btn btn-danger doi-button doi-listpage-header btn-sm hidden"
                                   id="doi_delete_button">Delete</button>
@@ -244,7 +244,7 @@
 
                         <!-- Buttons -->
                         <div class="form-group">
-                          <label for="doi_journal_ref" class="col-sm-3 control-label">
+                          <label for="doi_journal_ref" class="doi_action_button col-sm-3 control-label">
                             <div id="doi_request_help" class="citation-tooltip citation-btn-bar" data-contentkey="request_doi"></div>
                             <div id="doi_update_help" class="citation-tooltip citation-btn-bar hidden" data-contentkey="update_doi"></div>
                           </label>
@@ -253,7 +253,7 @@
                               <!-- Javascript changes text here to be 'Update' button where appropriate -->
                               <button type="submit" class="doi_action_button btn btn-primary" id="doi_request_button" tabindex="5">Request</button>
                               <button type="submit" class="doi_action_button btn btn-primary hidden" id="doi_update_button" tabindex="5">Update</button>
-                              <button class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Reset</button>
+                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Reset</button>
                              </div>
                             <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Mint function will be available when Update is complete</i></div>
                           </div>
