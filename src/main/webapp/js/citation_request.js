@@ -279,13 +279,7 @@
           break
         case uiState.MINT_RETRY:
           $('.button-group').removeClass('hidden')
-          // / put this back, comment out the next 3 lines
-          // and set form state to 'display' if
-          // doi information isn't supposed to be edited at this point
           $('.doi_action_button').addClass('hidden')
-          //$('#doi_update_button').removeClass('hidden')
-          //$('#doi_request_button').addClass('hidden')
-
           $('#doi_form_reset_button').addClass('hidden')
           $('#doi_delete_button').addClass('hidden')
           $('#doi_register_button').addClass('hidden')
