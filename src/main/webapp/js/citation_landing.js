@@ -31,11 +31,15 @@
 
         Promise.resolve(page.prepareCall())
             .then(function(serviceCapabilityURL) {
-              getDoi(serviceCapabilityURL, doiSuffix)
-              getDoiStatus(serviceCapabilityURL, doiSuffix)
+              getDoi(serviceCapabilityURL, doiSuffix).catch(function(message) {
+                page.handleAjaxError(message)
+              })
+              getDoiStatus(serviceCapabilityURL, doiSuffix).catch(function(message) {
+                page.handleAjaxError(message)
+              })
             })
             .catch(function(message) {
-              page.setAjaxFail(message)
+              page.handleAjaxError(message)
             })
 
       } else {
@@ -53,11 +57,11 @@
       })
     }
 
-    function handleAjaxError(request) {
-      page.hideInfoModal(true)
-      page.setProgressBar('error')
-      page.setAjaxFail(page.getRcDisplayText(request))
-    }
+    //function handleAjaxError(request) {
+    //  page.hideInfoModal(true)
+    //  page.setProgressBar('error')
+    //  page.setAjaxFail(request)
+    //}
 
 
     // ------------ HTTP/Ajax functions ------------

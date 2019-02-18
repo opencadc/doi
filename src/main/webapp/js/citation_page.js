@@ -134,6 +134,12 @@
       hideModals()
     }
 
+    function handleAjaxError(request) {
+      hideInfoModal(true)
+      setProgressBar('error')
+      setAjaxFail(request)
+    }
+
     // ---------- Event Handling Functions ----------
 
     function subscribe(target, event, eHandler) {
@@ -372,6 +378,7 @@
       setAjaxCount: setAjaxCount,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
+      handleAjaxError: handleAjaxError,
       setProgressBar: setProgressBar,
       clearAjaxAlert: clearAjaxAlert,
       setInfoModal: setInfoModal,

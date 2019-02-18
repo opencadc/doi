@@ -516,13 +516,19 @@
           Promise.resolve(postDoiMetadata(serviceURL + urlAddition, multiPartData))
               .then(function(doiSuffix) {
                 getDoiStatus(serviceURL, doiSuffix)
+                    .catch(function(message) {
+                      page.handleAjaxError(message)
+                    })
               })
               .catch(function(message) {
                 page.setAjaxFail(message)
+                    .catch(function(message) {
+                      page.handleAjaxError(message)
+                    })
               })
         })
         .catch(function(message) {
-          page.setAjaxFail(message)
+          page.handleAjaxError(message)
         })
     }
 
@@ -683,11 +689,11 @@
       })
     }
 
-    function handleAjaxError(request) {
-        page.hideInfoModal(true)
-        page.setProgressBar('error')
-        page.setAjaxFail(request)
-    }
+    //function handleAjaxError(request) {
+    //    page.hideInfoModal(true)
+    //    page.setProgressBar('error')
+    //    page.setAjaxFail(request)
+    //}
 
     // ---------------- DELETE ----------------
     function handleDOIDelete() {
