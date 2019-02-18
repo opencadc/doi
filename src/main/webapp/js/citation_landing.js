@@ -57,13 +57,6 @@
       })
     }
 
-    //function handleAjaxError(request) {
-    //  page.hideInfoModal(true)
-    //  page.setProgressBar('error')
-    //  page.setAjaxFail(request)
-    //}
-
-
     // ------------ HTTP/Ajax functions ------------
 
     function getDoi(serviceURL, doiNumber) {

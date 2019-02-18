@@ -616,7 +616,13 @@
       Promise.resolve(page.prepareCall())
         .then(function(serviceCapabilityURL) {
           getDoi(serviceCapabilityURL, doiNumber)
+              .catch(function(message) {
+                page.setAjaxFail(message)
+              })
           getDoiStatus(serviceCapabilityURL, doiNumber)
+              .catch(function(message) {
+                page.setAjaxFail(message)
+              })
         })
         .catch(function(message) {
           page.setAjaxFail(message)
@@ -688,12 +694,6 @@
         request.send(null)
       })
     }
-
-    //function handleAjaxError(request) {
-    //    page.hideInfoModal(true)
-    //    page.setProgressBar('error')
-    //    page.setAjaxFail(request)
-    //}
 
     // ---------------- DELETE ----------------
     function handleDOIDelete() {
