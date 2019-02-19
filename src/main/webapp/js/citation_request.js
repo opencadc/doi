@@ -105,6 +105,7 @@
     // ------------ Page state management functions ------------
 
     function setPageState(newState) {
+      // Clear any error states
       curServiceState = newState
       switch(newState) {
         case page.serviceState.START:
@@ -288,9 +289,9 @@
           break
         case uiState.REGISTER:
         case uiState.COMPLETED:
-          // TODO: with story to support registering the Publication DOI,
-          // this will change
+          // TODO: with story to support registering the Publication DOI, this will change
           $('.button-group').addClass('hidden')
+          $('#doi_request').removeClass('hidden')
           setMintButton('off')
           break
       }
@@ -343,6 +344,7 @@
 
       // Clear the form programmatically.
       $('form input[type=text]').val('')
+      $('.doi_action_label').removeClass('hidden')
 
     }
 
@@ -350,6 +352,7 @@
       // revert form to it's state when page was first loaded
       // load the data from the last ajax call, if there is any
       event.preventDefault()
+      page.clearAjaxAlert()
 
       if (doiDoc.isEmpty() === true) {
         // Clear the form programmatically.
@@ -515,10 +518,8 @@
                     })
               })
               .catch(function(message) {
-                page.setAjaxFail(message)
-                    .catch(function(message) {
-                      page.handleAjaxError(message)
-                    })
+                page.handleAjaxError(message)
+
               })
         })
         .catch(function(message) {
@@ -578,7 +579,7 @@
       var doiSuffix = doiDoc.getDOISuffix()
 
       urlAddition = '/' + doiSuffix  + '/mint'
-      modalMessage += 'Minting Data DOI ' + doiSuffix + '...'
+      modalMessage += 'Processing request for DOI ' + doiSuffix + '...'
       page.setInfoModal('Please wait ', modalMessage, false, false)
       setFormDisplayState('display')
 
@@ -589,14 +590,16 @@
 
           Promise.resolve(postDoiMetadata(serviceURL + urlAddition, multiPartData))
               .then(function(doiSuffix) {
-                getDoiStatus(serviceURL, doiSuffix)
+                getDoiStatus(serviceURL, doiSuffix).catch(function(message) {
+                  page.handleAjaxError(message)
+                })
               })
               .catch(function(message) {
-                page.setAjaxFail(message)
+                page.handleAjaxError(message)
               })
         })
         .catch(function(message) {
-          page.setAjaxFail(message)
+          page.handleAjaxError(message)
         })
     }
 
@@ -607,19 +610,21 @@
       page.setProgressBar('busy')
       page.setInfoModal('Please wait ', 'Fetching DOI ' + doiNumber + '...', false, true)
 
+      page.setAjaxCount(2)
+
       Promise.resolve(page.prepareCall())
         .then(function(serviceCapabilityURL) {
           getDoi(serviceCapabilityURL, doiNumber)
               .catch(function(message) {
-                page.setAjaxFail(message)
+                page.handleAjaxError(message)
               })
           getDoiStatus(serviceCapabilityURL, doiNumber)
               .catch(function(message) {
-                page.setAjaxFail(message)
+                page.handleAjaxError(message)
               })
         })
         .catch(function(message) {
-          page.setAjaxFail(message)
+          page.handleAjaxError(message)
         })
     }
 
@@ -689,6 +694,11 @@
       })
     }
 
+    //function handleAjaxError(request) {
+    //    page.hideInfoModal(true)
+    //    page.setProgressBar('error')
+    //}
+
     // ---------------- DELETE ----------------
     function handleDOIDelete() {
       // Get doi number from form...
@@ -705,7 +715,7 @@
             deleteDoi(serviceURL, doiNumber)
           })
           .catch(function(message) {
-            handleAjaxError(message)
+            page.handleAjaxError(message)
           })
 
       return false
@@ -723,7 +733,7 @@
               if (request.status === 200) {
                 page.hideInfoModal()
                 page.setProgressBar('okay')
-                handleFormReset(true)
+                handleNewDoiClick()
                 page.setAjaxSuccess('DOI Deleted')
                 resolve(request)
               } else {

@@ -161,7 +161,7 @@
                             <div class="panel panel-primary doi-retry hidden">
                               <div class="panel-body doi-panel-body ">
                                 <div class="doi-retry doi-msg-text">
-                                  Click Retry to continue minting process
+                                  Click Register to continue minting process
                                 </div>
                               </div>
                             </div>
@@ -244,7 +244,7 @@
 
                         <!-- Buttons -->
                         <div class="form-group">
-                          <label for="doi_journal_ref" class="doi_action_button col-sm-3 control-label">
+                          <label for="doi_journal_ref" class="doi_action_button doi_action_label col-sm-3 control-label">
                             <div id="doi_request_help" class="citation-tooltip citation-btn-bar" data-contentkey="request_doi"></div>
                             <div id="doi_update_help" class="citation-tooltip citation-btn-bar hidden" data-contentkey="update_doi"></div>
                           </label>
