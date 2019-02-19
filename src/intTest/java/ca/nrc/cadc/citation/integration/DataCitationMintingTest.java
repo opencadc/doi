@@ -62,10 +62,6 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
 
     @Test
     public void testMinting() throws Exception {
-        // NOTE: This test requires manual clean up, as minted DOIs
-        // can't be removed by the doi service.
-        // Manual clean up includes: removing the parent directory from vospace, and
-        // removing the user group set up.
         DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
         doiNumber = "";
 
@@ -73,30 +69,23 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
             requestPage.pageLoadLogin();
             requestPage.waitForCreateStateReady();
 
-            requestPage.setDoiTitle("Test publication title");
+            requestPage.setDoiTitle("Birdsong in the - Afternoon");
             requestPage.setDoiAuthorList("Warbler, Yellow");
-            requestPage.setJournalRef("2018, Nature, ApJ, 1000, 100");
-            requestPage.submitForm();
+            requestPage.setJournalRef("2018, Nature, ApJ, 5000, 100");
+            requestPage.requestDoi();
 
             // Wait for create to complete
             requestPage.waitForJournalRefLoaded();
+            requestPage.waitForInfoModalGone();
             Assert.assertTrue(requestPage.isStateOkay());
 
-
-            // Update the journal reference and title
-            // one is an XML file change, one is a vospace attribute change
-            String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
-            String newDoiTitle = "Birdsong in the - Afternoon";
-            requestPage.setDoiTitle(newDoiTitle);
-            requestPage.setJournalRef(newJournalRef);
-
-            requestPage.submitForm();
             requestPage.waitForDOIGetDone();
 
             Assert.assertTrue(requestPage.isStateOkay());
 
             // Mint DOI just created
             requestPage.mintDoi();
+            requestPage.waitForInfoModalGone();
             doiNumber = requestPage.getDoiNumber();
 
             Assert.assertTrue(requestPage.isStateMinted());

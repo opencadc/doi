@@ -37,19 +37,19 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class DataCitationRequestPage extends DataCitationAbstractPage {
     private static final By DOI_DELETE_BY = By.id("doi_delete_button");
     private static final By DOI_MINT_BY = By.id("doi_mint_button");
     private static final By DOI_MINTED_BADGE = By.className("doi-status-badge");
     private static final By DOI_DATA_DIR_BY = By.id("doi_data_dir");
-    private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_action_button");
+    private static final By DOI_REQUEST_SUBMIT_BY = By.id("doi_request_button");
+    private static final By DOI_UPDATE_SUBMIT_BY = By.id("doi_update_button");
     private static final By DOI_NUMBER_BY = By.id("doi_number");
     private static final By DOI_JOURNALREF_BY = By.id("doi_journal_ref");
     private static final By DOI_ERRORMSG_BY = By.id("error_msg");
-    private static final By DOI_UPDATE_BUTTON = By.xpath("//button[@type='submit' and span='New']");
-
-    //*[@id="doi_action_button"]
+    private static final By INFO_MODAL = By.id("info_modal");
 
     @FindBy(id = "doi_number")
     WebElement doiNumberInput;
@@ -110,8 +110,16 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
         doiJournalRef.sendKeys(journalRef);
     }
 
-    public void submitForm() throws Exception {
+    public void requestDoi() throws Exception {
         WebElement cb = find(DOI_REQUEST_SUBMIT_BY);
+        click(cb);
+        // If submit has a problem, this element will not become visible
+        waitForElementVisible(DOI_DATA_DIR_BY);
+        waitForElementClickable(DOI_DELETE_BY);
+    }
+
+    public void updateDoi() throws Exception {
+        WebElement cb = find(DOI_UPDATE_SUBMIT_BY);
         click(cb);
         // If submit has a problem, this element will not become visible
         waitForElementVisible(DOI_DATA_DIR_BY);
@@ -163,7 +171,26 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
 
     public boolean isStateMinted() throws Exception {
         WebElement badge = find(DOI_MINTED_BADGE);
-        return !badge.getAttribute("class").contains("hidden");
+        if(badge.getAttribute("class").contains("hidden"))
+            return true;
+        else
+            return false;
     }
+
+    public void waitForInfoModalGone() throws Exception {
+        WebDriverWait wait = new WebDriverWait(driver,10);
+
+        wait.until(new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver driver) {
+            WebElement infoModal = driver.findElement(INFO_MODAL);
+            String enabled = infoModal.getAttribute("style");
+            if(enabled.contains("none"))
+                return true;
+            else
+                return false;
+            }
+        });
+    }
+
 
 }

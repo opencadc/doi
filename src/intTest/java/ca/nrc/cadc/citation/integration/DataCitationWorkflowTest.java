@@ -61,7 +61,7 @@ public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTes
         requestPage.setDoiAuthorList("Yellow Warbler Jamboree");
         requestPage.setJournalRef("2018, Nature, ApJ, 1000, 100");
 
-        requestPage.submitForm();
+        requestPage.requestDoi();
 
         Assert.assertTrue(requestPage.isStateOkay());
 
@@ -94,7 +94,7 @@ public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTes
         requestPage.setDoiTitle(newDoiTitle);
         requestPage.setJournalRef(newJournalRef);
 
-        requestPage.submitForm();
+        requestPage.updateDoi();
         requestPage.waitForDOIGetDone();
 
         Assert.assertTrue(requestPage.isStateOkay());
