@@ -64,17 +64,30 @@
                         <li class="nav-item"><h4>DOI Information</h4></li>
                         <li class="nav-item pull-right doi-authenticated">
                           <button id="doi_request"
-                                  class="citation-tooltip-btn btn btn-primary doi-listpage-header btn-sm"
-                                  data-contentkey="new_doi">New</button>
+                                  class="btn btn-primary doi-listpage-header btn-sm hidden">New</button>
                           <button type="delete"
-                                  class="citation-tooltip-btn btn btn-danger doi-button doi-listpage-header btn-sm hidden"
-                                  id="doi_delete_button"
-                                  data-contentkey="delete_doi">Delete</button>
+                                  class="btn btn-danger doi-button doi-listpage-header btn-sm hidden"
+                                  id="doi_delete_button">Delete</button>
                           <%--<!-- Javascript changes text here to be 'Mint Retry' where appropriate -->--%>
                           <button type="mint"
-                                  class="citation-tooltip-btn btn btn-success doi-button doi-listpage-header btn-sm hidden"
-                                  id="doi_mint_button"
-                                  data-contentkey="mint_doi">Mint</button>
+                                  class="btn btn-success doi-button doi-listpage-header btn-sm hidden"
+                                  id="doi_mint_button">Mint</button>
+                          <%--<!-- Context Help hooks -->--%>
+                          <div id="doi_help_new"
+                               class="citation-tooltip citation-btn-bar hidden"
+                               data-contentkey="new_only_buttonbar"></div>
+                          <div id="doi_help_update"
+                               class="citation-tooltip citation-btn-bar hidden"
+                               data-contentkey="update_buttonbar"></div>
+                          <div id="doi_help_minted"
+                               class="citation-tooltip citation-btn-bar hidden"
+                               data-contentkey="locked_data_buttonbar"></div>
+                          <div id="doi_help_minted"
+                               class="citation-tooltip citation-btn-bar hidden"
+                               data-contentkey="minted_buttonbar"></div>
+                          <div id="doi_help_completed"
+                               class="citation-tooltip citation-btn-bar hidden"
+                               data-contentkey="completed_buttonbar"></div>
                         </li>
                       </ul>
                     </nav>
@@ -203,8 +216,7 @@
                                  class="col-sm-3 control-label"
                                  id="doi_addtl_authors_label">Additional Authors (<i>optional</i>)<div id="additional_authors"
                                                                                                        class="citation-tooltip"
-                                                                                                       data-contentkey="additional_authors"
-                                                                                                       data-title="Additional Authors"></div></label>
+                                                                                                       data-contentkey="additional_authors"></div></label>
                             <div class="col-sm-6">
                                 <div id="doi_additional_authors" class="doi-form"></div>
                                 <div id="doi_additional_authors_display" class="hidden"></div>
@@ -221,8 +233,7 @@
                                  class="col-sm-3 control-label"
                                  id="doi_journal_ref_label">Journal Reference (<i>optional</i>) <div id="journal_reference"
                                                                                                      class="citation-tooltip"
-                                                                                                     data-contentkey="journal_reference"
-                                                                                                     data-title="Journal Reference"></div></label>
+                                                                                                     data-contentkey="journal_reference"></div></label>
                           <div class="col-sm-6">
                             <input type="text" class="form-control doi-form doi-form-input" id="doi_journal_ref" name="journalRef"
                                    placeholder="Journal  Reference" tabindex="3"/>
@@ -233,19 +244,16 @@
 
                         <!-- Buttons -->
                         <div class="form-group">
-                          <div class="col-sm-offset-3 col-sm-10">
+                          <label for="doi_journal_ref" class="doi_action_button col-sm-3 control-label">
+                            <div id="doi_request_help" class="citation-tooltip citation-btn-bar" data-contentkey="request_doi"></div>
+                            <div id="doi_update_help" class="citation-tooltip citation-btn-bar hidden" data-contentkey="update_doi"></div>
+                          </label>
+                          <div class="col-sm-9">
                             <div class="button-group doi-button-group col-sm-4" role="group">
                               <!-- Javascript changes text here to be 'Update' button where appropriate -->
-                              <button type="submit"
-                                      class="doi_action_button citation-tooltip-btn btn btn-primary"
-                                      id="doi_action_button"
-                                      tabindex="5"
-                                      data-contentkey="request_doi">Request</button>
-                                <button type="submit"
-                                        class="doi_action_button citation-tooltip-btn btn btn-primary hidden"
-                                        tabindex="5"
-                                        data-contentkey="update_doi">Update</button>
-                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Cancel</button>
+                              <button type="submit" class="doi_action_button btn btn-primary" id="doi_request_button" tabindex="5">Request</button>
+                              <button type="submit" class="doi_action_button btn btn-primary hidden" id="doi_update_button" tabindex="5">Update</button>
+                              <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Reset</button>
                              </div>
                             <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Mint function will be available when Update is complete</i></div>
                           </div>
@@ -283,7 +291,7 @@
                     </div>
 
                     <div class="row">
-                      <label for="doi_landing_page" class="col-sm-3 control-label text-right" id="doi_landing_page_label">URL</label>
+                      <label for="doi_landing_page" class="col-sm-3 control-label text-right" id="doi_landing_page_label">Landing Page URL</label>
                       <div class="col-sm-9">
                         <span id="doi_landing_page"><i>not available yet</i></span>
                       </div>

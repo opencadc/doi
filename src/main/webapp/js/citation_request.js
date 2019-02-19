@@ -23,6 +23,7 @@
   function CitationRequest(inputs) {
     var doiDoc = new cadc.web.citation.DOIDocument()
     var page = new cadc.web.citation.CitationPage(inputs)
+    var doiInfo = {'journalRef': ' '}
     var ajaxCallStatus = ''  // minting, creating, updating
 
     // The UI state reflects what actions are available and how the metadata is displayed to the
@@ -78,7 +79,7 @@
 
     function attachListeners() {
       // Button listeners
-      $('#doi_form_reset_button').click(handleFormReset)
+      $('#doi_form_reset_button').click(handleResetFormState)
       $('#doi_delete_button').click(handleDOIDelete)
       $('#doi_mint_button').click(handleDoiMint)
       $('#doi_request_form').submit(handleDOIRequest)
@@ -112,6 +113,7 @@
           setButtonState(uiState.CREATE)
           setFormDisplayState('form')
           setBadgeState('off')
+          setContextHelp(uiState.CREATE)
           curUIState = uiState.CREATE
           break
         case page.serviceState.INPROGRESS:
@@ -119,6 +121,7 @@
           curUIState = uiState.MINT
           setButtonState(uiState.MINT)
           setFormDisplayState('form')
+          setContextHelp(uiState.MINT)
           break
         case page.serviceState.LOCKING_DATA:
           setButtonState(uiState.MINT_RETRY)
@@ -126,19 +129,22 @@
           curUIState = uiState.MINT_RETRY
           setFormDisplayState('display')
           setBadgeState('working')
+          setContextHelp(uiState.MINT_RETRY)
           break
         case page.serviceState.DATA_LOCKED:
           // XML can be updated
           curUIState = uiState.MINT
           setButtonState(uiState.MINT_RETRY)
-          setFormDisplayState('form')
+          setFormDisplayState('display')
           setBadgeState('data_locked')
+          setContextHelp(uiState.MINT_RETRY)
           break
         case page.serviceState.MINTED:
           curUIState = uiState.REGISTER
           setButtonState(uiState.REGISTER)
           setFormDisplayState('display')
           setBadgeState(newState)
+          setContextHelp(uiState.COMPLETED)
           break
         case page.serviceState.ERROR_LOCKING_DATA:
         case page.serviceState.ERROR_REGISTERING:
@@ -148,12 +154,14 @@
           // if not this will be different than REGISTER_ERROR state
           setFormDisplayState('display')
           setBadgeState('warning')
+          setContextHelp(uiState.COMPLETED)
           break
         case page.serviceState.COMPLETED:
           curUIState = uiState.COMPLETED
           setButtonState(uiState.COMPLETED)
           setFormDisplayState('display')
           setBadgeState('completed')
+          setContextHelp(uiState.COMPLETED)
           break
       }
     }
@@ -217,17 +225,17 @@
       // current form data has been updated. Having the button disappear completely is more
       // confusing than having the button be disabled with some helpful text...
       if (state === 'on') {
-        $('#doi_mint_button').text('Mint')
+        $('#doi_mint_button').text('Lock Data Directory')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', false)
         $('.doi-mint-info').addClass('hidden')
       } else if (state === 'disabled') {
-        $('#doi_mint_button').text('Mint')
+        $('#doi_mint_button').text('Lock Data Directory')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', true)
         $('.doi-mint-info').removeClass('hidden')
       } else if (state === 'retry') {
-        $('#doi_mint_button').text('Mint Retry')
+        $('#doi_mint_button').text('Register')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', false)
         $('.doi-mint-info').addClass('hidden')
@@ -241,29 +249,32 @@
       switch(curUiState){
         case uiState.CREATE:
           $('.button-group').removeClass('hidden')
-          $('.doi_action_button[data-contentkey="request_doi"]').removeClass('hidden')
-          $('.doi_action_button[data-contentkey="update_doi"]').addClass('hidden')
+          $('#doi_request_button').removeClass('hidden')
+          $('#doi_update_button').addClass('hidden')
           $('#doi_form_reset_button').removeClass('hidden')
           $('#doi_delete_button').addClass('hidden')
           $('#doi_register_button').addClass('hidden')
+          $('#doi_request').addClass('hidden')
           setMintButton('off')
           break
         case uiState.UPDATE:
           $('.button-group').removeClass('hidden')
-          $('.doi_action_button[data-contentkey="request_doi"]').addClass('hidden')
-          $('.doi_action_button[data-contentkey="update_doi"]').removeClass('hidden')
+          $('#doi_request_button').addClass('hidden')
+          $('#doi_update_button').removeClass('hidden')
           $('#doi_form_reset_button').removeClass('hidden')
           $('#doi_delete_button').removeClass('hidden')
           $('#doi_register_button').addClass('hidden')
+          $('#doi_request').removeClass('hidden')
           setMintButton('disabled')
           break
         case uiState.MINT:
           $('.button-group').removeClass('hidden')
-          $('.doi_action_button[data-contentkey="request_doi"]').addClass('hidden')
-          $('.doi_action_button[data-contentkey="update_doi"]').removeClass('hidden')
+          $('#doi_request_button').addClass('hidden')
+          $('#doi_update_button').removeClass('hidden')
           $('#doi_form_reset_button').removeClass('hidden')
           $('#doi_delete_button').removeClass('hidden')
           $('#doi_register_button').addClass('hidden')
+          $('#doi_request').removeClass('hidden')
           setMintButton('on')
           break
         case uiState.MINT_RETRY:
@@ -272,6 +283,7 @@
           $('#doi_form_reset_button').addClass('hidden')
           $('#doi_delete_button').addClass('hidden')
           $('#doi_register_button').addClass('hidden')
+          $('#doi_request').removeClass('hidden')
           setMintButton('retry')
           break
         case uiState.REGISTER:
@@ -284,13 +296,41 @@
       }
     }
 
-    function handleNewDoiClick() {
-      // 'true' here will trigger the form to reset itself
-      handleFormReset(true)
+    function setContextHelp(state) {
+        $('.citation-btn-bar').addClass('hidden')
+
+        switch (state) {
+          case uiState.CREATE:
+            // Upper right button bar not active
+            $('.citation-tooltip[data-contentkey="request_doi"]').removeClass('hidden')
+            break
+          case uiState.MINT:
+            // Both button bars active
+            $('.citation-tooltip[data-contentkey="update_doi"]').removeClass('hidden')
+            $('.citation-tooltip[data-contentkey="update_buttonbar"]').removeClass('hidden')
+            break
+          case uiState.MINT_RETRY:
+            $('.citation-tooltip[data-contentkey="update_doi"]').removeClass('hidden')
+            $('.citation-tooltip[data-contentkey="locked_data_buttonbar"]').removeClass('hidden')
+            break
+          case uiState.MINTED :
+            // Button bar below form not active
+            $('.citation-tooltip[data-contentkey="minted_buttonbar"]').removeClass('hidden')
+            break
+          case uiState.COMPLETED :
+            // Button bar below form not active
+            $('.citation-tooltip[data-contentkey="completed_buttonbar"]').removeClass('hidden')
+            break
+        }
     }
 
-    function handleFormReset(callFormReset) {
+    function handleNewDoiClick() {
+      // Reset the form to it's original state.
       setPageState(page.serviceState.START)
+
+      // Reset the doi Doc
+      doiDoc.clearDoc()
+      doiInfo.journalRef = ''
 
       // Clear Related Information panel
       $('#doi_related').addClass('hidden')
@@ -301,12 +341,24 @@
       page.setProgressBar('okay')
       $('#doi_additional_authors').empty()
 
-      // Do this only if explicitly asked
-      // If this comes in from clicking the 'Clear' button, the data will be
-      // the event itself.
-      if (callFormReset === true) {
-        $('#doi_form_reset_button').click()
+      // Clear the form programmatically.
+      $('form input[type=text]').val('')
+
+    }
+
+    function handleResetFormState(event) {
+      // revert form to it's state when page was first loaded
+      // load the data from the last ajax call, if there is any
+      event.preventDefault()
+
+      if (doiDoc.isEmpty() === true) {
+        // Clear the form programmatically.
+        $('form input[type=text]').val('')
+      } else {
+        populateForm()
       }
+      $('#doi_journal_ref').val(doiInfo.journalRef)
+      $('.doi-journal-ref').html(doiInfo.journalRef)
     }
 
     function setFormDisplayState(mode) {
@@ -451,11 +503,27 @@
       page.setInfoModal('Please wait ', modalMessage, false, true)
 
       page.setAjaxCount(2)
+
       Promise.resolve(page.prepareCall())
-          .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
-              .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix))
-          )
-          .catch(request => handleAjaxError(request))
+        .then(function(serviceURL) {
+
+          Promise.resolve(postDoiMetadata(serviceURL + urlAddition, multiPartData))
+              .then(function(doiSuffix) {
+                getDoiStatus(serviceURL, doiSuffix)
+                    .catch(function(message) {
+                      page.handleAjaxError(message)
+                    })
+              })
+              .catch(function(message) {
+                page.setAjaxFail(message)
+                    .catch(function(message) {
+                      page.handleAjaxError(message)
+                    })
+              })
+        })
+        .catch(function(message) {
+          page.handleAjaxError(message)
+        })
     }
 
 
@@ -515,13 +583,21 @@
       setFormDisplayState('display')
 
       page.setAjaxCount(2)
+
       Promise.resolve(page.prepareCall())
-          .then(serviceURL =>  postDoiMetadata(serviceURL + urlAddition, multiPartData)
-              .then(doiSuffix => getDoiStatus(serviceURL, doiSuffix)
-                  .then(doiSuffix => pollDoiStatus(doiSuffix, 2000, 150))
-              )
-          )
-          .catch(message => handleAjaxError(message))
+        .then(function(serviceURL) {
+
+          Promise.resolve(postDoiMetadata(serviceURL + urlAddition, multiPartData))
+              .then(function(doiSuffix) {
+                getDoiStatus(serviceURL, doiSuffix)
+              })
+              .catch(function(message) {
+                page.setAjaxFail(message)
+              })
+        })
+        .catch(function(message) {
+          page.setAjaxFail(message)
+        })
     }
 
 
@@ -531,13 +607,20 @@
       page.setProgressBar('busy')
       page.setInfoModal('Please wait ', 'Fetching DOI ' + doiNumber + '...', false, true)
 
-      // Submit calls to get DOI metadata and status
-      // Run the registry lookup call prior to running the get and get status
-      // Get and get status can run in parallel
-
       Promise.resolve(page.prepareCall())
-          .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiNumber), getDoiStatus(serviceURL, doiNumber)]))
-          .catch(message => handleAjaxError(message))
+        .then(function(serviceCapabilityURL) {
+          getDoi(serviceCapabilityURL, doiNumber)
+              .catch(function(message) {
+                page.setAjaxFail(message)
+              })
+          getDoiStatus(serviceCapabilityURL, doiNumber)
+              .catch(function(message) {
+                page.setAjaxFail(message)
+              })
+        })
+        .catch(function(message) {
+          page.setAjaxFail(message)
+        })
     }
 
     function getDoi(serviceURL, doiNumber) {
@@ -606,12 +689,6 @@
       })
     }
 
-    function handleAjaxError(request) {
-        page.hideInfoModal(true)
-        page.setProgressBar('error')
-        page.setAjaxFail(request)
-    }
-
     // ---------------- DELETE ----------------
     function handleDOIDelete() {
       // Get doi number from form...
@@ -624,8 +701,12 @@
       page.setAjaxCount(1)
 
       Promise.resolve(page.prepareCall())
-          .then(serviceURL =>  deleteDoi(serviceURL, doiNumber))
-          .catch(message => handleAjaxError(message))
+          .then(function(serviceURL) {
+            deleteDoi(serviceURL, doiNumber)
+          })
+          .catch(function(message) {
+            handleAjaxError(message)
+          })
 
       return false
     }
@@ -670,12 +751,13 @@
       // This happens to be an input element in the form, so 'val' is preferred
       if (typeof statusData.doistatus.journalRef === 'undefined') {
         $('#doi_journal_ref').val('not available')
-        $('.doi-journal-ref').html('<i>not availabile</i>')
+        $('.doi-journal-ref').html('<i>not available</i>')
+        doiInfo.journalRef = ''
       } else {
         $('#doi_journal_ref').val(statusData.doistatus.journalRef['$'])
         $('.doi-journal-ref').html(statusData.doistatus.journalRef['$'])
+        doiInfo.journalRef = statusData.doistatus.journalRef['$']
       }
-
     }
 
     function populateForm() {
@@ -721,8 +803,10 @@
       interval = interval || 100
 
       var checkCondition = function(resolve, reject) {
-        page.prepareCall().then(serviceUrl => getDoiStatus(serviceUrl, doiNumber))
-            .then( function(response){
+        page.prepareCall().then(function(serviceUrl) {
+          getDoiStatus(serviceUrl, doiNumber)
+        })
+        .then( function(response){
           // If the condition is met, we're done!
           if(response.data.var == true) {
             // There's a few options here.
@@ -739,7 +823,7 @@
         })
       }
 
-      //return new Promise(checkCondition)
+      return new Promise(checkCondition)
     }
 
     $.extend(this, {

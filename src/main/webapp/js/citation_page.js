@@ -134,6 +134,12 @@
       hideModals()
     }
 
+    function handleAjaxError(request) {
+      hideInfoModal(true)
+      setProgressBar('error')
+      setAjaxFail(request)
+    }
+
     // ---------- Event Handling Functions ----------
 
     function subscribe(target, event, eHandler) {
@@ -372,6 +378,7 @@
       setAjaxCount: setAjaxCount,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
+      handleAjaxError: handleAjaxError,
       setProgressBar: setProgressBar,
       clearAjaxAlert: clearAjaxAlert,
       setInfoModal: setInfoModal,
@@ -399,8 +406,10 @@
   function DOIDocument() {
     var _selfDoc = this
     this._badgerfishDoc = {}
+    var _isEmpty = true
 
     function initDoc() {
+      _isEmpty = true
       // build initial badgerfish version of metadata doc to start.
       _selfDoc._badgerfishDoc = {
         resource: {
@@ -443,7 +452,12 @@
       }
     }
 
+    function isEmpty() {
+      return _isEmpty
+    }
+
     function populateDoc(serviceData) {
+      _isEmpty = false
       _selfDoc._badgerfishDoc = serviceData
     }
 
@@ -574,6 +588,7 @@
       initDoc: initDoc,
       getDoc: getDoc,
       clearDoc: clearDoc,
+      isEmpty: isEmpty,
       populateDoc: populateDoc,
       setAuthorList: setAuthorList,
       setDOINumber: setDOINumber,
@@ -587,7 +602,6 @@
       getTitle: getTitle,
       getLanguage: getLanguage,
       getRelatedDOI: getRelatedDOI,
-
     })
   }
 

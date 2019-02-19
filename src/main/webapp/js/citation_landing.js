@@ -26,15 +26,21 @@
 
       if (query !== '') {
         var doiSuffix = query.split('=')[1]
-        // Kick off 2 parallel ajax calls.
-        // Doesn't matter which one comes back first. The first one to fail
-        // will report it's error to the UI
 
         page.setInfoModal('Please wait ', 'Fetching Landing page for DOI ' + doiSuffix + '...', false, true)
 
         Promise.resolve(page.prepareCall())
-            .then(serviceURL =>  Promise.race([getDoi(serviceURL, doiSuffix), getDoiStatus(serviceURL, doiSuffix)]))
-            .catch(message => page.setAjaxFail(message))
+            .then(function(serviceCapabilityURL) {
+              getDoi(serviceCapabilityURL, doiSuffix).catch(function(message) {
+                page.handleAjaxError(message)
+              })
+              getDoiStatus(serviceCapabilityURL, doiSuffix).catch(function(message) {
+                page.handleAjaxError(message)
+              })
+            })
+            .catch(function(message) {
+              page.handleAjaxError(message)
+            })
 
       } else {
         page.setInfoModal('Not Found', 'Landing page for DOI \' + doiSuffix + \'...\'not found.', true, false)
@@ -50,13 +56,6 @@
         parseUrl()
       })
     }
-
-    function handleAjaxError(request) {
-      page.hideInfoModal(true)
-      page.setProgressBar('error')
-      page.setAjaxFail(page.getRcDisplayText(request))
-    }
-
 
     // ------------ HTTP/Ajax functions ------------
 
@@ -145,7 +144,10 @@
     function displayMetadata() {
       $('#doi_creator_list').text(doiDoc.getAuthorListString(true))
       $('#doi_title').text(doiDoc.getTitle())
-      $('#publication_doi').html(doiDoc.getRelatedDOI())
+      var doiNumStr = doiDoc.getRelatedDOI()
+      var hrefStr = 'https://doi.org/' + doiNumStr
+      var publicationDoiHtml = '<a href="' + hrefStr + '" target="_blank">' + doiNumStr + '</a>'
+      $('#publication_doi').html(publicationDoiHtml)
     }
 
     $.extend(this, {
