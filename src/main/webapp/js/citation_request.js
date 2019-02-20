@@ -596,7 +596,7 @@
 
           Promise.resolve(postDoiMetadata(serviceURL + urlAddition, multiPartData))
             .then(function(doiSuffix) {
-              //getDoiStatus(serviceURL, doiSuffix). then (function() {
+              getDoiStatus(serviceURL, doiSuffix). then (function() {
                 // start polling
                 pollDoiStatus(serviceURL, doiSuffix, 1000, 100)
                     .then(function(status) {
@@ -612,6 +612,10 @@
                     })
                     .catch(function(message) {
                   page.handleAjaxError(message)
+                })
+                .catch(function(message) {
+                  page.handleAjaxError(message)
+                })
               })
               .catch(function(message) {
                 page.handleAjaxError(message)
