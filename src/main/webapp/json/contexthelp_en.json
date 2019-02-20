@@ -25,17 +25,12 @@
     "title": "Journal Reference"
   },
   "data_directory": {
-    "tipHTML": "The data folder that is being published needs to be moved into this folder.",
+    "tipHTML": "The dataset associated with this DOI is housed at this location.",
     "placement": "right",
     "title": "Data Directory"
   },
   "new_doi": {
-    "tipHTML": "Press this button if you wish to discard all your input and start over with a new DOI and journal reference.",
-    "placement": "auto",
-    "title": "New DOI"
-  },
-  "new_doi_simple": {
-    "tipHTML": "This will take you to a form where you can request a new DOI.",
+    "tipHTML": "Discard all current information and start over with a new DOI.",
     "placement": "auto",
     "title": "New DOI"
   },
