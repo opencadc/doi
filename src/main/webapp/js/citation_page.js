@@ -253,13 +253,13 @@
           statusHtml  = 'Registering DOI with DataCite'
           break
         case serviceState.MINTED:
-          statusHtml = '<div class="doi-minted">Minted</div>'
+          statusHtml = '<div class="doi-minted">Published</div>'
           break
         case serviceState.ERROR_LOCKING_DATA:
           statusHtml = '<div class="doi-warning">Error locking data directory</div>'
           break
         case serviceState.ERROR_REGISTERING:
-          statusHtml = '<div class="doi-warning">Error registering DOI with DataCite </div>'
+          statusHtml = '<div class="doi-warning">Error registering DOI</div>'
           break
         case serviceState.COMPLETED:
           statusHtml = '<div class="doi-minted">Complete</div>'

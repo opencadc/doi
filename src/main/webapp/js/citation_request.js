@@ -200,7 +200,7 @@
             $('.doi-working').addClass('hidden')
             $('.doi-warning').addClass('hidden')
             $('.doi-retry').addClass('hidden')
-            $('#green_badge').text('MINTED')
+            $('#green_badge').text('PUBLISHED')
             $('.doi-data-locked').removeClass('hidden')
             break
           case 'completed' :
@@ -227,17 +227,17 @@
       // current form data has been updated. Having the button disappear completely is more
       // confusing than having the button be disabled with some helpful text...
       if (state === 'on') {
-        $('#doi_mint_button').text('Mint')
+        $('#doi_mint_button').text('Publish')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', false)
         $('.doi-mint-info').addClass('hidden')
       } else if (state === 'disabled') {
-        $('#doi_mint_button').text('Mint')
+        $('#doi_mint_button').text('Publish')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', true)
         $('.doi-mint-info').removeClass('hidden')
       } else if (state === 'retry') {
-        $('#doi_mint_button').text('Retry Minting')
+        $('#doi_mint_button').text('Retry Publish')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', false)
         $('.doi-mint-info').addClass('hidden')
@@ -580,7 +580,7 @@
       if (typeof event.newMsg !== 'undefined') {
         modalMessage = event.newMsg
       } else {
-        modalMessage = 'Minting DOI '
+        modalMessage = 'Publishing DOI '
       }
       var doiSuffix = doiDoc.getDOISuffix()
 
@@ -602,7 +602,7 @@
                     .then(function(status) {
                         if (status === page.serviceState.DATA_LOCKED) {
                           // Submit second mint request to complete registration
-                          event.newMsg = 'Registering DOI '
+                          event.newMsg = 'Registering DOI with DataCite: '
                           handleDoiMint(event)
                         } else {
                           // Otherwise return to the page with current status

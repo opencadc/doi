@@ -60,7 +60,7 @@
     "title": "DOI Publication Help"
   },
   "update_buttonbar": {
-    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Delete</b></br>This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself. You will start from scratch.</p><p><b>Mint</b></br>Lock the DOI information and data directory, then register the DOI and associated landing page with DataCite. The DOI will be publicly available after minting.</br><b>Caution</b>: The data directory will be locked so that no further changes can be made. Be sure the dataset and DOI information are finalized and refereeing is finished. </br><em>Note:</em>Related publication information can be added manually after this step. (Contact support.)</p>",
+    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Delete</b></br>This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself. You will start from scratch.</p><p><b>Publish</b></br>Register the DOI and associated landing page with DataCite. The DOI will be publicly available.</br><b>Caution</b>: The data directory will be locked so that no further changes can be made. Be sure the dataset and DOI information are finalized and refereeing is finished. </br><em>Note:</em></br>Related publication information can be added manually after this step. (Contact support.)</p>",
     "placement": "auto",
     "title": "DOI Publication Help"
   },
@@ -70,7 +70,7 @@
     "title": "DOI Publication Help"
   },
   "locked_data_buttonbar": {
-    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Retry Minting</b></br>Retry Minting the DOI. If a retry as already been attempted, please contact support for further assistance.",
+    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Retry Publishing</b></br>If a retry as already been attempted, please contact support for further assistance.",
     "placement": "auto",
     "title": "DOI Publication Help"
   },

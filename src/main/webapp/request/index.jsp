@@ -68,10 +68,10 @@
                           <button type="delete"
                                   class="btn btn-danger doi-button doi-listpage-header btn-sm hidden"
                                   id="doi_delete_button">Delete</button>
-                          <%--<!-- Javascript changes text here to be 'Mint Retry' where appropriate -->--%>
+                          <%--<!-- Javascript changes text here to be 'Retry Publishing' where appropriate -->--%>
                           <button type="mint"
                                   class="btn btn-success doi-button doi-listpage-header btn-sm hidden"
-                                  id="doi_mint_button">Mint</button>
+                                  id="doi_mint_button">Publish</button>
                           <%--<!-- Context Help hooks -->--%>
                           <div id="doi_help_new"
                                class="citation-tooltip citation-btn-bar hidden"
@@ -137,7 +137,7 @@
                             <div class="panel panel-success doi-minted hidden">
                               <div class="panel-body doi-panel-body ">
                                 <div id="green_badge" class="doi-minted doi-msg-text">
-                                  MINTED
+                                  Published
                                 </div>
                               </div>
                             </div>
@@ -145,7 +145,7 @@
                             <div class="panel panel-danger doi-warning hidden">
                               <div class="panel-body doi-panel-body ">
                                 <div class="doi-warning doi-msg-text">
-                                  Minting Error - Retry or contact a CADC administrator
+                                  Publishing Error - Retry or contact a CADC administrator
                                 </div>
                               </div>
                             </div>
@@ -153,7 +153,7 @@
                             <div class="panel panel-warning doi-working hidden">
                               <div class="panel-body doi-panel-body ">
                                 <div class="doi-working doi-msg-text ">
-                                  Minting in progress - Refresh page for new status
+                                  Publishing in progress - Refresh page for new status
                                 </div>
                               </div>
                             </div>
@@ -161,7 +161,7 @@
                             <div class="panel panel-primary doi-retry hidden">
                               <div class="panel-body doi-panel-body ">
                                 <div class="doi-retry doi-msg-text">
-                                  Click Register to continue minting process
+                                  Click Retry to continue publishing process
                                 </div>
                               </div>
                             </div>
@@ -255,7 +255,7 @@
                               <button type="submit" class="doi_action_button btn btn-primary hidden" id="doi_update_button" tabindex="5">Update</button>
                               <button type="reset" class="btn btn-default doi-button" id="doi_form_reset_button" tabindex="6">Reset</button>
                              </div>
-                            <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Mint function will be available when Update is complete</i></div>
+                            <div class="col-sm-4 doi-mint-info hidden"><i>Form information changed: Publishing will be available when Update is complete</i></div>
                           </div>
                         </div>
                       </form>
