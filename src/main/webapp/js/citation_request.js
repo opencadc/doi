@@ -105,7 +105,8 @@
     // ------------ Page state management functions ------------
 
     function setPageState(newState) {
-      // Clear any error states
+      // Clear any tooltips
+      page
       curServiceState = newState
       switch(newState) {
         case page.serviceState.START:
@@ -226,17 +227,17 @@
       // current form data has been updated. Having the button disappear completely is more
       // confusing than having the button be disabled with some helpful text...
       if (state === 'on') {
-        $('#doi_mint_button').text('Lock Data Directory')
+        $('#doi_mint_button').text('Mint')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', false)
         $('.doi-mint-info').addClass('hidden')
       } else if (state === 'disabled') {
-        $('#doi_mint_button').text('Lock Data Directory')
+        $('#doi_mint_button').text('Mint')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', true)
         $('.doi-mint-info').removeClass('hidden')
       } else if (state === 'retry') {
-        $('#doi_mint_button').text('Register')
+        $('#doi_mint_button').text('Retry Minting')
         $('#doi_mint_button').removeClass('hidden')
         $('#doi_mint_button').prop('disabled', false)
         $('.doi-mint-info').addClass('hidden')
@@ -576,10 +577,15 @@
       // this is a CREATE or UPDATE function
       var urlAddition = ''
       var modalMessage = ''
+      if (typeof event.newMsg !== 'undefined') {
+        modalMessage = event.newMsg
+      } else {
+        modalMessage = 'Minting DOI '
+      }
       var doiSuffix = doiDoc.getDOISuffix()
 
       urlAddition = '/' + doiSuffix  + '/mint'
-      modalMessage += 'Processing request for DOI ' + doiSuffix + '...'
+      modalMessage +=  doiSuffix + '...'
       page.setInfoModal('Please wait ', modalMessage, false, false)
       setFormDisplayState('display')
 
@@ -589,14 +595,31 @@
         .then(function(serviceURL) {
 
           Promise.resolve(postDoiMetadata(serviceURL + urlAddition, multiPartData))
-              .then(function(doiSuffix) {
-                getDoiStatus(serviceURL, doiSuffix).catch(function(message) {
+            .then(function(doiSuffix) {
+              //getDoiStatus(serviceURL, doiSuffix). then (function() {
+                // start polling
+                pollDoiStatus(serviceURL, doiSuffix, 1000, 100)
+                    .then(function(status) {
+                        if (status === page.serviceState.DATA_LOCKED) {
+                          // Submit second mint request to complete registration
+                          event.newMsg = 'Registering DOI '
+                          handleDoiMint(event)
+                        } else {
+                          // Otherwise return to the page with current status
+                          // close all remaining modals
+                          page.hideInfoModal(true)
+                        }
+                    })
+                    .catch(function(message) {
                   page.handleAjaxError(message)
-                })
               })
               .catch(function(message) {
                 page.handleAjaxError(message)
-              })
+            })
+          })
+          .catch(function(message) {
+            page.handleAjaxError(message)
+          })
         })
         .catch(function(message) {
           page.handleAjaxError(message)
@@ -694,11 +717,6 @@
       })
     }
 
-    //function handleAjaxError(request) {
-    //    page.hideInfoModal(true)
-    //    page.setProgressBar('error')
-    //}
-
     // ---------------- DELETE ----------------
     function handleDOIDelete() {
       // Get doi number from form...
@@ -713,6 +731,9 @@
       Promise.resolve(page.prepareCall())
           .then(function(serviceURL) {
             deleteDoi(serviceURL, doiNumber)
+              .catch(function(message) {
+                page.handleAjaxError(message)
+              })
           })
           .catch(function(message) {
             page.handleAjaxError(message)
@@ -805,32 +826,34 @@
     }
 
 
-    // The polling function
-    // TODO: test this after talking about web sockets, etc. as possible other things to use...
-    function pollDoiStatus(doiNumber, timeout, interval) {
+    function pollDoiStatus(serviceUrl, doiNumber, timeout, interval) {
       // Set a reasonable timeout
       var endTime = Number(new Date()) + (timeout || 2000)
       interval = interval || 100
 
       var checkCondition = function(resolve, reject) {
-        page.prepareCall().then(function(serviceUrl) {
           getDoiStatus(serviceUrl, doiNumber)
-        })
-        .then( function(response){
-          // If the condition is met, we're done!
-          if(response.data.var == true) {
-            // There's a few options here.
-            resolve(response.data.var)
-          }
-          // If the condition isn't met but the timeout hasn't elapsed, go again
-          else if (Number(new Date()) < endTime) {
-            setTimeout(checkCondition, interval, resolve, reject)
-          }
-          // Didn't match and too much time, reject!
-          else {
-            reject(new Error('timed out for ' + fn + ': ' + arguments))
-          }
-        })
+          .then( function(response){
+            // If the condition is met, we're done!
+            var jsonData = page.parseJSONStr(response.responseText)
+            var curStatus = jsonData.doistatus.status["$"]
+            if(curStatus == page.serviceState.DATA_LOCKED ||
+                curStatus === page.serviceState.MINTED) {
+              resolve(curStatus)
+            }
+            else if (Number(new Date()) < endTime) {
+              // If neither of the conditions are met and the timeout
+              // hasn't elapsed, go again
+              setTimeout(checkCondition, interval, resolve, reject)
+            }
+            // Didn't match and too much time, reject!
+            else {
+              reject(new Error('timed out for ' + fn + ': ' + arguments))
+            }
+          })
+          .catch(function(message) {
+            page.handleAjaxError(message)
+          })
       }
 
       return new Promise(checkCondition)

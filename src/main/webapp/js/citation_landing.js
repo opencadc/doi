@@ -145,8 +145,15 @@
       $('#doi_creator_list').text(doiDoc.getAuthorListString(true))
       $('#doi_title').text(doiDoc.getTitle())
       var doiNumStr = doiDoc.getRelatedDOI()
-      var hrefStr = 'https://doi.org/' + doiNumStr
-      var publicationDoiHtml = '<a href="' + hrefStr + '" target="_blank">' + doiNumStr + '</a>'
+
+      var publicationDoiHtml = ''
+      if (doiNumStr === 'not available yet') {
+        publicationDoiHtml = '<i>' + doiNumStr +'</i>'
+      } else {
+        var hrefStr = 'https://doi.org/' + doiNumStr
+        publicationDoiHtml = '<a href="' + hrefStr + '" target="_blank">' + doiNumStr + '</a>'
+      }
+
       $('#publication_doi').html(publicationDoiHtml)
     }
 

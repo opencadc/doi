@@ -69,7 +69,7 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
             requestPage.pageLoadLogin();
             requestPage.waitForCreateStateReady();
 
-            requestPage.setDoiTitle("Birdsong in the - Afternoon");
+            requestPage.setDoiTitle("Birdsong in the Afternoon - AUTOMATED TEST DOI");
             requestPage.setDoiAuthorList("Warbler, Yellow");
             requestPage.setJournalRef("2018, Nature, ApJ, 5000, 100");
             requestPage.requestDoi();

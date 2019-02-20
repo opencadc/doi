@@ -71,7 +71,7 @@
                           <%--<!-- Javascript changes text here to be 'Mint Retry' where appropriate -->--%>
                           <button type="mint"
                                   class="btn btn-success doi-button doi-listpage-header btn-sm hidden"
-                                  id="doi_mint_button">Lock Data Directory</button>
+                                  id="doi_mint_button">Mint</button>
                           <%--<!-- Context Help hooks -->--%>
                           <div id="doi_help_new"
                                class="citation-tooltip citation-btn-bar hidden"
