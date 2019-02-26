@@ -452,8 +452,8 @@ public class PostAction extends DoiAction {
                 if (StringUtil.hasText(groupWrite)) {
                     xmlFile.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setValue(groupRead);
                 }
+                vClient.getVOSpaceClient().setNode(xmlFile);
             }
-            vClient.getVOSpaceClient().setNode(xmlFile);
 
             doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
             doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("false");
