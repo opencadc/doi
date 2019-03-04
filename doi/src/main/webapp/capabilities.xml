@@ -8,27 +8,17 @@
     <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="full">https://replace.me.com/doi/capabilities</accessURL>
     </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="full">http://replace.me.com/doi/capabilities</accessURL>
-    </interface>
   </capability>
 
   <capability standardID="ivo://ivoa.net/std/VOSI#availability">
     <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="full">https://replace.me.com/doi/availability</accessURL>
     </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="full">http://replace.me.com/doi/availability</accessURL>
-    </interface>
   </capability>
 
   <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/LOGGING#logControl-1.0">
     <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
       <accessURL use="full">https://replace.me.com/doi/logControl</accessURL>
-      <securityMethod standardID="ivo://ivoa.net/sso#BasicAA"/>
-    </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
-      <accessURL use="full">http://replace.me.com/doi/logControl</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#BasicAA"/>
     </interface>
   </capability>
@@ -40,14 +30,6 @@
     </interface>
     <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="base">https://replace.me.com/doi/instances</accessURL>
-      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
-    </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/doi/auth-instances</accessURL>
-      <securityMethod standardID="ivo://ivoa.net/sso#BasicAA"/>
-    </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">http://replace.me.com/doi/instances</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
     </interface>
     <interface xsi:type="vs:ParamHTTP" role="std">
