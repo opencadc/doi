@@ -56,12 +56,39 @@
                 </a>Data Publication
               </h3>
 
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                      <i>How does this work?</i>
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    <p>This service allows users to publish data that is associated with a
+                      journal paper. The data (and associated material) need to be uploaded by
+                      the user into a specific CANFAR storage area and a Digital Object Identifier (DOI) is minted (issued
+                      by the international DataCite organization). The DOI needs to appear in the journal paper and it
+                      will point to the folder where the data is stored for long-term preservation.
+                    </p><p>
+                    The purpose of this service is to allow readers of the journal paper to
+                    find and view (and perhaps download and evaluate) the actual data that was
+                    used to support the conclusions of the paper.
+                    </p><p>
+                      Use this form to request a new DOI and CANFAR storage area, view or edit existing DOI information, or delete
+                      an unpublished DOI.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div class="doi-authenticated">
                 <div id="doi_metadata" class="panel panel-default doi-panel">
                   <div class="panel-heading doi-panel-heading">
                     <nav class="navbar navbar-expand-sm doi-header-navbar" id="navbar-functions">
                       <ul class="nav navbar-nav doi-header-navbar">
-                        <li class="nav-item"><h4>DOI Information</h4></li>
+                        <li class="nav-item"><h4>Digital Object Identifier (DOI) Information</h4></li>
                         <li class="nav-item pull-right doi-authenticated">
                           <button id="doi_request"
                                   class="btn btn-primary doi-listpage-header btn-sm hidden">New</button>
