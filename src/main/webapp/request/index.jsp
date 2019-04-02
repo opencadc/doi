@@ -60,7 +60,7 @@
                 <div class="panel-heading">
                   <h4 class="panel-title">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                      <i>How does this work?</i>
+                      <i>What is the Data Publication service?</i>
                     </a>
                   </h4>
                 </div>
