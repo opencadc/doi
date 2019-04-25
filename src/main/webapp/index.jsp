@@ -184,7 +184,7 @@
       $(document).ready(function() {
 
         // Instantiate controller for Data Citation List page
-        citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+        citation_js = new cadc.web.citation.Citation({baseURL: window.location.origin})
         citation_js.init()
 
     }); // end body onReady function

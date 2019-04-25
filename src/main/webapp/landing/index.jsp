@@ -188,7 +188,7 @@
   $(document).ready(function() {
 
     // Set up  controller for Data Citation List page
-    landing_page = new cadc.web.citation.CitationLanding({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+    landing_page = new cadc.web.citation.CitationLanding({baseURL: window.location.origin})
     landing_page.init()
 
   });

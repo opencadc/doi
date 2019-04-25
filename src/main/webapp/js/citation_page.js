@@ -20,20 +20,19 @@
    *
    * @constructor
    * @param {{}} inputs   Input configuration.
-   * @param {String} [inputs.resourceCapabilitiesEndPoint='http://www.canfar.net/reg/resource-caps'] URL of the resource capability document.
+   * @param {String} [inputs.baseURL='http://www.canfar.net/'] URL of the /reg web service
+   * needed by the Registry to look up web service and ui URLs for use in ajax calls by this page.
    */
   function CitationPage(inputs) {
 
     var _selfCitationPage = this
-    var resourceCapabilitiesEndPoint =
-            inputs && inputs.hasOwnProperty('resourceCapabilitiesEndPoint')
-                ? inputs.resourceCapabilitiesEndPoint
-                : 'http://www.canfar.net/reg/resource-caps'
+    var baseURL =
+            inputs && inputs.hasOwnProperty('baseURL')
+                ? inputs.baseURL
+                : 'https://www.canfar.net'
 
-    // NOTE: for deployment to production, this constructor should have no parameters.
-    // for DEV, use the URL of the dev VM the doi and vospace services are deployed on.
     var _registryClient = new Registry({
-      resourceCapabilitiesEndPoint: resourceCapabilitiesEndPoint
+      baseURL: baseURL
     })
 
     var _runid = ''

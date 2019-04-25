@@ -360,7 +360,7 @@
     <script type="application/javascript">
       $(document).ready(function() {
         // Set up controller for Data Citation Request page
-        request_js = new cadc.web.citation.CitationRequest({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+        request_js = new cadc.web.citation.CitationRequest({baseURL: window.location.origin}})
         request_js.init()
       });
 
