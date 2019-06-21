@@ -64,7 +64,7 @@
         <servlet-name>AvailabilityServlet</servlet-name>
         <servlet-class>ca.nrc.cadc.vosi.AvailabilityServlet</servlet-class>
         <init-param>
-            <param-name>ca.nrc.cadc.vosi.WebService</param-name>
+            <param-name>ca.nrc.cadc.vosi.AvailabilityPlugin</param-name>
             <param-value>ca.nrc.cadc.doi.ServiceAvailability</param-value>
         </init-param>
     </servlet>

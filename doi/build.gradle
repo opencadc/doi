@@ -20,7 +20,7 @@ sourceCompatibility = 1.7
 
 group = 'ca.nrc.cadc'
 
-version = '1008'
+version = '1009'
 
 copy {
     from (System.getenv('A') + '/etc/') {
@@ -39,8 +39,8 @@ war {
 }
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
-    providedCompile 'javax.servlet:javax.servlet-api:3.1.+'
+    compile 'log4j:log4j:[1.2.0,)'
+    providedCompile 'javax.servlet:javax.servlet-api:[3.1.0,)'
     
     compile 'org.opencadc:cadc-util:[1.2.5,)'
     runtime 'org.opencadc:cadc-log:[1.0,)'

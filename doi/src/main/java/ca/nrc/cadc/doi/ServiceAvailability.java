@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2010.                            (c) 2010.
+ *  (c) 2019.                            (c) 2019.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,8 +70,8 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.AvailabilityStatus;
-import ca.nrc.cadc.vosi.WebService;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
 
@@ -79,12 +79,22 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URL;
 
-public class ServiceAvailability implements WebService {
+public class ServiceAvailability implements AvailabilityPlugin {
     private static String AC_AVAIL = "ivo://cadc.nrc.ca/gms";
     private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vospace";
     private static String DATACITE_URL = "https://mds.datacite.org";
 
     public ServiceAvailability() {
+    }
+
+    @Override
+    public void setAppName(String appName) {
+        // no op
+    }
+
+    @Override
+    public void heartBeat() {
+        // no op
     }
 
     public AvailabilityStatus getStatus() {
