@@ -81,7 +81,7 @@ import java.net.URL;
 
 public class ServiceAvailability implements AvailabilityPlugin {
     private static String AC_AVAIL = "ivo://cadc.nrc.ca/gms";
-    private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vospace";
+    private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vault";
     private static String DATACITE_URL = "https://mds.datacite.org";
 
     public ServiceAvailability() {

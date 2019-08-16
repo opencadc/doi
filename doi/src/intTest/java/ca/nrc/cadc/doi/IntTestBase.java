@@ -101,7 +101,7 @@ public abstract class IntTestBase {
     protected static File CADCREGTEST_CERT;
     protected static File DOIADMIN_CERT;
     protected static String baseURL;
-    protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vospace/AstroDataCitationDOI/CISTI.CANFAR";
+    protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vault/AstroDataCitationDOI/CISTI.CANFAR";
     protected static VOSpaceClient vosClient;
     protected static VOSURI astroDataURI;
     protected static RegistryClient rc;

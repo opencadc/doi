@@ -89,7 +89,7 @@ public abstract class DoiAction extends RestAction {
     public static final String MINT_ACTION = "mint";
     public static final String TEST_SUFFIX = ".test";
     public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vospace" + DOI_BASE_FILEPATH;
+    public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vault" + DOI_BASE_FILEPATH;
     public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
     public static final String CADC_DOI_PREFIX = "10.11570";
     public static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
