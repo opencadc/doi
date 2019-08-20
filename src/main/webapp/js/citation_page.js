@@ -20,7 +20,7 @@
    *
    * @constructor
    * @param {{}} inputs   Input configuration.
-   * @param {String} [inputs.baseURL='http://www.canfar.net/'] URL of the /reg web service
+   * @param {String} [inputs.baseURL='https://www.canfar.net/'] URL of the /reg web service
    * needed by the Registry to look up web service and ui URLs for use in ajax calls by this page.
    */
   function CitationPage(inputs) {
