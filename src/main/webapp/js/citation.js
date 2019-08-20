@@ -106,9 +106,6 @@
 
       page.setProgressBar('okay')
       hideInfoModal()
-
-      // attach context help to buttons
-      page.loadContextHelp()
     }
 
     function setTableStatus(displayText) {
@@ -123,7 +120,6 @@
 
 
     // ------------ HTTP/Ajax functions ------------
-
 
     function loadRequestPage(event) {
       var doiSuffix = event.currentTarget.dataset.doinum
