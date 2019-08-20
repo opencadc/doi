@@ -60,13 +60,41 @@
                 </a>Data Publication
               </h3>
 
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                      <i>What is the Data Publication service?</i>
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    <p>This service allows users to publish data that is associated with a
+                      journal paper. The data (and associated material) need to be uploaded by
+                      the user into a specific CANFAR storage area and a Digital Object Identifier (DOI) is minted (issued
+                      by the international DataCite organization). The DOI needs to appear in the journal paper and it
+                      will point to the folder where the data is stored for long-term preservation.
+                    </p><p>
+                    The purpose of this service is to allow readers of the journal paper to
+                    find and view (and perhaps download and evaluate) the actual data that was
+                    used to support the conclusions of the paper.
+                    </p><p>
+                    DOIs you have requested will be displayed in the table below.</p><p>
+                    To generate a new DOI and data storage area, click the button to the right of this page to access
+                    the Data Publication request service.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div >
                 <div class="panel panel-default doi-panel">
                   <div class="panel-heading doi-panel-heading">
 
                     <nav class="navbar navbar-expand-sm doi-header-navbar" id="navbar-functions">
                       <ul class="nav navbar-nav doi-header-navbar">
-                        <li class="nav-item"><h4>DOI Listing</h4></li>
+                        <li class="nav-item"><h4>Digital Object Identifier (DOI) Listing</h4></li>
                         <li class="nav-item pull-right doi-authenticated">
                           <button class="btn btn-default doi_refresh doi-listpage-header btn-sm">Refresh list</button>
                         </li>
@@ -156,7 +184,7 @@
       $(document).ready(function() {
 
         // Instantiate controller for Data Citation List page
-        citation_js = new cadc.web.citation.Citation({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+        citation_js = new cadc.web.citation.Citation({baseURL: window.location.origin})
         citation_js.init()
 
     }); // end body onReady function

@@ -62,7 +62,7 @@
                     <div >
                         <div class="panel panel-default doi-panel">
                             <div class="panel-heading doi-panel-heading">
-                                <h4>DOI Information</h4>
+                                <h4>Digital Object Identifier (DOI) Information</h4>
                             </div>
                             <div class="progress doi-progress-bar-container">
                                 <div class="progress-bar progress-bar-success doi-progress-bar"
@@ -92,7 +92,7 @@
                                         <!-- Data DOI Number -->
                                         <div class="row">
                                             <label for="doi_number" class="doi-landing text-right col-sm-3 control-label">
-                                                Data DOI
+                                                Data DOI Reference
                                             </label>
                                             <div id="doi_number" class="col-sm-3 doi-landing doi-landing-text"></div>
                                         </div>
@@ -188,7 +188,7 @@
   $(document).ready(function() {
 
     // Set up  controller for Data Citation List page
-    landing_page = new cadc.web.citation.CitationLanding({resourceCapabilitiesEndPoint: '${resourceCapabilitiesEndPoint}'})
+    landing_page = new cadc.web.citation.CitationLanding({baseURL: window.location.origin})
     landing_page.init()
 
   });
