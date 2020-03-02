@@ -160,7 +160,7 @@ public class DocumentTest extends IntTestBase {
         initialDocument = builder.toString();
     }
 
-    protected String postDocument(URL postUrl, String document, String journalRef) {
+    protected String postDocument(URL postUrl, String document, String journalRef) throws IOException {
         log.info("url: " + postUrl.getPath());
         Map<String, Object> params = new HashMap<String, Object>();
         FileContent fc = new FileContent(document, "text/xml", Charset.forName("UTF-8"));
