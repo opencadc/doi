@@ -5,7 +5,6 @@
     "version": "1.0.0",
     "title": "CADC DOI Service"
   },
-  "host": "apps.canfar.net",
   "basePath": "/doi",
   "tags": [
     {
