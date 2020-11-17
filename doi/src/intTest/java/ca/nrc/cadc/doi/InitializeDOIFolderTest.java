@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Direction;
@@ -110,7 +111,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(InitializeDOIFolderTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
     }
 
     public InitializeDOIFolderTest() {
@@ -215,10 +216,10 @@ public class InitializeDOIFolderTest extends IntTestBase {
                             VOSURI target = new VOSURI(new URI(writeFile));
                             Node doiFileDataNode = new DataNode(target);
                             vosClient.createNode(doiFileDataNode);
-                        } catch (AccessControlException ace) {
-                            log.info("expected exception: " + ace);
+                        } catch (NotAuthenticatedException nae) {
+                            log.info("expected exception: ", nae);
                         } catch (Exception e) {
-                            log.info("some other error occurred");
+                            log.info("some other error occurred", e);
                             Assert.fail();
                         }
 

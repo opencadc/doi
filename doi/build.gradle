@@ -16,11 +16,11 @@ repositories {
 
 apply from: '../service.gradle'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 group = 'ca.nrc.cadc'
 
-version = '1011'
+version = '1021'
 
 copy {
     from (System.getenv('A') + '/etc/') {
