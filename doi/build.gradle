@@ -20,7 +20,7 @@ sourceCompatibility = 1.8
 
 group = 'ca.nrc.cadc'
 
-version = '1021'
+version = '1012'
 
 copy {
     from (System.getenv('A') + '/etc/') {
