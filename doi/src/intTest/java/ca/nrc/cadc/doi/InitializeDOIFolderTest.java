@@ -111,7 +111,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(InitializeDOIFolderTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     public InitializeDOIFolderTest() {
