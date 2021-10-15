@@ -6,11 +6,7 @@ plugins {
 }
 
 repositories {
-    jcenter()
     mavenLocal()
-//    maven {
-//        url = 'http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/m2repo'
-//    }
     mavenCentral()
 }
 
@@ -20,7 +16,7 @@ sourceCompatibility = 1.8
 
 group = 'ca.nrc.cadc'
 
-version = '1012'
+version = '1013'
 
 copy {
     from (System.getenv('A') + '/etc/') {

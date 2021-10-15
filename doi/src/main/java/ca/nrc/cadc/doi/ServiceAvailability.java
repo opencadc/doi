@@ -72,10 +72,12 @@ import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.AvailabilityStatus;
+import ca.nrc.cadc.vosi.avail.CheckCertificate;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
 
@@ -83,6 +85,8 @@ public class ServiceAvailability implements AvailabilityPlugin {
     private static String AC_AVAIL = "ivo://cadc.nrc.ca/gms";
     private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vault";
     private static String DATACITE_URL = "https://mds.datacite.org";
+    private static File DOIADMIN_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+
 
     public ServiceAvailability() {
     }
@@ -126,6 +130,11 @@ public class ServiceAvailability implements AvailabilityPlugin {
             if (responseCode != 200) {
                 throw new RuntimeException("response code from " + DATACITE_URL + ": " + responseCode);
             }
+
+            // certificate needed to do any actions with VOSpace Client
+            CheckCertificate checkCert = new CheckCertificate(DOIADMIN_PEM_FILE);
+            checkCert.check();
+
         } catch (Throwable t) {
             // the test itself failed
             isGood = false;
