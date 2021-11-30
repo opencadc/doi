@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2019.                            (c) 2019.
+ *  (c) 2021.                            (c) 2021.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,17 +72,22 @@ import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.AvailabilityStatus;
+import ca.nrc.cadc.vosi.avail.CheckCertificate;
+import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import org.apache.log4j.Logger;
 
 public class ServiceAvailability implements AvailabilityPlugin {
     private static String AC_AVAIL = "ivo://cadc.nrc.ca/gms";
     private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vault";
     private static String DATACITE_URL = "https://mds.datacite.org";
+    private static File DOIADMIN_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
 
     public ServiceAvailability() {
     }
@@ -117,7 +122,11 @@ public class ServiceAvailability implements AvailabilityPlugin {
             checkResource = new CheckWebService(url);
             checkResource.check();
 
-            // Check that datacite is available
+            // certificate needed to do any actions with VOSpace Client
+            CheckCertificate checkCert = new CheckCertificate(DOIADMIN_PEM_FILE);
+            checkCert.check();
+
+            // check that datacite is available
             URL docURL = new URL(DATACITE_URL);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(docURL, bos);
@@ -127,7 +136,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
                 throw new RuntimeException("response code from " + DATACITE_URL + ": " + responseCode);
             }
         } catch (Throwable t) {
-            // the test itself failed
+            // one of the status tests failed
             isGood = false;
             note = "test failed, reason: " + t;
         }
