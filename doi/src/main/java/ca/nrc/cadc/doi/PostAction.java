@@ -92,6 +92,7 @@ import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -807,10 +808,11 @@ public class PostAction extends DoiAction {
     private void uploadDOIDocument(Resource resource, DataNode docNode)
         throws ResourceNotFoundException {
         
-        List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        Transfer transfer = new Transfer(docNode.getUri().getURI(), Direction.pushToVoSpace, protocols);
+        Transfer transfer = new Transfer(docNode.getUri().getURI(), Direction.pushToVoSpace);
+        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+        put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
+        transfer.getProtocols().add(put);
+        
         ClientTransfer clientTransfer = vClient.getVOSpaceClient().createTransfer(transfer);
         DoiOutputStream outStream = new DoiOutputStream(resource);
         clientTransfer.setOutputStreamWrapper(outStream);

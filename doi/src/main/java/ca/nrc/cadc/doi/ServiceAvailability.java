@@ -69,9 +69,10 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
-import ca.nrc.cadc.vosi.AvailabilityStatus;
+import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
 import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
@@ -84,10 +85,11 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 public class ServiceAvailability implements AvailabilityPlugin {
-    private static String AC_AVAIL = "ivo://cadc.nrc.ca/gms";
-    private static String VOS_AVAIL = "ivo://cadc.nrc.ca/vault";
+    
+    private static URI VOS_URI = URI.create("ivo://cadc.nrc.ca/vault");
     private static String DATACITE_URL = "https://mds.datacite.org";
     private static File DOIADMIN_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+    private static File SERVOPS_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
 
     public ServiceAvailability() {
     }
@@ -102,29 +104,45 @@ public class ServiceAvailability implements AvailabilityPlugin {
         return true;
     }
 
-    public AvailabilityStatus getStatus() {
+    public Availability getStatus() {
         boolean isGood = true;
         String note = "service is accepting requests";
         try {
-            RegistryClient reg = new RegistryClient();
-            CheckResource checkResource;
-            String url;
-
-            // check ac service availability
-            url = reg.getServiceURL(URI.create(AC_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON)
-                    .toExternalForm();
-            checkResource = new CheckWebService(url);
-            checkResource.check();
-
-            // check vospace service availability
-            url = reg.getServiceURL(URI.create(VOS_AVAIL), Standards.VOSI_AVAILABILITY, AuthMethod.ANON)
-                    .toExternalForm();
-            checkResource = new CheckWebService(url);
-            checkResource.check();
-
             // certificate needed to do any actions with VOSpace Client
             CheckCertificate checkCert = new CheckCertificate(DOIADMIN_PEM_FILE);
             checkCert.check();
+            
+            // certificate needed to do any A&A actions
+            checkCert = new CheckCertificate(SERVOPS_PEM_FILE);
+            checkCert.check();
+
+            // check other services we depend on
+            RegistryClient reg = new RegistryClient();
+            URL url;
+            CheckResource checkResource;
+            
+            LocalAuthority localAuthority = new LocalAuthority();
+
+            URI credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
+            url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+
+            URI usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_01.toString());
+            url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+            
+            URI groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_01.toString());
+            if (!groupsURI.equals(usersURI)) {
+                url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                checkResource = new CheckWebService(url);
+                checkResource.check();
+            }
+            
+            url = reg.getServiceURL(VOS_URI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            checkResource = new CheckWebService(url);
+            checkResource.check();
 
             // check that datacite is available
             URL docURL = new URL(DATACITE_URL);
@@ -140,7 +158,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
             isGood = false;
             note = "test failed, reason: " + t;
         }
-        return new AvailabilityStatus(isGood, null, null, null, note);
+        return new Availability(isGood, note);
     }
 
     public void setState(String string) {

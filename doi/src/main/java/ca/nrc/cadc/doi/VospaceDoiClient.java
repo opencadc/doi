@@ -73,6 +73,7 @@ import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
@@ -195,10 +196,11 @@ public class VospaceDoiClient {
 
     private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {
 
-        List<Protocol> protocols = new ArrayList<Protocol>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-        Transfer transfer = new Transfer(dataNode.getURI(), Direction.pullFromVoSpace, protocols);
+        Transfer transfer = new Transfer(dataNode.getURI(), Direction.pushToVoSpace);
+        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+        put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
+        transfer.getProtocols().add(put);
+        
         xmlFilename = dataNode.getPath();
         ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
         DoiInputStream doiStream = new DoiInputStream();

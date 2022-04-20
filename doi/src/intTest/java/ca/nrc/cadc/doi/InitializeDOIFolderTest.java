@@ -103,6 +103,7 @@ import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
 
 /**
@@ -184,8 +185,6 @@ public class InitializeDOIFolderTest extends IntTestBase {
                 log.debug("Atempting to write to " + dataNodeName);
 
                 // Test writing to the data directory
-                final List<Protocol> protocols = new ArrayList<Protocol>();
-                protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
                 String fileName = "doi-test-write-file.txt";
                 String dataFileToWrite = dataNodeName + "/" + fileName;
 
@@ -193,7 +192,11 @@ public class InitializeDOIFolderTest extends IntTestBase {
                 Node doiFileDataNode = new DataNode(target);
                 vosClient.createNode(doiFileDataNode);
 
-                Transfer transfer = new Transfer(new URI(dataFileToWrite), Direction.pushToVoSpace, protocols);
+                Transfer transfer = new Transfer(new URI(dataFileToWrite), Direction.pushToVoSpace);
+                Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+                put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
+                transfer.getProtocols().add(put);
+                
                 log.debug("file to be written: " + dataFileToWrite);
                 ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
                 File testFile = new File("src/test/data/" + fileName);
