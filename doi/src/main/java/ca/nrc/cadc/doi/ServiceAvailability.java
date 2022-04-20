@@ -74,6 +74,7 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
+import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
 
@@ -144,16 +145,23 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             // check that datacite is available
             URL docURL = new URL(DATACITE_URL);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpGet get = new HttpGet(docURL, true);
             get.setHeadOnly(true);
             get.setConnectionTimeout(9000);
             get.setReadTimeout(9000);
             get.run();
             int responseCode = get.getResponseCode();
+            if (get.getThrowable() != null) {
+                throw new CheckException(get.getThrowable().getClass().getSimpleName()
+                    + ": " + get.getThrowable().getMessage());
+            }
             if (responseCode != 200) {
                 throw new RuntimeException("response code from " + DATACITE_URL + ": " + responseCode);
             }
+        } catch (CheckException ce) {
+            // tests determined that the resource is not working
+            isGood = false;
+            note = ce.getMessage();
         } catch (Throwable t) {
             // one of the status tests failed
             isGood = false;
