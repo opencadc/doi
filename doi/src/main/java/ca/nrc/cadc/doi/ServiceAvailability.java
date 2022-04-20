@@ -67,14 +67,13 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
-import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
 
@@ -82,7 +81,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
-import org.apache.log4j.Logger;
 
 public class ServiceAvailability implements AvailabilityPlugin {
     
@@ -147,7 +145,10 @@ public class ServiceAvailability implements AvailabilityPlugin {
             // check that datacite is available
             URL docURL = new URL(DATACITE_URL);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(docURL, bos);
+            HttpGet get = new HttpGet(docURL, true);
+            get.setHeadOnly(true);
+            get.setConnectionTimeout(9000);
+            get.setReadTimeout(9000);
             get.run();
             int responseCode = get.getResponseCode();
             if (responseCode != 200) {
