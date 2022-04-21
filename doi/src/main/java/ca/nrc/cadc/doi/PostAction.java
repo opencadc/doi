@@ -810,7 +810,7 @@ public class PostAction extends DoiAction {
         
         Transfer transfer = new Transfer(docNode.getUri().getURI(), Direction.pushToVoSpace);
         Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
-        put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
+        //put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
         transfer.getProtocols().add(put);
         
         ClientTransfer clientTransfer = vClient.getVOSpaceClient().createTransfer(transfer);
