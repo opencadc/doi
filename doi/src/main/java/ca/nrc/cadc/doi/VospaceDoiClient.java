@@ -197,7 +197,7 @@ public class VospaceDoiClient {
     private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {
 
         Transfer transfer = new Transfer(dataNode.getURI(), Direction.pullFromVoSpace);
-        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_GET);
         //put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
         transfer.getProtocols().add(put);
         
