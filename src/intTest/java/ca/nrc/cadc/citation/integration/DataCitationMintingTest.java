@@ -56,7 +56,7 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
     // Used to get the doiNumber into the subject.doAs that will delete minted DOIs
     String doiNumber = "";
 
-    public DataCitationMintingTest() throws Exception {
+    public DataCitationMintingTest() {
         super();
     }
 
@@ -66,7 +66,7 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
         doiNumber = "";
 
         try {
-            requestPage.pageLoadLogin();
+            requestPage.pageLoadLogin(username, password);
             requestPage.waitForCreateStateReady();
 
             requestPage.setDoiTitle("Birdsong in the Afternoon - AUTOMATED TEST DOI");
@@ -100,31 +100,29 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
 
             if (!doiNumber.equals("")) {
 
-                Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
-                    @Override
-                    public String run() throws Exception {
+                Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
 
-                        String doiNumberParts[] = doiNumber.split("/");
-                        // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
+                    String[] doiNumberParts = doiNumber.split("/");
+                    // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
 
-                        ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                        // the Status enum is in the war file for doiservice, not in a library that can be included in this test,
-                        // so we're stuck with hard coding the values.
-                        doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue("in progress");
-                        vosClient.setNode(doiContainerNode);
+                    ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
+                    // the Status enum is in the war file for doiservice, not in a library that can be included in this test,
+                    // so we're stuck with hard coding the values.
+                    doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue("in progress");
+                    vosClient.setNode(doiContainerNode);
 
-                        // unlock the data directory and delete the DOI
-                        ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                        String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-                        if (StringUtil.hasText(isLocked)) {
-                            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
-                            setDataNodeRecursively(dataContainerNode);
-                        }
-                        deleteTestFolder(vosClient, doiNumberParts[1]);
-
-                        return null;
+                    // unlock the data directory and delete the DOI
+                    ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
+                    String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
+                    if (StringUtil.hasText(isLocked)) {
+                        dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
+                        setDataNodeRecursively(dataContainerNode);
                     }
 
+                    // Cannot delete already minted DOIs.
+//                    deleteTestFolder(doiNumberParts[1]);
+
+                    return null;
                 });
             }
         }
@@ -145,29 +143,26 @@ public class DataCitationMintingTest extends AbstractDataCitationIntegrationTest
 
     private void setDataNodeRecursively(final ContainerNode dataContainerNode) throws Exception {
         // testSubject is doiadmin subject.
-        Subject.doAs(testSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(dataContainerNode);
-                URL jobURL = recSetNode.getJobURL();
+        Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+            ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(dataContainerNode);
+            URL jobURL = recSetNode.getJobURL();
 
-                // this is an async operation
-                Thread abortThread = new ClientAbortThread(jobURL);
-                Runtime.getRuntime().addShutdownHook(abortThread);
-                recSetNode.setMonitor(true);
-                recSetNode.run();
-                Runtime.getRuntime().removeShutdownHook(abortThread);
+            // this is an async operation
+            Thread abortThread = new ClientAbortThread(jobURL);
+            Runtime.getRuntime().addShutdownHook(abortThread);
+            recSetNode.setMonitor(true);
+            recSetNode.run();
+            Runtime.getRuntime().removeShutdownHook(abortThread);
 
-                recSetNode = new ClientRecursiveSetNode(jobURL, dataContainerNode, false);
-                ExecutionPhase phase = recSetNode.getPhase();
-                while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
-                    TimeUnit.SECONDS.sleep(1);
-                    phase = recSetNode.getPhase();
-                }
-
-                Assert.assertTrue("Failed to unlock test data directory, phase = " + phase, ExecutionPhase.COMPLETED == phase);
-                return phase.getValue();
+            recSetNode = new ClientRecursiveSetNode(jobURL, dataContainerNode, false);
+            ExecutionPhase phase = recSetNode.getPhase();
+            while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
+                TimeUnit.SECONDS.sleep(1);
+                phase = recSetNode.getPhase();
             }
+
+            Assert.assertSame("Failed to unlock test data directory.", ExecutionPhase.COMPLETED, phase);
+            return phase.getValue();
         });
     }
 

@@ -37,7 +37,7 @@ import org.junit.Test;
 
 public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTest {
 
-    public DataCitationWorkflowTest() throws Exception {
+    public DataCitationWorkflowTest() {
         super();
     }
 
@@ -45,7 +45,7 @@ public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTes
     public void testDoiWorkflow() throws Exception {
         DataCitationRequestPage requestPage = goTo(endpoint, null, DataCitationRequestPage.class);
 
-        requestPage.pageLoadLogin();
+        requestPage.pageLoadLogin(username, password);
         requestPage.waitForCreateStateReady();
 
         requestPage.setDoiTitle("DOI PUBLICATION TITLE");
@@ -54,7 +54,7 @@ public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTes
 
         requestPage.resetForm();
 
-        Assert.assertTrue(requestPage.getDoiTitle().equals(""));
+        Assert.assertEquals("", requestPage.getDoiTitle());
 
         requestPage.setDoiTitle("TEST publication title");
         // Change format to something non-standard that is similar to a group name
@@ -89,7 +89,7 @@ public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTes
 
         // Update the journal reference and title
         // one is an XML file change, one is a vospace attribute change
-        String newJournalRef = "2018, Nature, ApJ, 5000, 1000";
+        String newJournalRef = "2018, Nature, ApJ, 1000, 100";
         String newDoiTitle = "Birdsong in the Afternoon: AUTOMATED TEST DOI";
         requestPage.setDoiTitle(newDoiTitle);
         requestPage.setJournalRef(newJournalRef);
@@ -99,7 +99,7 @@ public class DataCitationWorkflowTest extends AbstractDataCitationIntegrationTes
 
         Assert.assertTrue(requestPage.isStateOkay());
 
-        // Go back to landing page and verify the title and journal reference have changed
+        // Go back to landing page and verify the title and journal references have changed
         landingPage = goTo("/citation/landing",
             "?doi=" + doiSuffix,
             DataCitationLandingPage.class

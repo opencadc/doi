@@ -37,6 +37,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class DataCitationRequestPage extends DataCitationAbstractPage {
@@ -171,10 +172,9 @@ public class DataCitationRequestPage extends DataCitationAbstractPage {
 
     public boolean isStateMinted() throws Exception {
         WebElement badge = find(DOI_MINTED_BADGE);
-        if(badge.getAttribute("class").contains("hidden"))
-            return true;
-        else
-            return false;
+        final WebElement successPanel = badge.findElement(By.className("doi-minted"));
+        final WebElement visiblePanel = waitUntil(ExpectedConditions.visibilityOf(successPanel));
+        return visiblePanel.isDisplayed();
     }
 
     public void waitForInfoModalGone() throws Exception {
