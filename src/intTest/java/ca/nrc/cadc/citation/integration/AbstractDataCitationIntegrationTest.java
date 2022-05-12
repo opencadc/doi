@@ -1,36 +1,36 @@
 /*
-************************************************************************
-****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
-*
-* (c) 2013.                         (c) 2013.
-* National Research Council            Conseil national de recherches
-* Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
-* All rights reserved                  Tous droits reserves
-*
-* NRC disclaims any warranties         Le CNRC denie toute garantie
-* expressed, implied, or statu-        enoncee, implicite ou legale,
-* tory, of any kind with respect       de quelque nature que se soit,
-* to the software, including           concernant le logiciel, y com-
-* without limitation any war-          pris sans restriction toute
-* ranty of merchantability or          garantie de valeur marchande
-* fitness for a particular pur-        ou de pertinence pour un usage
-* pose.  NRC shall not be liable       particulier.  Le CNRC ne
-* in any event for any damages,        pourra en aucun cas etre tenu
-* whether direct or indirect,          responsable de tout dommage,
-* special or general, consequen-       direct ou indirect, particul-
-* tial or incidental, arising          ier ou general, accessoire ou
-* from the use of the software.        fortuit, resultant de l'utili-
-*                                      sation du logiciel.
-*
-*
-* @author jenkinsd
-* 12/13/13 - 1:44 PM
-*
-*
-*
-****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
-************************************************************************
-*/
+ ************************************************************************
+ ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
+ *
+ * (c) 2013.                         (c) 2013.
+ * National Research Council            Conseil national de recherches
+ * Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ * All rights reserved                  Tous droits reserves
+ *
+ * NRC disclaims any warranties         Le CNRC denie toute garantie
+ * expressed, implied, or statu-        enoncee, implicite ou legale,
+ * tory, of any kind with respect       de quelque nature que se soit,
+ * to the software, including           concernant le logiciel, y com-
+ * without limitation any war-          pris sans restriction toute
+ * ranty of merchantability or          garantie de valeur marchande
+ * fitness for a particular pur-        ou de pertinence pour un usage
+ * pose.  NRC shall not be liable       particulier.  Le CNRC ne
+ * in any event for any damages,        pourra en aucun cas etre tenu
+ * whether direct or indirect,          responsable de tout dommage,
+ * special or general, consequen-       direct ou indirect, particul-
+ * tial or incidental, arising          ier ou general, accessoire ou
+ * from the use of the software.        fortuit, resultant de l'utili-
+ *                                      sation du logiciel.
+ *
+ *
+ * @author jenkinsd
+ * 12/13/13 - 1:44 PM
+ *
+ *
+ *
+ ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
+ ************************************************************************
+ */
 package ca.nrc.cadc.citation.integration;
 
 import ca.nrc.cadc.auth.AuthMethod;
@@ -40,21 +40,21 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import ca.nrc.cadc.web.selenium.AbstractWebApplicationIntegrationTest;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.BeforeClass;
 
 
-public abstract class AbstractDataCitationIntegrationTest extends AbstractWebApplicationIntegrationTest
-{
+public abstract class AbstractDataCitationIntegrationTest extends AbstractWebApplicationIntegrationTest {
     private static final Logger log = Logger.getLogger(AbstractDataCitationIntegrationTest.class);
 
     private static final String DEFAULT_ENDPOINT = "/citation/request?runid=TEST";
@@ -73,8 +73,7 @@ public abstract class AbstractDataCitationIntegrationTest extends AbstractWebApp
 
     final String endpoint;
 
-    AbstractDataCitationIntegrationTest() throws Exception
-    {
+    AbstractDataCitationIntegrationTest() {
         super();
         setFailOnTimeout(true);
 
@@ -98,9 +97,10 @@ public abstract class AbstractDataCitationIntegrationTest extends AbstractWebApp
         // Initialize vosClient for later use
         astroDataURI = new VOSURI(new URI(DOI_BASE_NODE));
         vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
+        log.info("staticInit(): OK\n vosClient -> " + astroDataURI.getServiceURI());
     }
 
-    protected void deleteTestFolder(VOSpaceClient vosClient, String doiSuffix) throws RuntimeException, MalformedURLException, NodeNotFoundException {
+    protected void deleteTestFolder(String doiSuffix) throws RuntimeException, MalformedURLException {
         // Clean up test folder
         // Set up DELETE
         URL deleteUrl = new URL(baseURL + "/" + doiSuffix);

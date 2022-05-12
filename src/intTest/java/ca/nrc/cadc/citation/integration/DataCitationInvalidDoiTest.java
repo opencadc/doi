@@ -36,7 +36,7 @@ import org.junit.Test;
 
 public class DataCitationInvalidDoiTest extends AbstractDataCitationIntegrationTest {
 
-    public DataCitationInvalidDoiTest() throws Exception {
+    public DataCitationInvalidDoiTest() {
         super();
     }
 
@@ -46,7 +46,7 @@ public class DataCitationInvalidDoiTest extends AbstractDataCitationIntegrationT
 
         requestPage = goTo(endpoint + "&doi=99.9999", null, DataCitationRequestPage.class);
 
-        requestPage.pageLoadLogin();
+        requestPage.pageLoadLogin(username, password);
         requestPage.waitForGetFailed();
 
         Assert.assertFalse(requestPage.isStateOkay());

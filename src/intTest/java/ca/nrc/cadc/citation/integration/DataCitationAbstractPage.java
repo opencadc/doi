@@ -66,7 +66,7 @@ public abstract class DataCitationAbstractPage extends AbstractTestWebPage {
         PageFactory.initElements(driver, this);
     }
 
-    protected void pageLoadLogin() throws Exception {
+    protected void pageLoadLogin(final String username, final String password) throws Exception {
         // timing here is bad. By the time the modal is rendered, the sendKeys
         // can sometimes be already run (or partially run?), and for whatever reason only some of
         // the values get sent. :(
@@ -74,8 +74,8 @@ public abstract class DataCitationAbstractPage extends AbstractTestWebPage {
 
         waitForElementClickable(DOI_MODAL_LOGIN);
 
-        sendKeys(modalUsernameInput,"CADCtest");
-        sendKeys(modalPasswordInput, "sywymUL4");
+        sendKeys(modalUsernameInput, username);
+        sendKeys(modalPasswordInput, password);
         modalPasswordInput.submit();
 
         waitForElementNotPresent(DOI_MODAL_LOGIN);

@@ -37,7 +37,7 @@ import org.junit.Test;
 
 public class DataCitationListingTest extends AbstractDataCitationIntegrationTest {
 
-    public DataCitationListingTest() throws Exception {
+    public DataCitationListingTest() {
         super();
     }
 
@@ -45,7 +45,7 @@ public class DataCitationListingTest extends AbstractDataCitationIntegrationTest
     public void testListPage() throws Exception {
         DataCitationPage citationPage = goTo("/citation", null, DataCitationPage.class);
 
-        citationPage.pageLoadLogin();
+        citationPage.pageLoadLogin(username, password);
         citationPage.waitForCreateStateReady();
         Assert.assertTrue(citationPage.isStateOkay());
 

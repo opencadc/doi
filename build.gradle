@@ -9,43 +9,30 @@ plugins {
 }
 
 repositories {
+    mavenCentral()
     mavenLocal()
-    jcenter()
 
     maven {
-        url = 'http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/m2repo'
+        url = 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/m2repo'
     }
 }
 
 dependencies {
+    implementation 'org.opencadc:cadc-vos:[1.2.2,2.0)'
 
-    runtime 'jstl:jstl:1.+'
+    runtimeOnly 'jstl:jstl:1.2'
 
-
-    testCompile 'junit:junit:4.+'
-    testCompile 'org.skyscreamer:jsonassert:1.+'
-    testCompile 'org.easymock:easymock:3.+'
-    testCompile 'org.apache.commons:commons-text:[1.3,)'
-    compile 'org.opencadc:cadc-vos:[1.1.8,)'
-
-    testCompile 'ca.nrc.cadc:web-test:[2.0, )'
-    testCompile 'org.seleniumhq.selenium:selenium-java:3.+'
+    testImplementation 'junit:junit:[4.12,5.0)'
+    testImplementation 'org.skyscreamer:jsonassert:[1.5,2.0)'
+    testImplementation 'org.easymock:easymock:[3.6,4.0)'
+    testImplementation 'org.apache.commons:commons-text:[1.3,)'
+    testImplementation 'org.opencadc:cadc-web-test:[2.1.1,3.0.0)'
+    testImplementation 'org.seleniumhq.selenium:selenium-java:[3.14,4.0)'
 }
 
-sourceCompatibility = '1.7'
+sourceCompatibility = '1.8'
 group = 'ca.nrc.cadc'
-version = '1011'
-
-ext {
-    intTest_user_name = 'CADCtest'
-    intTest_user_password = 'sywymUL4'
-
-    docker_image_name = 'mach378.cadc.dao.nrc.ca:5000/citation'
-
-    // Change this value to test other locations, such as Production or RC.
-    intTest_default_web_app_url = 'https://rc.canfar.net'
-    intTest_default_web_app_endpoint = '/citation'
-}
+version = '1012'
 
 war {
     // Trying to fix static file caching on new build.
@@ -59,63 +46,42 @@ war {
 }
 
 sourceSets {
-    intTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/intTest/java')
-        }
-
-        // set the intTest resource directory
-        resources.srcDir file('src/intTest/resources')
-
-        // also grab the resources from the test source set
-        // resources.srcDirs += file('src/test/resources')
-        resources.srcDirs += new File(System.getenv('A') + '/test-certificates/')
-    }
+    intTest
 }
-
-
-tasks.withType(Test) {
-    // reset the report destinations so that intTests go to their
-    // own page
-    //reports.html.destination = file("${reporting.baseDir}/${name}")
-//    reports.html.destination = file(reporting.baseDir.getAbsolutePath() + '/' + name)
-
-    // Assign all Java system properties from
-    // the command line to the tests
-    systemProperties System.properties
-}
-
 
 configurations {
-    intTestCompile
-    intTestCompile.extendsFrom(testCompile)
+    intTestImplementation
+    intTestImplementation.extendsFrom(testImplementation)
 }
 
 idea {
     module {
         //and some extra test source dirs
         testSourceDirs += file('src/intTest/java')
-        scopes.TEST.plus += [ configurations.intTestCompile ]
     }
+}
+
+tasks.withType(Test) {
+    // Assign all Java system properties from
+    // the command line to the tests
+    systemProperties System.properties
 }
 
 ['firefox', 'chrome'].each { driver ->
     task "intTest${driver.capitalize()}"(type: Test) { driverTest ->
-        testClassesDir = sourceSets.intTest.output.classesDir
+        testClassesDirs = sourceSets.intTest.output.classesDirs
         classpath = sourceSets.intTest.runtimeClasspath
         reports {
             html.destination = reporting.file("$name/html")
         }
         dependencies {
-            intTestCompile 'junit:junit:4.+'
-            intTestCompile 'ca.nrc.cadc:web-test:2.+'
-            intTestCompile 'org.seleniumhq.selenium:selenium-java:3.+'
+            intTestImplementation 'junit:junit:[4.12,5.0)'
+            intTestImplementation 'org.opencadc:cadc-web-test:[2.1.1,3.0.0)'
+            intTestImplementation 'org.seleniumhq.selenium:selenium-java:[3.14,4.0)'
         }
 
         // set the configuration context
-        testClassesDir = sourceSets.intTest.output.classesDir
+        testClassesDirs = sourceSets.intTest.output.classesDirs
         classpath = sourceSets.intTest.runtimeClasspath
 
         // run the tests always
@@ -134,26 +100,33 @@ idea {
             rename 'DelegationTokenKey.pub', 'RsaSignaturePub.key'
         }
 
-
         systemProperty "driver", "${driver}"
 
-        if (project.hasProperty('intTest_selenium_server_url')) {
+        if (!project.hasProperty('intTest_selenium_server_url')) {
+            systemProperty 'selenium.server.url', 'http://mach378.cadc.dao.nrc.ca:4444'
+        }
+        else {
             systemProperty 'selenium.server.url', project.intTest_selenium_server_url
             logger.info('Running browser tests on ' + project.intTest_selenium_server_url)
         }
-        else {
-            systemProperty 'selenium.server.url', 'http://cadcint2.cadc.dao.nrc.ca:3444'
-        }
 
-        if (project.hasProperty('intTest_web_app_url')) {
+        if (!project.hasProperty('intTest_web_app_url')) {
+            System.err.println("Please set the intTest_web_app_url property (-PintTest_web_app_url=https://www...).")
+        } else {
             systemProperty 'web.app.url', project.intTest_web_app_url
         }
-        else {
-            systemProperty 'web.app.url', project.intTest_default_web_app_url
+
+        if (!project.hasProperty('intTest_user_name')) {
+            System.err.println("Please set the intTest_user_name property (-PintTest_user_name=cadcuser).")
+        } else {
+            systemProperty 'user.name', project.intTest_user_name
         }
 
-        systemProperty 'user.name', project.intTest_user_name
-        systemProperty 'user.password', project.intTest_user_password
+        if (!project.hasProperty('intTest_user_password')) {
+            System.err.println("Please set the intTest_user_password property (-intTest_user_password=1234pw).")
+        } else {
+            systemProperty 'user.password', project.intTest_user_password
+        }
 
         maxParallelForks = 1
     }
