@@ -13,7 +13,7 @@
         <servlet-class>ca.nrc.cadc.log.LogControlServlet</servlet-class>
         <init-param>
             <param-name>logLevel</param-name>
-            <param-value>info</param-value>
+            <param-value>debug</param-value>
         </init-param>
         <init-param>
             <param-name>logLevelPackages</param-name>
@@ -25,14 +25,6 @@
                 ca.nrc.cadc.vos
                 ca.nrc.cadc.ac
             </param-value>
-        </init-param>
-        <init-param>
-            <param-name>logAccessGroup</param-name>
-            <param-value>ivo://cadc.nrc.ca/gms?CADC</param-value>
-        </init-param>
-        <init-param>
-            <param-name>groupAuthorizer</param-name>
-            <param-value>ca.nrc.cadc.ac.client.GroupAuthorizer</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
@@ -119,34 +111,4 @@
         <url-pattern>/logControl</url-pattern>
     </servlet-mapping>
 
-    <security-role>
-        <description>Public security role</description>
-        <role-name>public</role-name>
-    </security-role>
-
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>auth</web-resource-name>
-            <description/>
-            <url-pattern>/logControl/*</url-pattern>
-            <url-pattern>/auth-instances/*</url-pattern>
-            <http-method>GET</http-method>
-            <http-method>POST</http-method>
-            <http-method>HEAD</http-method>
-            <http-method>PUT</http-method>
-            <http-method>OPTIONS</http-method>
-            <http-method>TRACE</http-method>
-            <http-method>DELETE</http-method>
-        </web-resource-collection>
-        <auth-constraint>
-            <description>force authentication for all requests</description>
-            <role-name>public</role-name>
-        </auth-constraint>
-    </security-constraint>
-    
-    <login-config>
-        <auth-method>BASIC</auth-method>
-        <realm-name>Canadian Astronomy Data Centre</realm-name>
-    </login-config>
-    
 </web-app>
