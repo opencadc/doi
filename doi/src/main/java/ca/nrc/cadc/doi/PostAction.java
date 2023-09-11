@@ -149,27 +149,22 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        try {
-            // Do DOI creation work as doiadmin
-            File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-            Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-            Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-                @Override
-                public String run() throws Exception {
-                    if (doiAction != null) {
-                        performDoiAction();
-                    } else if (doiSuffix == null) {
-                        createDOI();
-                    } else {
-                        updateDOI();
-                    }
-                    return null;
+        // Do DOI creation work as doiadmin
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                if (doiAction != null) {
+                    performDoiAction();
+                } else if (doiSuffix == null) {
+                    createDOI();
+                } else {
+                    updateDOI();
                 }
-            });
-        } catch (Exception e) {
-            log.error("error updating DOI", e);
-            throw e;
-        }
+                return null;
+            }
+        });
     }
 
     private Resource merge(Resource sourceResource, Resource targetResource) {

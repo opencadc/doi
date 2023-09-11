@@ -112,23 +112,18 @@ public class GetAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(false);
 
-        try {
-            // need the following statement because the VOSClient is not initializing
-            // the credentials properly
-            CredUtil.checkCredentials();
+        // need the following statement because the VOSClient is not initializing
+        // the credentials properly
+        CredUtil.checkCredentials();
 
-            if (super.doiSuffix == null) {
-                // get the DoiStatus of all DOI instances for the calling user
-                getStatusList();
-            } else if (super.doiAction != null) {
-                // perform the action on the DOI
-                performDoiAction();
-            } else {
-                getDoi();
-            }
-        } catch (Exception e) {
-            log.error("error getting DOI", e);
-            throw e;
+        if (super.doiSuffix == null) {
+            // get the DoiStatus of all DOI instances for the calling user
+            getStatusList();
+        } else if (super.doiAction != null) {
+            // perform the action on the DOI
+            performDoiAction();
+        } else {
+            getDoi();
         }
     }
     

@@ -98,21 +98,16 @@ public class DeleteAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        try {
-            // Do all subsequent work as doiadmin
-            File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-            Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-            Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-                @Override
-                public String run() throws Exception {
-                    doActionImpl();
-                    return null;
-                }
-            });
-        } catch (Exception e) {
-            log.error("error deleting DOI", e);
-            throw e;
-        }
+        // Do all subsequent work as doiadmin
+        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public String run() throws Exception {
+                doActionImpl();
+                return null;
+            }
+        });
     }
 
 
