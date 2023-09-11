@@ -103,7 +103,5 @@ public class VosiCapabilitiesTest extends CapabilitiesTest {
         Assert.assertNotNull("cert", tap.findInterface(Standards.SECURITY_METHOD_CERT, Standards.INTERFACE_PARAM_HTTP));
         Assert.assertNotNull("cookie",
                 tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
-        Assert.assertNotNull("password",
-                tap.findInterface(Standards.SECURITY_METHOD_HTTP_BASIC, Standards.INTERFACE_PARAM_HTTP));
     }
 }

@@ -194,7 +194,6 @@ public class InitializeDOIFolderTest extends IntTestBase {
 
                 Transfer transfer = new Transfer(new URI(dataFileToWrite), Direction.pushToVoSpace);
                 Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
-                put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
                 transfer.getProtocols().add(put);
                 
                 log.debug("file to be written: " + dataFileToWrite);
