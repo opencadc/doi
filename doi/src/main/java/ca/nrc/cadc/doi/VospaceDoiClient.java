@@ -67,13 +67,13 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.ACIdentityManager;
+import ca.nrc.cadc.ac.ACIdentityManager;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.doi.datacite.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.Direction;
@@ -91,9 +91,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 import javax.security.auth.Subject;
+import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 
 public class VospaceDoiClient {
@@ -102,9 +102,10 @@ public class VospaceDoiClient {
     protected static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     protected static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vault" + DOI_BASE_FILEPATH;
     protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
+    private static final X500Principal DOIADMIN = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
 
-    private Integer callersNumericId;
-    private String callersDN;
+    private final Integer callersNumericId;
+//    private final String callersDN;
     private VOSpaceClient vosClient = null;
     private VOSURI baseDataURI = null;
     private String xmlFilename = "";
@@ -115,8 +116,12 @@ public class VospaceDoiClient {
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
-        this.callersNumericId = (Integer) acIdentMgr.toOwner(callingSubject);
-        this.callersDN = acIdentMgr.toOwnerString(callingSubject);
+        Object ownerID = acIdentMgr.toOwner(callingSubject);
+        if (ownerID == null) {
+            throw new IllegalArgumentException("NumberID not found for subject: " + callingSubject);
+        }
+        this.callersNumericId = ((Long) ownerID).intValue();
+//        this.callersDN = acIdentMgr.toDisplayString(callingSubject);
 
         if (includePublicNodes != null) {
             this.includePublicNodes = includePublicNodes;
@@ -131,7 +136,7 @@ public class VospaceDoiClient {
         return this.baseDataURI;
     }
 
-    public ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException, AccessControlException {
+    public ContainerNode getContainerNode(String path) throws NodeNotFoundException, AccessControlException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -139,7 +144,7 @@ public class VospaceDoiClient {
         ContainerNode requestedNode = null;
 
         try {
-            requestedNode =  (ContainerNode) vosClient.getNode(nodePath);
+            requestedNode = (ContainerNode) vosClient.getNode(nodePath);
         } catch (NodeNotFoundException | AccessControlException ef) {
             throw ef;
         } catch (Exception e) {
@@ -149,7 +154,7 @@ public class VospaceDoiClient {
         return requestedNode;
     }
 
-    public DataNode getDataNode(String path) throws URISyntaxException, NodeNotFoundException, AccessControlException {
+    public DataNode getDataNode(String path) throws NodeNotFoundException, AccessControlException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -177,14 +182,17 @@ public class VospaceDoiClient {
     public boolean isCallerAllowed(Node node) {
         boolean isRequesterNode = false;
 
-        if (this.includePublicNodes == true && isPublicNode(node)) {
+        if (this.includePublicNodes && isPublicNode(node)) {
             isRequesterNode = true;
         } else {
             String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
             log.debug("requester for node: " + requester);
             if (StringUtil.hasText(requester)) {
-                isRequesterNode = requester.equals(this.callersNumericId.toString()) ||
-                    callersDN.contains("doiadmin");
+                isRequesterNode = requester.equals(this.callersNumericId.toString());
+                Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
+                for (X500Principal p : xset) {
+                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, DOIADMIN);
+                }
             }
         }
         return isRequesterNode;

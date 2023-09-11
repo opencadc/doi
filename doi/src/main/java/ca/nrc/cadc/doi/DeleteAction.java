@@ -69,7 +69,7 @@ package ca.nrc.cadc.doi;
 
 
 import ca.nrc.cadc.ac.client.GMSClient;
-import ca.nrc.cadc.auth.ACIdentityManager;
+import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -98,16 +98,21 @@ public class DeleteAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        // Do all subsequent work as doiadmin
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                doActionImpl();
-                return null;
-            }
-        });
+        try {
+            // Do all subsequent work as doiadmin
+            File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+            Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+            Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                @Override
+                public String run() throws Exception {
+                    doActionImpl();
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            log.error("error deleting DOI", e);
+            throw e;
+        }
     }
 
 

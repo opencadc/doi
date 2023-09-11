@@ -92,7 +92,6 @@ import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.ContainerNode;
@@ -150,22 +149,27 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        // Do DOI creation work as doiadmin
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                if (doiAction != null) {
-                    performDoiAction();
-                } else if (doiSuffix == null) {
-                    createDOI();
-                } else {
-                    updateDOI();
-                } 
-                return null;
-            }
-        });
+        try {
+            // Do DOI creation work as doiadmin
+            File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
+            Subject doiadminSubject = SSLUtil.createSubject(pemFile);
+            Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                @Override
+                public String run() throws Exception {
+                    if (doiAction != null) {
+                        performDoiAction();
+                    } else if (doiSuffix == null) {
+                        createDOI();
+                    } else {
+                        updateDOI();
+                    }
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            log.error("error updating DOI", e);
+            throw e;
+        }
     }
 
     private Resource merge(Resource sourceResource, Resource targetResource) {
@@ -782,7 +786,7 @@ public class PostAction extends DoiAction {
         setPermissions(properties, guri.toString());
 
         // Get numeric id for setting doiRequestor property
-        NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callingSubjectNumericID.toString());
+        NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callersNumericId.toString());
         properties.add(doiRequestor);
         
         NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, DOI_VOS_STATUS_DRAFT);

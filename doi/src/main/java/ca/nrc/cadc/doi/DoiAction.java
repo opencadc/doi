@@ -67,7 +67,7 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.ACIdentityManager;
+import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -108,7 +108,7 @@ public abstract class DoiAction extends RestAction {
     protected static final String DOI_GROUP_PREFIX = "DOI-";
     
     protected Subject callingSubject;
-    protected Integer callingSubjectNumericID;
+    protected Integer callersNumericId;
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
@@ -151,7 +151,11 @@ public abstract class DoiAction extends RestAction {
         parsePath();
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
-        this.callingSubjectNumericID = (Integer) acIdentMgr.toOwner(callingSubject);
+        Object ownerID = acIdentMgr.toOwner(callingSubject);
+        if (ownerID == null) {
+            throw new IllegalArgumentException("NumberID not found for subject: " + callingSubject);
+        }
+        this.callersNumericId = ((Long) ownerID).intValue();
         this.vClient = new VospaceDoiClient(callingSubject, this.includePublic);
     }
     
@@ -172,7 +176,8 @@ public abstract class DoiAction extends RestAction {
     	this.prodURL = pr.getFirstPropertyValue("PROD_URL");
     	this.devURL = pr.getFirstPropertyValue("DEV_URL");
     	this.landingPageURL = pr.getFirstPropertyValue("LANDING_PAGE_URL");
-    	if (this.prodHost == null || this.devHost == null || this.prodHost == null || this.devURL == null) {
+    	if (this.prodHost == null || this.devHost == null || this.prodURL == null
+                || this.devURL == null || this.landingPageURL == null) {
     		throw new RuntimeException("Failed to load properties from config file " + DOI_CONFIG_FILE);
     	}
     }
