@@ -104,8 +104,7 @@ public class VospaceDoiClient {
     protected static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
     private static final X500Principal DOIADMIN = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
 
-    private final Integer callersNumericId;
-//    private final String callersDN;
+    private final Long callersNumericId;
     private VOSpaceClient vosClient = null;
     private VOSURI baseDataURI = null;
     private String xmlFilename = "";
@@ -116,13 +115,7 @@ public class VospaceDoiClient {
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
-        Object ownerID = acIdentMgr.toOwner(callingSubject);
-        if (ownerID == null) {
-            throw new IllegalArgumentException("NumberID not found for subject: " + callingSubject);
-        }
-        this.callersNumericId = ((Long) ownerID).intValue();
-//        this.callersDN = acIdentMgr.toDisplayString(callingSubject);
-
+        this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         if (includePublicNodes != null) {
             this.includePublicNodes = includePublicNodes;
         }

@@ -108,7 +108,7 @@ public abstract class DoiAction extends RestAction {
     protected static final String DOI_GROUP_PREFIX = "DOI-";
     
     protected Subject callingSubject;
-    protected Integer callersNumericId;
+    protected Long callersNumericId;
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
@@ -151,11 +151,7 @@ public abstract class DoiAction extends RestAction {
         parsePath();
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
-        Object ownerID = acIdentMgr.toOwner(callingSubject);
-        if (ownerID == null) {
-            throw new IllegalArgumentException("NumberID not found for subject: " + callingSubject);
-        }
-        this.callersNumericId = ((Long) ownerID).intValue();
+        this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         this.vClient = new VospaceDoiClient(callingSubject, this.includePublic);
     }
     
