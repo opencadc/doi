@@ -84,9 +84,6 @@ import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
 
 import java.io.File;
 import java.net.URL;
@@ -95,9 +92,15 @@ import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Set;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.Node;
+import org.opencadc.vospace.NodeProperty;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.ClientRecursiveSetNode;
 
 
 public class GetAction extends DoiAction {
@@ -150,9 +153,10 @@ public class GetAction extends DoiAction {
             public String run() throws Exception {
             	// update status based on the result of the minting service
             	String localStatus = status;
-            	String jobURLString = doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_JOB_URL_PROP);
+            	String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
             	if (jobURLString != null) {
             		URL jobURL = new URL(jobURLString);
+                    VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
             		ClientRecursiveSetNode recSetNode = new ClientRecursiveSetNode(jobURL, doiContainerNode, false);
             		ExecutionPhase phase = recSetNode.getPhase();
             		switch (phase) {
@@ -166,9 +170,9 @@ public class GetAction extends DoiAction {
             				}
             				
             				// delete jobURL property
-            				doiContainerNode.findProperty(DoiAction.DOI_VOS_JOB_URL_PROP).setMarkedForDeletion(true);
-            				doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
-            				vClient.getVOSpaceClient().setNode(doiContainerNode);
+                            doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
+            				doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+            				vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
             				break;
             			case ERROR:
             			case ABORTED:
@@ -183,9 +187,9 @@ public class GetAction extends DoiAction {
             				}
             				
             				// delete jobURL property
-            				doiContainerNode.findProperty(DoiAction.DOI_VOS_JOB_URL_PROP).setMarkedForDeletion(true);
-            				doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
-            				vClient.getVOSpaceClient().setNode(doiContainerNode);
+                            doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
+            				doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+            				vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
             				break;
             			case PENDING:
             			case QUEUED:
@@ -221,7 +225,7 @@ public class GetAction extends DoiAction {
             List<Node> doiContainedNodes = doiContainerNode.getNodes();
             for (Node node : doiContainedNodes) {
                 if (node.getName().equals("data")) {
-                    dataDirectory = node.getUri().getPath();
+                    dataDirectory = getPath(node);
                     break;
                 }
             }

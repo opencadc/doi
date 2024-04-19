@@ -75,9 +75,6 @@ import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vos.NodeNotFoundException;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -85,6 +82,8 @@ import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.BeforeClass;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.VOSpaceClient;
 
 /**
  * Integration tests generating DOI folders in VOSpace
@@ -101,7 +100,7 @@ public abstract class IntTestBase {
     protected static File CADCREGTEST_CERT;
     protected static File DOIADMIN_CERT;
     protected static String baseURL;
-    protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca!vault/AstroDataCitationDOI/CISTI.CANFAR";
+    protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca~vault/AstroDataCitationDOI/CISTI.CANFAR";
     protected static VOSpaceClient vosClient;
     protected static VOSURI astroDataURI;
     protected static RegistryClient rc;
@@ -127,11 +126,12 @@ public abstract class IntTestBase {
         baseURL = doi.toExternalForm();
 
         // Initialize vosClient for later use
-        astroDataURI = new VOSURI(new URI(DOI_BASE_NODE));
+        astroDataURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH);
         vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
     }
 
-    protected void deleteTestFolder(VOSpaceClient vosClient, String doiSuffix) throws RuntimeException, MalformedURLException, NodeNotFoundException {
+    protected void deleteTestFolder(String doiSuffix)
+            throws RuntimeException, MalformedURLException {
         // Clean up test folder
         // Set up DELETE
         URL deleteUrl = new URL(baseURL + "/" + doiSuffix);

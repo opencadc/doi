@@ -361,7 +361,7 @@ public class UpdateDocumentTest extends DocumentTest {
                     }
                 } finally {
                     // delete containing folder using doiadmin credentials
-                    deleteTestFolder(vosClient, doiNumberParts[1]);
+                    deleteTestFolder(doiNumberParts[1]);
                 }
                 return resource;
             }

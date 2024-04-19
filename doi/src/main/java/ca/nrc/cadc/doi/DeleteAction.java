@@ -72,9 +72,6 @@ import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.net.URI;
 import java.security.AccessControlException;
@@ -84,6 +81,9 @@ import java.util.Iterator;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.VOSpaceClient;
 
 
 public class DeleteAction extends DoiAction {
@@ -113,7 +113,7 @@ public class DeleteAction extends DoiAction {
 
     private void doActionImpl() throws Exception {
 
-        VOSURI doiDataURI = new VOSURI(new URI(DOI_BASE_VOSPACE ));
+        VOSURI doiDataURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH);
         VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
 
         if (doiSuffix == null) {

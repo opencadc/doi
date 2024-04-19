@@ -67,6 +67,9 @@
 
 package ca.nrc.cadc.doi;
 
+import java.net.URISyntaxException;
+import java.util.Set;
+import java.util.TreeSet;
 import org.opencadc.gms.GroupURI;
 
 import ca.nrc.cadc.ac.Group;
@@ -94,18 +97,6 @@ import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.DataNode;
-import ca.nrc.cadc.vos.Direction;
-import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.NodeProperty;
-import ca.nrc.cadc.vos.Protocol;
-import ca.nrc.cadc.vos.Transfer;
-import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.ClientAbortThread;
-import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
-import ca.nrc.cadc.vos.client.ClientTransfer;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -129,6 +120,18 @@ import java.util.MissingResourceException;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.jdom2.Namespace;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.DataNode;
+import org.opencadc.vospace.Node;
+import org.opencadc.vospace.NodeProperty;
+import org.opencadc.vospace.VOS;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.ClientAbortThread;
+import org.opencadc.vospace.client.ClientRecursiveSetNode;
+import org.opencadc.vospace.client.ClientTransfer;
+import org.opencadc.vospace.transfer.Direction;
+import org.opencadc.vospace.transfer.Protocol;
+import org.opencadc.vospace.transfer.Transfer;
 
 
 public class PostAction extends DoiAction {
@@ -184,14 +187,15 @@ public class PostAction extends DoiAction {
     private Resource updateResource(Resource resourceFromUser) throws Exception {
         Resource updatedResource = null;
         if (resourceFromUser != null) {
+            String nodeName = getDoiFilename(doiSuffix);
+
             // Get resource from vospace
-            Resource resourceFromVos = vClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
+            Resource resourceFromVos = vClient.getResource(doiSuffix, nodeName);
             
-            // udpate the resource from vospace and upload it
+            // update the resource from vospace and upload it
             updatedResource = merge(resourceFromUser, resourceFromVos);
-            VOSURI docDataURI = new VOSURI(
-                    vClient.getDoiBaseVOSURI().toString() + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix) );
-            this.uploadDOIDocument(updatedResource, new DataNode(docDataURI));
+            VOSURI docVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
+            this.uploadDOIDocument(updatedResource, docVOSURI);
         }
 
         return updatedResource;
@@ -201,24 +205,24 @@ public class PostAction extends DoiAction {
         // update journal reference 
         if (journalRefFromUser != null) {
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+            VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
             String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
             if (journalRefFromVOSpace == null) {
                 if (journalRefFromUser.length() > 0) {
                     // journal reference does not exist, add it
                     NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
                     doiContainerNode.getProperties().add(journalRef);
-                    vClient.getVOSpaceClient().setNode(doiContainerNode);
+                    vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
                 }
             } else {
                 if (journalRefFromUser.length() > 0) {
                     // journal reference already exists, update it
-                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
+                    doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
                 } else {
                     // delete existing journal reference
-                    doiContainerNode.findProperty(DOI_VOS_JOURNAL_PROP).setMarkedForDeletion(true);;
+                    doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOURNAL_PROP));
                 }
-                
-                vClient.getVOSpaceClient().setNode(doiContainerNode);
+                vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
             }
         }
 
@@ -393,15 +397,18 @@ public class PostAction extends DoiAction {
 
 
     private void register(ContainerNode doiContainerNode) throws Exception {
-        String groupRead = "";
-        String groupWrite = "";
+        Set<GroupURI> groupRead = new TreeSet<>();
+        Set<GroupURI> groupWrite = new TreeSet<>();
         String xmlFilename = doiSuffix + "/"+ getDoiFilename(doiSuffix);
         DataNode xmlFile = null;
 
+        VOSURI doiURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
+        VOSURI xmlURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName() + "/" + xmlFilename);
+
         try {
             // update status
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.REGISTERING.getValue());
+            vClient.getVOSpaceClient().setNode(doiURI, doiContainerNode);
 
             // register DOI to DataCite
             String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
@@ -414,92 +421,70 @@ public class PostAction extends DoiAction {
             makeDOIFindable(doiContainerNode);
 
             // completed minting, update status and node properties
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
+            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.MINTED.getValue());
 
             // make parent container and XML file public, remove group properties.
             // this is required for the landing page to be available to doi.org for
             // anonymous access
             xmlFile = vClient.getDataNode(xmlFilename);
-            xmlFile.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
-            if (StringUtil.hasText(xmlFile.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
-                xmlFile.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-            }
-            if (StringUtil.hasText(xmlFile.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
-                xmlFile.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            }
+            xmlFile.isPublic = true;
+            xmlFile.getReadOnlyGroup().clear();
+            xmlFile.getReadWriteGroup().clear();
+            vClient.getVOSpaceClient().setNode(xmlURI, xmlFile);
 
-            vClient.getVOSpaceClient().setNode(xmlFile);
-
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
-            groupRead = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD);
-            if (StringUtil.hasText(groupRead)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-            }
-            groupWrite = doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE);
-            if (StringUtil.hasText(groupWrite)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            }
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            groupRead.addAll(doiContainerNode.getReadOnlyGroup());
+            groupWrite.addAll(doiContainerNode.getReadWriteGroup());
+            doiContainerNode.isPublic = true;
+            doiContainerNode.getReadOnlyGroup().clear();
+            doiContainerNode.getReadWriteGroup().clear();
+            vClient.getVOSpaceClient().setNode(doiURI, doiContainerNode);
 
         } catch (Exception ex) {
             // update status to flag error state, and original properties of
             // container node and xml file
 
             if (xmlFile != null) {
-                xmlFile.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("false");
-                if (StringUtil.hasText(groupRead)) {
-                    xmlFile.findProperty(VOS.PROPERTY_URI_GROUPREAD).setValue(groupRead);
-                }
-                if (StringUtil.hasText(groupWrite)) {
-                    xmlFile.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setValue(groupRead);
-                }
-                vClient.getVOSpaceClient().setNode(xmlFile);
+                xmlFile.isPublic = false;
+                xmlFile.getReadOnlyGroup().addAll(groupRead);
+                xmlFile.getReadWriteGroup().addAll(groupWrite);
+                vClient.getVOSpaceClient().setNode(xmlURI, xmlFile);
             }
 
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
-            doiContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("false");
-            if (StringUtil.hasText(groupRead)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setValue(groupRead);
-            }
-            if (StringUtil.hasText(groupWrite)) {
-                doiContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setValue(groupRead);
-            }
+            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
+            doiContainerNode.isPublic = false;
+            doiContainerNode.getReadOnlyGroup().addAll(groupRead);
+            doiContainerNode.getReadWriteGroup().addAll(groupWrite);
 
             // update both nodes
             // This will work unless vospace is failing
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            vClient.getVOSpaceClient().setNode(doiURI, doiContainerNode);
 
             throw ex;
         }
     }
 
-    private void lockData(ContainerNode doiContainerNode) throws Exception {        
+    private void lockData(ContainerNode doiContainerNode) throws Exception {
+        VOSURI containerVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
+        VOSURI dataVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/data");
         try {
-            ContainerNode dataContainerNode = vClient.getContainerNode(doiSuffix + "/data");
-
             // update status
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            ContainerNode dataContainerNode = vClient.getContainerNode(doiSuffix + "/data");
+            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
+            vClient.getVOSpaceClient().setNode(containerVOSURI, doiContainerNode);
 
             // lock data directory and subdirectories, make them public
-            dataContainerNode.findProperty(VOS.PROPERTY_URI_ISPUBLIC).setValue("true");
-            if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD))) {
-                dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPREAD).setMarkedForDeletion(true);
-            }
+            dataContainerNode.isPublic = true;
+            dataContainerNode.getReadOnlyGroup().clear();
+            dataContainerNode.getReadWriteGroup().clear();
+            dataContainerNode.isLocked = true;
 
-            if (StringUtil.hasText(dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE))) {
-                dataContainerNode.findProperty(VOS.PROPERTY_URI_GROUPWRITE).setMarkedForDeletion(true);
-            }
-
-            NodeProperty readOnly = new NodeProperty(VOS.PROPERTY_URI_ISLOCKED, "true");
-            dataContainerNode.getProperties().add(readOnly);
             // clear all children in the dataContainerNode, otherwise the XML file may be
             // too long resulting in (413) Request Entity Too Large
-            dataContainerNode.setNodes(new ArrayList<Node>());
-            vClient.getVOSpaceClient().setNode(dataContainerNode);
+            dataContainerNode.getNodes().clear();
+            vClient.getVOSpaceClient().setNode(dataVOSURI, dataContainerNode);
             
             // get the job URL
-            ClientRecursiveSetNode recSetNode = vClient.getVOSpaceClient().setNodeRecursive(dataContainerNode);
+            ClientRecursiveSetNode recSetNode = vClient.getVOSpaceClient().setNodeRecursive(dataVOSURI, dataContainerNode);
             URL jobURL = recSetNode.getJobURL();
 
             // this is an async operation
@@ -511,18 +496,18 @@ public class PostAction extends DoiAction {
             log.debug("invoked async call to recursively set the properties in the data directory " + doiSuffix + "/data");
            
             // save job URL
-            NodeProperty jobURLProp = new NodeProperty(DoiAction.DOI_VOS_JOB_URL_PROP, jobURL.toExternalForm());
+            NodeProperty jobURLProp = new NodeProperty(DOI_VOS_JOB_URL_PROP, jobURL.toExternalForm());
             doiContainerNode.getProperties().add(jobURLProp);
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            vClient.getVOSpaceClient().setNode(containerVOSURI, doiContainerNode);
         } catch (Exception ex) {
             // update status
-            doiContainerNode.findProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());;
-            String jobURLString = doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_JOB_URL_PROP);
+            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());;
+            String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
             if (jobURLString != null) {
-            	doiContainerNode.findProperty(DoiAction.DOI_VOS_JOB_URL_PROP).setMarkedForDeletion(true);
+                doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
             }
             
-            vClient.getVOSpaceClient().setNode(doiContainerNode);
+            vClient.getVOSpaceClient().setNode(containerVOSURI, doiContainerNode);
             throw ex;
         }
     }
@@ -544,7 +529,7 @@ public class PostAction extends DoiAction {
             // start minting process            
             // check minting status
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
+            Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP));
             switch (mintingStatus) {
                 case DRAFT:
                 case ERROR_LOCKING_DATA:
@@ -676,19 +661,16 @@ public class PostAction extends DoiAction {
         }
     }
     
-    private void setPermissions(List<NodeProperty> properties, String guriString) {
+    private void setPermissions(Node node, GroupURI doiGroup) {
         // Before completion, directory is visible in AstroDataCitationDOI directory, but not readable
         // except by doiadmin and calling user's group
-        NodeProperty isPublic = new NodeProperty(VOS.PROPERTY_URI_ISPUBLIC, "false");
-        properties.add(isPublic);
+        node.isPublic = false;
 
         // All folders will be only readable by requester
-        NodeProperty rGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPREAD, guriString);
-        properties.add(rGroup);
+        node.getReadOnlyGroup().add(doiGroup);
         
         // All folders will be only readable by requester
-        NodeProperty writeGroup = new NodeProperty(VOS.PROPERTY_URI_GROUPWRITE, guriString);
-        properties.add(writeGroup);
+        node.getReadWriteGroup().add(doiGroup);
     }
     
     private void createDOI() throws Exception {
@@ -706,7 +688,7 @@ public class PostAction extends DoiAction {
         VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
         String nextDoiSuffix = generateNextDOINumber(doiDataURI);
         if (isTesting()) {
-        	nextDoiSuffix = nextDoiSuffix + DoiAction.TEST_SUFFIX;
+        	nextDoiSuffix = nextDoiSuffix + TEST_SUFFIX;
         }
         log.debug("Next DOI suffix: " + nextDoiSuffix);
 
@@ -727,15 +709,16 @@ public class PostAction extends DoiAction {
         
         // create VOSpace data node to house XML doc using doi filename and upload the document
         String docName = super.getDoiFilename(nextDoiSuffix);
-        DataNode doiDocNode = new DataNode(new VOSURI(doiFolder.getUri().toString() + "/" + docName));
-        vClient.getVOSpaceClient().createNode(doiDocNode);
-        this.uploadDOIDocument(resource, doiDocNode);
+        DataNode doiDocNode = new DataNode(docName);
+        VOSURI doiDocVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + nextDoiSuffix + "/" + docName);
+        vClient.getVOSpaceClient().createNode(doiDocVOSURI, doiDocNode);
+        this.uploadDOIDocument(resource, doiDocVOSURI);
         
         // Create the DOI data folder
-        VOSURI dataDir = new VOSURI(doiFolder.getUri().toString() + "/data");
-        ContainerNode newDataFolder = new ContainerNode(dataDir);
-        setPermissions(newDataFolder.getProperties(), guri.toString());
-        vClient.getVOSpaceClient().createNode(newDataFolder);
+        VOSURI dataVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + nextDoiSuffix + "/data");
+        ContainerNode newDataFolder = new ContainerNode("data");
+        setPermissions(newDataFolder, guri);
+        vClient.getVOSpaceClient().createNode(dataVOSURI, newDataFolder);
 
         // Done, send redirect to GET for the XML file just made
         String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
@@ -774,11 +757,7 @@ public class PostAction extends DoiAction {
     private ContainerNode createDOIDirectory(GroupURI guri, String folderName)
         throws Exception {
         
-        List<NodeProperty> properties = new ArrayList<>();
-
-        // Before completion, directory is visible in AstroDataCitationDOI directory, 
-        // but not readable except by doiadmin and calling user's group
-        setPermissions(properties, guri.toString());
+        Set<NodeProperty> properties = new TreeSet<>();
 
         // Get numeric id for setting doiRequestor property
         NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callersNumericId.toString());
@@ -796,18 +775,22 @@ public class PostAction extends DoiAction {
             properties.add(runIdTest);
         }
 
-        String dataDirURI = DOI_BASE_VOSPACE + "/" + folderName;
+        VOSURI newVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + folderName);
+        ContainerNode newFolder = new ContainerNode(folderName);
 
-        VOSURI target = new VOSURI(new URI(dataDirURI));
-        ContainerNode newFolder = new ContainerNode(target, properties);
-        vClient.getVOSpaceClient().createNode(newFolder);
+        // Before completion, directory is visible in AstroDataCitationDOI directory,
+        // but not readable except by doiadmin and calling user's group
+        setPermissions(newFolder, guri);
+
+        newFolder.getProperties().addAll(properties);
+        vClient.getVOSpaceClient().createNode(newVOSURI, newFolder);
         return newFolder;
     }
     
-    private void uploadDOIDocument(Resource resource, DataNode docNode)
-        throws ResourceNotFoundException {
-        
-        Transfer transfer = new Transfer(docNode.getUri().getURI(), Direction.pushToVoSpace);
+    private void uploadDOIDocument(Resource resource, VOSURI docVOSUIRI)
+        throws URISyntaxException, ResourceNotFoundException {
+
+        Transfer transfer = new Transfer(docVOSUIRI.getURI(), Direction.pushToVoSpace);
         Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
         //put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
         transfer.getProtocols().add(put);

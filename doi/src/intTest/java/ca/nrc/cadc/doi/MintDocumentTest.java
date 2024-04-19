@@ -70,14 +70,10 @@
 package ca.nrc.cadc.doi;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
@@ -95,15 +91,13 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.DataNode;
-import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.ClientAbortThread;
-import ca.nrc.cadc.vos.client.ClientRecursiveSetNode;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.DataNode;
+import org.opencadc.vospace.VOS;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.ClientAbortThread;
+import org.opencadc.vospace.client.ClientRecursiveSetNode;
 
 /**
  */
@@ -148,32 +142,32 @@ public class MintDocumentTest extends DocumentTest {
     private void verifyDataDirNodeProperties(ContainerNode dataContainerNode,
                                              ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
         // verify the DOI data containerNode properties
-        Assert.assertTrue("should be public", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
-        Assert.assertNull("should not have group read", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertEquals("incorrect lock property", "true", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        Assert.assertTrue("should be public", dataContainerNode.isPublic);
+        Assert.assertTrue("should not have group read", dataContainerNode.getReadOnlyGroup().isEmpty());
+        Assert.assertTrue("should not have group write", dataContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertTrue("incorrect lock property", dataContainerNode.isLocked);
 
         // verify the DOI data subDir containerNode properties
-        Assert.assertTrue("should be public", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
-        Assert.assertNull("should not have group read", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertEquals("incorrect lock property", "true", dataSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        Assert.assertTrue("should be public", dataSubDirContainerNode.isPublic);
+        Assert.assertTrue("should not have group read", dataSubDirContainerNode.getReadOnlyGroup().isEmpty());
+        Assert.assertTrue("should not have group write", dataSubDirContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertTrue("incorrect lock property", dataSubDirContainerNode.isLocked);
 
         // verify the DOI data subSubDir containerNode properties
-        Assert.assertTrue("should be public", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC).equals("true"));
-        Assert.assertNull("should not have group read", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertEquals("incorrect lock property", "true", dataSubSubDirContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        Assert.assertTrue("should be public", dataSubSubDirContainerNode.isPublic);
+        Assert.assertTrue("should not have group read", dataSubSubDirContainerNode.getReadOnlyGroup().isEmpty());
+        Assert.assertTrue("should not have group write", dataSubSubDirContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertTrue("incorrect lock property", dataSubSubDirContainerNode.isLocked);
     }
 
     private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
     		ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
         // verify the DOI containerNode properties
         Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
-        Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-        Assert.assertNotNull("should have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNotNull("should have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertNull("incorrect lock property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic);
+        Assert.assertFalse("should have group read", doiContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertFalse("should have group write", doiContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertFalse("incorrect lock property", doiContainerNode.isLocked);
 
         verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
     }
@@ -182,10 +176,10 @@ public class MintDocumentTest extends DocumentTest {
                                                  ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
         // verify the DOI containerNode properties
         Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
-        Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-        Assert.assertNotNull("should have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNotNull("should have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
-        Assert.assertNull("incorrect lock property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED));
+        Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic);
+        Assert.assertFalse("should have group read", doiContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertFalse("should have group write", doiContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertFalse("incorrect lock property", doiContainerNode.isLocked);
 
         verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
     }
@@ -194,30 +188,29 @@ public class MintDocumentTest extends DocumentTest {
                                                   ContainerNode dataSubDirContainerNode, ContainerNode dataSubSubDirContainerNode) throws Exception {
         // verify the DOI containerNode properties
         Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
-        Assert.assertEquals("incorrect isPublic property", "true", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-        Assert.assertNull("should not have group read", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
-        Assert.assertNull("should not have group write", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+        Assert.assertTrue("incorrect isPublic property", doiContainerNode.isPublic);
+        Assert.assertTrue("should not have group read", doiContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertTrue("should not have group write", doiContainerNode.getReadWriteGroup().isEmpty());
 
         verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
     }
 
-    
-    private ContainerNode createDataDirectory(String dir) throws URISyntaxException {
-        VOSURI dataDir = new VOSURI(new URI(DoiAction.DOI_BASE_VOSPACE + "/" + dir));
-        ContainerNode newDataFolder = new ContainerNode(dataDir);
-        return (ContainerNode) vosClient.createNode(newDataFolder);
+    private ContainerNode createContainerNode(String parentPath, String nodeName) throws Exception {
+        ContainerNode node = new ContainerNode(nodeName);
+        VOSURI nodeURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, parentPath + "/" + nodeName);
+        return (ContainerNode) vosClient.createNode(nodeURI, node);
     }
     
-    private DataNode createData(String filename) throws URISyntaxException {
-        VOSURI file = new VOSURI(new URI(DoiAction.DOI_BASE_VOSPACE + "/" + filename));
-        DataNode newFile = new DataNode(file);
-        return (DataNode) vosClient.createNode(newFile);
+    private DataNode createDataNode(String parentPath, String nodeName) throws Exception {
+        DataNode node = new DataNode(nodeName);
+        VOSURI nodeURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + parentPath + "/" + nodeName);
+        return (DataNode) vosClient.createNode(nodeURI, node);
     }
 
-    private void createFilesWithLongNames(String dir) throws URISyntaxException {
-        String baseFilename = dir + "50chars_1234567890_1234567890_1234567890_1234567890_file";
+    private void createFilesWithLongNames(String parentPath) throws Exception {
+        String baseFilename = "50chars_1234567890_1234567890_1234567890_1234567890_file_";
         for (int i = 0; i < 20; i++) {
-            createData(baseFilename + i + ".txt");
+            createDataNode(parentPath, baseFilename + i + ".txt");
         }
     }
     
@@ -225,7 +218,8 @@ public class MintDocumentTest extends DocumentTest {
         Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
-                ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(dataContainerNode);
+                VOSURI vosuri = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + dataContainerNode.getName());
+                ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(vosuri, dataContainerNode);
                 URL jobURL = recSetNode.getJobURL();
 
                 // this is an async operation
@@ -284,17 +278,19 @@ public class MintDocumentTest extends DocumentTest {
                     
                     // verify the DOI containerNode properties
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                    Assert.assertEquals("incorrect isPublic property", "false", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISPUBLIC));
-                    Assert.assertNotNull("should have group read property", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPREAD));
+                    Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic);
+                    Assert.assertFalse("should have group read property", doiContainerNode.getReadOnlyGroup().isEmpty());
                     ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                    Assert.assertNotNull("should have group write", dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_GROUPWRITE));
+                    Assert.assertFalse("should have group write", dataContainerNode.getReadWriteGroup().isEmpty());
 
                     // create subdirectories under the data directory
-                    String subDir = doiNumberParts[1] + "/data/subDir";
-                    ContainerNode dataSubDirContainerNode = createDataDirectory(subDir);
+                    String subDir = "subDir";
+                    String subPath = DoiAction.DOI_BASE_FILEPATH + "/" + doiNumberParts[1] + "/data";
+                    ContainerNode dataSubDirContainerNode = createContainerNode(subPath, subDir);
                     createFilesWithLongNames(subDir);
-                    String subSubDir = subDir + "/subsubDir";
-                    ContainerNode dataSubSubDirContainerNode = createDataDirectory(subSubDir);
+                    String subSubDir = "/subsubDir";
+                    String subSubPath = subPath + subDir;
+                    ContainerNode dataSubSubDirContainerNode = createContainerNode(subSubPath, subSubDir);
                     
                     // mint the document, DRAFT ==> LOCKING_DATA
                     executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
@@ -306,8 +302,9 @@ public class MintDocumentTest extends DocumentTest {
                     verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode, dataSubSubDirContainerNode);
                     
                     // mint the document, ERROR_LOCKING_DATA ==> LOCKING_DATA
-                    doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());
-                    vosClient.setNode(doiContainerNode);
+                    doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());
+                    VOSURI vosuri = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
+                    vosClient.setNode(vosuri, doiContainerNode);
                     executeMintTest(docURL, returnedDoc, expectedIdentifier, null);
                     doiContainerNode = getContainerNode(doiNumberParts[1]);
                     dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
@@ -334,12 +331,13 @@ public class MintDocumentTest extends DocumentTest {
                     // mint the document, ERROR_REGISTERING ==> REGISTERING
                     // the doiContainerNode doesn't have group read & write anymore, and is owned
                     // by doiadmin, so changes to it must be done with that cert.
-                    doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
+                    doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
                     doiParentNode = doiContainerNode;
                     Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
                         @Override
                         public String run() throws Exception {
-                            vosClient.setNode(doiParentNode);
+                            VOSURI parentVOSURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiParentNode.getName());
+                            vosClient.setNode(parentVOSURI, doiParentNode);
                             return null;
                         }
                     });
@@ -369,18 +367,17 @@ public class MintDocumentTest extends DocumentTest {
                         public String run() throws Exception {
 
                             ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
-                            doiContainerNode.findProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
-                            vosClient.setNode(doiContainerNode);
+                            VOSURI vosuri = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
+                            doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
+                            vosClient.setNode(vosuri, doiContainerNode);
 
                             // unlock the data directory and delete the DOI
                             ContainerNode dataContainerNode = getContainerNode(doiNumberParts[1] + "/data");
-                            String isLocked = dataContainerNode.getPropertyValue(VOS.PROPERTY_URI_ISLOCKED);
-                            if (StringUtil.hasText(isLocked)) {
-                                dataContainerNode.findProperty(VOS.PROPERTY_URI_ISLOCKED).setMarkedForDeletion(true);
-                                dataContainerNode.setNodes(new ArrayList<Node>());
+                            if (dataContainerNode.isLocked) {
+                                dataContainerNode.getNodes().clear();
                                 setDataNodeRecursively(dataContainerNode);
                             }
-                            deleteTestFolder(vosClient, doiNumberParts[1]);
+//                            deleteTestFolder(doiNumberParts[1]);
 
                             return null;
                         }

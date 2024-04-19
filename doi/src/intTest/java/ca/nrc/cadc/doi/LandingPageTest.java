@@ -88,10 +88,10 @@ public class LandingPageTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(DocumentTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.reg", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
     }
 
     private final static String TEST_DOI = "13.0001";

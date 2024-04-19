@@ -71,14 +71,7 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.net.FileContent;
-import ca.nrc.cadc.vos.DataNode;
-import ca.nrc.cadc.vos.Direction;
-import ca.nrc.cadc.vos.Node;
-import ca.nrc.cadc.vos.Protocol;
-import ca.nrc.cadc.vos.Transfer;
-import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.ClientTransfer;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URI;
@@ -87,9 +80,7 @@ import java.nio.charset.Charset;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
 
@@ -103,8 +94,15 @@ import ca.nrc.cadc.doi.datacite.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.HttpPost;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
+import org.opencadc.vospace.DataNode;
+import org.opencadc.vospace.Node;
+import org.opencadc.vospace.VOS;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.ClientTransfer;
+import org.opencadc.vospace.transfer.Direction;
+import org.opencadc.vospace.transfer.Protocol;
+import org.opencadc.vospace.transfer.Transfer;
 
 /**
  */
@@ -112,7 +110,8 @@ public class InitializeDOIFolderTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(InitializeDOIFolderTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("org.opencadc.vospace", Level.DEBUG);
     }
 
     public InitializeDOIFolderTest() {
@@ -180,17 +179,16 @@ public class InitializeDOIFolderTest extends IntTestBase {
                 // Check access permissions for DOI Containing folder (get DOI & parse suffix
                 // from
                 // <identifier> in document)
-
                 String dataNodeName = DOI_BASE_NODE + "/" + doiSuffix + "/data";
-                log.debug("Atempting to write to " + dataNodeName);
+                log.debug("Attempting to write to " + dataNodeName);
 
                 // Test writing to the data directory
                 String fileName = "doi-test-write-file.txt";
                 String dataFileToWrite = dataNodeName + "/" + fileName;
 
-                VOSURI target = new VOSURI(new URI(dataFileToWrite));
-                Node doiFileDataNode = new DataNode(target);
-                vosClient.createNode(doiFileDataNode);
+                VOSURI target = new VOSURI(dataFileToWrite);
+                Node doiFileDataNode = new DataNode(fileName);
+                vosClient.createNode(target, doiFileDataNode);
 
                 Transfer transfer = new Transfer(new URI(dataFileToWrite), Direction.pushToVoSpace);
                 Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
@@ -208,17 +206,18 @@ public class InitializeDOIFolderTest extends IntTestBase {
 
                 // Test that cadcRegtest1 CAN'T write to the same folder
 
-                final String writeFile = dataNodeName + "/doi-test-write-file-2.txt";
+                String writeName = "doi-test-write-file-2.txt";
+                final String writeFile = dataNodeName + "/" + writeName;
 
                 // Try to write to data directory as regtest
                 Subject.doAs(cadcregtest_sub, new PrivilegedExceptionAction<Object>() {
                     public Object run() throws Exception {
                         log.debug("Trying as cadcregtest");
                         try {
-                            VOSURI target = new VOSURI(new URI(writeFile));
-                            Node doiFileDataNode = new DataNode(target);
-                            vosClient.createNode(doiFileDataNode);
-                        } catch (NotAuthenticatedException nae) {
+                            VOSURI target = new VOSURI(writeFile);
+                            Node doiFileDataNode = new DataNode(writeName);
+                            vosClient.createNode(target, doiFileDataNode);
+                        } catch (AccessControlException nae) {
                             log.info("expected exception: ", nae);
                         } catch (Exception e) {
                             log.info("some other error occurred", e);
@@ -229,7 +228,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
                     }
                 });
 
-                deleteTestFolder(vosClient, doiSuffix);
+//                deleteTestFolder(doiSuffix);
                 return "done";
             }
         });

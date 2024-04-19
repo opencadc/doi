@@ -75,12 +75,14 @@ import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
 
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.vospace.Node;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
@@ -89,17 +91,17 @@ public abstract class DoiAction extends RestAction {
     public static final String MINT_ACTION = "mint";
     public static final String TEST_SUFFIX = ".test";
     public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    public static final String DOI_BASE_VOSPACE = "vos://cadc.nrc.ca!vault" + DOI_BASE_FILEPATH;
     public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
     public static final String CADC_DOI_PREFIX = "10.11570";
     public static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
     public static final String JOURNALREF_PARAM = "journalref";
     public static final String RUNID_TEST = "TEST";
-    
-    public static final String DOI_VOS_JOB_URL_PROP = "ivo://cadc.nrc.ca/vospace/doi#joburl";
-    public static final String DOI_VOS_REQUESTER_PROP = "ivo://cadc.nrc.ca/vospace/doi#requester";
-    public static final String DOI_VOS_STATUS_PROP = "ivo://cadc.nrc.ca/vospace/doi#status";
-    public static final String DOI_VOS_JOURNAL_PROP = "ivo://cadc.nrc.ca/vospace/doi#journalref";
+
+    public static final URI VAULT_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/vault");
+    public static final URI DOI_VOS_JOB_URL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#joburl");
+    public static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
+    public static final URI DOI_VOS_STATUS_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#status");
+    public static final URI DOI_VOS_JOURNAL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#journalref");
     protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
     protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
     
@@ -214,6 +216,19 @@ public abstract class DoiAction extends RestAction {
 
     protected String getDoiFilename(String suffix) {
         return CADC_CISTI_PREFIX + suffix + ".xml";
+    }
+
+
+    // from cadc-vos-server Util
+    public static String getPath(Node node) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(node.getName());
+        Node tmp = node.parent;
+        while (tmp != null) {
+            sb.insert(0, tmp.getName() + "/");
+            tmp = tmp.parent;
+        }
+        return sb.toString();
     }
 
 }

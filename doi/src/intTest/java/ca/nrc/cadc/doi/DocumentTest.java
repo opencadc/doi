@@ -72,10 +72,8 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.net.FileContent;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.List;
@@ -106,17 +104,16 @@ import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.NodeNotFoundException;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.VOSpaceClient;
 
 /**
  */
 public class DocumentTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(DocumentTest.class);
 
-    final VOSURI baseDataURI = new VOSURI(URI.create(DoiAction.DOI_BASE_VOSPACE));
+    final VOSURI baseDataURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH);
     final VOSpaceClient vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
     static final String JSON = "application/json";
@@ -136,12 +133,11 @@ public class DocumentTest extends IntTestBase {
     public DocumentTest() {
     };
     
-    protected ContainerNode getContainerNode(String path) throws URISyntaxException, NodeNotFoundException {
+    protected ContainerNode getContainerNode(String path) throws Exception {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
         }
-
         return (ContainerNode) vosClient.getNode(nodePath);
     }
 
@@ -163,10 +159,10 @@ public class DocumentTest extends IntTestBase {
     protected String postDocument(URL postUrl, String document, String journalRef) throws IOException {
         log.info("url: " + postUrl.getPath());
         Map<String, Object> params = new HashMap<String, Object>();
-        FileContent fc = new FileContent(document, "text/xml", Charset.forName("UTF-8"));
+        FileContent fc = new FileContent(document, "text/xml", StandardCharsets.UTF_8);
         params.put("doiMetadata", fc);
         if (journalRef != null) {
-            if (journalRef.length() > 0) {
+            if (!journalRef.isEmpty()) {
                 params.put("journalref", journalRef);
             } else {
                 params.put("journalref", "");
@@ -265,7 +261,7 @@ public class DocumentTest extends IntTestBase {
                     "nameIdentifierScheme");
             compareNull(id1.schemeURI, id2.schemeURI, "schemeURI");
             if (id1.schemeURI != null) {
-                Assert.assertTrue("schemeURI is different", id1.schemeURI.equals(id2.schemeURI));
+                Assert.assertEquals("schemeURI is different", id1.schemeURI, id2.schemeURI);
             }
         }
     }
