@@ -90,6 +90,7 @@ public abstract class DoiAction extends RestAction {
     public static final String STATUS_ACTION = "status";
     public static final String MINT_ACTION = "mint";
     public static final String TEST_SUFFIX = ".test";
+    public static final String DOI_UI_BASE_FILEPATH = "/storage/vault/list";
     public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
     public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
     public static final String CADC_DOI_PREFIX = "10.11570";
@@ -216,19 +217,6 @@ public abstract class DoiAction extends RestAction {
 
     protected String getDoiFilename(String suffix) {
         return CADC_CISTI_PREFIX + suffix + ".xml";
-    }
-
-
-    // from cadc-vos-server Util
-    public static String getPath(Node node) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(node.getName());
-        Node tmp = node.parent;
-        while (tmp != null) {
-            sb.insert(0, tmp.getName() + "/");
-            tmp = tmp.parent;
-        }
-        return sb.toString();
     }
 
 }

@@ -225,7 +225,7 @@ public class GetAction extends DoiAction {
             List<Node> doiContainedNodes = doiContainerNode.getNodes();
             for (Node node : doiContainedNodes) {
                 if (node.getName().equals("data")) {
-                    dataDirectory = getPath(node);
+                    dataDirectory = String.format("%s%s/%s/data", DoiAction.DOI_UI_BASE_FILEPATH, DoiAction.DOI_BASE_FILEPATH, doiSuffixString);
                     break;
                 }
             }
