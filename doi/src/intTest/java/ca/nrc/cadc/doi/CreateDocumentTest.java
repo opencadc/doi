@@ -69,9 +69,12 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.ac.client.GMSClient;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
@@ -95,6 +98,7 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.VOS;
+import org.opencadc.vospace.VOSURI;
 
 /**
  */
@@ -132,10 +136,12 @@ public class CreateDocumentTest extends DocumentTest {
 
     @Test
     public void testCreateDocumentAndStatus() throws Throwable {
-        final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+
+        final Subject cadcauthtest_sub = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+        final Subject doiadmin_sub = SSLUtil.createSubject(DOIADMIN_CERT);
 
         this.buildInitialDocument();
-        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+        Subject.doAs(cadcauthtest_sub, new PrivilegedExceptionAction<Object>() {
             public Object run() throws Exception {
                 // post the job
                 URL postUrl = new URL(baseURL);
@@ -166,7 +172,7 @@ public class CreateDocumentTest extends DocumentTest {
                     // should have runId property, only test DOI's have this property
                     ContainerNode doiContainerNode = getContainerNode(doiNumberParts[1]);
                     Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
-                   
+
                     // For DOI status test below
                     Title expectedTitle = resource.getTitles().get(0);
                     String expectedDataDirectory = "/AstroDataCitationDOI/CISTI.CANFAR/" + doiNumberParts[1] + "/data";
@@ -187,29 +193,55 @@ public class CreateDocumentTest extends DocumentTest {
                             doiStatus.getTitle().getText());
                     Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
+                } catch (Exception e) {
+                    log.error("unexpected exception", e);
+                    Assert.fail("unexpected exception");
                 } finally {
                     // delete containing folder using doiadmin credentials
-//                    deleteTestFolder(doiNumberParts[1]);
+                    Subject.doAs(doiadmin_sub, new PrivilegedExceptionAction<Object>() {
+                        public Object run() throws Exception {
+                            log.debug("Cleanup as doiadmin");
+                            try {
+                                GMSClient gmsClient = new GMSClient(new URI(DoiAction.GMS_RESOURCE_ID));
+                                String groupToDelete = DoiAction.DOI_GROUP_PREFIX + doiNumberParts[1];
+                                log.debug("deleting this group: " + groupToDelete);
+                                gmsClient.deleteGroup(groupToDelete);
+
+                                VOSURI nodeURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiNumberParts[1]);
+                                vosClient.deleteNode(nodeURI.getPath() + "/" + getDoiFilename(doiNumberParts[1]));
+                                vosClient.deleteNode(nodeURI.getPath() + "/data");
+                                vosClient.deleteNode(nodeURI.getPath());
+                            } catch (AccessControlException nae) {
+                                log.info("expected exception: ", nae);
+                            } catch (Exception e) {
+                                log.info("some other error occurred", e);
+                                Assert.fail();
+                            }
+                            return "done";
+                        }
+                    });
                 }
                 return resource;
             }
         });
     }
 
+    // Ignored until getting the status list returns in a reasonable time.
     @Ignore
     @Test
     public void testGetStatusList() throws Throwable {
-        final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+        final Subject cadcauthtest_sub = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+        final Subject doiadmin_sub = SSLUtil.createSubject(DOIADMIN_CERT);
         final String[] newDois = new String[3];
 
         // create a list of documents
         for (int i = 0; i < newDois.length; i++) {
-            newDois[i] = this.createADocument(s);
+            newDois[i] = this.createADocument(cadcauthtest_sub);
         }
 
         // invoke the doi list service
         System.out.print("made dois");
-        List<DoiStatus> doiStatusList = getDoiStatusList(s);
+        List<DoiStatus> doiStatusList = getDoiStatusList(cadcauthtest_sub);
         DoiStatus[] doiStatusArray = doiStatusList.toArray(new DoiStatus[doiStatusList.size()]);
 
         // verify that the returned list contains the dois of the documents just created
@@ -245,16 +277,36 @@ public class CreateDocumentTest extends DocumentTest {
             }
 
             Assert.assertEquals("Missing DOIs in DOI list", newDois.length, matchCount);
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
+            Assert.fail("unexpected exception: " + e);
         } finally {
-            // clean up
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+            // clean up as doiadmin
+            Subject.doAs(doiadmin_sub, new PrivilegedExceptionAction<Object>() {
                 public Object run() throws Exception {
-                    for (int i = 0; i < newDois.length; i++) {
-                        deleteTestFolder(newDois[i]);
+                    log.debug("Cleanup as doiadmin");
+                    GMSClient gmsClient = new GMSClient(new URI(DoiAction.GMS_RESOURCE_ID));
+                    try {
+                        for (int i = 0; i < newDois.length; i++) {
+                            String groupToDelete = DoiAction.DOI_GROUP_PREFIX + newDois[1];
+                            log.debug("deleting this group: " + groupToDelete);
+                            gmsClient.deleteGroup(groupToDelete);
+
+                            VOSURI nodeURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + newDois[i]);
+                            vosClient.deleteNode(nodeURI.getPath() + "/" + getDoiFilename(newDois[i]));
+                            vosClient.deleteNode(nodeURI.getPath() + "/data");
+                            vosClient.deleteNode(nodeURI.getPath());
+                        }
+                    } catch (AccessControlException nae) {
+                        log.info("expected exception: ", nae);
+                    } catch (Exception e) {
+                        log.info("some other error occurred", e);
+                        Assert.fail();
                     }
-                    return null;
+                    return "done";
                 }
             });
+
         }
     }
 }

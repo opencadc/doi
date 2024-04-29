@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.NotAuthenticatedException;
+import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.net.FileContent;
 
 import java.io.File;
@@ -110,8 +110,8 @@ public class InitializeDOIFolderTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(InitializeDOIFolderTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
-        Log4jInit.setLevel("org.opencadc.vospace", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.vospace", Level.INFO);
     }
 
     public InitializeDOIFolderTest() {
@@ -125,6 +125,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
 
         final Subject cadcauthtest_sub = SSLUtil.createSubject(CADCAUTHTEST_CERT);
         final Subject cadcregtest_sub = SSLUtil.createSubject(CADCREGTEST_CERT);
+        final Subject doiadmin_sub = SSLUtil.createSubject(DOIADMIN_CERT);
 
         // read test xml file
         final DoiXmlReader reader = new DoiXmlReader(true);
@@ -223,12 +224,34 @@ public class InitializeDOIFolderTest extends IntTestBase {
                             log.info("some other error occurred", e);
                             Assert.fail();
                         }
-
                         return "done";
                     }
                 });
 
-//                deleteTestFolder(doiSuffix);
+                Subject.doAs(doiadmin_sub, new PrivilegedExceptionAction<Object>() {
+                    public Object run() throws Exception {
+                        log.debug("Cleanup as doiadmin");
+                        try {
+                            GMSClient gmsClient = new GMSClient(new URI(DoiAction.GMS_RESOURCE_ID));
+                            String groupToDelete = DoiAction.DOI_GROUP_PREFIX + doiSuffix;
+                            log.debug("deleting this group: " + groupToDelete);
+                            gmsClient.deleteGroup(groupToDelete);
+
+                            VOSURI nodeURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiSuffix);
+                            vosClient.deleteNode(nodeURI.getPath() + "/" + getDoiFilename(doiSuffix));
+                            vosClient.deleteNode(nodeURI.getPath() + "/data/" + fileName);
+                            vosClient.deleteNode(nodeURI.getPath() + "/data");
+                            vosClient.deleteNode(nodeURI.getPath());
+                        } catch (AccessControlException nae) {
+                            log.info("expected exception: ", nae);
+                        } catch (Exception e) {
+                            log.info("some other error occurred", e);
+                            Assert.fail();
+                        }
+                        return "done";
+                    }
+                });
+
                 return "done";
             }
         });

@@ -92,7 +92,6 @@ import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Set;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
@@ -158,7 +157,7 @@ public class GetAction extends DoiAction {
             		URL jobURL = new URL(jobURLString);
                     VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
             		ClientRecursiveSetNode recSetNode = new ClientRecursiveSetNode(jobURL, doiContainerNode, false);
-            		ExecutionPhase phase = recSetNode.getPhase();
+            		ExecutionPhase phase = recSetNode.getPhase(20); // seconds
             		switch (phase) {
             			case COMPLETED:
             			case ARCHIVED:

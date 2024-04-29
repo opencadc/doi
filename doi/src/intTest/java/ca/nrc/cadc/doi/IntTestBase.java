@@ -144,5 +144,8 @@ public abstract class IntTestBase {
             throw new RuntimeException(deleteTask.getThrowable());
         }
     }
+    protected String getDoiFilename(String suffix) {
+        return DoiAction.CADC_CISTI_PREFIX + suffix + ".xml";
+    }
 
 }

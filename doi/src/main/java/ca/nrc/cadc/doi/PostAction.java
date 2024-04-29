@@ -205,7 +205,7 @@ public class PostAction extends DoiAction {
         // update journal reference 
         if (journalRefFromUser != null) {
             ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
+            VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
             String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
             if (journalRefFromVOSpace == null) {
                 if (journalRefFromUser.length() > 0) {
@@ -220,7 +220,11 @@ public class PostAction extends DoiAction {
                     doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
                 } else {
                     // delete existing journal reference
-                    doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOURNAL_PROP));
+                    NodeProperty nodeProperty = doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP);
+                    if (nodeProperty != null) {
+                        doiContainerNode.getProperties().remove(nodeProperty);
+                        doiContainerNode.getProperties().add(new NodeProperty(DOI_VOS_JOURNAL_PROP));
+                    }
                 }
                 vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
             }
@@ -403,7 +407,7 @@ public class PostAction extends DoiAction {
         DataNode xmlFile = null;
 
         VOSURI doiURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
-        VOSURI xmlURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName() + "/" + xmlFilename);
+        VOSURI xmlURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + xmlFilename);
 
         try {
             // update status
@@ -428,14 +432,18 @@ public class PostAction extends DoiAction {
             // anonymous access
             xmlFile = vClient.getDataNode(xmlFilename);
             xmlFile.isPublic = true;
+            xmlFile.clearReadOnlyGroups = true;
             xmlFile.getReadOnlyGroup().clear();
+            xmlFile.clearReadWriteGroups = true;
             xmlFile.getReadWriteGroup().clear();
             vClient.getVOSpaceClient().setNode(xmlURI, xmlFile);
 
             groupRead.addAll(doiContainerNode.getReadOnlyGroup());
             groupWrite.addAll(doiContainerNode.getReadWriteGroup());
             doiContainerNode.isPublic = true;
+            doiContainerNode.clearReadOnlyGroups = true;
             doiContainerNode.getReadOnlyGroup().clear();
+            doiContainerNode.clearReadWriteGroups = true;
             doiContainerNode.getReadWriteGroup().clear();
             vClient.getVOSpaceClient().setNode(doiURI, doiContainerNode);
 
@@ -474,7 +482,9 @@ public class PostAction extends DoiAction {
 
             // lock data directory and subdirectories, make them public
             dataContainerNode.isPublic = true;
+            dataContainerNode.clearReadOnlyGroups = true;
             dataContainerNode.getReadOnlyGroup().clear();
+            dataContainerNode.clearReadWriteGroups = true;
             dataContainerNode.getReadWriteGroup().clear();
             dataContainerNode.isLocked = true;
 

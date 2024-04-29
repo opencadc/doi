@@ -157,7 +157,7 @@ public class DocumentTest extends IntTestBase {
     }
 
     protected String postDocument(URL postUrl, String document, String journalRef) throws IOException {
-        log.info("url: " + postUrl.getPath());
+        log.debug("url: " + postUrl.getPath());
         Map<String, Object> params = new HashMap<String, Object>();
         FileContent fc = new FileContent(document, "text/xml", StandardCharsets.UTF_8);
         params.put("doiMetadata", fc);

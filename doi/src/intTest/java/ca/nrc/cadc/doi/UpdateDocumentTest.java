@@ -69,10 +69,13 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.ac.client.GMSClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,6 +103,7 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import org.opencadc.vospace.VOSURI;
 
 /**
  */
@@ -118,10 +122,12 @@ public class UpdateDocumentTest extends DocumentTest {
     // test update DOI instance
     @Test
     public void testUpdateDocument() throws Throwable {
-        final Subject s = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+
+        final Subject cadcauthtest_sub = SSLUtil.createSubject(CADCAUTHTEST_CERT);
+        final Subject doiadmin_sub = SSLUtil.createSubject(DOIADMIN_CERT);
 
         this.buildInitialDocument();
-        Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+        Subject.doAs(cadcauthtest_sub, new PrivilegedExceptionAction<Object>() {
 
             private DoiStatus getStatus(URL docURL)
                     throws DoiParsingException, IOException {
@@ -142,8 +148,8 @@ public class UpdateDocumentTest extends DocumentTest {
             }
 
             private Resource executeTest(URL docURL, String document, List<Creator> expectedCreators,
-                    List<Title> expectedTitles, String expectedIdentifier, String expectedJournalRef,
-                    String newJournalRef) throws DoiParsingException, IOException {
+                    List<Title> expectedTitles, String expectedIdentifier, String expectedJournalRef,  String newJournalRef)
+                    throws DoiParsingException, IOException {
                 String uDoc = postDocument(docURL, document, newJournalRef);
                 Resource uResource = xmlReader.read(uDoc);
                 compareCreators(expectedCreators, uResource.getCreators());
@@ -359,9 +365,35 @@ public class UpdateDocumentTest extends DocumentTest {
                         Assert.assertTrue("caught an unexpected exception",
                                 ex.getMessage().contains("identifier update is not allowed"));
                     }
+                } catch (Exception e) {
+                    log.error("unexpected exception", e);
+                    Assert.fail("unexpected exception: " + e);
                 } finally {
                     // delete containing folder using doiadmin credentials
-                    deleteTestFolder(doiNumberParts[1]);
+//                    deleteTestFolder(doiNumberParts[1]);
+
+                    Subject.doAs(doiadmin_sub, new PrivilegedExceptionAction<Object>() {
+                        public Object run() throws Exception {
+                            log.debug("Cleanup as doiadmin");
+                            try {
+                                GMSClient gmsClient = new GMSClient(new URI(DoiAction.GMS_RESOURCE_ID));
+                                String groupToDelete = DoiAction.DOI_GROUP_PREFIX + doiNumberParts[1];
+                                log.debug("deleting this group: " + groupToDelete);
+                                gmsClient.deleteGroup(groupToDelete);
+
+                                VOSURI nodeURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiNumberParts[1]);
+                                vosClient.deleteNode(nodeURI.getPath() + "/" + getDoiFilename(doiNumberParts[1]));
+                                vosClient.deleteNode(nodeURI.getPath() + "/data");
+                                vosClient.deleteNode(nodeURI.getPath());
+                            } catch (AccessControlException nae) {
+                                log.info("expected exception: ", nae);
+                            } catch (Exception e) {
+                                log.info("some other error occurred", e);
+                                Assert.fail();
+                            }
+                            return "done";
+                        }
+                    });
                 }
                 return resource;
             }

@@ -88,12 +88,10 @@ import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.Node;
 import org.opencadc.vospace.NodeNotFoundException;
-import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientTransfer;
 import org.opencadc.vospace.client.VOSpaceClient;
-import org.opencadc.vospace.io.NodeWriter;
 import org.opencadc.vospace.transfer.Direction;
 import org.opencadc.vospace.transfer.Protocol;
 import org.opencadc.vospace.transfer.Transfer;
@@ -178,7 +176,7 @@ public class VospaceDoiClient {
     //  doi admin should have access as well
     public boolean isCallerAllowed(Node node) {
         boolean isRequesterNode = false;
-        if (this.includePublicNodes && node.isPublic) {
+        if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
             isRequesterNode = true;
         } else {
             String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
