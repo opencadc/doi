@@ -219,7 +219,7 @@ public class InitializeDOIFolderTest extends IntTestBase {
                             Node doiFileDataNode = new DataNode(writeName);
                             vosClient.createNode(target, doiFileDataNode);
                         } catch (AccessControlException nae) {
-                            log.info("expected exception: ", nae);
+                            log.info("expected exception: " + nae.getMessage());
                         } catch (Exception e) {
                             log.info("some other error occurred", e);
                             Assert.fail();

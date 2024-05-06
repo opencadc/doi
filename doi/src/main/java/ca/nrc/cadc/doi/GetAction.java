@@ -99,7 +99,7 @@ import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
 import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOSURI;
-import org.opencadc.vospace.client.ClientRecursiveSetNode;
+import org.opencadc.vospace.client.async.RecursiveSetNode;
 
 
 public class GetAction extends DoiAction {
@@ -140,7 +140,6 @@ public class GetAction extends DoiAction {
                 break;
             }
         }
-        
         return title;
     }
     
@@ -156,8 +155,9 @@ public class GetAction extends DoiAction {
             	if (jobURLString != null) {
             		URL jobURL = new URL(jobURLString);
                     VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
-            		ClientRecursiveSetNode recSetNode = new ClientRecursiveSetNode(jobURL, doiContainerNode, false);
-            		ExecutionPhase phase = recSetNode.getPhase(20); // seconds
+            		RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
+                    recursiveSetNode.setSchemaValidation(false);
+            		ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
             		switch (phase) {
             			case COMPLETED:
             			case ARCHIVED:
@@ -243,7 +243,6 @@ public class GetAction extends DoiAction {
 
             // set journalRef
             doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-
         }
         else
         {
@@ -254,21 +253,32 @@ public class GetAction extends DoiAction {
         return doiStatus;
     }
     
-    private List<Node> getNodeList() throws Exception {
-        // VOspace is expected to filter the list of DOIs by user in the future.
-        // Currently all DOIs are returned.
-        List<Node> containedNodes = new ArrayList<Node>();
-        ContainerNode doiContainer = vClient.getContainerNode("");
-        if (doiContainer != null)
-        {
-            containedNodes = doiContainer.getNodes();
+    private List<Node> getOwnedDOIList() throws Exception {
+        List<Node> ownedNodes = new ArrayList<>();
+        ContainerNode doiRootNode = vClient.getContainerNode("");
+        if (doiRootNode != null) {
+            for (Node childNode : doiRootNode.getNodes()) {
+                // TODO: configure doiadmin viewing of all nodes
+                NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
+                if (requester != null && requester.getValue() != null) {
+                    try {
+                        Long uid = Long.parseLong(requester.getValue());
+                        if (callersNumericId.equals(uid)) {
+                            ownedNodes.add(childNode);
+                        }
+                    } catch (NumberFormatException e) {
+                        log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
+                                requester.getValue(), childNode.getName()), e);
+                    }
+                }
+            }
         }
-        return containedNodes;
+        return ownedNodes;
     }
     
     private void getStatusList() throws Exception {
-        List<DoiStatus> doiStatusList = new ArrayList<DoiStatus>();
-        List<Node> nodes = getNodeList();
+        List<DoiStatus> doiStatusList = new ArrayList<>();
+        List<Node> nodes = getOwnedDOIList();
         for (Node node : nodes)
         {
             // Verify this is a container node before continuing

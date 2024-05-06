@@ -127,8 +127,8 @@ import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientAbortThread;
-import org.opencadc.vospace.client.ClientRecursiveSetNode;
 import org.opencadc.vospace.client.ClientTransfer;
+import org.opencadc.vospace.client.async.RecursiveSetNode;
 import org.opencadc.vospace.transfer.Direction;
 import org.opencadc.vospace.transfer.Protocol;
 import org.opencadc.vospace.transfer.Transfer;
@@ -494,7 +494,7 @@ public class PostAction extends DoiAction {
             vClient.getVOSpaceClient().setNode(dataVOSURI, dataContainerNode);
             
             // get the job URL
-            ClientRecursiveSetNode recSetNode = vClient.getVOSpaceClient().setNodeRecursive(dataVOSURI, dataContainerNode);
+            RecursiveSetNode recSetNode = vClient.getVOSpaceClient().createRecursiveSetNode(dataVOSURI, dataContainerNode);
             URL jobURL = recSetNode.getJobURL();
 
             // this is an async operation

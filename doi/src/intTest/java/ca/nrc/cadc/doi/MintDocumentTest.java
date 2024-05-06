@@ -100,7 +100,7 @@ import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientAbortThread;
-import org.opencadc.vospace.client.ClientRecursiveSetNode;
+import org.opencadc.vospace.client.async.RecursiveSetNode;
 
 /**
  */
@@ -210,21 +210,22 @@ public class MintDocumentTest extends DocumentTest {
             public String run() throws Exception {
                 VOSURI vosuri = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH + "/" + doiSuffix + "/data");
                 ContainerNode dataContainerNode = new ContainerNode("data");
-                ClientRecursiveSetNode recSetNode = vosClient.setNodeRecursive(vosuri, dataContainerNode);
-                URL jobURL = recSetNode.getJobURL();
+                RecursiveSetNode recursiveSetNode = vosClient.createRecursiveSetNode(vosuri, dataContainerNode);
+                URL jobURL = recursiveSetNode.getJobURL();
 
                 // this is an async operation
                 Thread abortThread = new ClientAbortThread(jobURL);
                 Runtime.getRuntime().addShutdownHook(abortThread);
-                recSetNode.setMonitor(true);
-                recSetNode.run();
+                recursiveSetNode.setMonitor(true);
+                recursiveSetNode.run();
                 Runtime.getRuntime().removeShutdownHook(abortThread);
                 
-        		recSetNode = new ClientRecursiveSetNode(jobURL, dataContainerNode, false);
-        		ExecutionPhase phase = recSetNode.getPhase(20);
+        		recursiveSetNode = new RecursiveSetNode(jobURL, dataContainerNode);
+                recursiveSetNode.setSchemaValidation(false);
+        		ExecutionPhase phase = recursiveSetNode.getPhase(20);
                 while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
                 	TimeUnit.SECONDS.sleep(1);
-            		phase = recSetNode.getPhase();
+            		phase = recursiveSetNode.getPhase();
                 }
 
         		Assert.assertTrue("Failed to unlock test data directory, phase = " + phase, ExecutionPhase.COMPLETED == phase);
