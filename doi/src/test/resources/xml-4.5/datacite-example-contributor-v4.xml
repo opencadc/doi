@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://datacite.org/schema/kernel-4" xsi:schemaLocation="http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd">
+  <identifier identifierType="DOI">10.4228/ZALF.SY6A-XT12</identifier>
+  <creators>
+    <creator>
+      <creatorName nameType="Personal">Lozada-Gobilard, Sissi</creatorName>
+      <givenName>Sissi</givenName>
+      <familyName>Lozada-Gobilard</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-1177-4015</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/03bnmw459" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Potsdam</affiliation>
+    </creator>
+  </creators>
+  <titles>
+    <title>Bee diversity in island-like habitats (kettle holes) to assess connectivity in agricultural landscapes - Part 1 of data collection</title>
+  </titles>
+  <publisher>BonaRes Data Centre (Leibniz Centre for Agricultural Landscape Research (ZALF))</publisher>
+  <publicationYear>2021</publicationYear>
+  <resourceType resourceTypeGeneral="Dataset">Dataset</resourceType>
+  <subjects>
+    <subject subjectScheme="Fields of Science and Technology (FOS)" schemeURI="http://www.oecd.org/science/inno" valueURI="http://www.oecd.org/science/inno/38235147.pdf">FOS: Earth and related environmental sciences</subject>
+  </subjects>
+  <contributors>
+    <contributor contributorType="DataCollector">
+      <contributorName nameType="Personal">Lozada-Gobilard, Sissi</contributorName>
+      <givenName>Sissi</givenName>
+      <familyName>Lozada-Gobilard</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-1177-4015</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/03bnmw459" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Potsdam</affiliation>
+    </contributor>
+    <contributor contributorType="DataCurator">
+      <contributorName nameType="Personal">Lozada-Gobilard, Sissi</contributorName>
+      <givenName>Sissi</givenName>
+      <familyName>Lozada-Gobilard</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-1177-4015</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/03bnmw459" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Potsdam</affiliation>
+    </contributor>
+    <contributor contributorType="ProjectManager">
+      <contributorName nameType="Personal">Lozada-Gobilard, Sissi</contributorName>
+      <givenName>Sissi</givenName>
+      <familyName>Lozada-Gobilard</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-1177-4015</nameIdentifier>
+    </contributor>
+    <contributor contributorType="Supervisor">
+      <contributorName nameType="Personal">Joshi, Jasmin</contributorName>
+      <givenName>Jasmin</givenName>
+      <familyName>Joshi</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-4210-2465</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/02g821610" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Applied Sciences Rapperswil</affiliation>
+    </contributor>
+    <contributor contributorType="ProjectLeader">
+      <contributorName nameType="Personal">Joshi, Jasmin</contributorName>
+      <givenName>Jasmin</givenName>
+      <familyName>Joshi</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-4210-2465</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/02g821610" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Applied Sciences Rapperswil</affiliation>
+    </contributor>
+    <contributor contributorType="ProjectLeader">
+      <contributorName nameType="Personal">Tiedemann, Ralph</contributorName>
+      <givenName>Ralph</givenName>
+      <familyName>Tiedemann</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-2604-6336</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/03bnmw459" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Potsdam</affiliation>
+    </contributor>
+    <contributor contributorType="Supervisor">
+      <contributorName nameType="Personal">Tiedemann, Ralph</contributorName>
+      <givenName>Ralph</givenName>
+      <familyName>Tiedemann</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0002-2604-6336</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/03bnmw459" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">University of Potsdam</affiliation>
+    </contributor>
+    <contributor contributorType="DataCollector">
+      <contributorName>Landivar Abis, Carlos Miguel</contributorName>
+      <givenName>Carlos Miguel</givenName>
+      <familyName>Landivar Abis</familyName>
+<!--      <nameIdentifier nameIdentifierScheme="" schemeURI=""/>-->
+      <affiliation affiliationIdentifier="https://ror.org/01t4pxy10" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">Dresden International University</affiliation>
+    </contributor>
+    <contributor contributorType="DataCollector">
+      <contributorName>Rupik, Karolina Beata</contributorName>
+      <givenName>Karolina Beata</givenName>
+      <familyName>Rupik</familyName>
+<!--      <nameIdentifier nameIdentifierScheme="" schemeURI=""/>-->
+      <affiliation affiliationIdentifier="https://ror.org/02hpadn98" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">Bielefeld University</affiliation>
+    </contributor>
+    <contributor contributorType="DataCollector">
+      <contributorName nameType="Personal">Pätzig, Marlene</contributorName>
+      <givenName>Marlene</givenName>
+      <familyName>Pätzig</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="https://orcid.org">https://orcid.org/0000-0003-1687-6982</nameIdentifier>
+      <affiliation affiliationIdentifier="https://ror.org/01ygyzs83" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">Leibniz Centre for Agricultural Landscape Research</affiliation>
+    </contributor>
+    <contributor contributorType="ProjectMember">
+      <contributorName nameType="Personal">Hausmann, Sebastian</contributorName>
+      <givenName>Sebastian</givenName>
+      <familyName>Hausmann</familyName>
+<!--      <nameIdentifier nameIdentifierScheme="" schemeURI=""/>-->
+      <affiliation affiliationIdentifier="https://ror.org/046ak2485" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">Freie Universität Berlin</affiliation>
+    </contributor>
+  </contributors>
+  <relatedIdentifiers>
+    <relatedIdentifier relatedIdentifierType="DOI" relationType="IsDocumentedBy">10.1016/j.agee.2021.107525</relatedIdentifier>
+    <relatedIdentifier relatedIdentifierType="URL" relationType="IsVariantFormOf">https://maps.bonares.de/mapapps/resources/apps/bonares/index.html?lang=en&amp;mid=c99723fb-18bb-4570-a49f-d5fd72d0e1e8</relatedIdentifier>
+    <relatedIdentifier relatedIdentifierType="URL" relationType="IsPartOf">https://maps.bonares.de/mapapps/resources/apps/bonares/index.html?lang=en&amp;mid=838648eb-6f69-467e-aeff-4e8e87ee98ad</relatedIdentifier>
+    <relatedIdentifier relatedIdentifierType="URL" relationType="IsPartOf">https://maps.bonares.de/mapapps/resources/apps/bonares/index.html?lang=en&amp;mid=dd6a0c58-166a-4e79-82b0-f32051d14faa</relatedIdentifier>
+  </relatedIdentifiers>
+  <sizes/>
+  <formats/>
+  <version>1</version>
+  <rightsList>
+    <rights rightsURI="https://creativecommons.org/licenses/by/4.0/legalcode">Creative Commons Attribution 4.0 International</rights>
+  </rightsList>
+  <descriptions>
+    <description xml:lang="en" descriptionType="Abstract">During June and July of 2017, wild bees were collected using color traps (blue, yellow and white pans) in small water bodies called kettle holes embedded in agricultural landscapes in the north of Germany. After all wild bees were identified to species level, from a subset of samples we measured the Intertegular distance ITD (distance between the wings) as body size and searched for functional traits regarding sociality (solitary, eusocial, parasitic) nesting type (below- or aboveground), and lecty (poly- or oligolectic). In addition, biotic and abiotic characteristics of these kettle holes were recorded to evaluate how they affect wild bee diversity. These factors included size of the kettle hole, the degree of isolation (number of neighboring kettle holes at different distances), percentage of flowering species and total of plant species (herbs and woody plants). We tested the effect of all these factors on wild bee abundance and bee species richness, as well on body size and functional traits. - Applied Methods for sampling and identification: Collection of individuals using colour traps. One trap had 6 coloured plastic containers (white, blue and yellow) placed in three levels randomly. Water with some drops of soap was added to each container and traps were place in each kettle hole during 48 hours. A total of 4 traps were set up in each kettle hole and a total of 36 kettle holes were studied. After 2 days insects trapped in the water were collected without differentiating the colour of the plastic container. Bee individuals were separated and taken to the lab for further preparation and identification. - Bee specimens were pinned and dried at room temperature. Individuals were identified until species level by specialists K. Rupik from Bielefeld University and C. Saure at the Natural History Museum in Berlin. Information about functional traits regarding sociality, lecty and nesting were compiled from the literature with the final list of species. Body size was characterized as intertegular distance (distance between wings) measured in a subset of randomly selected individuals per species.</description>
+  </descriptions>
+  <geoLocations>
+    <geoLocation>
+      <geoLocationPlace>Quillow</geoLocationPlace>
+    </geoLocation>
+  </geoLocations>
+  <fundingReferences>
+    <fundingReference>
+      <funderName>Deutsche Forschungsgemeinschaft</funderName>
+      <funderIdentifier funderIdentifierType="Crossref Funder ID">https://doi.org/10.13039/501100001659</funderIdentifier>
+      <awardNumber>DFG GRK 2118/1</awardNumber>
+      <awardTitle>BioMove Research Training Group</awardTitle>
+    </fundingReference>
+  </fundingReferences>
+</resource>

@@ -16,5 +16,5 @@
   </titles>
   <publisher>DataCite</publisher>
   <publicationYear>2014</publicationYear>
-  <resourceType resourceTypeGeneral="Software">XML</resourceType>
+  <resourceType resourceTypeGeneral="Dataset">XML</resourceType>
 </resource>

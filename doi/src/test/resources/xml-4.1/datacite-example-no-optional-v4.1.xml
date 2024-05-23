@@ -32,7 +32,7 @@
     <date dateType="Updated" >2017-09-13</date>
   </dates>
   <language>en-US</language>
-  <resourceType resourceTypeGeneral="Software">XML</resourceType>
+  <resourceType resourceTypeGeneral="Dataset">XML</resourceType>
   <alternateIdentifiers>
     <alternateIdentifier alternateIdentifierType="URL">https://schema.datacite.org/meta/kernel-4.1/example/datacite-example-full-v4.1.xml</alternateIdentifier>
   </alternateIdentifiers>
@@ -51,9 +51,7 @@
     <rights xml:lang="en-US" >CC0 1.0 Universal</rights>
   </rightsList>
   <descriptions>
-    <description xml:lang="en-US" descriptionType="Abstract">
-      XML example of all DataCite Metadata Schema v4.1 properties.
-    </description>
+    <description xml:lang="en-US" descriptionType="Abstract">XML example of all DataCite Metadata Schema v4.1 properties.</description>
   </descriptions>
   <geoLocations>
     <geoLocation>
