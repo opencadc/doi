@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.xml.JsonInputter;
 
 import org.apache.log4j.Logger;

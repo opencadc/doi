@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,14 +69,12 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiReader;
+import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.datacite.TitleType;
 
 import java.util.List;
-import org.apache.log4j.Logger;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -88,7 +86,6 @@ import org.jdom2.Namespace;
  * @author yeunga
  */
 public class DoiStatusReader {
-    private static final Logger log = Logger.getLogger(DoiStatusReader.class);
 
     /**
      * Constructor.
@@ -102,7 +99,7 @@ public class DoiStatusReader {
     }
 
     public DoiStatus buildStatus(Element root) throws DoiParsingException {
-        Identifier id = buildIdentifier(root);
+        Identifier identifier = buildIdentifier(root);
         
         if (root.getChild("status") == null) {
             String msg = "status not found in doi status element.";
@@ -119,7 +116,7 @@ public class DoiStatusReader {
             dataDirectory = root.getChild("dataDirectory").getText();
         }
 
-        DoiStatus ds = new DoiStatus(id, title, dataDirectory, status);
+        DoiStatus ds = new DoiStatus(identifier, title, dataDirectory, status);
 
         // optional element
         if (root.getChild("journalRef") != null) {
@@ -130,43 +127,28 @@ public class DoiStatusReader {
         return ds;
     }
 
-    protected Identifier buildIdentifier(Element root) {
-        Namespace ns = root.getNamespace();
-        Element identifierElement = root.getChild("identifier", ns);
-        String text = identifierElement.getText();
-        String identifierType = identifierElement.getAttributeValue("identifierType");
-        Identifier id = new Identifier(identifierType);
-        DoiReader.assignIdentifier(id, text);
-        return id;
+    protected Identifier buildIdentifier(Element root) throws DoiParsingException {
+        Element identifierElement = root.getChild(Identifier.NAME, root.getNamespace());
+        if (identifierElement == null) {
+            throw new DoiParsingException(String.format("required element '%s' not found",
+                    Identifier.NAME));
+        }
+        String identifier = identifierElement.getText();
+        String identifierType = identifierElement.getAttributeValue(Identifier.IDENTIFIER_TYPE);
+        return new Identifier(identifier, identifierType);
     }
 
     protected Title buildTitle(Element root) throws DoiParsingException {
-        Title title = null;
-        Element titleElement = root.getChild("title");
-        if (titleElement != null) {
-	        // get the title text
-	        String text = titleElement.getText();
-	        String lang = null;
-	        String titleType = null;
-	
-	        // get the attributes and build a title instance
-	        List<Attribute> attributes = titleElement.getAttributes();
-	        for (Attribute attr : attributes) {
-	            String key = attr.getName();
-	            if ("lang".equals(key)) {
-	                lang = attr.getValue();
-	            } else {
-	                titleType = attr.getValue();
-	            }
-	        }
-	
-	        // the titleType attribute is optional
-	        title = new Title(lang, text);
-	        if (titleType != null) {
-	            title.titleType = TitleType.toValue(titleType);
-	        }
+        Element titleElement = root.getChild(Title.NAME);
+        if (titleElement == null) {
+            return null;
         }
-
+        Title title = new Title(titleElement.getText());
+        String titleType = titleElement.getAttributeValue(Title.TITLE_TYPE);
+        if (titleType != null) {
+            title.titleType = TitleType.toValue(titleType);
+        }
+        title.lang = titleElement.getAttributeValue(Title.LANG);
         return title;
     }
 }
