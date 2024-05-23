@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi.io;
 
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.util.StringBuilderWriter;
@@ -75,8 +75,8 @@ import ca.nrc.cadc.xml.JsonOutputter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -89,7 +89,7 @@ import org.jdom2.output.Format;
 public class DoiJsonWriter extends DoiWriter {
     private static final Logger log = Logger.getLogger(DoiJsonWriter.class);
 
-    private boolean prettyPrint;
+    private final boolean prettyPrint;
 
     public DoiJsonWriter() {
         this(true);
@@ -102,30 +102,22 @@ public class DoiJsonWriter extends DoiWriter {
     /**
      * Write a Resource instance to an OutputStream using UTF-8 encoding.
      *
-     * @param resource
-     *            Resource instance to write.
-     * @param out
-     *            OutputStream to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param resource Resource instance to write.
+     * @param out  OutputStream to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(Resource resource, OutputStream out) throws IOException {
         OutputStreamWriter outWriter;
-        try {
-            outWriter = new OutputStreamWriter(out, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("UTF-8 encoding not supported", e);
-        }
+        outWriter = new OutputStreamWriter(out, StandardCharsets.UTF_8);
         write(resource, outWriter);
     }
 
     /**
      * Write a Resource instance to a StringBuilder.
      * 
-     * @param resource
-     *            Resource instance to write.
-     * @param builder
-     * @throws IOException
+     * @param resource Resource instance to write.
+     * @param builder StringBuilder to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(Resource resource, StringBuilder builder) throws IOException {
         write(resource, new StringBuilderWriter(builder));
@@ -134,12 +126,9 @@ public class DoiJsonWriter extends DoiWriter {
     /**
      * Write the Resource instance to a writer.
      *
-     * @param resource
-     *            Resource instance to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param resource Resource instance to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(Resource resource, Writer writer) throws IOException {
         long start = System.currentTimeMillis();
@@ -152,29 +141,21 @@ public class DoiJsonWriter extends DoiWriter {
     /**
      * Write a Document instance by providing the root element to a writer.
      *
-     * @param root
-     *            Root element to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param root  Root element to write.
+     * @param writer  Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     protected void write(Element root, Writer writer) throws IOException {
         JsonOutputter outputter = new JsonOutputter();
         outputter.getListElementNames().add("creators");
+        outputter.getListElementNames().add("creators");
         outputter.getListElementNames().add("titles");
-        outputter.getListElementNames().add("subjects");
         outputter.getListElementNames().add("contributors");
         outputter.getListElementNames().add("dates");
-        outputter.getListElementNames().add("alternateIdentifiers");
         outputter.getListElementNames().add("sizes");
-        outputter.getListElementNames().add("formats");
         outputter.getListElementNames().add("rightsList");
         outputter.getListElementNames().add("descriptions");
-        outputter.getListElementNames().add("geoLocations");
-        outputter.getListElementNames().add("fundingReferences");
         outputter.getListElementNames().add("relatedIdentifiers");
-        outputter.getListElementNames().add("geoLocationPolygon");
 
         Format fmt = null;
         if (prettyPrint) {
@@ -184,4 +165,5 @@ public class DoiJsonWriter extends DoiWriter {
         outputter.setFormat(fmt);
         outputter.output(new Document(root), writer);
     }
+
 }

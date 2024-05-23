@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,95 +67,132 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi.io;
 
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.util.StringBuilderWriter;
+import ca.nrc.cadc.xml.XmlUtil;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import org.jdom2.JDOMException;
 
 /**
- * Writes a Resource instance as XML to an output.
- * 
+ * Constructs a DoiMetadata from an XML source. This class is not thread safe
+ * but it is re-usable so it can safely be used to sequentially parse multiple
+ * XML node documents.
+ *
  * @author yeunga
  */
-public class DoiXmlWriter extends DoiWriter {
-    private static Logger log = Logger.getLogger(DoiXmlWriter.class);
+public class DoiXmlReader extends DoiReader {
+    private static final Logger log = Logger.getLogger(DoiXmlReader.class);
 
-    public DoiXmlWriter() {
+    static final String DATACITE_NAMESPACE = "http://datacite.org/schema/kernel-4";
+    static final String DATACITE_SCHEMA = "datacite-metadata-4.5.xsd";
+
+    protected Map<String, String> schemaMap;
+
+    /**
+     * Constructor. XML Schema validation is enabled by default.
+     */
+    public DoiXmlReader() {
+        this(true);
     }
 
     /**
-     * Write a Resource instance to an OutputStream using UTF-8 encoding.
+     * Constructor. XML schema validation may be disabled, in which case the client
+     * is likely to fail in horrible ways (e.g. NullPointerException) if it receives
+     * invalid documents. However, performance may be improved.
      *
-     * @param resource
-     *            Resource instance to write.
-     * @param out
-     *            OutputStream to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param enableSchemaValidation
      */
-    public void write(Resource resource, OutputStream out) throws IOException {
-        OutputStreamWriter outWriter;
-        try {
-            outWriter = new OutputStreamWriter(out, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("UTF-8 encoding not supported", e);
+    public DoiXmlReader(boolean enableSchemaValidation) {
+        if (enableSchemaValidation) {
+            String dataCiteSchemaUrl = XmlUtil.getResourceUrlString(DATACITE_SCHEMA, DoiXmlReader.class);
+            log.debug("dataciteSchemaUrl: " + dataCiteSchemaUrl);
+
+            if (dataCiteSchemaUrl == null) {
+                throw new RuntimeException("failed to load " + DATACITE_SCHEMA + " from classpath");
+            }
+
+            schemaMap = new HashMap<String, String>();
+            schemaMap.put(DATACITE_NAMESPACE, dataCiteSchemaUrl);
+            log.debug("schema validation enabled");
+        } else {
+            log.debug("schema validation disabled");
         }
-        write(resource, outWriter);
     }
 
     /**
-     * Write a Resource instance to a StringBuilder.
-     * 
-     * @param resource
-     * @param builder
-     * @throws IOException
-     */
-    public void write(Resource resource, StringBuilder builder) throws IOException {
-        write(resource, new StringBuilderWriter(builder));
-    }
-
-    /**
-     * Write a Resource instance to a writer.
+     * Construct a DOM document from an XML String source.
      *
-     * @param resource
-     *            Resource instance to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param xml String of the XML.
+     * @return Resource object containing all doi metadata.
+     * @throws DoiParsingException if there is an error parsing the XML.
      */
-    public void write(Resource resource, Writer writer) throws IOException {
-        long start = System.currentTimeMillis();
-        Element root = this.getRootElement(resource);
-        write(root, writer);
-        long end = System.currentTimeMillis();
-        log.debug("Write elapsed time: " + (end - start) + "ms");
+    public Resource read(String xml) throws DoiParsingException {
+        if (xml == null) {
+            throw new IllegalArgumentException("XML must not be null");
+        }
+
+        try {
+            return read(new StringReader(xml));
+        } catch (IOException ioe) {
+            String error = "Error reading XML: " + ioe.getMessage();
+            throw new DoiParsingException(error, ioe);
+        }
     }
 
     /**
-     * Write a Document instance by providing the root element to a writer.
+     * Construct a DOM document from a InputStream.
      *
-     * @param root
-     *            Root element to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param in InputStream.
+     * @return Resource object containing all doi metadata.
+     * @throws IOException  input stream is null.
+     * @throws DoiParsingException if there is an error parsing the XML.
      */
-    protected void write(Element root, Writer writer) throws IOException {
-        XMLOutputter outputter = new XMLOutputter();
-        outputter.setFormat(Format.getPrettyFormat());
-        outputter.output(new Document(root), writer);
+    public Resource read(InputStream in) throws IOException, DoiParsingException {
+        if (in == null) {
+            throw new IOException("stream closed");
+        }
+
+        try {
+            return read(new InputStreamReader(in, StandardCharsets.UTF_8));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF-8 encoding not supported");
+        }
     }
+
+    /**
+     * Construct a DOM document from a Reader.
+     *
+     * @param reader Reader.
+     * @return Resource object containing all doi metadata.
+     * @throws IOException  when an I/O error prevents a document from being fully parsed
+     */
+    public Resource read(Reader reader) throws DoiParsingException, IOException {
+        if (reader == null) {
+            throw new IllegalArgumentException("reader must not be null");
+        }
+
+        // Create a JDOM Document from the XML
+        Document document;
+        try {
+            // TODO: investigate creating a SAXBuilder once and re-using it
+            // as long as we can detect concurrent access (a la java collections)
+            document = XmlUtil.buildDocument(reader, schemaMap);
+        } catch (JDOMException jde) {
+            String error = "XML failed schema validation: " + jde.getMessage();
+            throw new DoiParsingException(error, jde);
+        }
+        return this.buildResource(document);
+    }
+
 }

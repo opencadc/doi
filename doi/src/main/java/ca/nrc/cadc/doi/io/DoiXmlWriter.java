@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -67,17 +67,84 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi.io;
 
-public class DoiParsingException extends Exception {
-    private static final long serialVersionUID = -5942924380206370808L;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.util.StringBuilderWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 
-    public DoiParsingException(String message) {
-        super(message);
+import java.nio.charset.StandardCharsets;
+import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+
+/**
+ * Writes a Resource instance as XML to an output.
+ * 
+ * @author yeunga
+ */
+public class DoiXmlWriter extends DoiWriter {
+    private static final Logger log = Logger.getLogger(DoiXmlWriter.class);
+
+    public DoiXmlWriter() {
     }
 
-    public DoiParsingException(String message, Throwable cause) {
-        super(message, cause);
+    /**
+     * Write a Resource instance to an OutputStream using UTF-8 encoding.
+     *
+     * @param resource Resource instance to write.
+     * @param out  OutputStream to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(Resource resource, OutputStream out) throws IOException {
+        OutputStreamWriter outWriter;
+        outWriter = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+        write(resource, outWriter);
+    }
+
+    /**
+     * Write a Resource instance to a StringBuilder.
+     * 
+     * @param resource Resource instance to write.
+     * @param builder StringBuilder to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(Resource resource, StringBuilder builder) throws IOException {
+        write(resource, new StringBuilderWriter(builder));
+    }
+
+    /**
+     * Write a Resource instance to a writer.
+     *
+     * @param resource  Resource instance to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    public void write(Resource resource, Writer writer) throws IOException {
+        long start = System.currentTimeMillis();
+        Element root = this.getRootElement(resource);
+        write(root, writer);
+        long end = System.currentTimeMillis();
+        log.debug("Write elapsed time: " + (end - start) + "ms");
+    }
+
+    /**
+     * Write a Document instance by providing the root element to a writer.
+     *
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
+     */
+    protected void write(Element root, Writer writer) throws IOException {
+        XMLOutputter outputter = new XMLOutputter();
+        outputter.setFormat(Format.getPrettyFormat());
+        outputter.output(new Document(root), writer);
     }
 
 }

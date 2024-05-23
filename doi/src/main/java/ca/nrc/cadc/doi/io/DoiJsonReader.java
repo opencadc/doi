@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,128 +67,45 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi.io;
 
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.xml.XmlUtil;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.JDOMException;
-import org.jdom2.Namespace;
+import ca.nrc.cadc.xml.JsonInputter;
 
 /**
- * Constructs a DoiMetadata from an XML source. This class is not thread safe
+ * Constructs a DoiMetadata from a JSON source. This class is not thread safe
  * but it is re-usable so it can safely be used to sequentially parse multiple
- * XML node documents.
+ * JSON node documents.
  *
  * @author yeunga
  */
-public class DoiXmlReader extends DoiReader {
-    private static final Logger log = Logger.getLogger(DoiXmlReader.class);
-
-    static final String DOI_NS_41 = "http://datacite.org/schema/kernel-4";
-    static final String DOI_SCHEMA_RESOURCE_41 = "DoiMetadata-4.1.xsd";
-
-    protected Map<String, String> schemaMap;
+public class DoiJsonReader extends DoiReader {
 
     /**
      * Constructor. XML Schema validation is enabled by default.
      */
-    public DoiXmlReader() {
-        this(true);
+    public DoiJsonReader() {
     }
 
     /**
-     * Constructor. XML schema validation may be disabled, in which case the client
-     * is likely to fail in horrible ways (e.g. NullPointerException) if it receives
-     * invalid documents. However, performance may be improved.
+     * Construct a Resource instance from a JSON String source.
      *
-     * @param enableSchemaValidation
-     */
-    public DoiXmlReader(boolean enableSchemaValidation) {
-        if (enableSchemaValidation) {
-            String doiSchemaUrl4 = XmlUtil.getResourceUrlString(DOI_SCHEMA_RESOURCE_41, DoiXmlReader.class);
-            log.debug("doiSchemaUrl4: " + doiSchemaUrl4);
-
-            if (doiSchemaUrl4 == null)
-                throw new RuntimeException("failed to load " + DOI_SCHEMA_RESOURCE_41 + " from classpath");
-
-            schemaMap = new HashMap<String, String>();
-            schemaMap.put(DOI_NS_41, doiSchemaUrl4);
-            log.debug("schema validation enabled");
-        } else {
-            log.debug("schema validation disabled");
-        }
-    }
-
-    /**
-     * Construct a DOM document from an XML String source.
-     *
-     * @param xml String of the XML.
+     * @param json String of the JSON.
      * @return Resource object containing all doi metadata.
-     * @throws DoiParsingException
-     *             if there is an error parsing the XML.
+     * @throws DoiParsingException if there is an error parsing the JSON.
      */
-    public Resource read(String xml) throws DoiParsingException {
-        if (xml == null)
-            throw new IllegalArgumentException("XML must not be null");
+    public Resource read(String json) throws DoiParsingException {
+        if (json == null) {
+            throw new IllegalArgumentException("JSON string must not be null");
+        }
+
         try {
-            return read(new StringReader(xml));
-        } catch (IOException ioe) {
-            String error = "Error reading XML: " + ioe.getMessage();
-            throw new DoiParsingException(error, ioe);
+            JsonInputter inputter = new JsonInputter();
+            return this.buildResource(inputter.input(json));
+        } catch (Exception ex) {
+            String error = "Error reading JSON string: " + ex.getMessage();
+            throw new DoiParsingException(error, ex);
         }
     }
 
-    /**
-     * Construct a DOM document from a InputStream.
-     *
-     * @param in InputStream.
-     * @return Resource object containing all doi metadata.
-     * @throws IOException  input stream is null.
-     * @throws DoiParsingException if there is an error parsing the XML.
-     */
-    public Resource read(InputStream in) throws IOException, DoiParsingException {
-        if (in == null)
-            throw new IOException("stream closed");
-        try {
-            return read(new InputStreamReader(in, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("UTF-8 encoding not supported");
-        }
-    }
-
-    /**
-     * Construct a DOM document from a Reader.
-     *
-     * @param reader Reader.
-     * @return Resource object containing all doi metadata.
-     * @throws IOException  when an I/O error prevents a document from being fully parsed
-     * @throws NodeParsingException if there is an error parsing the XML.
-     */
-    public Resource read(Reader reader) throws DoiParsingException, IOException {
-        if (reader == null)
-            throw new IllegalArgumentException("reader must not be null");
-
-        // Create a JDOM Document from the XML
-        Document document;
-        try {
-            // TODO: investigate creating a SAXBuilder once and re-using it
-            // as long as we can detect concurrent access (a la java collections)
-            document = XmlUtil.buildDocument(reader, schemaMap);
-        } catch (JDOMException jde) {
-            String error = "XML failed schema validation: " + jde.getMessage();
-            throw new DoiParsingException(error, jde);
-        }
-
-        return this.buildResource(document);
-    }
 }
