@@ -138,7 +138,7 @@ public class DoiStatusReaderWriterTest
     	if (t1 == null) {
     		Assert.assertNull("expected title is null, actual title is not null: " + t2);
     	} else {
-	        Assert.assertEquals("langs are different", t1.getLang(), t2.getLang());
+	        Assert.assertEquals("langs are different", t1.lang, t2.lang);
 	        Assert.assertEquals("titles are different", t1.getText(), t2.getText());
 	        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
     	}
@@ -192,7 +192,7 @@ public class DoiStatusReaderWriterTest
             DoiStatusXmlReader xmlReader = new DoiStatusXmlReader();
             
             // read test xml file
-            String fileName = "src/test/data/doi-status.xml";
+            String fileName = "src/test/resources/doi-status.xml";
             FileInputStream fis = new FileInputStream(fileName);
             DoiStatus doiStatusFromReader = xmlReader.read(fis);
             fis.close();
@@ -225,7 +225,7 @@ public class DoiStatusReaderWriterTest
             DoiStatusListXmlReader xmlReader = new DoiStatusListXmlReader();
             
             // read test xml file
-            String fileName = "src/test/data/doi-statuses.xml";
+            String fileName = "src/test/resources/doi-statuses.xml";
             FileInputStream fis = new FileInputStream(fileName);
             List<DoiStatus> doiStatusListFromReader = xmlReader.read(fis);
             fis.close();
@@ -258,7 +258,7 @@ public class DoiStatusReaderWriterTest
             DoiStatusXmlReader xmlReader = new DoiStatusXmlReader();
             
             // read test xml file
-            String fileName = "src/test/data/doi-status.xml";
+            String fileName = "src/test/resources/doi-status.xml";
             FileInputStream fis = new FileInputStream(fileName);
             DoiStatus doiStatusFromReader = xmlReader.read(fis);
             fis.close();
@@ -292,7 +292,7 @@ public class DoiStatusReaderWriterTest
             DoiStatusListXmlReader xmlReader = new DoiStatusListXmlReader();
             
             // read test xml file
-            String fileName = "src/test/data/doi-statuses.xml";
+            String fileName = "src/test/resources/doi-statuses.xml";
             FileInputStream fis = new FileInputStream(fileName);
             List<DoiStatus> doiStatusListFromReader = xmlReader.read(fis);
             fis.close();
