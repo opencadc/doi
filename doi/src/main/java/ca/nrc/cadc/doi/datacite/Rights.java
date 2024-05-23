@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,10 +69,8 @@
 
 package ca.nrc.cadc.doi.datacite;
 
+import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
-
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
 
 /**
  * Any rights information for this resource. Provide a rights management
@@ -84,40 +82,40 @@ import org.springframework.util.StringUtils;
  */
 public class Rights {
 
-    private static Logger log = Logger.getLogger(Rights.class);
+    public static final String NAME = "rights";
+    public static final String RIGHTS_URI = "rightsURI";
+    public static final String RIGHTS_IDENTIFIER = "rightsIdentifier";
+    public static final String RIGHTS_IDENTIFIER_SCHEME = "rightsIdentifierScheme";
+    public static final String SCHEME_URI = "schemeURI";
+    public static final String LANG = "lang";
 
-    // lang uses the xml namespace
-    private String lang;
-    private String text;
+    private final String text;
+
     public URI rightsURI;
+    public String rightsIdentifier;
+    public String rightsIdentifierScheme;
+    public URI schemeURI;
+    public String lang;
 
     /**
      * Title constructor.
-     * 
-     * @param lang language used, e.g. en-US
-     * @param rights rights text
+     *
+     * @param text the rights text
      */
-    public Rights(String lang, String rights) {
-        if (!StringUtils.hasText(lang) || !StringUtils.hasText(rights)) {
-            String msg = "lang and rights must be specified.";
-            throw new IllegalArgumentException(msg);
+    public Rights(String text) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("Rights text must be specified");
         }
-
-        this.lang = lang;
-        this.text = rights;
+        this.text = text;
     }
 
-    /**
-     * @return language used in this title.
-     */
-    public String getLang() {
-        return this.lang;
-    }
-
-    /**
-     * @return rights text
-     */
     public String getText() {
         return this.text;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Rights[%s]", text);
+    }
+
 }

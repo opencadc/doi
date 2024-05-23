@@ -67,59 +67,55 @@
 
 package ca.nrc.cadc.doi.datacite;
 
+import ca.nrc.cadc.util.StringUtil;
+import java.net.URI;
+
 /**
- * Enums for types of contributor.
- * 
- * @author yeunga
- *
+ * The name of the entity that holds, archives, publishes prints, distributes, releases,
+ * issues, or produces the resource. This property will be used to formulate the citation,
+ * so consider the prominence of the role.
+ * In the case of datasets, "publish" is understood to mean making the data available
+ * to the community of researchers.
  */
-public enum ContributorType {
-    CONTACT_PERSON("ContactPerson"), 
-    DATA_COLLECTOR("DataCollector"), 
-    DATA_CURATOR("DataCurator"), 
-    DATA_MANAGER("DataManager"), 
-    DISTRIBUTOR("Distributor"), 
-    EDITOR("Editor"), 
-    HOSTING_INSTITUTION("HostingInstitution"), 
-    OTHER("Other"), 
-    PRODUCER("Producer"), 
-    PROJECT_LEADER("ProjectLeader"), 
-    PROJECT_MANAGER("ProjectManager"), 
-    PROJECT_MEMBER("ProjectMember"), 
-    REGISTRATION_AGENCY("RegistrationAgency"), 
-    REGISTRATION_AUTHORITY("RegistrationAuthority"), 
-    RELATED_PERSON("RelatedPerson"), 
-    RESEARCH_GROUP("ResearchGroup"), 
-    RIGHTS_HOLDER("RightsHolder"), 
-    RESEARCHER("Researcher"), 
-    SPONSOR("Sponsor"), 
-    SUPERVISOR("Supervisor"), 
-    WORK_PACKAGE_LEADER("WorkPackageLeader");
+public class Publisher {
 
-    private final String value;
+    public static final String NAME = "publisher";
+    public static final String PUBLISHER_IDENTIFIER = "publisherIdentifier";
+    public static final String PUBLISHER_IDENTIFIER_SCHEME = "publisherIdentifierScheme";
+    public static final String SCHEME_URI = "schemeURI";
+    public static final String LANG = "lang";
 
-    public static final String NAME = "contributorType";
+    public static final String VALID_PUBLISHER = "CADC";
 
-    private ContributorType(String value) {
-        this.value = value;
-    }
+    private final String text;
 
-    public static ContributorType toValue(String s) {
-        for (ContributorType type : values()) {
-            if (type.value.equals(s)) {
-                return type;
-            }
+    public String publisherIdentifier;
+    public String publisherIdentifierScheme;
+    public URI schemeURI;
+    public String lang;
+
+    /**
+     * Publisher constructor.
+     *
+     * @param text publisher name
+     */
+    public Publisher(String text) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("Publisher text must be specified");
         }
-        throw new IllegalArgumentException("invalid value: " + s);
+        if (text.equalsIgnoreCase(VALID_PUBLISHER)) {
+            throw new IllegalArgumentException("currently only supported publisher is CADC");
+        }
+        this.text = text;
     }
 
-    public String getValue() {
-        return this.value;
+    public String getText() {
+        return this.text;
     }
 
     @Override
     public String toString() {
-        return String.format("ContributorType[%s]", value);
+        return String.format("Publisher[%s]", text);
     }
 
 }

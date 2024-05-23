@@ -62,64 +62,38 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  : 5 $
+ *
  ************************************************************************
  */
 
 package ca.nrc.cadc.doi.datacite;
 
 /**
- * Enums for types of contributor.
- * 
- * @author yeunga
- *
+ * Primary language of the resource. Allowed values are taken from IETF BCP 47, ISO 639-1 language codes.
  */
-public enum ContributorType {
-    CONTACT_PERSON("ContactPerson"), 
-    DATA_COLLECTOR("DataCollector"), 
-    DATA_CURATOR("DataCurator"), 
-    DATA_MANAGER("DataManager"), 
-    DISTRIBUTOR("Distributor"), 
-    EDITOR("Editor"), 
-    HOSTING_INSTITUTION("HostingInstitution"), 
-    OTHER("Other"), 
-    PRODUCER("Producer"), 
-    PROJECT_LEADER("ProjectLeader"), 
-    PROJECT_MANAGER("ProjectManager"), 
-    PROJECT_MEMBER("ProjectMember"), 
-    REGISTRATION_AGENCY("RegistrationAgency"), 
-    REGISTRATION_AUTHORITY("RegistrationAuthority"), 
-    RELATED_PERSON("RelatedPerson"), 
-    RESEARCH_GROUP("ResearchGroup"), 
-    RIGHTS_HOLDER("RightsHolder"), 
-    RESEARCHER("Researcher"), 
-    SPONSOR("Sponsor"), 
-    SUPERVISOR("Supervisor"), 
-    WORK_PACKAGE_LEADER("WorkPackageLeader");
+public class Language {
 
-    private final String value;
+    public static final String NAME = "language";
 
-    public static final String NAME = "contributorType";
+    private final String text;
 
-    private ContributorType(String value) {
-        this.value = value;
+    /**
+     * Language constructor
+     *
+     * @param text language of the resource
+     */
+    public Language(String text) {
+        this.text = text;
     }
 
-    public static ContributorType toValue(String s) {
-        for (ContributorType type : values()) {
-            if (type.value.equals(s)) {
-                return type;
-            }
-        }
-        throw new IllegalArgumentException("invalid value: " + s);
-    }
-
-    public String getValue() {
-        return this.value;
+    public String getText() {
+        return text;
     }
 
     @Override
     public String toString() {
-        return String.format("ContributorType[%s]", value);
+        return String.format("Language[%s]", this.text);
     }
 
 }

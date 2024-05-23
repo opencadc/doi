@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,8 +69,7 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
+import ca.nrc.cadc.util.StringUtil;
 
 /**
  * A name or title by which a resource is known.
@@ -79,42 +78,34 @@ import org.springframework.util.StringUtils;
  */
 public class Title {
 
-    private static Logger log = Logger.getLogger(Title.class);
+    public static final String NAME = "title";
+    public static final String TITLE_TYPE = "titleType";
+    public static final String LANG = "lang";
 
-    // lang uses the xml namespace
-    private String lang;
+    private final String text;
+
     public TitleType titleType;
-    private String text;
+    public String lang;
 
     /**
      * Title constructor.
-     * 
-     * @param lang
-     *            language used, e.g. en-US
-     * @param title
-     *            title text
+     *
+     * @param text title text
      */
-    public Title(String lang, String title) {
-        if (!StringUtils.hasText(lang) || !StringUtils.hasText(title)) {
-            String msg = "lang and title must be specified.";
-            throw new IllegalArgumentException(msg);
+    public Title(String text) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("Title text must be specified");
         }
-
-        this.lang = lang;
-        this.text = title;
+        this.text = text;
     }
 
-    /**
-     * @return language used in this title.
-     */
-    public String getLang() {
-        return this.lang;
-    }
-
-    /**
-     * @return title text
-     */
     public String getText() {
         return this.text;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Title[%s]", text);
+    }
+
 }

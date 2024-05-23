@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -80,18 +80,33 @@ package ca.nrc.cadc.doi.datacite;
  *
  */
 public enum ResourceType {
-    AUDIO_VISUAL("Audiovisual"), 
-    COLLECTION("Collection"), 
+    AUDIO_VISUAL("Audiovisual"),
+    BOOK("Book"),
+    BOOK_CHAPTER("BookChapter"),
+    COLLECTION("Collection"),
+    COMPUTATIONAL_NOTEBOOK("ComputationalNotebook"),
+    CONFERENCE_PAPER("ConferencePaper"),
+    CONFERENCE_PROCEEDINGS("ConferenceProceeding"),
     DATA_PAPER("DataPaper"), 
-    DATA_SET("Dataset"), 
+    DATA_SET("Dataset"),
+    DISSERTATION("Dissertation"),
     EVENT("Event"), 
-    IMAGE("Image"), 
-    INTERACTIVE_RESOURCE("InteractiveResource"), 
-    MODEL("Model"), 
-    PHYSICAL_OBJECT("PhysicalObject"), 
+    IMAGE("Image"),
+    INSTRUMENT("Instrument"),
+    INTERACTIVE_RESOURCE("InteractiveResource"),
+    JOURNAL("Journal"),
+    JOURNAL_ARTICLE("JournalArticle"),
+    MODEL("Model"),
+    OUTPUT_MANAGEMENT_PLAN("OutputManagementPlan"),
+    PEER_REVIEW("PeerReview"),
+    PHYSICAL_OBJECT("PhysicalObject"),
+    PREPRINT("Preprint"),
+    REPORT("Report"),
     SERVICE("Service"), 
     SOFTWARE("Software"), 
-    SOUND("Sound"), 
+    SOUND("Sound"),
+    STANDARD("Standard"),
+    STUDY_REGISTRATION("StudyRegistration"),
     TEXT("Text"), 
     WORKFLOW("Workflow"), 
     OTHER("Other");
@@ -110,11 +125,12 @@ public enum ResourceType {
     }
 
     public String getValue() {
-        return value;
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return String.format("ResourceType[%s]", value);
     }
+
 }

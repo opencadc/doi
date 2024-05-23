@@ -62,64 +62,59 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  : 5 $
+ *
  ************************************************************************
  */
 
 package ca.nrc.cadc.doi.datacite;
 
+import ca.nrc.cadc.util.StringUtil;
+
 /**
- * Enums for types of contributor.
- * 
- * @author yeunga
- *
+ * Year when the data is made publicly available. If an embargo period has been in effect,
+ * use the date when the embargo period ends.
  */
-public enum ContributorType {
-    CONTACT_PERSON("ContactPerson"), 
-    DATA_COLLECTOR("DataCollector"), 
-    DATA_CURATOR("DataCurator"), 
-    DATA_MANAGER("DataManager"), 
-    DISTRIBUTOR("Distributor"), 
-    EDITOR("Editor"), 
-    HOSTING_INSTITUTION("HostingInstitution"), 
-    OTHER("Other"), 
-    PRODUCER("Producer"), 
-    PROJECT_LEADER("ProjectLeader"), 
-    PROJECT_MANAGER("ProjectManager"), 
-    PROJECT_MEMBER("ProjectMember"), 
-    REGISTRATION_AGENCY("RegistrationAgency"), 
-    REGISTRATION_AUTHORITY("RegistrationAuthority"), 
-    RELATED_PERSON("RelatedPerson"), 
-    RESEARCH_GROUP("ResearchGroup"), 
-    RIGHTS_HOLDER("RightsHolder"), 
-    RESEARCHER("Researcher"), 
-    SPONSOR("Sponsor"), 
-    SUPERVISOR("Supervisor"), 
-    WORK_PACKAGE_LEADER("WorkPackageLeader");
+public class PublicationYear {
 
-    private final String value;
+    public static final String NAME = "publicationYear";
+    public static final Integer PUBLICATION_YEAR_LOWER_LIMIT = 1900;
+    public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
 
-    public static final String NAME = "contributorType";
+    private String text;
 
-    private ContributorType(String value) {
-        this.value = value;
+    public PublicationYear(String text) {
+        validatePublicationYear(text);
+        this.text = text;
     }
 
-    public static ContributorType toValue(String s) {
-        for (ContributorType type : values()) {
-            if (type.value.equals(s)) {
-                return type;
-            }
+    public String getText() {
+        return this.text;
+    }
+
+    public void setText(String text) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("PublicationYear text must be specified");
         }
-        throw new IllegalArgumentException("invalid value: " + s);
+        validatePublicationYear(text);
+        this.text = text;
     }
 
-    public String getValue() {
-        return this.value;
+    private void validatePublicationYear(String publicationYear) {
+        try {
+            int year = Integer.parseInt(publicationYear);
+            if (year > PUBLICATION_YEAR_UPPER_LIMIT
+                    || year < PUBLICATION_YEAR_LOWER_LIMIT) {
+                throw new IllegalArgumentException("publicationYear is not a recent year");
+            }
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("publicationYear is not a number");
+        }
     }
 
     @Override
     public String toString() {
-        return String.format("ContributorType[%s]", value);
+        return String.format("PublicationYear[%s]", text);
     }
 
 }

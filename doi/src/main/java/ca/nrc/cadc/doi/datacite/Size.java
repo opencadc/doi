@@ -62,64 +62,43 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  : 5 $
+ *
  ************************************************************************
  */
 
 package ca.nrc.cadc.doi.datacite;
 
+import ca.nrc.cadc.util.StringUtil;
+
 /**
- * Enums for types of contributor.
- * 
- * @author yeunga
- *
+ * Unstructured size information about the resource.
  */
-public enum ContributorType {
-    CONTACT_PERSON("ContactPerson"), 
-    DATA_COLLECTOR("DataCollector"), 
-    DATA_CURATOR("DataCurator"), 
-    DATA_MANAGER("DataManager"), 
-    DISTRIBUTOR("Distributor"), 
-    EDITOR("Editor"), 
-    HOSTING_INSTITUTION("HostingInstitution"), 
-    OTHER("Other"), 
-    PRODUCER("Producer"), 
-    PROJECT_LEADER("ProjectLeader"), 
-    PROJECT_MANAGER("ProjectManager"), 
-    PROJECT_MEMBER("ProjectMember"), 
-    REGISTRATION_AGENCY("RegistrationAgency"), 
-    REGISTRATION_AUTHORITY("RegistrationAuthority"), 
-    RELATED_PERSON("RelatedPerson"), 
-    RESEARCH_GROUP("ResearchGroup"), 
-    RIGHTS_HOLDER("RightsHolder"), 
-    RESEARCHER("Researcher"), 
-    SPONSOR("Sponsor"), 
-    SUPERVISOR("Supervisor"), 
-    WORK_PACKAGE_LEADER("WorkPackageLeader");
+public class Size {
 
-    private final String value;
+    public static final String NAME = "size";
 
-    public static final String NAME = "contributorType";
+    private final String text;
 
-    private ContributorType(String value) {
-        this.value = value;
-    }
-
-    public static ContributorType toValue(String s) {
-        for (ContributorType type : values()) {
-            if (type.value.equals(s)) {
-                return type;
-            }
+    /**
+     * Size constructor.
+     *
+     * @param text the size info
+     */
+    public Size(String text) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("Size text must be specified");
         }
-        throw new IllegalArgumentException("invalid value: " + s);
+        this.text = text;
     }
 
-    public String getValue() {
-        return this.value;
+    public String getText() {
+        return this.text;
     }
 
     @Override
     public String toString() {
-        return String.format("ContributorType[%s]", value);
+        return String.format("Size[%s]", text);
     }
 
 }

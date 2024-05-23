@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,10 +69,8 @@
 
 package ca.nrc.cadc.doi.datacite;
 
+import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
-
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
 
 /**
  * An identifier for a name.
@@ -81,40 +79,43 @@ import org.springframework.util.StringUtils;
  */
 public class NameIdentifier {
 
-    private static Logger log = Logger.getLogger(NameIdentifier.class);
+    public static final String NAME = "nameIdentifier";
+    public static final String NAME_IDENTIFIER_SCHEME = "nameIdentifierScheme";
+    public static final String SCHEME_URI = "schemeURI";
+
+    private final String text;
+    private final String nameIdentifierScheme;
 
     public URI schemeURI;
-    private String nameIdentifierScheme;
-    private String nameIdentifier;
 
     /**
      * NameIdentifier constructor.
-     * 
+     *
+     * @param text value of this name identifier
      * @param nameIdentifierScheme scheme of this name identifier
-     * @param nameIdentifier value of this name identifier
      */
-    public NameIdentifier(String nameIdentifierScheme, String nameIdentifier) {
-        if (!StringUtils.hasText(nameIdentifierScheme) || !StringUtils.hasText(nameIdentifier)) {
-            String msg = "nameIdentifierScheme and nameIdentifier must be specified.";
-            throw new IllegalArgumentException(msg);
+    public NameIdentifier(String text, String nameIdentifierScheme) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("NameIdentifier text must be specified");
         }
-
+        if (!StringUtil.hasText(nameIdentifierScheme)) {
+            throw new IllegalArgumentException("NameIdentifier nameIdentifierScheme must be specified");
+        }
+        this.text = text;
         this.nameIdentifierScheme = nameIdentifierScheme;
-        this.nameIdentifier = nameIdentifier;
     }
 
-    /**
-     * @return the scheme of this name identifier.
-     */
+    public String getText() {
+        return this.text;
+    }
+
     public String getNameIdentifierScheme() {
         return this.nameIdentifierScheme;
     }
 
-    /**
-     * @return this name identifier.
-     */
-    public String getNameIdentifier() {
-        return this.nameIdentifier;
+    @Override
+    public String toString() {
+        return String.format("NameIdentifier[%s, %s]", text, nameIdentifierScheme);
     }
 
 }

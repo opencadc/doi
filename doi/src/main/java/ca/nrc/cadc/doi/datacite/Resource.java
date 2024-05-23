@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,60 +74,76 @@
 package ca.nrc.cadc.doi.datacite;
 
 import java.util.List;
-
-import org.apache.log4j.Logger;
 import org.jdom2.Namespace;
-import org.springframework.util.StringUtils;
 
 /**
  * Root business object for DOI metadata.
  * 
  * @author yeunga
- *
  */
 public class Resource {
-    private static Logger log = Logger.getLogger(Resource.class);
 
-    private static String RIGHTS_STMT = "Public: If you make use of these data products we request that you acknowledge their origin and cite the paper below and cite this DOI and the DOI of the paper.";
-    // first %s is the publication title,
-    // second %2 is last name of first author
-    // third %s is the journal reference
-    private static String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s ' by %s et al., %s ";
+    public static final String NAME = "resource";
 
-    // define boundaries for the publicationYear
-    public static final Integer PUBLICATION_YEAR_LOWER_LIMIT = 1900;
-    public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
-    public static final String PUBLISHER = "CADC";
-    public static final ResourceType RESOURCE_TYPE = ResourceType.toValue("Dataset");
+    private final Namespace namespace;
+    private final Identifier identifier;
+    private final List<Creator> creators;
+    private final List<Title> titles;
+    private final Publisher publisher;
+    private PublicationYear publicationYear;
+    private final DoiResourceType resourceType;
 
-    private Namespace namespace;
-    private Identifier identifier;
-    private List<Creator> creators;
-    private List<Title> titles;
-    private DoiResourceType resourceType;
-    private String publicationYear;
-    public List<Rights> rightsList;
     public List<Contributor> contributors;
-    public List<DoiDate> dates;
-    public List<Description> descriptions;
-    public String language;
+    public List<Date> dates;
+    public List<Size> sizes;
+    public Language language;
     public List<RelatedIdentifier> relatedIdentifiers;
+    public List<Rights> rightsList;
+    public List<Description> descriptions;
 
-    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators, List<Title> titles,
-            String publicationYear) {
-        if (namespace == null || identifier == null || creators.isEmpty() || titles.isEmpty()
-                || !StringUtils.hasText(publicationYear)) {
-            String msg = "namespace, identifier, creator, title AND publicationYear must be specified.";
-            throw new IllegalArgumentException(msg);
+    /**
+     * Resource constructor.
+     *
+     * @param namespace resource namespace
+     * @param identifier resource identifier
+     * @param creators resource creators
+     * @param titles resource titles
+     * @param publisher resource publisher
+     * @param publicationYear resource publication year
+     * @param resourceType resource type
+     */
+    public Resource(Namespace namespace, Identifier identifier, List<Creator> creators,
+                    List<Title> titles, Publisher publisher, PublicationYear publicationYear,
+                    DoiResourceType resourceType) {
+        if (namespace == null) {
+            throw new IllegalArgumentException("namespace must be specified");
+        }
+        if (identifier == null) {
+            throw new IllegalArgumentException("identifier must be specified");
+        }
+        if (creators == null || creators.isEmpty()) {
+            throw new IllegalArgumentException("creators must be specified and not empty");
+        }
+        if (titles == null || titles.isEmpty()) {
+            throw new IllegalArgumentException("titles must be specified and not empty");
+        }
+        if (publisher == null) {
+            throw new IllegalArgumentException("publisher must be specified");
+        }
+        if (publicationYear == null) {
+            throw new IllegalArgumentException("publicationYear must be specified");
+        }
+        if (resourceType == null) {
+            throw new IllegalArgumentException("resourceType must be specified");
         }
 
         this.namespace = namespace;
         this.identifier = identifier;
         this.creators = creators;
         this.titles = titles;
-        this.resourceType = new DoiResourceType(RESOURCE_TYPE);
-        validatePublicationYear(publicationYear);
+        this.publisher = publisher;
         this.publicationYear = publicationYear;
+        this.resourceType = resourceType;
     }
 
     public Namespace getNamespace() {
@@ -142,42 +158,30 @@ public class Resource {
         return this.creators;
     }
 
-    public void setCreators(List<Creator> creators) {
-        this.creators = creators;
+    public List<Title> getTitles() {
+        return titles;
     }
 
-    public String getPublisher() {
-        return PUBLISHER;
-    }
-
-    public String getPublicationYear() {
-        return this.publicationYear;
-    }
-
-    public void setPublicationYear(String newYear) {
-        this.publicationYear = newYear;
+    public Publisher getPublisher() {
+        return this.publisher;
     }
 
     public DoiResourceType getResourceType() {
         return this.resourceType;
     }
 
-    public List<Title> getTitles() {
-        return titles;
+    public PublicationYear getPublicationYear() {
+        return this.publicationYear;
     }
 
-    public void setTitles(List<Title> titles) {
-        this.titles = titles;
+    public void setPublicationYear(PublicationYear publicationYear) {
+        this.publicationYear = publicationYear;
     }
 
-    private void validatePublicationYear(String pYear) {
-        try {
-            Integer year = Integer.valueOf(pYear);
-            if (year > PUBLICATION_YEAR_UPPER_LIMIT || year < PUBLICATION_YEAR_LOWER_LIMIT) {
-                throw new IllegalArgumentException("publicationYear is not a recent year");
-            }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("publicationYear is not a number");
-        }
+    @Override
+    public String toString() {
+        return String.format("Resource[%s, %s, %s, %s, %s, %s, %s]",
+                namespace, identifier, creators, titles, publisher, publicationYear, resourceType);
     }
+
 }

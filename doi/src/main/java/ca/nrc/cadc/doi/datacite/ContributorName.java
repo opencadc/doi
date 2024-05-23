@@ -69,8 +69,7 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
+import ca.nrc.cadc.util.StringUtil;
 
 /**
  * Name to identify a contributor.
@@ -79,30 +78,34 @@ import org.springframework.util.StringUtils;
  */
 public class ContributorName {
 
-    private static Logger log = Logger.getLogger(ContributorName.class);
+    public static final String NAME = "contributorName";
+    public static final String NAME_TYPE = "nameType";
+    public static final String LANG = "lang";
 
-    // name of contributor
-    private String text;
+    private final String text;
+
     public NameType nameType;
+    public String lang;
 
     /**
-     * Constructor.
+     * Contributor Constructor.
      * 
-     * @param contributorName name of contributor
+     * @param text name of contributor
      */
-    public ContributorName(String contributorName) {
-        if (!StringUtils.hasText(contributorName)) {
-            String msg = "contributorName must be specified.";
-            throw new IllegalArgumentException(msg);
+    public ContributorName(String text) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("ContributorName text must be specified");
         }
-
-        this.text = contributorName;
+        this.text = text;
     }
 
-    /**
-     * @return contributor name.
-     */
     public String getText() {
         return this.text;
     }
+
+    @Override
+    public String toString() {
+        return String.format("ContributorName[%s]", text);
+    }
+
 }

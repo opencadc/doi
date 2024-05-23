@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,8 +69,7 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
+import ca.nrc.cadc.util.StringUtil;
 
 /**
  * All additional information that does not fit in any of the other categories.
@@ -81,49 +80,43 @@ import org.springframework.util.StringUtils;
  */
 public class Description {
 
-    private static Logger log = Logger.getLogger(Description.class);
+    public static final String NAME = "description";
+    public static final String DESCRIPTION_TYPE = "descriptionType";
+    public static final String LANG = "lang";
 
-    // lang uses the xml namespace
-    private String lang;
-    private DescriptionType descriptionType;
-    private String text;
+    private final String text;
+    private final DescriptionType descriptionType;
+
+    public String lang;
 
     /**
      * Title constructor.
-     * 
-     * @param lang language used, e.g. en-US
-     * @param br text
+     *
+     * @param text description text
      * @param descriptionType type of description, e.g. Abstract
      */
-    public Description(String lang, String br, DescriptionType descriptionType) {
-        if (!StringUtils.hasText(lang) || !StringUtils.hasText(br) || descriptionType == null) {
-            String msg = "lang, br and descriptionType must be specified.";
-            throw new IllegalArgumentException(msg);
+    public Description(String text, DescriptionType descriptionType) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("Description text must be specified");
         }
-
-        this.lang = lang;
-        this.text = br;
+        if (descriptionType == null) {
+            throw new IllegalArgumentException("Description descriptionType must be specified");
+        }
+        this.text = text;
         this.descriptionType = descriptionType;
     }
 
-    /**
-     * @return language used in this description.
-     */
-    public String getLang() {
-        return this.lang;
-    }
-
-    /**
-     * @return description text
-     */
     public String getText() {
         return this.text;
     }
 
-    /**
-     * @return description typet
-     */
     public DescriptionType getDescriptionType() {
         return this.descriptionType;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Description[%s, %s", this.text, this.descriptionType);
+    }
+
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -88,7 +88,9 @@ public enum DateType {
     ISSUED("Issued"), 
     OTHER("Other"), 
     SUBMITTED("Submitted"), // To indicate the start of an embargo period
-    UPDATED("Updated"), VALID("Valid");
+    UPDATED("Updated"),
+    VALID("Valid"),
+    WITHDRAWN("Withdrawn");
 
     private final String value;
 
@@ -104,11 +106,12 @@ public enum DateType {
     }
 
     public String getValue() {
-        return value;
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return String.format("DateType[%s]", value);
     }
+
 }

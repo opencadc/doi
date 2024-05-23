@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,47 +69,54 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
+import ca.nrc.cadc.util.StringUtil;
 
 /**
  * Different dates relevant to the work.
  * 
  * @author jeevesh
  */
-public class DoiDate {
-    private static Logger log = Logger.getLogger(DoiDate.class);
+public class Date {
 
-    // YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or
-    // any other format or level of granularity described in W3CDTF.
-    private String isoDate;
-    private DateType dateType; // DoiDate enum has valid values
+    public static final String NAME = "date";
+    public static final String DATE_TYPE = "dateType";
+    public static final String DATE_INFORMATION = "dateInformation";
+
+    private final String text;
+    private final DateType dateType;
+
     public String dateInformation;
 
     /**
      * DoiDate constructor.
+     * YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or any other format or level of granularity
+     * described in W3CDTF. Use RKMS-ISO8601 standard for depicting date ranges.
      * 
-     * @param isoDate
-     *            type of this resource
-     * @param dateType
-     *            additional text description for this resource type
+     * @param text text description for this resource type
+     * @param dateType type of this resource
      */
-    public DoiDate(String isoDate, DateType dateType) {
-        if (!StringUtils.hasText(isoDate) || dateType == null) {
-            String msg = "isoDate and dateType must be specified.";
-            throw new IllegalArgumentException(msg);
+    public Date(String text, DateType dateType) {
+        if (!StringUtil.hasText(text)) {
+            throw new IllegalArgumentException("Date text must be specified");
         }
-
-        this.isoDate = isoDate;
+        if (dateType == null) {
+            throw new IllegalArgumentException("Date dateType must be specified");
+        }
+        this.text = text;
         this.dateType = dateType;
     }
 
-    public String getIsoDate() {
-        return this.isoDate;
+    public String getText() {
+        return this.text;
     }
 
     public DateType getDateType() {
         return this.dateType;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Date[%s, %s]", text, dateType);
     }
 
 }

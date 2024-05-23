@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,9 +68,6 @@
 */
 
 package ca.nrc.cadc.doi.datacite;
-
-import org.apache.log4j.Logger;
-
 /**
  * The type of a resource. Additional free text description can be entered into
  * resourceTypeGeneral.
@@ -79,29 +76,37 @@ import org.apache.log4j.Logger;
  */
 public class DoiResourceType {
 
-    private static Logger log = Logger.getLogger(DoiResourceType.class);
+    public static final ResourceType SUPPORTED_RESOURCE_TYPE = ResourceType.toValue("Dataset");
+    public static final String NAME = "resourceType";
+    public static final String RESOURCE_TYPE_GENERAL = "resourceTypeGeneral";
+
+    private final ResourceType resourceTypeGeneral;
 
     public String text;
-    private ResourceType resourceTypeGeneral;
 
     /**
-     * ResourceType constructor.
-     * 
-     * @param resourceType type of this resource
+     * DOIResourceType constructor.
+     *
+     * @param resourceTypeGeneral the type of the resource
      */
-    public DoiResourceType(ResourceType resourceType) {
-        if (resourceType == null) {
-            String msg = "resourceType must be specified.";
-            throw new IllegalArgumentException(msg);
+    public DoiResourceType(ResourceType resourceTypeGeneral) {
+        if (resourceTypeGeneral == null) {
+            throw new IllegalArgumentException("DoiResourceType resourceTypeGeneral must be specified");
         }
-
-        this.resourceTypeGeneral = resourceType;
+        if (!resourceTypeGeneral.equals(SUPPORTED_RESOURCE_TYPE)) {
+            throw new IllegalArgumentException(String.format("currently only supported ResourceType is %s",
+                    ResourceType.DATA_SET.getValue()));
+        }
+        this.resourceTypeGeneral = resourceTypeGeneral;
     }
 
-    /**
-     * @return type of this resource
-     */
     public ResourceType getResourceTypeGeneral() {
         return this.resourceTypeGeneral;
     }
+
+    @Override
+    public String toString() {
+        return String.format("DoiResourceType[%s]", resourceTypeGeneral);
+    }
+
 }
