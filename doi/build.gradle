@@ -2,6 +2,7 @@ plugins {
     id 'war'
     id 'maven'
     id 'maven-publish'
+    id 'checkstyle'
 }
 
 repositories {
@@ -14,6 +15,17 @@ apply from: '../service.gradle'
 sourceCompatibility = 11
 
 group = 'ca.nrc.cadc'
+
+configurations {
+    checkstyleDep
+}
+
+checkstyle {
+    ignoreFailures = false
+    config = resources.text.fromArchiveEntry(configurations.checkstyleDep, 'cadc_checkstyle.xml')
+    toolVersion = '8.2'
+    sourceSets = []
+}
 
 copy {
     from (System.getenv('A') + '/etc/') {
@@ -40,9 +52,12 @@ dependencies {
     implementation 'org.opencadc:cadc-vos:[2.0,3.0)'
     implementation 'org.opencadc:cadc-vos-client:[2.0.4,3.0)'
     implementation 'org.opencadc:cadc-log:[1.0,)'
+    implementation 'com.puppycrawl.tools:checkstyle:8.2'
 
     runtimeOnly 'org.opencadc:cadc-registry:[1.7.2,)'
 
     testImplementation 'junit:junit:[4.0,5.0)'
     intTestImplementation 'org.opencadc:cadc-test-vosi:[1.0.11,)'
+
+    checkstyleDep 'org.opencadc:cadc-quality:1.+'
 }
