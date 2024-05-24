@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.doi;
 
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -81,12 +82,11 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DescriptionType;
-import ca.nrc.cadc.doi.datacite.DoiDate;
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiReader;
+import ca.nrc.cadc.doi.datacite.Date;
+import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiResourceType;
-import ca.nrc.cadc.doi.datacite.DoiXmlReader;
-import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.io.DoiXmlReader;
+import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
@@ -113,13 +113,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.MissingResourceException;
 
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.Node;
@@ -173,64 +171,62 @@ public class PostAction extends DoiAction {
     private Resource merge(Resource sourceResource, Resource targetResource) {
 
         // A user is only allowed to update creators and titles
-        verifyUneditableFields(sourceResource, targetResource);
+        verifyImmutableFields(sourceResource, targetResource);
 
         // update editable fields
-        targetResource.setCreators(sourceResource.getCreators());
-        targetResource.setTitles(sourceResource.getTitles());
+        targetResource.getCreators().clear();
+        targetResource.getCreators().addAll(sourceResource.getCreators());
+        targetResource.getTitles().clear();
+        targetResource.getTitles().addAll(sourceResource.getTitles());
         targetResource.setPublicationYear(sourceResource.getPublicationYear());
         targetResource.language = sourceResource.language;
 
         return targetResource;
     }
 
-    private Resource updateResource(Resource resourceFromUser) throws Exception {
-        Resource updatedResource = null;
-        if (resourceFromUser != null) {
-            String nodeName = getDoiFilename(doiSuffix);
-
-            // Get resource from vospace
-            Resource resourceFromVos = vClient.getResource(doiSuffix, nodeName);
-            
-            // update the resource from vospace and upload it
-            updatedResource = merge(resourceFromUser, resourceFromVos);
-            VOSURI docVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
-            this.uploadDOIDocument(updatedResource, docVOSURI);
+    private void updateResource(Resource resourceFromUser) throws Exception {
+        if (resourceFromUser == null) {
+            return;
         }
 
-        return updatedResource;
+        // merge resources and push
+        String nodeName = getDoiFilename(doiSuffix);
+        Resource resourceFromVos = vClient.getResource(doiSuffix, nodeName);
+        Resource mergedResource = merge(resourceFromUser, resourceFromVos);
+        VOSURI docVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
+        this.uploadDOIDocument(mergedResource, docVOSURI);
     }
     
-    private String updateJournalRef(String journalRefFromUser) throws Exception {
+    private void updateJournalRef(String journalRefFromUser) throws Exception {
         // update journal reference 
-        if (journalRefFromUser != null) {
-            ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-            VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
-            String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
-            if (journalRefFromVOSpace == null) {
-                if (journalRefFromUser.length() > 0) {
-                    // journal reference does not exist, add it
-                    NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
-                    doiContainerNode.getProperties().add(journalRef);
-                    vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
-                }
-            } else {
-                if (journalRefFromUser.length() > 0) {
-                    // journal reference already exists, update it
-                    doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
-                } else {
-                    // delete existing journal reference
-                    NodeProperty nodeProperty = doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP);
-                    if (nodeProperty != null) {
-                        doiContainerNode.getProperties().remove(nodeProperty);
-                        doiContainerNode.getProperties().add(new NodeProperty(DOI_VOS_JOURNAL_PROP));
-                    }
-                }
-                vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
-            }
+        if (journalRefFromUser == null) {
+            return;
         }
 
-        return journalRefFromUser;
+        ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
+        VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
+        String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+        if (journalRefFromVOSpace == null) {
+            if (!journalRefFromUser.isEmpty()) {
+                // journal reference does not exist, add it
+                NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
+                doiContainerNode.getProperties().add(journalRef);
+                vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+            }
+        } else {
+            if (!journalRefFromUser.isEmpty()) {
+                // journal reference already exists, update it
+                doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP).setValue(journalRefFromUser);
+            } else {
+                // delete existing journal reference
+                NodeProperty nodeProperty = doiContainerNode.getProperty(DOI_VOS_JOURNAL_PROP);
+                if (nodeProperty != null) {
+                    doiContainerNode.getProperties().remove(nodeProperty);
+                    doiContainerNode.getProperties().add(new NodeProperty(DOI_VOS_JOURNAL_PROP));
+                }
+            }
+            vClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+        }
     }
 
     private String getPath(String filename) {
@@ -239,13 +235,11 @@ public class PostAction extends DoiAction {
                 throw new MissingResourceException("Resource not found: " + filename, 
                     DoiXmlReader.class.getName(), filename);
             }
-            
             return doiTemplateURL.getPath();
     }
     
     private Resource getTemplateResource() {
         Resource templateResource = null;
-
         try {
             String doiTemplatePath = getPath(DOI_TEMPLATE_RESOURCE_41);
             log.debug("doiTemplatePath: " + doiTemplatePath);
@@ -258,7 +252,6 @@ public class PostAction extends DoiAction {
         } catch (DoiParsingException dpe) {
             throw new RuntimeException("Structure of template file " + DOI_TEMPLATE_RESOURCE_41 + " failed validation");
         }
-
         return templateResource;
     }
 
@@ -279,10 +272,10 @@ public class PostAction extends DoiAction {
         }
         
         List<Description> descriptionList = new ArrayList<Description>();
-        Description newDescrip = new Description(inProgressDoi.language, description, DescriptionType.OTHER);
+        Description newDescrip = new Description(description, DescriptionType.OTHER);
+        newDescrip.lang = inProgressDoi.language.getText();
         descriptionList.add(newDescrip);
         inProgressDoi.descriptions = descriptionList;
-
         return inProgressDoi;
     }
     
@@ -315,10 +308,7 @@ public class PostAction extends DoiAction {
 
         return inProgressDoi;
     }
-    
-    /*
-     * 
-     */
+
     private String getCredentials() {
         // datacite.pass contains the credentials and is in the doi.war file
         String dataciteCredentialsPath = getPath(DATACITE_CREDENTIALS);
@@ -327,12 +317,13 @@ public class PostAction extends DoiAction {
         PasswordAuthentication pa = netrcFile.getCredentials(dataCiteHost, true);
         if (pa == null) {
             throw new RuntimeException("failed to read from " + dataciteCredentialsPath + " file");
-            }
+        }
 
         return pa.getUserName() + ":" + String.valueOf(pa.getPassword());
     }
     
-    private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg) throws IOException {
+    private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg)
+            throws IOException {
         log.debug("response code from DataCite: " + responseCode);
 
         // check if an exception was thrown
@@ -347,14 +338,13 @@ public class PostAction extends DoiAction {
         // no exception thrown, check response code
         if (responseCode == 200 || responseCode == 201) {
             log.debug(msg);
-            return;
         } else {
             throw new IOException("HttpResponse (" + responseCode + ") - " + responseBody);
         }
-
     }
     
-    private void registerDOI(URL postURL, String content, String contentType, boolean redirect) throws IOException {
+    private void registerDOI(URL postURL, String content, String contentType, boolean redirect)
+            throws IOException {
         log.debug("post to DataCite URL: " + postURL);
         log.debug("contentType: " + contentType);
 
@@ -597,64 +587,44 @@ public class PostAction extends DoiAction {
         syncOutput.setCode(303);
     }
 
-    private void verifyUneditableFields(Resource s1, Resource s2) {
-        if (!s1.getNamespace().getPrefix().equals(s2.getNamespace().getPrefix()) ||
-            !s1.getNamespace().getURI().equals(s2.getNamespace().getURI())) {
-            Namespace expected = s2.getNamespace();
-            Namespace actual = s1.getNamespace();
-            String msg = "namespace update is not allowed, expected = " + expected + ", actual = " + actual;
+    private void verifyImmutableFields(Resource r1, Resource r2) {
+        if (!r1.getNamespace().getPrefix().equals(r2.getNamespace().getPrefix()) ||
+            !r1.getNamespace().getURI().equals(r2.getNamespace().getURI())) {
+            String msg = String.format("namespace update is not allowed, expected: %s, actual: %s",
+                    r2.getNamespace(), r1.getNamespace());
             throw new IllegalArgumentException(msg);
-        } else if (!s1.getPublisher().equals(s2.getPublisher())) {
-            String expected = s2.getPublisher();
-            String actual = s1.getPublisher();
-            String msg = "software error, publisher is different, expected = " + expected + ", actual = " + actual;
+        } else if (!r1.getPublisher().equals(r2.getPublisher())) {
+            String msg = String.format("software error, publisher is different, expected: %s, actual: %s",
+                    r2.getPublisher(), r1.getPublisher());
             throw new IllegalArgumentException(msg);
         } else {
-            verifyIdentifier(s1.getIdentifier(), s2.getIdentifier());
-            verifyResourceType(s1.getResourceType(), s2.getResourceType());
+            verifyIdentifier(r1.getIdentifier(), r2.getIdentifier());
+            verifyResourceType(r1.getResourceType(), r2.getResourceType());
         }
     }
     
-    private void verifyString(String s1, String s2, String field)
-    {
+    private void verifyString(String s1, String s2, String field) {
         verifyNull(s1, s2, field);
-        if (s1 != null)
-        {
-            if (!s1.equals(s2)) {
-                String msg = field + " update is not allowed, expected = " + s2 + ", actual = " + s1;
-                throw new IllegalArgumentException(msg);
-            }
-        }
-    }
-
-    private void verifyNull(Object o1, Object o2, String field)
-    {
-        if (o1 == null)
-        {
-            if (o2 != null) {
-                String msg = field + " update is not allowed, expected = " + o2 + ", actual = null";
-                throw new IllegalArgumentException(msg);
-            }
-        } 
-        else
-        {
-            if (o2 == null) {
-                String msg = field + " update is not allowed, expected = null, actual = " + o1;
-                throw new IllegalArgumentException(msg);
-            }
-        }
-    }
-
-    private void verifyIdentifier(Identifier id1, Identifier id2) {
-        if (!id1.getText().equals(id2.getText())) {
-            String expected = id2.getText();
-            String actual = id1.getText();
-            String msg = "identifier update is not allowed, expected = " + expected + ", actual = " + actual;
+        if (!s1.equals(s2)) {
+            String msg = String.format("%s update is not allowed, expected: %s, actual: %s", field, s2, s1);
             throw new IllegalArgumentException(msg);
-        } else if (!id1.getIdentifierType().equals(id2.getIdentifierType())) {
-            String expected = id2.getIdentifierType();
-            String actual = id1.getIdentifierType();
-            String msg = "identifierType update is not allowed, expected = " + expected + ", actual = " + actual;
+        }
+    }
+
+    private void verifyNull(Object o1, Object o2, String field) {
+        if (o1 == null && o2 != null) {
+            String msg = String.format("%s update is not allowed, expected: %s, actual: null", field, o2);
+            throw new IllegalArgumentException(msg);
+        } else if (o2 == null) {
+            String msg = String.format("%s update is not allowed, expected: null, actual: %s", field, o1);
+            throw new IllegalArgumentException(msg);
+        }
+    }
+
+    private void verifyIdentifier(Identifier i1, Identifier i2) {
+        if (!i1.equals(i2)) {
+            String msg = String.format("identifier update is not allowed, expected: %s, actual: %s",
+                    i2, i1);
             throw new IllegalArgumentException(msg);
         }
     }
@@ -662,12 +632,11 @@ public class PostAction extends DoiAction {
     private void verifyResourceType(DoiResourceType rt1, DoiResourceType rt2) {
         verifyNull(rt1, rt2, "DoiResourceType");
         if (rt1.getResourceTypeGeneral() != rt2.getResourceTypeGeneral()) {
-            String expected = rt2.getResourceTypeGeneral().getValue();
-            String actual = rt1.getResourceTypeGeneral().getValue();
-            String msg = "resourceType update is not allowed, expected = " + expected + ", actual = " + actual;
+            String msg = String.format("resourceType update is not allowed, expected: %s, actual: %s",
+                    rt2.getResourceTypeGeneral().getValue(), rt1.getResourceTypeGeneral().getValue());
             throw new IllegalArgumentException(msg);
         } else {
-            verifyString(rt1.text, rt2.text, "resourceTYpe text");
+            verifyString(rt1.text, rt2.text, "resourceTYpe description");
         }
     }
     
@@ -703,12 +672,12 @@ public class PostAction extends DoiAction {
         log.debug("Next DOI suffix: " + nextDoiSuffix);
 
         // update the template with the new DOI number
-        DoiReader.assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
+        assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
 
         //Add a Created date to the Resource object
-        String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        DoiDate doiDate = new DoiDate(createdDate, DateType.CREATED);
-        resource.dates = new ArrayList<DoiDate>();
+        String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+        Date doiDate = new Date(createdDate, DateType.CREATED);
+        resource.dates = new ArrayList<Date>();
         resource.dates.add(doiDate);
 
         // Create the group that is able to administer the DOI process
@@ -864,6 +833,20 @@ public class PostAction extends DoiAction {
         String formattedDOI = String.format("%04d", maxDoi);
         return currentYear + "." + formattedDOI;
     }
+
+    // methods to assign to private field in Identity
+    public static void assignIdentifier(Object ce, String identifier) {
+        try {
+            Field f = Identifier.class.getDeclaredField("text");
+            f.setAccessible(true);
+            f.set(ce, identifier);
+        } catch (NoSuchFieldException fex) {
+            throw new RuntimeException("Identifier class is missing the text field", fex);
+        } catch (IllegalAccessException bug) {
+            throw new RuntimeException("No access to Identifier text field", bug);
+        }
+    }
+
 
     private class DoiOutputStream implements OutputStreamWrapper
     {
