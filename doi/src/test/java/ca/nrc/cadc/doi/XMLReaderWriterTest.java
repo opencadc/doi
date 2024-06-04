@@ -80,7 +80,7 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class XMLReaderWriterTest extends BaseTest {
+public class XMLReaderWriterTest extends TestBase {
     private static final Logger log = Logger.getLogger(XMLReaderWriterTest.class);
 
     static {
