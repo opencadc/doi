@@ -68,7 +68,6 @@
 package ca.nrc.cadc.doi;
 
 
-import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
@@ -80,7 +79,6 @@ import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.io.DoiJsonWriter;
-import ca.nrc.cadc.doi.io.DoiReader;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.util.StringUtil;
@@ -95,6 +93,7 @@ import java.util.List;
 
 import javax.security.auth.Subject;
 
+import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
@@ -155,8 +154,9 @@ public class GetAction extends DoiAction {
             	String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
             	if (jobURLString != null) {
             		URL jobURL = new URL(jobURLString);
-                    VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
-            		RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
+//                    VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
+                    VOSURI vosuri = getVOSURI(doiContainerNode.getName());
+                    RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
                     recursiveSetNode.setSchemaValidation(false);
             		ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
             		switch (phase) {
@@ -208,7 +208,8 @@ public class GetAction extends DoiAction {
     
     private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
         DoiStatus doiStatus = null;
-        if (vClient.isCallerAllowed(doiContainerNode))
+        X500Principal adminX500 = new X500Principal(config.getFirstPropertyValue(DoiInitAction.ADMIN_DN_KEY));
+        if (vClient.isCallerAllowed(doiContainerNode, adminX500))
         {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
@@ -225,7 +226,7 @@ public class GetAction extends DoiAction {
             List<Node> doiContainedNodes = doiContainerNode.getNodes();
             for (Node node : doiContainedNodes) {
                 if (node.getName().equals("data")) {
-                    dataDirectory = String.format("%s/%s/data", DoiAction.DOI_BASE_FILEPATH, doiSuffixString);
+                    dataDirectory = String.format("%s/%s/data", vaultDOIParentPath, doiSuffixString);
                     break;
                 }
             }

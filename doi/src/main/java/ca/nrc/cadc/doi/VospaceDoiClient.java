@@ -74,6 +74,7 @@ import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,7 +101,7 @@ public class VospaceDoiClient {
 
     private static final Logger log = Logger.getLogger(VospaceDoiClient.class);
     protected static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
-    private static final X500Principal DOIADMIN = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
+//    private static final X500Principal DOIADMIN = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
 
     private final Long callersNumericId;
     private VOSpaceClient vosClient = null;
@@ -108,8 +109,8 @@ public class VospaceDoiClient {
     private String xmlFilename = "";
     private boolean includePublicNodes = false;
 
-    public VospaceDoiClient(Subject callingSubject, Boolean includePublicNodes) throws URISyntaxException {
-        this.baseDataURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH);
+    public VospaceDoiClient(URI resourceID, String doiParentPath, Subject callingSubject, Boolean includePublicNodes) {
+        this.baseDataURI = new VOSURI(resourceID, doiParentPath);
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
@@ -174,7 +175,7 @@ public class VospaceDoiClient {
     }
 
     //  doi admin should have access as well
-    public boolean isCallerAllowed(Node node) {
+    public boolean isCallerAllowed(Node node, X500Principal adminDN) {
         boolean isRequesterNode = false;
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
             isRequesterNode = true;
@@ -185,7 +186,7 @@ public class VospaceDoiClient {
                 isRequesterNode = requester.equals(callersNumericId.toString());
                 Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
                 for (X500Principal p : xset) {
-                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, DOIADMIN);
+                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminDN);
                 }
             }
         }

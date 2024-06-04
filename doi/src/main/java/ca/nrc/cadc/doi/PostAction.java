@@ -67,6 +67,12 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Contributor;
+import ca.nrc.cadc.doi.datacite.Rights;
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.InvalidConfigException;
+import ca.nrc.cadc.util.MultiValuedProperties;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Set;
@@ -83,7 +89,6 @@ import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DescriptionType;
 import ca.nrc.cadc.doi.datacite.Date;
-import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.DoiResourceType;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
@@ -100,7 +105,6 @@ import ca.nrc.cadc.util.StringUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -135,12 +139,7 @@ import org.opencadc.vospace.transfer.Transfer;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    public static final String DOI_TEMPLATE_RESOURCE_41 = "DoiTemplate-4.1.xml";
-    public static final String DESCRIPTION_TEMPLATE = "This contains data and other information related to the publication '%s' by %s et al.";
-    public static final String DATACITE_CREDENTIALS = "datacite.pass";
-    
-    private String dataCiteHost;
-    private String dataCiteURL;
+    private static final String DATACITE_CREDENTIALS = "datacite.pass";
 
     public PostAction() {
         super();
@@ -193,7 +192,8 @@ public class PostAction extends DoiAction {
         String nodeName = getDoiFilename(doiSuffix);
         Resource resourceFromVos = vClient.getResource(doiSuffix, nodeName);
         Resource mergedResource = merge(resourceFromUser, resourceFromVos);
-        VOSURI docVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
+//        VOSURI docVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/" + getDoiFilename(doiSuffix));
+        VOSURI docVOSURI = getVOSURI(String.format("%s/%s", doiSuffix, getDoiFilename(doiSuffix)));
         this.uploadDOIDocument(mergedResource, docVOSURI);
     }
     
@@ -204,7 +204,8 @@ public class PostAction extends DoiAction {
         }
 
         ContainerNode doiContainerNode = vClient.getContainerNode(doiSuffix);
-        VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
+//        VOSURI vosuri = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
+        VOSURI vosuri = getVOSURI(doiSuffix);
         String journalRefFromVOSpace = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
         if (journalRefFromVOSpace == null) {
             if (!journalRefFromUser.isEmpty()) {
@@ -229,97 +230,31 @@ public class PostAction extends DoiAction {
         }
     }
 
-    private String getPath(String filename) {
-            URL doiTemplateURL = DoiXmlReader.class.getClassLoader().getResource(filename);
-            if (doiTemplateURL == null) {
-                throw new MissingResourceException("Resource not found: " + filename, 
-                    DoiXmlReader.class.getName(), filename);
-            }
-            return doiTemplateURL.getPath();
-    }
-    
-    private Resource getTemplateResource() {
-        Resource templateResource = null;
-        try {
-            String doiTemplatePath = getPath(DOI_TEMPLATE_RESOURCE_41);
-            log.debug("doiTemplatePath: " + doiTemplatePath);
-            InputStream inputStream = new FileInputStream(doiTemplatePath);
-            // read xml file
-            DoiXmlReader reader = new DoiXmlReader(false);
-            templateResource = reader.read(inputStream);
-        } catch (IOException fne) {
-            throw new RuntimeException("failed to load " + DOI_TEMPLATE_RESOURCE_41 + " from classpath");
-        } catch (DoiParsingException dpe) {
-            throw new RuntimeException("Structure of template file " + DOI_TEMPLATE_RESOURCE_41 + " failed validation");
-        }
-        return templateResource;
-    }
-
-    private Resource addDescription(Resource inProgressDoi, String journalRef) {
-        // Generate the description string
-        // Get first author's last name
-        String lastName = inProgressDoi.getCreators().get(0).familyName;
-        if (lastName == null) {
-            // Use full name in a pinch
-            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
-        }
-
-        String description = null;
-        if (StringUtil.hasText(journalRef)) {
-            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName) + ", " +journalRef;
-        } else {
-            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName);
-        }
-        
-        List<Description> descriptionList = new ArrayList<Description>();
-        Description newDescrip = new Description(description, DescriptionType.OTHER);
-        newDescrip.lang = inProgressDoi.language.getText();
-        descriptionList.add(newDescrip);
-        inProgressDoi.descriptions = descriptionList;
-        return inProgressDoi;
-    }
-    
-    /**
-     * Add the CADC template material to the DOI during the minting step
-     */
-    private Resource addFinalElements(Resource inProgressDoi, String journalRef) {
-
-        // Build a resource using the template file
-        Resource cadcTemplate = getTemplateResource();
-
-        // Whitelist handling of fields users are allowed to provide information for.
-
-        if (cadcTemplate.contributors == null) {
-            throw new RuntimeException("contributors stanza missing from CADC template.");
-        } else {
-            inProgressDoi.contributors = cadcTemplate.contributors;
-        }
-
-        if (cadcTemplate.rightsList != null) {
-            throw new RuntimeException("rightslist stanza missing from CADC template.");
-        } else {
-            inProgressDoi.rightsList = cadcTemplate.rightsList;
-        }
-
-        // Generate the description string
-        if (journalRef != null) {
-            inProgressDoi = addDescription(inProgressDoi, journalRef);
-        }
-
-        return inProgressDoi;
-    }
-
     private String getCredentials() {
-        // datacite.pass contains the credentials and is in the doi.war file
-        String dataciteCredentialsPath = getPath(DATACITE_CREDENTIALS);
-        log.debug("datacite username/password file path: " + dataciteCredentialsPath);
-        NetrcFile netrcFile = new NetrcFile(dataciteCredentialsPath);
-        PasswordAuthentication pa = netrcFile.getCredentials(dataCiteHost, true);
-        if (pa == null) {
-            throw new RuntimeException("failed to read from " + dataciteCredentialsPath + " file");
-        }
+//        // datacite.pass contains the credentials and is in the doi.war file
+//        URL fileUrl = PostAction.class.getClassLoader().getResource(DATACITE_CREDENTIALS);
+//        if (fileUrl == null) {
+//            throw new MissingResourceException("Resource not found: " + DATACITE_CREDENTIALS,
+//                    PostAction.class.getName(), DATACITE_CREDENTIALS);
+//        }
+//        String passwordPath = fileUrl.getPath();
+//        log.debug("datacite username/password file path: " + passwordPath);
+//        PropertiesReader reader = new PropertiesReader(passwordPath);
 
-        return pa.getUserName() + ":" + String.valueOf(pa.getPassword());
+        File passwordFile;
+        try {
+            passwordFile = FileUtil.getFileFromResource(DATACITE_CREDENTIALS, PostAction.class);
+        } catch (InvalidConfigException e) {
+            throw new RuntimeException(String.format("Could not find password file '%s'", DATACITE_CREDENTIALS));
+        }
+        PropertiesReader reader = new PropertiesReader(passwordFile);
+        MultiValuedProperties properties = reader.getAllProperties();
+        String username = properties.getFirstPropertyValue("username");
+        String password = properties.getFirstPropertyValue("password");
+        if (username == null || password == null) {
+            throw new RuntimeException(String.format("Username or password are missing in '%s'", DATACITE_CREDENTIALS));
+        }
+        return String.format("%s:%s", username, password);
     }
     
     private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg)
@@ -360,17 +295,22 @@ public class PostAction extends DoiAction {
     
     private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
         // form the upload endpoint
-        String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
-        URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
-        log.debug("makeFindable endpoint: " + makeFindableURL);
+//        String doiToMakeFindable = CADC_DOI_PREFIX + "/" + doiSuffix;
+//        URL makeFindableURL = new URL(dataCiteURL +"/doi/" + doiToMakeFindable);
+        String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
+        String path = String.format("%s/doi/%s/%s", dataCiteUrl, cadcDataCitePrefix, doiSuffix);
+        URL doiURL = new URL(path);
+        log.debug("makeFindable endpoint: " + doiURL);
 
         // add the landing page URL
-        String content = "doi=" + doiToMakeFindable + "\nurl=" + this.landingPageURL + "?doi=" + doiSuffix;
+        String landingPageUrl = config.getFirstPropertyValue(DoiInitAction.LANDING_URL_KEY);
+//        String content = "doi=" + doiURL + "\nurl=" + landingPageUrl + "?doi=" + doiSuffix;
+        String content = String.format("doi=%s\nurl=%s?doi=%s", doiURL, landingPageUrl, doiSuffix);
         log.debug("content: " + content);    	
         InputStream inputStream = new ByteArrayInputStream(content.getBytes());
 
         // upload
-        HttpUpload put = new HttpUpload(inputStream, makeFindableURL);
+        HttpUpload put = new HttpUpload(inputStream, doiURL);
         put.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
         put.setBufferSize(64 * 1024);
         put.setContentType("text/plain;charset=UTF-8");
@@ -396,8 +336,10 @@ public class PostAction extends DoiAction {
         String xmlFilename = doiSuffix + "/"+ getDoiFilename(doiSuffix);
         DataNode xmlFile = null;
 
-        VOSURI doiURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
-        VOSURI xmlURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + xmlFilename);
+//        VOSURI doiURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiContainerNode.getName());
+//        VOSURI xmlURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + xmlFilename);
+        VOSURI doiURI = getVOSURI(doiContainerNode.getName());
+        VOSURI xmlURI = getVOSURI(xmlFilename);
 
         try {
             // update status
@@ -405,10 +347,10 @@ public class PostAction extends DoiAction {
             vClient.getVOSpaceClient().setNode(doiURI, doiContainerNode);
 
             // register DOI to DataCite
-            String doiToRegister = CADC_DOI_PREFIX + "/" + doiSuffix;
+            String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
+            URL registerURL = new URL(String.format("%s/metadata/%s/%s", dataCiteUrl, cadcDataCitePrefix, doiSuffix));
             String content = getDOIContent();
             String contentType = "application/xml;charset=UTF-8";
-            URL registerURL = new URL(dataCiteURL + "/metadata/" + doiToRegister);
             registerDOI(registerURL, content, contentType, true);
 
             // success, add landing page to the DOI instance
@@ -462,11 +404,14 @@ public class PostAction extends DoiAction {
     }
 
     private void lockData(ContainerNode doiContainerNode) throws Exception {
-        VOSURI containerVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
-        VOSURI dataVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/data");
+//        VOSURI containerVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix);
+//        VOSURI dataVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + doiSuffix + "/data");
+        String doiDataPath = doiSuffix + "/data";
+        VOSURI containerVOSURI = getVOSURI(doiSuffix);
+        VOSURI dataVOSURI = getVOSURI( doiDataPath);
         try {
             // update status
-            ContainerNode dataContainerNode = vClient.getContainerNode(doiSuffix + "/data");
+            ContainerNode dataContainerNode = vClient.getContainerNode(doiDataPath);
             doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());;
             vClient.getVOSpaceClient().setNode(containerVOSURI, doiContainerNode);
 
@@ -493,7 +438,7 @@ public class PostAction extends DoiAction {
             recSetNode.setMonitor(false);
             recSetNode.run();
             Runtime.getRuntime().removeShutdownHook(abortThread);
-            log.debug("invoked async call to recursively set the properties in the data directory " + doiSuffix + "/data");
+            log.debug("invoked async call to recursively set the properties in the data directory " + doiDataPath);
            
             // save job URL
             NodeProperty jobURLProp = new NodeProperty(DOI_VOS_JOB_URL_PROP, jobURL.toExternalForm());
@@ -512,19 +457,19 @@ public class PostAction extends DoiAction {
         }
     }
     
-    private void setDataCiteProperties() {
-        if (isTesting()) {
-            this.dataCiteHost = devHost;
-            this.dataCiteURL = devURL;
-        } else {
-            this.dataCiteHost = prodHost;
-            this.dataCiteURL = prodURL;
-        }
-    }
+//    private void setDataCiteProperties() {
+//        if (isTesting()) {
+//            this.dataCiteHost = devHost;
+//            this.dataCiteURL = devURL;
+//        } else {
+//            this.dataCiteHost = prodHost;
+//            this.dataCiteURL = prodURL;
+//        }
+//    }
     
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.MINT_ACTION)) {
-            setDataCiteProperties();
+//            setDataCiteProperties();
 
             // start minting process            
             // check minting status
@@ -666,13 +611,15 @@ public class PostAction extends DoiAction {
         //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
         VOSURI doiDataURI = vClient.getDoiBaseVOSURI();
         String nextDoiSuffix = generateNextDOINumber(doiDataURI);
-        if (isTesting()) {
-        	nextDoiSuffix = nextDoiSuffix + TEST_SUFFIX;
+
+        String testSuffix = config.getFirstPropertyValue(DoiInitAction.TEST_SUFFIX_KEY);
+        if (testSuffix != null) {
+        	nextDoiSuffix = nextDoiSuffix + testSuffix;
         }
         log.debug("Next DOI suffix: " + nextDoiSuffix);
 
         // update the template with the new DOI number
-        assignIdentifier(resource.getIdentifier(), CADC_DOI_PREFIX + "/" + nextDoiSuffix);
+        assignIdentifier(resource.getIdentifier(), cadcDataCitePrefix + "/" + nextDoiSuffix);
 
         //Add a Created date to the Resource object
         String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
@@ -689,12 +636,14 @@ public class PostAction extends DoiAction {
         // create VOSpace data node to house XML doc using doi filename and upload the document
         String docName = super.getDoiFilename(nextDoiSuffix);
         DataNode doiDocNode = new DataNode(docName);
-        VOSURI doiDocVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + nextDoiSuffix + "/" + docName);
+//        VOSURI doiDocVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + nextDoiSuffix + "/" + docName);
+        VOSURI doiDocVOSURI = getVOSURI(nextDoiSuffix + "/" + docName);
         vClient.getVOSpaceClient().createNode(doiDocVOSURI, doiDocNode);
         this.uploadDOIDocument(resource, doiDocVOSURI);
         
         // Create the DOI data folder
-        VOSURI dataVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + nextDoiSuffix + "/data");
+//        VOSURI dataVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + nextDoiSuffix + "/data");
+        VOSURI dataVOSURI = getVOSURI(nextDoiSuffix + "/data");
         ContainerNode newDataFolder = new ContainerNode("data");
         setPermissions(newDataFolder, guri);
         vClient.getVOSpaceClient().createNode(dataVOSURI, newDataFolder);
@@ -707,10 +656,13 @@ public class PostAction extends DoiAction {
     
     private GroupURI createDoiGroup(String groupName) throws Exception {
         // Create group to use for applying permissions
-        GMSClient gmsClient = new GMSClient(new URI(GMS_RESOURCE_ID));
-        String doiGroupName = DOI_GROUP_PREFIX + groupName;
-        String doiGroupURI = GMS_RESOURCE_ID + "?" + doiGroupName;
-        GroupURI guri = new GroupURI(new URI(doiGroupURI));
+        GMSClient gmsClient = getGMSClient();
+//        String doiGroupName = DOI_GROUP_PREFIX + groupName;
+//        String doiGroupURI = GMS_RESOURCE_ID + "?" + doiGroupName;
+        String gmsResourceID = config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY);
+        String doiGroupPrefix = config.getFirstPropertyValue(DoiInitAction.GROUP_PREFIX_KEY);
+        String group = String.format("%s?%s%s", gmsResourceID, doiGroupPrefix, groupName);
+        GroupURI guri = new GroupURI(URI.create(group));
         log.debug("creating group: " + guri);
 
         Group doiRWGroup = new Group(guri);
@@ -749,12 +701,13 @@ public class PostAction extends DoiAction {
         NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
         properties.add(journalRef);
         
-        if (isTesting()) {
-            NodeProperty runIdTest = new NodeProperty(VOS.PROPERTY_URI_RUNID, RUNID_TEST);
-            properties.add(runIdTest);
-        }
+//        if (isTesting()) {
+//            NodeProperty runIdTest = new NodeProperty(VOS.PROPERTY_URI_RUNID, RUNID_TEST);
+//            properties.add(runIdTest);
+//        }
 
-        VOSURI newVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + folderName);
+//        VOSURI newVOSURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH + "/" + folderName);
+        VOSURI newVOSURI = getVOSURI(folderName);
         ContainerNode newFolder = new ContainerNode(folderName);
 
         // Before completion, directory is visible in AstroDataCitationDOI directory,

@@ -75,7 +75,6 @@ package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -85,12 +84,11 @@ import org.apache.log4j.Logger;
  *
  */
 public class DoiStatus {
-    private static Logger log = Logger.getLogger(DoiStatus.class);
 
-    private Identifier identifier;
-    private Status status;
-    private Title title;
-    private String dataDirectory;
+    private final Identifier identifier;
+    private final Status status;
+    private final Title title;
+    private final String dataDirectory;
     public String journalRef;
 
     public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) {
@@ -120,12 +118,13 @@ public class DoiStatus {
     public Status getStatus() {
         return this.status;
     }
-    
-	public Title getTitle() {
-		return this.title;
+
+    public Title getTitle() {
+        return this.title;
 	}
 
-	public String getDataDirectory() {
-	    	return this.dataDirectory;
+    public String getDataDirectory() {
+        return this.dataDirectory;
 	}
+
 }

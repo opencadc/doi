@@ -71,6 +71,7 @@ import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
@@ -88,7 +89,7 @@ import org.apache.log4j.Logger;
 public class ServiceAvailability implements AvailabilityPlugin {
 
     private static final Logger log = Logger.getLogger(ServiceAvailability.class);
-    private static final URI VOS_URI = URI.create("ivo://cadc.nrc.ca/vault");
+
     private static final String DATACITE_URL = "https://mds.datacite.org";
     private static final File DOIADMIN_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
     private static final File AAI_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
@@ -110,9 +111,20 @@ public class ServiceAvailability implements AvailabilityPlugin {
         boolean isGood = true;
         String note = "service is accepting requests";
         try {
-            // check other services we depend on
+            // check other services we depend on (vault, gms, datacite)
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
+
+            MultiValuedProperties config = DoiInitAction.getConfig();
+            URI vaultURI = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
+            log.debug("vaultURI: " + vaultURI);
+            URL vaultURL = reg.getServiceURL(vaultURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            if (vaultURL != null) {
+                CheckResource checkResource = new CheckWebService(vaultURL);
+                checkResource.check();
+            } else {
+                log.debug("check skipped: " + vaultURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+            }
 
             URI credURI = null;
             try {

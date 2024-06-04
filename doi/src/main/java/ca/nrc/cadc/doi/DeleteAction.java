@@ -68,21 +68,17 @@
 package ca.nrc.cadc.doi;
 
 
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
 import java.io.File;
-import java.net.URI;
 import java.security.AccessControlException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
-import java.util.Iterator;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
 
 
@@ -112,10 +108,6 @@ public class DeleteAction extends DoiAction {
 
 
     private void doActionImpl() throws Exception {
-
-        VOSURI doiDataURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH);
-        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-
         if (doiSuffix == null) {
             throw new IllegalArgumentException("DOI number required.");
         }
@@ -124,7 +116,11 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-        String doiParentPath = doiDataURI.getPath() + "/" + doiSuffix;
+//        VOSURI doiBaseURI = new VOSURI(vospaceServiceURI, vospaceDOIParentPath);
+        VOSpaceClient vosClient = new VOSpaceClient(vaultResourceID);
+
+//        String doiParentPath = doiBaseURI.getPath() + "/" + doiSuffix;
+        String doiParentPath = String.format("%s/%s", vaultDOIParentPath, doiSuffix);
         ContainerNode doiContainer = (ContainerNode) vosClient.getNode(doiParentPath);
         
         // check to see if this user has permission
@@ -153,10 +149,10 @@ public class DeleteAction extends DoiAction {
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        GMSClient gmsClient = new GMSClient(new URI(GMS_RESOURCE_ID));
-        String groupToDelete = DOI_GROUP_PREFIX + doiSuffix;
+        String groupPrefix = config.getFirstPropertyValue(DoiInitAction.GROUP_PREFIX_KEY);
+        String groupToDelete = groupPrefix + doiSuffix;
         log.debug("deleting this group: " + groupToDelete);
-        gmsClient.deleteGroup(groupToDelete);
+        getGMSClient().deleteGroup(groupToDelete);
 
         log.debug("deleting this node: " + doiParentPath);
         vosClient.deleteNode(doiParentPath);
@@ -165,17 +161,14 @@ public class DeleteAction extends DoiAction {
     private boolean checkSubjectsMatch(Subject subA, Subject subB) {
         Set<Principal> subAPrincipals = subA.getPrincipals();
         Set<Principal> subBPrincipals = subB.getPrincipals();
-        Iterator iter = subAPrincipals.iterator();
 
-        while (iter.hasNext()) {
-            if (subBPrincipals.contains(iter.next())) {
+        for (Principal subAPrincipal : subAPrincipals) {
+            if (subBPrincipals.contains(subAPrincipal)) {
                 // Return if one of the principals matches
                 return true;
             }
         }
-
         return false;
-
     }
 
 }
