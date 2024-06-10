@@ -82,7 +82,7 @@ public class Date {
     public static final String DATE_TYPE = "dateType";
     public static final String DATE_INFORMATION = "dateInformation";
 
-    private final String text;
+    private final String value;
     private final DateType dateType;
 
     public String dateInformation;
@@ -92,22 +92,19 @@ public class Date {
      * YYYY,YYYY-MM-DD, YYYY-MM-DDThh:mm:ssTZD or any other format or level of granularity
      * described in W3CDTF. Use RKMS-ISO8601 standard for depicting date ranges.
      * 
-     * @param text text description for this resource type
+     * @param value description for this resource type, can be null or an empty string.
      * @param dateType type of this resource
      */
-    public Date(String text, DateType dateType) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Date text must be specified");
-        }
+    public Date(String value, DateType dateType) {
         if (dateType == null) {
             throw new IllegalArgumentException("Date dateType must be specified");
         }
-        this.text = text;
+        this.value = value;
         this.dateType = dateType;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     public DateType getDateType() {
@@ -116,7 +113,7 @@ public class Date {
 
     @Override
     public String toString() {
-        return String.format("Date[%s, %s]", text, dateType);
+        return String.format("Date[%s, %s]", value, dateType);
     }
 
 }

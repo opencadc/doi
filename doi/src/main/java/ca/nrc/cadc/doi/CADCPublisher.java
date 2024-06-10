@@ -69,45 +69,15 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import ca.nrc.cadc.util.StringUtil;
-import java.net.URI;
+public class CADCPublisher extends Publisher {
 
-/**
- * Uniquely identifies an affiliation, according to various identifier schemes.
- */
-public class Affiliation {
-
-    public static final String NAME = "affiliation";
-    public static final String AFFILIATION_IDENTIFIER = "affiliationIdentifier";
-    public static final String AFFILIATION_IDENTIFIER_SCHEME = "affiliationIdentifierScheme";
-    public static final String SCHEME_URI = "schemeURI";
-
-    private final String value;
-
-    public String affiliationIdentifier;
-    public String affiliationIdentifierScheme;
-    public URI schemeURI;
+    public static final String CADC_PUBLISHER = "CADC";
 
     /**
-     * Affiliation constructor.
-     *
-     * @param value affiliation name, must not be null or an empty string.
-     * @throws IllegalArgumentException if value is null or an empty string.
+     * Publisher constructor using CADC as the publisher.
      */
-    public Affiliation(String value) {
-        if (!StringUtil.hasText(value)) {
-            throw new IllegalArgumentException("affiliation value cannot be null or empty");
-        }
-        this.value = value;
-    }
-
-    public String getValue() {
-        return this.value;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Affiliation[%s]", value);
+    public CADCPublisher() {
+        super(CADC_PUBLISHER);
     }
 
 }

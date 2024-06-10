@@ -90,8 +90,8 @@ public class Resource {
     private final List<Creator> creators;
     private final List<Title> titles;
     private final Publisher publisher;
-    private PublicationYear publicationYear;
-    private final DoiResourceType resourceType;
+    private final PublicationYear publicationYear;
+    private final ResourceType resourceType;
 
     public List<Contributor> contributors;
     public List<Date> dates;
@@ -114,7 +114,7 @@ public class Resource {
      */
     public Resource(Namespace namespace, Identifier identifier, List<Creator> creators,
                     List<Title> titles, Publisher publisher, PublicationYear publicationYear,
-                    DoiResourceType resourceType) {
+                    ResourceType resourceType) {
         if (namespace == null) {
             throw new IllegalArgumentException("namespace must be specified");
         }
@@ -166,7 +166,7 @@ public class Resource {
         return this.publisher;
     }
 
-    public DoiResourceType getResourceType() {
+    public ResourceType getResourceType() {
         return this.resourceType;
     }
 
@@ -174,9 +174,9 @@ public class Resource {
         return this.publicationYear;
     }
 
-    public void setPublicationYear(PublicationYear publicationYear) {
-        this.publicationYear = publicationYear;
-    }
+//    public void setPublicationYear(PublicationYear publicationYear) {
+//        this.publicationYear = publicationYear;
+//    }
 
     @Override
     public String toString() {

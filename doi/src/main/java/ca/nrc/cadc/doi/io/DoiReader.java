@@ -75,7 +75,7 @@ import ca.nrc.cadc.doi.datacite.ContributorName;
 import ca.nrc.cadc.doi.datacite.ContributorType;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
@@ -90,14 +90,12 @@ import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
 import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
 import ca.nrc.cadc.doi.datacite.RelationType;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Size;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.datacite.TitleType;
-import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -140,7 +138,7 @@ public class DoiReader {
         List<Title> titles = buildTitles(root, ns);
         Publisher publisher = buildPublisher(root, ns);
         PublicationYear publicationYear = buildPublicationYear(root, ns);
-        DoiResourceType resourceType = buildDoiResourceType(root, ns);
+        ResourceType resourceType = buildDataCiteResourceType(root, ns);
 
         Resource resource = new Resource(ns, id, creators, titles, publisher, publicationYear, resourceType);
 
@@ -162,23 +160,22 @@ public class DoiReader {
             throw new DoiParsingException(String.format("required element '%s' not found",
                     Identifier.NAME));
         }
-        String text = identifierElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Identifier element is empty");
+
+        Identifier identifier;
+        try {
+            identifier = new Identifier(identifierElement.getText(),
+                    identifierElement.getAttributeValue(Identifier.IDENTIFIER_TYPE));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        String identifierType = identifierElement.getAttributeValue(Identifier.IDENTIFIER_TYPE);
-        if (identifierType == null) {
-            throw new DoiParsingException(String.format("Identifier missing required attribute: %s",
-                    Identifier.IDENTIFIER_TYPE));
-        }
-        return new Identifier(text, identifierType);
+        return identifier;
     }
 
     protected List<Creator> buildCreators(Element root, Namespace ns)
             throws DoiParsingException {
         Element creatersElement = root.getChild(CREATORS, ns);
         if (creatersElement == null) {
-            throw new DoiParsingException(String.format("required element '%s' not found", CREATORS));
+            throw new DoiParsingException("required 'creators' element not found");
         }
 
         List<Element> creatorElements = creatersElement.getChildren();
@@ -212,17 +209,14 @@ public class DoiReader {
         return creator;
     }
 
-    protected CreatorName buildCreatorName(Element element, Namespace ns)
+    protected CreatorName buildCreatorName(Element parentElement, Namespace ns)
             throws DoiParsingException {
-        Element creatorNameElement = element.getChild(CreatorName.NAME, ns);
+        Element creatorNameElement = parentElement.getChild(CreatorName.NAME, ns);
         if (creatorNameElement == null) {
             throw new DoiParsingException("required 'CreatorName' element not found");
         }
-        String text = creatorNameElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("CreatorName element is empty");
-        }
-        CreatorName creatorName = new CreatorName(text);
+
+        CreatorName creatorName = new CreatorName(creatorNameElement.getText());
 
         // optional attributes
         String nameType = creatorNameElement.getAttributeValue(CreatorName.NAME_TYPE);
@@ -242,7 +236,7 @@ public class DoiReader {
 
         List<Element> titleElements = titlesElement.getChildren();
         if (titleElements.isEmpty()) {
-            throw new DoiParsingException(String.format("%s must have at least one %s child element",
+            throw new DoiParsingException(String.format("%s must have at least one '%s' child element",
                     TITLES, Title.NAME));
         }
 
@@ -255,11 +249,12 @@ public class DoiReader {
 
     protected Title buildTitle(Element element)
             throws DoiParsingException {
-        String text = element.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Title element is empty");
+        Title title;
+        try {
+            title = new Title(element.getText());
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        Title title = new Title(text);
 
         // optional
         String titleType = element.getAttributeValue(Title.TITLE_TYPE);
@@ -270,18 +265,20 @@ public class DoiReader {
         return title;
     }
 
-    protected Publisher buildPublisher(Element parentElement, Namespace ns)
+    protected Publisher buildPublisher(Element root, Namespace ns)
             throws DoiParsingException {
-        Element publisherElement = parentElement.getChild(Publisher.NAME, ns);
+        Element publisherElement = root.getChild(Publisher.NAME, ns);
         if (publisherElement == null) {
             throw new DoiParsingException(String.format("required '%s' element not found",
                     Publisher.NAME));
         }
-        String text = publisherElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Publisher element is empty");
+
+        Publisher publisher;
+        try {
+            publisher = new Publisher(publisherElement.getText());
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        Publisher publisher = new Publisher(text);
 
         // optional attributes
         publisher.publisherIdentifier = publisherElement.getAttributeValue(Publisher.PUBLISHER_IDENTIFIER);
@@ -294,36 +291,44 @@ public class DoiReader {
         return publisher;
     }
 
-    protected PublicationYear buildPublicationYear(Element parentElement, Namespace ns) {
-        Element publicationYearElement = parentElement.getChild(PublicationYear.NAME, ns);
-        String text;
-        if (publicationYearElement != null) {
-            text = publicationYearElement.getText();
-        } else {
-            // TODO should a default date be set?
-            text = new SimpleDateFormat("yyyy").format(new java.util.Date());
+    // TODO should a default date be set?
+    // value = new SimpleDateFormat("yyyy").format(new java.util.Date());
+    protected PublicationYear buildPublicationYear(Element root, Namespace ns)
+            throws DoiParsingException {
+        Element publicationYearElement = root.getChild(PublicationYear.NAME, ns);
+        if (publicationYearElement == null) {
+            throw new DoiParsingException(String.format("required '%s' element not found", PublicationYear.NAME));
         }
-        return new PublicationYear(text);
+
+        PublicationYear publicationYear;
+        try {
+            publicationYear = new PublicationYear(publicationYearElement.getText());
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
+        }
+        return publicationYear;
     }
 
-    protected DoiResourceType buildDoiResourceType(Element parentElement, Namespace ns)
+    protected ResourceType buildDataCiteResourceType(Element root, Namespace ns)
             throws DoiParsingException {
-        Element resourceTypeElement = parentElement.getChild(DoiResourceType.NAME, ns);
+        Element resourceTypeElement = root.getChild(ResourceType.NAME, ns);
         if (resourceTypeElement == null) {
             throw new DoiParsingException(String.format("required '%s' element not found",
-                    DoiResourceType.NAME));
+                    ResourceType.NAME));
         }
-        String resourceTypeGeneral = resourceTypeElement.getAttributeValue(DoiResourceType.RESOURCE_TYPE_GENERAL);
-        if (resourceTypeGeneral == null) {
-            throw new DoiParsingException(String.format("ResourceType missing required attribute: %s",
-                    DoiResourceType.RESOURCE_TYPE_GENERAL));
+
+        String resourceTypeGeneral = resourceTypeElement.getAttributeValue(ResourceType.RESOURCE_TYPE_GENERAL);
+        ResourceType resourceType;
+        try {
+            resourceType = new ResourceType(DataCiteResourceType.toValue(resourceTypeGeneral));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        ResourceType resourceType = ResourceType.toValue(resourceTypeGeneral);
-        DoiResourceType doiResourceType =  new DoiResourceType(resourceType);
-        doiResourceType.text = resourceTypeElement.getText();
-        return doiResourceType;
+        resourceType.text = resourceTypeElement.getText();
+        return resourceType;
     }
 
+    // optional elements
     protected List<Contributor> buildContributors(Element root, Namespace ns)
             throws DoiParsingException {
         Element contributorsElement = root.getChild(CONTRIBUTORS, ns);
@@ -332,8 +337,12 @@ public class DoiReader {
         }
 
         List<Contributor> contributors = new ArrayList<>();
-        for (Element contributorElement : contributorsElement.getChildren()) {
-            contributors.add(buildContributor(contributorElement, ns));
+        try {
+            for (Element contributorElement : contributorsElement.getChildren()) {
+                contributors.add(buildContributor(contributorElement, ns));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
         return contributors;
     }
@@ -341,15 +350,14 @@ public class DoiReader {
     protected Contributor buildContributor(Element element, Namespace ns)
             throws DoiParsingException {
         ContributorName contributorName = buildContributorName(element, ns);
-
         String contributorTypeString = element.getAttributeValue(ContributorType.NAME);
-        if (contributorTypeString == null) {
-            throw new DoiParsingException(String.format("required attribute '%s' not found",
-                    ContributorType.NAME));
-        }
-        ContributorType contributorType = ContributorType.toValue(contributorTypeString);
 
-        Contributor contributor = new Contributor(contributorName, contributorType);
+        Contributor contributor;
+        try {
+            contributor = new Contributor(contributorName, ContributorType.toValue(contributorTypeString));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
+        }
 
         // optional attributes
         Element givenNameElement = element.getChild(Contributor.GIVEN_NAME, ns);
@@ -369,16 +377,18 @@ public class DoiReader {
             throws DoiParsingException {
         Element contributorNameElement = element.getChild(ContributorName.NAME, ns);
         if (contributorNameElement == null) {
-            throw new DoiParsingException(String.format("required element '%s' not found",
-                    ContributorName.NAME));
+            return null;
         }
-        String text = contributorNameElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("ContributorName element is empty");
-        }
-        ContributorName contributorName = new ContributorName(text);
 
-        // optional ContributorName attributes
+        String text = contributorNameElement.getText();
+        ContributorName contributorName;
+        try {
+            contributorName = new ContributorName(text);
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
+        }
+
+        // optional attributes
         String nameType = contributorNameElement.getAttributeValue(ContributorName.NAME_TYPE);
         if (nameType != null) {
             contributorName.nameType = NameType.toValue(nameType);
@@ -394,26 +404,25 @@ public class DoiReader {
             return null;
         }
 
-        List<Element> rightsElements = rightsListElement.getChildren();
-        if (rightsElements.isEmpty()) {
-            throw new DoiParsingException(String.format("%s must have at least one %s child element",
-                    RIGHTS_LIST, Rights.NAME));
-        }
-
         List<Rights> rightsList = new ArrayList<>();
-        for (Element rightsElement : rightsElements) {
-            rightsList.add(buildRights(rightsElement));
+        try {
+            for (Element rightsElement : rightsListElement.getChildren()) {
+                rightsList.add(buildRights(rightsElement));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
         return rightsList;
     }
 
     protected Rights buildRights(Element element)
             throws DoiParsingException {
-        String text = element.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Rights element is empty");
+        Rights rights;
+        try {
+            rights = new Rights(element.getText());
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        Rights rights = new Rights(text);
 
         // optional attributes
         String rightUri = element.getAttributeValue(Rights.RIGHTS_URI);
@@ -438,24 +447,25 @@ public class DoiReader {
         }
 
         List<Date> dates = new ArrayList<>();
-        for (Element dateElement : datesElement.getChildren()) {
-            dates.add(buildDate(dateElement));
+        try {
+            for (Element dateElement : datesElement.getChildren()) {
+                dates.add(buildDate(dateElement));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
         return dates;
     }
 
     protected Date buildDate(Element element)
             throws DoiParsingException {
-        String text = element.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Date element is empty");
-        }
+        Date date;
         String dateType = element.getAttributeValue(Date.DATE_TYPE);
-        if (dateType == null) {
-            throw new DoiParsingException(String.format("Date missing required attribute: %s",
-                    Date.DATE_TYPE));
+        try {
+            date = new Date(element.getText(), DateType.toValue(dateType));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        Date date = new Date(text, DateType.toValue(dateType));
 
         // optional attribute
         date.dateInformation = element.getAttributeValue(Date.DATE_INFORMATION);
@@ -470,25 +480,27 @@ public class DoiReader {
         }
 
         List<Description> descriptions = new ArrayList<>();
-        for (Element descriptionElement : descriptionsElement.getChildren()) {
-            descriptions.add(buildDescription(descriptionElement));
+        try {
+            for (Element descriptionElement : descriptionsElement.getChildren()) {
+                descriptions.add(buildDescription(descriptionElement));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
         return descriptions;
     }
 
     protected Description buildDescription(Element element)
             throws DoiParsingException {
-        String text = element.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Description element is empty");
-        }
+        Description description;
         String type = element.getAttributeValue(Description.DESCRIPTION_TYPE);
-        if (type == null) {
-            throw new DoiParsingException(String.format("Description missing required attribute: %s",
-                    Description.DESCRIPTION_TYPE));
+        try {
+            description = new Description(element.getText(), DescriptionType.toValue(type));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        DescriptionType descriptionType = DescriptionType.toValue(type);
-        Description description = new Description(text, descriptionType);
+
+        // optional attribute
         description.lang = element.getAttributeValue(Description.LANG, Namespace.XML_NAMESPACE);
         return description;
     }
@@ -499,13 +511,14 @@ public class DoiReader {
         if (sizesElement == null) {
             return null;
         }
+
         List<Size> sizes = new ArrayList<>();
-        for (Element sizeElement : sizesElement.getChildren()) {
-            String text = sizeElement.getText();
-            if (text.isEmpty()) {
-                throw new DoiParsingException("Size element is empty");
+        try {
+            for (Element sizeElement : sizesElement.getChildren()) {
+                sizes.add(new Size(sizeElement.getText()));
             }
-            sizes.add(new Size(sizeElement.getText()));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
         return sizes;
     }
@@ -516,11 +529,14 @@ public class DoiReader {
         if (languageElement == null) {
             return null;
         }
-        String text = languageElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Language element is empty");
+
+        Language language;
+        try {
+            language = new Language(languageElement.getText());
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        return new Language(languageElement.getText());
+        return language;
     }
     
     protected List<RelatedIdentifier> buildRelatedIdentifiers(Element root, Namespace ns)
@@ -531,38 +547,32 @@ public class DoiReader {
         }
 
         List<RelatedIdentifier> relatedIdentifiers = new ArrayList<>();
-        for (Element relatedIdentifierElement : relatedIdentifiersElement.getChildren()) {
-            relatedIdentifiers.add(buildRelatedIdentifier(relatedIdentifierElement));
+        try {
+            for (Element relatedIdentifierElement : relatedIdentifiersElement.getChildren()) {
+                relatedIdentifiers.add(buildRelatedIdentifier(relatedIdentifierElement));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
         return relatedIdentifiers;
     }
 
     protected RelatedIdentifier buildRelatedIdentifier(Element element)
             throws DoiParsingException {
-        String text = element.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("RelatedIdentifier element is empty");
-        }
-
+        RelatedIdentifier relatedIdentifier;
         String identType = element.getAttributeValue(RelatedIdentifier.RELATED_IDENTIFIER_TYPE);
-        if (identType == null) {
-            throw new DoiParsingException(String.format("RelatedIdentifier missing required attribute: %s",
-                    RelatedIdentifier.RELATED_IDENTIFIER_TYPE));
-        }
-        RelatedIdentifierType relatedIdentifierType = RelatedIdentifierType.toValue(identType);
-
         String relType = element.getAttributeValue(RelatedIdentifier.RELATION_TYPE);
-        if (relType == null) {
-            throw new DoiParsingException(String.format("RelatedIdentifier missing required attribute: %s",
-                    RelatedIdentifier.RELATION_TYPE));
+        try {
+            relatedIdentifier = new RelatedIdentifier(element.getText(),
+                    RelatedIdentifierType.toValue(identType), RelationType.toValue(relType));
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        RelationType relationType = RelationType.toValue(relType);
-        RelatedIdentifier relatedIdentifier = new RelatedIdentifier(text, relatedIdentifierType, relationType);
 
         // optional attributes
         String resourceTypeGeneral = element.getAttributeValue(RelatedIdentifier.RESOURCE_TYPE_GENERAL);
         if (resourceTypeGeneral != null) {
-            relatedIdentifier.resourceTypeGeneral = ResourceType.toValue(resourceTypeGeneral);
+            relatedIdentifier.dataCiteResourceTypeGeneral = DataCiteResourceType.toValue(resourceTypeGeneral);
         }
         String schemeURI = element.getAttributeValue(RelatedIdentifier.SCHEME_URI);
         if (schemeURI != null) {
@@ -580,17 +590,13 @@ public class DoiReader {
             return null;
         }
 
-        String text = nameIdentifierElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("NamedIdentifier element is empty");
-        }
-
+        NameIdentifier nameIdentifier;
         String nameIdentifierScheme = nameIdentifierElement.getAttributeValue(NameIdentifier.NAME_IDENTIFIER_SCHEME);
-        if (nameIdentifierScheme == null) {
-            throw new DoiParsingException(String.format("NamedIdentifier missing required attribute: %s",
-                    NameIdentifier.NAME_IDENTIFIER_SCHEME));
+        try {
+            nameIdentifier = new NameIdentifier(nameIdentifierElement.getText(), nameIdentifierScheme);
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        NameIdentifier nameIdentifier = new NameIdentifier(text, nameIdentifierScheme);
 
         // optional attribute
         String schemeUri = nameIdentifierElement.getAttributeValue(NameIdentifier.SCHEME_URI);
@@ -606,11 +612,13 @@ public class DoiReader {
         if (affiliationElement == null) {
             return null;
         }
-        String text = affiliationElement.getText();
-        if (text.isEmpty()) {
-            throw new DoiParsingException("Affiliation element is empty");
+
+        Affiliation affiliation;
+        try {
+            affiliation = new Affiliation(affiliationElement.getText());
+        } catch (IllegalArgumentException e) {
+            throw new DoiParsingException(e.getMessage());
         }
-        Affiliation affiliation = new Affiliation(text);
 
         // optional attributes
         String affiliationIdentifier = affiliationElement.getAttributeValue(Affiliation.AFFILIATION_IDENTIFIER);

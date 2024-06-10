@@ -81,26 +81,26 @@ public class PublicationYear {
     public static final Integer PUBLICATION_YEAR_LOWER_LIMIT = 1900;
     public static final Integer PUBLICATION_YEAR_UPPER_LIMIT = 2100;
 
-    private String text;
+    private String value;
 
-    public PublicationYear(String text) {
-        validatePublicationYear(text);
-        this.text = text;
+    public PublicationYear(String value) {
+        validatePublicationYear(value);
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
-    public void setText(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("PublicationYear text must be specified");
-        }
-        validatePublicationYear(text);
-        this.text = text;
+    public void setValue(String value) {
+        validatePublicationYear(value);
+        this.value = value;
     }
 
     private void validatePublicationYear(String publicationYear) {
+        if (!StringUtil.hasText(publicationYear)) {
+            throw new IllegalArgumentException("PublicationYear value cannot be null or empty");
+        }
         try {
             int year = Integer.parseInt(publicationYear);
             if (year > PUBLICATION_YEAR_UPPER_LIMIT
@@ -114,7 +114,7 @@ public class PublicationYear {
 
     @Override
     public String toString() {
-        return String.format("PublicationYear[%s]", text);
+        return String.format("PublicationYear[%s]", value);
     }
 
 }

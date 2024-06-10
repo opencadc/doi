@@ -78,27 +78,28 @@ public class Size {
 
     public static final String NAME = "size";
 
-    private final String text;
+    private final String value;
 
     /**
      * Size constructor.
      *
-     * @param text the size info
+     * @param value the size info.
+     * @throws IllegalArgumentException is value is null or an empty string.
      */
-    public Size(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Size text must be specified");
+    public Size(String value) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("Size value cannot be null or empty");
         }
-        this.text = text;
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("Size[%s]", text);
+        return String.format("Size[%s]", value);
     }
 
 }

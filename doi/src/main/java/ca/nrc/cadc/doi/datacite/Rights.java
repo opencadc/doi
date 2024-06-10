@@ -89,7 +89,7 @@ public class Rights {
     public static final String SCHEME_URI = "schemeURI";
     public static final String LANG = "lang";
 
-    private final String text;
+    private final String value;
 
     public URI rightsURI;
     public String rightsIdentifier;
@@ -98,24 +98,22 @@ public class Rights {
     public String lang;
 
     /**
-     * Title constructor.
+     * Rights constructor.
      *
-     * @param text the rights text
+     * @param value the rights.
+     * @throws IllegalArgumentException is rights is null or empty.
      */
-    public Rights(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Rights text must be specified");
-        }
-        this.text = text;
+    public Rights(String value) {
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("Rights[%s]", text);
+        return String.format("Rights[%s]", value);
     }
 
 }

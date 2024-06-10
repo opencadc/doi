@@ -83,7 +83,7 @@ public class NameIdentifier {
     public static final String NAME_IDENTIFIER_SCHEME = "nameIdentifierScheme";
     public static final String SCHEME_URI = "schemeURI";
 
-    private final String text;
+    private final String value;
     private final String nameIdentifierScheme;
 
     public URI schemeURI;
@@ -91,22 +91,23 @@ public class NameIdentifier {
     /**
      * NameIdentifier constructor.
      *
-     * @param text value of this name identifier
+     * @param value value of this name identifier
      * @param nameIdentifierScheme scheme of this name identifier
+     * @throws IllegalArgumentException for invalid parameters
      */
-    public NameIdentifier(String text, String nameIdentifierScheme) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("NameIdentifier text must be specified");
+    public NameIdentifier(String value, String nameIdentifierScheme) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("NameIdentifier value cannot be null or empty");
         }
         if (!StringUtil.hasText(nameIdentifierScheme)) {
-            throw new IllegalArgumentException("NameIdentifier nameIdentifierScheme must be specified");
+            throw new IllegalArgumentException("NameIdentifier nameIdentifierScheme cannot be null or empty");
         }
-        this.text = text;
+        this.value = value;
         this.nameIdentifierScheme = nameIdentifierScheme;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     public String getNameIdentifierScheme() {
@@ -115,7 +116,7 @@ public class NameIdentifier {
 
     @Override
     public String toString() {
-        return String.format("NameIdentifier[%s, %s]", text, nameIdentifierScheme);
+        return String.format("NameIdentifier[%s, %s]", value, nameIdentifierScheme);
     }
 
 }

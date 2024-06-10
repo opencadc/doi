@@ -128,7 +128,7 @@ public enum RelationType {
         for (RelationType type : values())
             if (type.value.equals(s))
                 return type;
-        throw new IllegalArgumentException("invalid value: " + s);
+        throw new IllegalArgumentException("RelationType invalid value: " + s);
     }
 
     public String getValue() {

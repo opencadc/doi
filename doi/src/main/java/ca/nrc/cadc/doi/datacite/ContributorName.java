@@ -82,7 +82,7 @@ public class ContributorName {
     public static final String NAME_TYPE = "nameType";
     public static final String LANG = "lang";
 
-    private final String text;
+    private final String value;
 
     public NameType nameType;
     public String lang;
@@ -90,22 +90,22 @@ public class ContributorName {
     /**
      * Contributor Constructor.
      * 
-     * @param text name of contributor
+     * @param value name of contributor.
      */
-    public ContributorName(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("ContributorName text must be specified");
+    public ContributorName(String value) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("ContributorName value cannot be null or empty");
         }
-        this.text = text;
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("ContributorName[%s]", text);
+        return String.format("ContributorName[%s]", value);
     }
 
 }

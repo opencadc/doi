@@ -79,7 +79,7 @@ import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DescriptionType;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Language;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
@@ -90,7 +90,7 @@ import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
 import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
 import ca.nrc.cadc.doi.datacite.RelationType;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Size;
 import ca.nrc.cadc.doi.datacite.Title;
@@ -246,10 +246,10 @@ public class Doi41RoundTripTest extends BaseTest {
         return new PublicationYear("1999");
     }
 
-    protected DoiResourceType getDoiResourceType() {
-        DoiResourceType doiResourceType = new DoiResourceType(ResourceType.DATA_SET);
-        doiResourceType.text = "XML";
-        return doiResourceType;
+    protected ResourceType getDoiResourceType() {
+        ResourceType resourceType = new ResourceType(DataCiteResourceType.DATA_SET);
+        resourceType.text = "XML";
+        return resourceType;
     }
 
     // optional
@@ -302,7 +302,7 @@ public class Doi41RoundTripTest extends BaseTest {
         RelatedIdentifier identifier = new RelatedIdentifier("Related identifier one",
                         RelatedIdentifierType.URL, RelationType.IS_PUBLISHED_IN);
         if (full) {
-            identifier.resourceTypeGeneral = ResourceType.CONFERENCE_PAPER;
+            identifier.dataCiteResourceTypeGeneral = DataCiteResourceType.CONFERENCE_PAPER;
             identifier.relatedMetadataScheme = "Related Metadata Scheme one";
             identifier.schemeURI = URI.create("http://example.com");
             identifier.schemeType = "Scheme type one";
@@ -311,7 +311,7 @@ public class Doi41RoundTripTest extends BaseTest {
         if (full) {
             RelatedIdentifier other = new RelatedIdentifier("Related identifier two",
                     RelatedIdentifierType.ARK, RelationType.IS_REVIEWED_BY);
-            other.resourceTypeGeneral = ResourceType.INTERACTIVE_RESOURCE;
+            other.dataCiteResourceTypeGeneral = DataCiteResourceType.INTERACTIVE_RESOURCE;
             other.relatedMetadataScheme = "Related metadata scheme two";
             other.schemeURI = URI.create("http://example.com");
             other.schemeType = "Scheme type two";

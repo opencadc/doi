@@ -77,7 +77,7 @@ import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Language;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
@@ -142,7 +142,7 @@ public class BaseTest {
     void compareIdentifier(Identifier expected, Identifier actual) {
         Assert.assertNotNull("expected Identifier is null", expected);
         Assert.assertNotNull("actual Identifier is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getIdentifierType(), actual.getIdentifierType());
     }
 
@@ -171,7 +171,7 @@ public class BaseTest {
     void compareCreatorName(CreatorName expected, CreatorName actual) {
         Assert.assertNotNull("expected CreatorName is null", expected);
         Assert.assertNotNull("actual CreatorName is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.nameType, actual.nameType);
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -188,7 +188,7 @@ public class BaseTest {
     }
 
     void compareTitle(Title expected, Title actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.titleType, actual.titleType);
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -196,7 +196,7 @@ public class BaseTest {
     void comparePublisher(Publisher expected, Publisher actual) {
         Assert.assertNotNull("expected Publisher is null", expected);
         Assert.assertNotNull("actual Publisher is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.publisherIdentifier, actual.publisherIdentifier);
         Assert.assertEquals(expected.publisherIdentifierScheme, actual.publisherIdentifierScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
@@ -206,10 +206,10 @@ public class BaseTest {
     void comparePublicationYear(PublicationYear expected, PublicationYear actual) {
         Assert.assertNotNull("expected PublicationYear is null", expected);
         Assert.assertNotNull("actual PublicationYear is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
-    void compareDoiResourceType(DoiResourceType expected, DoiResourceType actual) {
+    void compareDoiResourceType(ResourceType expected, ResourceType actual) {
         Assert.assertNotNull("expected ResourceType is null", expected);
         Assert.assertNotNull("actual ResourceType is null", actual);
         Assert.assertEquals(expected.getResourceTypeGeneral(), actual.getResourceTypeGeneral());
@@ -240,7 +240,7 @@ public class BaseTest {
     void compareContributorName(ContributorName expected, ContributorName actual) {
         Assert.assertNotNull("expected ContributorName is null", expected);
         Assert.assertNotNull("actual ContributorName is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.nameType, actual.nameType);
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -262,7 +262,7 @@ public class BaseTest {
     }
 
     void compareDate(Date expected, Date actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getDateType(), actual.getDateType());
         Assert.assertEquals(expected.dateInformation, actual.dateInformation);
     }
@@ -271,7 +271,7 @@ public class BaseTest {
         if (isNull(expected, actual, "RelatedIdentifiers")) {
             return;
         }
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
     void compareRelatedIdentifiers(List<RelatedIdentifier> expected, List<RelatedIdentifier> actual) {
@@ -285,10 +285,10 @@ public class BaseTest {
     }
 
     void compareRelatedIdentifier(RelatedIdentifier expected, RelatedIdentifier actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getRelatedIdentifierType(), actual.getRelatedIdentifierType());
         Assert.assertEquals(expected.getRelationType(), actual.getRelationType());
-        Assert.assertEquals(expected.resourceTypeGeneral, actual.resourceTypeGeneral);
+        Assert.assertEquals(expected.dataCiteResourceTypeGeneral, actual.dataCiteResourceTypeGeneral);
         Assert.assertEquals(expected.relatedMetadataScheme, actual.relatedMetadataScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
         Assert.assertEquals(expected.schemeType, actual.schemeType);
@@ -305,7 +305,7 @@ public class BaseTest {
     }
 
     void compareSize(Size expected, Size actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
     void compareRightsList(List<Rights> expected, List<Rights> actual) {
@@ -319,7 +319,7 @@ public class BaseTest {
     }
 
     void compareRights(Rights expected, Rights actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.rightsURI, actual.rightsURI);
         Assert.assertEquals(expected.rightsIdentifier, actual.rightsIdentifier);
         Assert.assertEquals(expected.rightsIdentifierScheme, actual.rightsIdentifierScheme);
@@ -338,7 +338,7 @@ public class BaseTest {
     }
 
     void compareDescription(Description expected, Description actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getDescriptionType(), actual.getDescriptionType());
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -347,7 +347,7 @@ public class BaseTest {
         if (isNull(expected, actual, "NameIdentifier")) {
             return;
         }
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getNameIdentifierScheme(), actual.getNameIdentifierScheme());
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
     }
@@ -356,7 +356,7 @@ public class BaseTest {
         if (isNull(expected, actual, "Affiliation")) {
             return;
         }
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.affiliationIdentifier, actual.affiliationIdentifier);
         Assert.assertEquals(expected.affiliationIdentifierScheme, actual.affiliationIdentifierScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
