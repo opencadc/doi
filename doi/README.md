@@ -24,33 +24,40 @@ See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-reg
 The doi.properties configures the DataCite service used to register new DOI's.
 
 ```
-# DataCite host used to look up username/password in datacite.pass
-PROD_HOST = mds.datacite.org
-DEV_HOST = mds.test.datacite.org
+# distinguished name for the doi admin user
+ca.nrc.cadc.doi.adminDN = C=ca,O=hia,OU=cadc,CN=doiadmin_045
 
-# DataCite url used to register a DOI and make the DOI findable
-PROD_URL = https://mds.datacite.org
-DEV_URL = https://mds.test.datacite.org
-
+# prefix to DOI specific metadata file
+ca.nrc.cadc.doi.metadataFilePrefix = CISTI_CADC_
+ 
 # DOI landing page url
-LANDING_PAGE_URL = http://www.canfar.net/citation/landing
+ca.nrc.cadc.doi.landingUrl = https://www.canfar.net/citation/landing
+
+# path to the DOI parent folder
+ca.nrc.cadc.doi.vault.doiParentPath = /AstroDataCitationDOI/CISTI.CANFAR
+
+# CADC datacite prefix
+ca.nrc.cadc.doi.datacite.prefix = 10.11570
+
+# Datacite MDS REST endpoint
+ca.nrc.cadc.doi.datacite.mdsUrl = https://mds.datacite.org
+
 ```
+_adminDN_ is the distinguished name of the account used to administer DOI's stored in VOSpace.
 
-_PROD_HOST_ is the key used to lookup a username/password in datacite.pass for the DataCite production service, 
-currently `mds.datacite.org`.
+_metadataPrefix_ is the prefix prepended to the DOI name to create the filename for the DOI specific metadata stored in VOSpace.
 
-_DEV_HOST_ is the key used to lookup a username/password in datacite.pass for the DataCite development service,
-currently `mds.test.datacite.org`.
+_landingUrl_ is the base URL used to compose URLs to individual DOI's.
 
-_PROD_URL_ is the URL to a DataCite service, currently `https://mds.datacite.org`.
+_vault.doiParentPath_ is the path in the VOSpace service to the DOI parent folder.
 
-_PROD_URL_ is the URL to a DataCite service, currently `https://mds.test.datacite.org`.
+_datacite.prefix_ is the registered prefix from Datacite for CADC account.
 
-The development DataCite service URL must be used for integration testing, and integration tests should not be
-run against a production DOI service.
+_datacite.url_ is the URL to the Datacite MDS rest endpoint used to create and update DOI's.
 
-_LANDING_PAGE_URL_ is the base URL used to compose URLs to individual DOI's. 
-For production `http://www.canfar.net/citation/landing`.
+_testSuffix_ is appended to the DOI suffix to indicate test DOI's.
+
+
 
 ### datacite.pass
 The datacite.pass contains the username and password for the DataCite service.

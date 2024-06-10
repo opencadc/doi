@@ -71,7 +71,6 @@ import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
@@ -115,15 +114,13 @@ public class ServiceAvailability implements AvailabilityPlugin {
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
 
-            MultiValuedProperties config = DoiInitAction.getConfig();
-            URI vaultURI = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
-            log.debug("vaultURI: " + vaultURI);
-            URL vaultURL = reg.getServiceURL(vaultURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            log.debug("vaultURI: " + DoiAction.VAULT_SERVICE_URI);
+            URL vaultURL = reg.getServiceURL(DoiAction.VAULT_SERVICE_URI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             if (vaultURL != null) {
                 CheckResource checkResource = new CheckWebService(vaultURL);
                 checkResource.check();
             } else {
-                log.debug("check skipped: " + vaultURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                log.debug("check skipped: " + DoiAction.VAULT_SERVICE_URI + " does not provide " + Standards.VOSI_AVAILABILITY);
             }
 
             URI credURI = null;

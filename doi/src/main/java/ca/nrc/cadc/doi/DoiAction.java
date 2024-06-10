@@ -70,11 +70,12 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -86,44 +87,27 @@ import org.opencadc.vospace.VOSURI;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
-    
-    public static final String STATUS_ACTION = "status";
-    public static final String MINT_ACTION = "mint";
-//    public static final String TEST_SUFFIX = ".test";
-//    public static final String DOI_UI_BASE_FILEPATH = "/storage/vault/list";
-//    public static final String DOI_BASE_FILEPATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-//    public static final String GMS_RESOURCE_ID = "ivo://cadc.nrc.ca/gms";
-//    public static final String CADC_DOI_PREFIX = "10.11570";
-//    public static final String CADC_CISTI_PREFIX = "CISTI_CADC_";
-    public static final String JOURNALREF_PARAM = "journalref";
-//    public static final String RUNID_TEST = "TEST";
 
-//    public static final URI VAULT_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/vault");
+    public static final URI VAULT_SERVICE_URI = URI.create("ivo://cadc.nrc.ca/vault");
+    public static final URI GMS_SERVICE_URI = URI.create("ivo://cadc.nrc.ca/gms");
     public static final URI DOI_VOS_JOB_URL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#joburl");
     public static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
     public static final URI DOI_VOS_STATUS_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#status");
     public static final URI DOI_VOS_JOURNAL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#journalref");
-    protected static final String DOI_VOS_STATUS_DRAFT = Status.DRAFT.getValue();
-    protected static final String DOI_VOS_STATUS_MINTED = Status.MINTED.getValue();
-    
-//    protected static final String DOI_CONFIG_FILE = "doi.properties";
-    
-//    protected static final String DOI_GROUP_PREFIX = "DOI-";
-    
+
+    public static final String STATUS_ACTION = "status";
+    public static final String MINT_ACTION = "mint";
+    public static final String JOURNALREF_PARAM = "journalref";
+    public static final String DOI_GROUP_PREFIX = "DOI-";
+
     protected Subject callingSubject;
     protected Long callersNumericId;
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
-    protected VospaceDoiClient vClient = null;
-//    protected String prodHost = null;
-//    protected String devHost = null;
-//    protected String prodURL = null;
-//    protected String devURL = null;
-//    protected String landingPageURL = null;
+    protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
     protected String cadcDataCitePrefix;
-    protected URI vaultResourceID;
     protected String vaultDOIParentPath;
 
     public DoiAction() { }
@@ -144,11 +128,10 @@ public abstract class DoiAction extends RestAction {
         return new DoiInlineContentHandler();
     }
     
-    protected void init(boolean authorize) throws URISyntaxException, UnknownHostException { 
-    	// load doi properties
-    	this.config = DoiInitAction.getConfig();
+    protected void init(boolean authorize) throws URISyntaxException, UnknownHostException {
+        // load doi properties
+        // this.config = DoiInitAction.getConfig();
         this.cadcDataCitePrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_PREFIX_KEY);
-        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
         this.vaultDOIParentPath = config.getFirstPropertyValue(DoiInitAction.VAULT_DOI_PARENT_PATH_KEY);
 
     	// get calling subject
@@ -162,31 +145,8 @@ public abstract class DoiAction extends RestAction {
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
-        this.vClient = new VospaceDoiClient(vaultResourceID, vaultDOIParentPath, callingSubject, this.includePublic);
+        this.vospaceDoiClient = new VospaceDoiClient(VAULT_SERVICE_URI, vaultDOIParentPath, callingSubject, includePublic);
     }
-    
-//    protected boolean isTesting() {
-//    	String runId = syncInput.getParameter("runId");
-//    	return StringUtil.hasText(runId) && runId.equals("TEST");
-//    }
-
-    /*
-     * The config file doi.properties contains the DataCite host and URL for both 
-     * production and testing/development. In a test VM, production host and URL 
-     * are set to testing host and URL.
-     */
-//    private void loadConfig() {
-//    	PropertiesReader pr = new PropertiesReader(DOI_CONFIG_FILE);
-//    	this.prodHost = pr.getFirstPropertyValue("PROD_HOST");
-//    	this.devHost = pr.getFirstPropertyValue("DEV_HOST");
-//    	this.prodURL = pr.getFirstPropertyValue("PROD_URL");
-//    	this.devURL = pr.getFirstPropertyValue("DEV_URL");
-//    	this.landingPageURL = pr.getFirstPropertyValue("LANDING_PAGE_URL");
-//    	if (this.prodHost == null || this.devHost == null || this.prodURL == null
-//                || this.devURL == null || this.landingPageURL == null) {
-//    		throw new RuntimeException("Failed to load properties from config file " + DOI_CONFIG_FILE);
-//    	}
-//    }
 
     protected String getDoiFilename(String suffix) {
         return String.format("%s%s.xml",
@@ -194,11 +154,15 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected VOSURI getVOSURI(String path) throws URISyntaxException {
-        return new VOSURI(vaultResourceID, String.format("%s/%s", vaultDOIParentPath, path));
+        return new VOSURI(VAULT_SERVICE_URI, String.format("%s/%s", vaultDOIParentPath, path));
     }
 
     protected GMSClient getGMSClient() {
-        return new GMSClient(URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY)));
+        return new GMSClient(GMS_SERVICE_URI);
+    }
+
+    protected Subject getAdminSubject() {
+        return SSLUtil.createSubject(new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem"));
     }
 
     private void authorizeUser(Subject s) {

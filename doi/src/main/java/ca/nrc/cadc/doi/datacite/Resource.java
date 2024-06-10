@@ -166,6 +166,10 @@ public class Resource {
         return this.publisher;
     }
 
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
+    }
+
     public DoiResourceType getResourceType() {
         return this.resourceType;
     }

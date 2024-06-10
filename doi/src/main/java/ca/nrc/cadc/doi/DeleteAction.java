@@ -71,6 +71,7 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.status.Status;
 import java.io.File;
 import java.security.AccessControlException;
 import java.security.Principal;
@@ -95,14 +96,9 @@ public class DeleteAction extends DoiAction {
         super.init(true);
 
         // Do all subsequent work as doiadmin
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                doActionImpl();
-                return null;
-            }
+        Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
+            doActionImpl();
+            return null;
         });
     }
 
@@ -116,46 +112,37 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-//        VOSURI doiBaseURI = new VOSURI(vospaceServiceURI, vospaceDOIParentPath);
-        VOSpaceClient vosClient = new VOSpaceClient(vaultResourceID);
-
-//        String doiParentPath = doiBaseURI.getPath() + "/" + doiSuffix;
-        String doiParentPath = String.format("%s/%s", vaultDOIParentPath, doiSuffix);
-        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(doiParentPath);
+        String doiPath = String.format("%s/%s", vaultDOIParentPath, doiSuffix);
+        ContainerNode doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
         
         // check to see if this user has permission
         String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
         if (doiRequester == null) {
-            throw new IllegalStateException("No requester associated with DOI.");
+            throw new IllegalStateException("No requester associated with DOI: " + doiSuffix);
         }
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         Integer numericID = Integer.parseInt(doiRequester);
         Subject requestorSubject = acIdentMgr.toSubject(numericID);
-
-        Subject doiAdminSubject = AuthenticationUtil.getCurrentSubject();
-
-
         if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
             // if doiadmin is the calling user, it has permission to delete any of the DOIs as well
-            if (!checkSubjectsMatch(callingSubject, doiAdminSubject)) {
+            if (!checkSubjectsMatch(callingSubject, getAdminSubject())) {
                 throw new AccessControlException("Not permitted to delete DOI");
             }
         }
 
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
-        if (doiStatus != null && doiStatus.equals(DOI_VOS_STATUS_MINTED)) {
+        if (doiStatus != null && doiStatus.equals(Status.MINTED.getValue())) {
             throw new AccessControlException("Unable to delete " + doiSuffix + "DOI already minted.\n");
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        String groupPrefix = config.getFirstPropertyValue(DoiInitAction.GROUP_PREFIX_KEY);
-        String groupToDelete = groupPrefix + doiSuffix;
-        log.debug("deleting this group: " + groupToDelete);
+        String groupToDelete = DOI_GROUP_PREFIX + doiSuffix;
+        log.debug("deleting group: " + groupToDelete);
         getGMSClient().deleteGroup(groupToDelete);
 
-        log.debug("deleting this node: " + doiParentPath);
-        vosClient.deleteNode(doiParentPath);
+        log.debug("deleting node: " + doiPath);
+        vospaceDoiClient.getVOSpaceClient().deleteNode(doiPath);
     }
 
     private boolean checkSubjectsMatch(Subject subA, Subject subB) {
