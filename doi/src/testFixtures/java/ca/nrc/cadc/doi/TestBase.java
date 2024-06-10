@@ -186,7 +186,14 @@ public abstract class TestBase {
     }
 
     protected Publisher getPublisher(boolean full) {
-        return new Publisher("Test publisher");
+        Publisher publisher = new Publisher("Test publisher");
+        if (full) {
+            publisher.publisherIdentifier = "https://ror.org/04z8jg394";
+            publisher.publisherIdentifierScheme = "ROR";
+            publisher.schemeURI = URI.create("https://ror.org/");
+            publisher.lang = "en";
+        }
+        return publisher;
     }
 
     protected PublicationYear getPublicationYear() {

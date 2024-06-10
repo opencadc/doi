@@ -69,83 +69,176 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.HttpDelete;
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.io.DoiXmlReader;
+import ca.nrc.cadc.doi.io.DoiXmlWriter;
+import ca.nrc.cadc.net.FileContent;
+import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.AccessControlException;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
+import org.opencadc.vospace.client.async.RecursiveDeleteNode;
 
 /**
  * Integration tests generating DOI folders in VOSpace
  *
  * @author jeevesh
  */
-public abstract class IntTestBase {
+public abstract class IntTestBase extends TestBase {
     private static final Logger log = Logger.getLogger(IntTestBase.class);
 
-    public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
-    
-    protected static URI DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
-    protected static File CADCAUTHTEST_CERT;
-    protected static File CADCREGTEST_CERT;
-    protected static File DOIADMIN_CERT;
-    protected static String baseURL;
-    protected static String DOI_BASE_NODE = "vos://cadc.nrc.ca~vault/AstroDataCitationDOI/CISTI.CANFAR";
-    protected static VOSpaceClient vosClient;
-    protected static VOSURI astroDataURI;
-    protected static RegistryClient rc;
+    public static final URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
+    public static final URI GMS_RESOURCE_ID = URI.create("gms://opencadc.org/gms");
+    public static final URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
+
+    static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
+    static final String NEW_JOURNAL_REF = "2018, Test Journal ref. ApJ 2000,200";
+
+    static File CADCAuthTest1Cert;
+    static File CADCRegTest1Cert;
+    static File DOIAdminCert;
+    static URL doiServiceURL;
+    static VOSpaceClient vosClient;
+    static GMSClient gmsClient;
+    static VOSURI doiParentPathURI;
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
-    public IntTestBase() {
-    }
-
     @BeforeClass
     public static void staticInit() throws Exception {
-        // CadcAuthtest1 will have write access to DOI data folders
-        // CadcRegtest1 will only have read access
-        CADCAUTHTEST_CERT = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", IntTestBase.class);
-        CADCREGTEST_CERT = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", IntTestBase.class);
-        DOIADMIN_CERT = FileUtil.getFileFromResource("doiadmin.pem", IntTestBase.class);
+        // CadcAuthtest1 has read/write access to DOI
+        // CadcRegtest1 has read only access to DOI
+        CADCAuthTest1Cert = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", IntTestBase.class);
+        CADCRegTest1Cert = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", IntTestBase.class);
+        DOIAdminCert = FileUtil.getFileFromResource("doiadmin.pem", IntTestBase.class);
 
+        RegistryClient regClient = new RegistryClient();
+        doiServiceURL = regClient.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
 
-        rc = new RegistryClient();
-        URL doi = rc.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        baseURL = doi.toExternalForm();
+        doiParentPathURI = new VOSURI(VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
 
-        // Initialize vosClient for later use
-        astroDataURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH);
-        vosClient = new VOSpaceClient(astroDataURI.getServiceURI());
+        vosClient = new VOSpaceClient(VAULT_RESOURCE_ID);
+        gmsClient = new GMSClient(GMS_RESOURCE_ID);
     }
 
-    protected void deleteTestFolder(String doiSuffix)
-            throws RuntimeException, MalformedURLException {
-        // Clean up test folder
-        // Set up DELETE
-        URL deleteUrl = new URL(baseURL + "/" + doiSuffix);
-        log.info("Deleting folder: " + doiSuffix + " using URL: " + deleteUrl.getPath());
+    @Before
+    public void before() {
 
-        HttpDelete deleteTask = new HttpDelete(deleteUrl, false);
-        deleteTask.run();
-        // Check that there was no exception thrown
-        if (deleteTask.getThrowable() != null) {
-            throw new RuntimeException(deleteTask.getThrowable());
+    }
+
+    protected VOSURI getVOSURI(String path) {
+        return new VOSURI(VAULT_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
+    }
+
+    protected String getDoiFilename(String doiSuffix) {
+        return String.format("%s%s.xml", TestUtil.METADATA_FILE_PREFIX, doiSuffix);
+    }
+
+    protected String getDOISuffix(String doiIdentifier) {
+        String [] parts = doiIdentifier.split("/");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("expected DOI identifier [prefix/suffix], found: " + doiIdentifier);
         }
+        return parts[1];
     }
-    protected String getDoiFilename(String suffix) {
-        return DoiAction.CADC_CISTI_PREFIX + suffix + ".xml";
+
+    protected String getResourceXML(Resource resource) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        DoiXmlWriter writer = new DoiXmlWriter();
+        writer.write(resource, sb);
+        return sb.toString();
+    }
+
+    protected ContainerNode getContainerNode(String path) throws Exception {
+        String nodePath = doiParentPathURI.getPath();
+        if (StringUtil.hasText(path)) {
+            nodePath = String.format("%s/%s", nodePath, path);
+        }
+        return (ContainerNode) vosClient.getNode(nodePath);
+    }
+
+    protected String createDOI(Subject testSubject)
+            throws IOException, PrivilegedActionException {
+        Resource resource = getTestResource(true);
+        final String doiXML = getResourceXML(resource);
+        return (String) Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+            String persistedXML = postDOI(doiServiceURL, doiXML, TEST_JOURNAL_REF);
+            DoiXmlReader reader = new DoiXmlReader();
+            Resource persistedResource = reader.read(persistedXML);
+            return getDOISuffix(persistedResource.getIdentifier().getText());
+        });
+    }
+
+    protected String postDOI(URL postUrl, String doiXML, String journalRef)
+            throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
+        params.put("doiMetadata", fileContent);
+        params.put("journalref", journalRef == null ? "" : journalRef);
+        HttpPost post = new HttpPost(postUrl, params, true);
+        post.prepare();
+
+        Assert.assertNull("POST exception", post.getThrowable());
+        Assert.assertEquals("non 200 response code", post.getResponseCode(), 200);
+        return new String(post.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    protected void cleanup(String doiSuffix) {
+        // delete doi as doiadmin
+        Subject adminSubject = SSLUtil.createSubject(DOIAdminCert);
+        try {
+            Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+                log.debug("cleanup as doiadmin");
+                try {
+                    String groupToDelete = TestUtil.DOI_GROUP_PREFIX + doiSuffix;
+                    gmsClient.deleteGroup(groupToDelete);
+                    log.debug("deleted group: " + groupToDelete);
+
+                    VOSURI nodeUri = getVOSURI(doiSuffix);
+                    RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
+                    recursiveDeleteNode.setMonitor(true);
+                    recursiveDeleteNode.run();
+                    log.info(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",
+                            recursiveDeleteNode.getPhase(), recursiveDeleteNode.getException()));
+                    log.debug("deleted node: " + nodeUri.getPath());
+                } catch (AccessControlException e) {
+                    log.error("unexpected AccessControlException: ", e);
+                    Assert.fail("unexpected AccessControlException: " + e);
+                } catch (Exception e) {
+                    log.error("unexpected exception", e);
+                    Assert.fail("unexpected exception: " + e);
+                }
+                return null;
+            });
+        } catch (PrivilegedActionException e) {
+            log.error("unexpected PrivilegedActionException: ", e);
+        }
     }
 
 }

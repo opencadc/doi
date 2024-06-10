@@ -79,6 +79,6 @@ public class VosiAvailabilityTest extends AvailabilityTest {
     private static final Logger log = Logger.getLogger(VosiAvailabilityTest.class);
 
     public VosiAvailabilityTest() {
-        super(IntTestBase.RESOURCE_ID);
+        super(IntTestBase.DOI_RESOURCE_ID);
     }
 }
