@@ -58,7 +58,11 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
+
+            // return the node in xml format
+            NodeWriter nodeWriter = new NodeWriter();
+            return new NodeActionResult(new N
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -68,45 +72,65 @@
 */
 
 package ca.nrc.cadc.doi.datacite;
+
 /**
- * The type of a resource. Additional free text description can be entered into
- * resourceTypeGeneral.
+ * Enums for types of contributor.
  * 
  * @author yeunga
+ *
  */
-public class DoiResourceType {
+public enum DataCiteResourceType {
+    AUDIO_VISUAL("Audiovisual"),
+    BOOK("Book"),
+    BOOK_CHAPTER("BookChapter"),
+    COLLECTION("Collection"),
+    COMPUTATIONAL_NOTEBOOK("ComputationalNotebook"),
+    CONFERENCE_PAPER("ConferencePaper"),
+    CONFERENCE_PROCEEDINGS("ConferenceProceeding"),
+    DATA_PAPER("DataPaper"), 
+    DATA_SET("Dataset"),
+    DISSERTATION("Dissertation"),
+    EVENT("Event"), 
+    IMAGE("Image"),
+    INSTRUMENT("Instrument"),
+    INTERACTIVE_RESOURCE("InteractiveResource"),
+    JOURNAL("Journal"),
+    JOURNAL_ARTICLE("JournalArticle"),
+    MODEL("Model"),
+    OUTPUT_MANAGEMENT_PLAN("OutputManagementPlan"),
+    PEER_REVIEW("PeerReview"),
+    PHYSICAL_OBJECT("PhysicalObject"),
+    PREPRINT("Preprint"),
+    REPORT("Report"),
+    SERVICE("Service"), 
+    SOFTWARE("Software"), 
+    SOUND("Sound"),
+    STANDARD("Standard"),
+    STUDY_REGISTRATION("StudyRegistration"),
+    TEXT("Text"), 
+    WORKFLOW("Workflow"), 
+    OTHER("Other");
 
-    public static final ResourceType SUPPORTED_RESOURCE_TYPE = ResourceType.toValue("Dataset");
-    public static final String NAME = "resourceType";
-    public static final String RESOURCE_TYPE_GENERAL = "resourceTypeGeneral";
+    private final String value;
 
-    private final ResourceType resourceTypeGeneral;
-
-    public String text;
-
-    /**
-     * DOIResourceType constructor.
-     *
-     * @param resourceTypeGeneral the type of the resource
-     */
-    public DoiResourceType(ResourceType resourceTypeGeneral) {
-        if (resourceTypeGeneral == null) {
-            throw new IllegalArgumentException("DoiResourceType resourceTypeGeneral must be specified");
-        }
-        if (!resourceTypeGeneral.equals(SUPPORTED_RESOURCE_TYPE)) {
-            throw new IllegalArgumentException(String.format("currently only supported ResourceType is %s",
-                    ResourceType.DATA_SET.getValue()));
-        }
-        this.resourceTypeGeneral = resourceTypeGeneral;
+    private DataCiteResourceType(String value) {
+        this.value = value;
     }
 
-    public ResourceType getResourceTypeGeneral() {
-        return this.resourceTypeGeneral;
+    public static DataCiteResourceType toValue(String s) {
+        for (DataCiteResourceType type : values())
+            if (type.value.equals(s))
+                return type;
+        throw new IllegalArgumentException("invalid value: " + s);
+    }
+
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("DoiResourceType[%s]", resourceTypeGeneral);
+        return String.format("ResourceType[%s]", value);
     }
 
 }

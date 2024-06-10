@@ -106,7 +106,7 @@ public class DoiStatusWriter {
 
     protected Element getIdentifierElement(Identifier identifier) {
         Element element = new Element(Identifier.NAME);
-        element.setText(identifier.getText());
+        element.setText(identifier.getValue());
         element.setAttribute(Identifier.IDENTIFIER_TYPE, identifier.getIdentifierType());
         return element;
 
@@ -117,7 +117,7 @@ public class DoiStatusWriter {
             return null;
         }
         Element element = new Element(Title.NAME);
-        element.setText(title.getText());
+        element.setText(title.getValue());
         if (title.titleType != null) {
             element.setAttribute(Title.TITLE_TYPE, title.titleType.getValue());
         }

@@ -76,29 +76,20 @@ import ca.nrc.cadc.doi.datacite.ContributorType;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Date;
-import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.DescriptionType;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Language;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
-import ca.nrc.cadc.doi.datacite.NameType;
 import ca.nrc.cadc.doi.datacite.PublicationYear;
 import ca.nrc.cadc.doi.datacite.Publisher;
 import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
-import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
-import ca.nrc.cadc.doi.datacite.RelationType;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Size;
 import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.doi.datacite.TitleType;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -108,7 +99,7 @@ import org.junit.Assert;
 /**
  *
  */
-public abstract class TestBase {
+public class BaseTest {
 
     List<Path> getTestFiles(final String path) {
         if (path == null) {
@@ -121,223 +112,6 @@ public abstract class TestBase {
         return Stream.of(testDir.listFiles()).filter(file -> !file.isDirectory()).map(File::toPath).collect(Collectors.toList());
     }
 
-    /**
-     * Methods to build test a resource.
-     */
-    Resource getTestResource(boolean full) {
-
-        Resource resource =  new Resource(getNamespace(), getIdentifier(), getCreators(full),
-                getTitles(full), getPublisher(full), getPublicationYear(), getDoiResourceType());
-        if (full) {
-            resource.contributors = getContributors(full);
-            resource.dates = getDates(full);
-            resource.sizes = getSizes(full);
-            resource.language = getLanguage();
-            resource.relatedIdentifiers = getRelatedIdentifiers(full);
-            resource.rightsList = getRightsList(full);
-            resource.descriptions = getDescriptions(full);
-        }
-        return resource;
-    }
-
-    protected Namespace getNamespace() {
-        return Namespace.getNamespace("http://datacite.org/schema/kernel-4");
-    }
-
-    // required
-    protected Identifier getIdentifier() {
-        return new Identifier("10.5072/example", "DOI");
-    }
-
-    protected List<Creator> getCreators(boolean full) {
-        List<Creator> creators = new ArrayList<>();
-        Creator creator = new Creator(getCreatorName(full));
-        if (full) {
-            creator.givenName = "Jill";
-            creator.familyName = "Smith";
-            creator.nameIdentifier = getNameIdentifier(full);
-            creator.affiliation = getAffiliation(full);
-        }
-        creators.add(creator);
-        if (full) {
-            Creator other = new Creator(getCreatorName(full));
-            other.givenName = "Jack";
-            other.familyName = "Jones";
-            other.nameIdentifier = getNameIdentifier(full);
-            other.affiliation = getAffiliation(full);
-            creators.add(other);
-        }
-        return creators;
-    }
-
-    protected List<Title> getTitles(boolean full) {
-        List<Title> titles = new ArrayList<>();
-        Title title = new Title("Test title one");
-        if (full) {
-            title.titleType = TitleType.SUBTITLE;
-        }
-        titles.add(title);
-        if (full) {
-            Title other = new Title("Test title two");
-            other.titleType = TitleType.ALTERNATIVE_TITLE;
-            titles.add(other);
-        }
-        return titles;
-    }
-
-    protected Publisher getPublisher(boolean full) {
-        Publisher publisher = new Publisher("Test publisher");
-        if (full) {
-            publisher.publisherIdentifier = "https://ror.org/04z8jg394";
-            publisher.publisherIdentifierScheme = "ROR";
-            publisher.schemeURI = URI.create("https://ror.org/");
-            publisher.lang = "en";
-        }
-        return publisher;
-    }
-
-    protected PublicationYear getPublicationYear() {
-        return new PublicationYear("1999");
-    }
-
-    protected DoiResourceType getDoiResourceType() {
-        DoiResourceType doiResourceType = new DoiResourceType(ResourceType.DATA_SET);
-        doiResourceType.text = "XML";
-        return doiResourceType;
-    }
-
-    // optional
-    protected List<Contributor> getContributors(boolean full) {
-        List<Contributor> contributors = new ArrayList<>();
-        ContributorName contributorName = new ContributorName("Test contributor");
-        if (full) {
-            contributorName.nameType = NameType.ORGANIZATIONAL;
-        }
-        Contributor contributor = new Contributor(contributorName, ContributorType.RESEARCHER);
-        if (full) {
-            contributor.givenName = "Jack";
-            contributor.familyName = "Jones";
-            contributor.nameIdentifier = getNameIdentifier(full);
-            contributor.affiliation = getAffiliation(full);
-        }
-        contributors.add(contributor);
-        if (full) {
-            Contributor other = new Contributor(contributorName, ContributorType.RESEARCHER);
-            other.givenName = "Jill";
-            other.familyName = "Smith";
-            other.nameIdentifier = getNameIdentifier(full);
-            other.affiliation = getAffiliation(full);
-            contributors.add(other);
-        }
-        return contributors;
-    }
-
-    protected List<Date> getDates(boolean full) {
-        List<Date> dates = new ArrayList<>();
-        Date date = new Date("1999-12-31", DateType.ACCEPTED);
-        if (full) {
-            date.dateInformation = "Some date info";
-        }
-        dates.add(date);
-        if (full) {
-            Date other = new Date("2000-05-04", DateType.UPDATED);
-            other.dateInformation = "More date info";
-            dates.add(other);
-        }
-        return dates;
-    }
-
-    protected Language getLanguage() {
-        return new Language("en-US");
-    }
-
-    protected List<RelatedIdentifier> getRelatedIdentifiers(boolean full) {
-        List<RelatedIdentifier> identifiers = new ArrayList<>();
-        RelatedIdentifier identifier = new RelatedIdentifier("Related identifier one",
-                RelatedIdentifierType.URL, RelationType.IS_PUBLISHED_IN);
-        if (full) {
-            identifier.resourceTypeGeneral = ResourceType.CONFERENCE_PAPER;
-            identifier.relatedMetadataScheme = "Related Metadata Scheme one";
-            identifier.schemeURI = URI.create("http://example.com");
-            identifier.schemeType = "Scheme type one";
-        }
-        identifiers.add(identifier);
-        if (full) {
-            RelatedIdentifier other = new RelatedIdentifier("Related identifier two",
-                    RelatedIdentifierType.ARK, RelationType.IS_REVIEWED_BY);
-            other.resourceTypeGeneral = ResourceType.INTERACTIVE_RESOURCE;
-            other.relatedMetadataScheme = "Related metadata scheme two";
-            other.schemeURI = URI.create("http://example.com");
-            other.schemeType = "Scheme type two";
-            identifiers.add(other);
-        }
-        return identifiers;
-    }
-
-    protected List<Size> getSizes(boolean full) {
-        List<Size> sizes = new ArrayList<>();
-        sizes.add(new Size("1024 KB"));
-        if (full) {
-            sizes.add(new Size("43"));
-        }
-        return sizes;
-    }
-
-    protected List<Rights> getRightsList(boolean full) {
-        List<Rights> rightsList = new ArrayList<>();
-        rightsList.add(getRights(full));
-        rightsList.add(getRights(full));
-        return rightsList;
-    }
-
-    protected Rights getRights(boolean full) {
-        Rights rights = new Rights("Rights");
-        if (full) {
-            rights.rightsURI = URI.create("http://example.com");
-            rights.lang = "en-US";
-        }
-        return rights;
-    }
-
-    protected List<Description> getDescriptions(boolean full) {
-        List<Description> descriptions = new ArrayList<>();
-        Description description = new Description("Description one", DescriptionType.ABSTRACT);
-        if (full) {
-            description.lang = "en-US";
-        }
-        descriptions.add(description);
-        if (full) {
-            Description other = new Description("Description two", DescriptionType.OTHER);
-            other.lang = "en-GB";
-            descriptions.add(other);
-        }
-        return descriptions;
-    }
-
-    protected CreatorName getCreatorName(boolean full) {
-        CreatorName creatorName = new CreatorName("Miller, Elizabeth");
-        if (full) {
-            creatorName.nameType = NameType.ORGANIZATIONAL;
-        }
-        return creatorName;
-    }
-
-    protected NameIdentifier getNameIdentifier(boolean full) {
-        NameIdentifier nameIdentifier = new NameIdentifier("0000-0001-5000-0007", "ORCID");
-        if (full) {
-            nameIdentifier.schemeURI = URI.create("http://orcid.org/");
-        }
-        return nameIdentifier;
-    }
-
-    protected Affiliation getAffiliation(boolean full) {
-        return new Affiliation("DataCite");
-    }
-
-
-    /*
-     * Methods to compare resource children.
-     */
     void compareResource(Resource expected, Resource actual) {
         // required
         compareNamespace(expected.getNamespace(), actual.getNamespace());
@@ -368,7 +142,7 @@ public abstract class TestBase {
     void compareIdentifier(Identifier expected, Identifier actual) {
         Assert.assertNotNull("expected Identifier is null", expected);
         Assert.assertNotNull("actual Identifier is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getIdentifierType(), actual.getIdentifierType());
     }
 
@@ -397,7 +171,7 @@ public abstract class TestBase {
     void compareCreatorName(CreatorName expected, CreatorName actual) {
         Assert.assertNotNull("expected CreatorName is null", expected);
         Assert.assertNotNull("actual CreatorName is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.nameType, actual.nameType);
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -414,7 +188,7 @@ public abstract class TestBase {
     }
 
     void compareTitle(Title expected, Title actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.titleType, actual.titleType);
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -422,7 +196,7 @@ public abstract class TestBase {
     void comparePublisher(Publisher expected, Publisher actual) {
         Assert.assertNotNull("expected Publisher is null", expected);
         Assert.assertNotNull("actual Publisher is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.publisherIdentifier, actual.publisherIdentifier);
         Assert.assertEquals(expected.publisherIdentifierScheme, actual.publisherIdentifierScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
@@ -432,10 +206,10 @@ public abstract class TestBase {
     void comparePublicationYear(PublicationYear expected, PublicationYear actual) {
         Assert.assertNotNull("expected PublicationYear is null", expected);
         Assert.assertNotNull("actual PublicationYear is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
-    void compareDoiResourceType(DoiResourceType expected, DoiResourceType actual) {
+    void compareDoiResourceType(ResourceType expected, ResourceType actual) {
         Assert.assertNotNull("expected ResourceType is null", expected);
         Assert.assertNotNull("actual ResourceType is null", actual);
         Assert.assertEquals(expected.getResourceTypeGeneral(), actual.getResourceTypeGeneral());
@@ -466,7 +240,7 @@ public abstract class TestBase {
     void compareContributorName(ContributorName expected, ContributorName actual) {
         Assert.assertNotNull("expected ContributorName is null", expected);
         Assert.assertNotNull("actual ContributorName is null", actual);
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.nameType, actual.nameType);
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -488,7 +262,7 @@ public abstract class TestBase {
     }
 
     void compareDate(Date expected, Date actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getDateType(), actual.getDateType());
         Assert.assertEquals(expected.dateInformation, actual.dateInformation);
     }
@@ -497,7 +271,7 @@ public abstract class TestBase {
         if (isNull(expected, actual, "RelatedIdentifiers")) {
             return;
         }
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
     void compareRelatedIdentifiers(List<RelatedIdentifier> expected, List<RelatedIdentifier> actual) {
@@ -511,10 +285,10 @@ public abstract class TestBase {
     }
 
     void compareRelatedIdentifier(RelatedIdentifier expected, RelatedIdentifier actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getRelatedIdentifierType(), actual.getRelatedIdentifierType());
         Assert.assertEquals(expected.getRelationType(), actual.getRelationType());
-        Assert.assertEquals(expected.resourceTypeGeneral, actual.resourceTypeGeneral);
+        Assert.assertEquals(expected.dataCiteResourceTypeGeneral, actual.dataCiteResourceTypeGeneral);
         Assert.assertEquals(expected.relatedMetadataScheme, actual.relatedMetadataScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
         Assert.assertEquals(expected.schemeType, actual.schemeType);
@@ -531,7 +305,7 @@ public abstract class TestBase {
     }
 
     void compareSize(Size expected, Size actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
     void compareRightsList(List<Rights> expected, List<Rights> actual) {
@@ -545,7 +319,7 @@ public abstract class TestBase {
     }
 
     void compareRights(Rights expected, Rights actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.rightsURI, actual.rightsURI);
         Assert.assertEquals(expected.rightsIdentifier, actual.rightsIdentifier);
         Assert.assertEquals(expected.rightsIdentifierScheme, actual.rightsIdentifierScheme);
@@ -564,7 +338,7 @@ public abstract class TestBase {
     }
 
     void compareDescription(Description expected, Description actual) {
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getDescriptionType(), actual.getDescriptionType());
         Assert.assertEquals(expected.lang, actual.lang);
     }
@@ -573,7 +347,7 @@ public abstract class TestBase {
         if (isNull(expected, actual, "NameIdentifier")) {
             return;
         }
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getNameIdentifierScheme(), actual.getNameIdentifierScheme());
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
     }
@@ -582,7 +356,7 @@ public abstract class TestBase {
         if (isNull(expected, actual, "Affiliation")) {
             return;
         }
-        Assert.assertEquals(expected.getText(), actual.getText());
+        Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.affiliationIdentifier, actual.affiliationIdentifier);
         Assert.assertEquals(expected.affiliationIdentifierScheme, actual.affiliationIdentifierScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);

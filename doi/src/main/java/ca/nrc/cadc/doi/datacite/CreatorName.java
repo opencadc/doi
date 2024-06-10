@@ -82,7 +82,7 @@ public class CreatorName {
     public static final String NAME_TYPE = "nameType";
     public static final String LANG = "lang";
 
-    private final String text;
+    private final String value;
 
     public NameType nameType;
     public String lang;
@@ -90,22 +90,19 @@ public class CreatorName {
     /**
      * Constructor.
      * 
-     * @param text creator name
+     * @param value creator name, can be null or an empty string.
      */
-    public CreatorName(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("CreatorName text must be specified");
-        }
-        this.text = text;
+    public CreatorName(String value) {
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("CreatorName[%s]", text);
+        return String.format("CreatorName[%s]", value);
     }
 
 }

@@ -69,6 +69,8 @@
 
 package ca.nrc.cadc.doi.datacite;
 
+import ca.nrc.cadc.util.StringUtil;
+
 /**
  * Primary language of the resource. Allowed values are taken from IETF BCP 47, ISO 639-1 language codes.
  */
@@ -76,24 +78,27 @@ public class Language {
 
     public static final String NAME = "language";
 
-    private final String text;
+    private final String value;
 
     /**
      * Language constructor
      *
-     * @param text language of the resource
+     * @param value language of the resource
      */
-    public Language(String text) {
-        this.text = text;
+    public Language(String value) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("Language value cannot be null or empty");
+        }
+        this.value = value;
     }
 
-    public String getText() {
-        return text;
+    public String getValue() {
+        return value;
     }
 
     @Override
     public String toString() {
-        return String.format("Language[%s]", this.text);
+        return String.format("Language[%s]", value);
     }
 
 }

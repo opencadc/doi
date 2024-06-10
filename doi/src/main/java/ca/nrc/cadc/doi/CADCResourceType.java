@@ -67,47 +67,21 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.util.StringUtil;
-import java.net.URI;
+import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 
 /**
- * Uniquely identifies an affiliation, according to various identifier schemes.
+ * CADC specific ResourceType with resourceTypeGeneral attribute set to 'DataSet'.
  */
-public class Affiliation {
-
-    public static final String NAME = "affiliation";
-    public static final String AFFILIATION_IDENTIFIER = "affiliationIdentifier";
-    public static final String AFFILIATION_IDENTIFIER_SCHEME = "affiliationIdentifierScheme";
-    public static final String SCHEME_URI = "schemeURI";
-
-    private final String value;
-
-    public String affiliationIdentifier;
-    public String affiliationIdentifierScheme;
-    public URI schemeURI;
-
+public class CADCResourceType extends ResourceType {
     /**
-     * Affiliation constructor.
+     * DOIResourceType constructor.
      *
-     * @param value affiliation name, must not be null or an empty string.
-     * @throws IllegalArgumentException if value is null or an empty string.
      */
-    public Affiliation(String value) {
-        if (!StringUtil.hasText(value)) {
-            throw new IllegalArgumentException("affiliation value cannot be null or empty");
-        }
-        this.value = value;
-    }
-
-    public String getValue() {
-        return this.value;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Affiliation[%s]", value);
+    public CADCResourceType() {
+        super(DataCiteResourceType.DATA_SET);
     }
 
 }

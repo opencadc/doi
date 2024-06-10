@@ -77,7 +77,7 @@ import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Language;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
@@ -149,7 +149,7 @@ public class DoiWriter {
 
     protected Element getIdentifierElement(Identifier identifier, Namespace ns) {
         Element element = new Element(Identifier.NAME, ns);
-        element.setText(identifier.getText());
+        element.setText(identifier.getValue());
         element.setAttribute(Identifier.IDENTIFIER_TYPE, identifier.getIdentifierType());
         return element;
     }
@@ -182,7 +182,7 @@ public class DoiWriter {
 
     protected Element getCreatorNameElement(CreatorName creatorName, Namespace ns) {
         Element element = new Element(CreatorName.NAME, ns);
-        element.setText(creatorName.getText());
+        element.setText(creatorName.getValue());
         if (creatorName.nameType != null) {
             element.setAttribute(CreatorName.NAME_TYPE, creatorName.nameType.getValue());
         }
@@ -194,7 +194,7 @@ public class DoiWriter {
 
     protected Element getNameIdentifierElement(NameIdentifier nameIdentifier, Namespace ns) {
         Element element = new Element(NameIdentifier.NAME, ns);
-        element.setText(nameIdentifier.getText());
+        element.setText(nameIdentifier.getValue());
         element.setAttribute(NameIdentifier.NAME_IDENTIFIER_SCHEME, nameIdentifier.getNameIdentifierScheme());
         if (nameIdentifier.schemeURI != null) {
             element.setAttribute(NameIdentifier.SCHEME_URI, nameIdentifier.schemeURI.toString());
@@ -204,7 +204,7 @@ public class DoiWriter {
 
     protected Element getAffiliationElement(Affiliation affiliation, Namespace ns) {
         Element element = new Element(Affiliation.NAME, ns);
-        element.setText(affiliation.getText());
+        element.setText(affiliation.getValue());
         if (affiliation.affiliationIdentifier != null) {
             element.setAttribute(Affiliation.AFFILIATION_IDENTIFIER, affiliation.affiliationIdentifier);
         }
@@ -227,7 +227,7 @@ public class DoiWriter {
 
     protected Element getTitleElement(Title title, Namespace ns) {
         Element element = new Element(Title.NAME, ns);
-        element.setText(title.getText());
+        element.setText(title.getValue());
         if (title.titleType != null) {
             element.setAttribute(Title.TITLE_TYPE, title.titleType.getValue());
         }
@@ -239,7 +239,7 @@ public class DoiWriter {
 
     protected Element getPublisherElement(Publisher publisher, Namespace ns) {
         Element element = new Element(Publisher.NAME, ns);
-        element.setText(publisher.getText());
+        element.setText(publisher.getValue());
         if (publisher.publisherIdentifier != null) {
             element.setAttribute(Publisher.PUBLISHER_IDENTIFIER, publisher.publisherIdentifier);
         }
@@ -257,14 +257,14 @@ public class DoiWriter {
 
     protected Element getPublicationYearElement(PublicationYear publicationYear, Namespace ns) {
         Element element = new Element(PublicationYear.NAME, ns);
-        element.setText(String.valueOf(publicationYear.getText()));
+        element.setText(String.valueOf(publicationYear.getValue()));
         return element;
     }
 
-    protected Element getDoiResourceTypeElement(DoiResourceType doiResourceType, Namespace ns) {
-        Element element = new Element(DoiResourceType.NAME, ns);
-        element.setText(doiResourceType.text);
-        element.setAttribute(DoiResourceType.RESOURCE_TYPE_GENERAL, doiResourceType.getResourceTypeGeneral().getValue());
+    protected Element getDoiResourceTypeElement(ResourceType resourceType, Namespace ns) {
+        Element element = new Element(ResourceType.NAME, ns);
+        element.setText(resourceType.text);
+        element.setAttribute(ResourceType.RESOURCE_TYPE_GENERAL, resourceType.getResourceTypeGeneral().getValue());
         return element;
     }
 
@@ -297,7 +297,7 @@ public class DoiWriter {
 
     protected Element getContributorNameElement(ContributorName contributorName, Namespace ns) {
         Element element = new Element(ContributorName.NAME, ns);
-        element.setText(contributorName.getText());
+        element.setText(contributorName.getValue());
         if (contributorName.nameType != null) {
             element.setAttribute(ContributorName.NAME_TYPE, contributorName.nameType.getValue());
         }
@@ -317,7 +317,7 @@ public class DoiWriter {
 
     protected Element getRightsElement(Rights rights, Namespace ns) {
         Element element = new Element(Rights.NAME, ns);
-        element.setText(rights.getText());
+        element.setText(rights.getValue());
         if (rights.rightsURI != null) {
             element.setAttribute(Rights.RIGHTS_URI, rights.rightsURI.toString());
         }
@@ -346,7 +346,7 @@ public class DoiWriter {
 
     protected Element getDateElement(Date date, Namespace ns) {
         Element element = new Element(Date.NAME, ns);
-        element.setText(date.getText());
+        element.setText(date.getValue());
         element.setAttribute(Date.DATE_TYPE, date.getDateType().getValue());
         if (date.dateInformation != null) {
             element.setAttribute(Date.DATE_INFORMATION, date.dateInformation);
@@ -364,7 +364,7 @@ public class DoiWriter {
 
     protected Element getDescriptionElement(Description description, Namespace ns) {
         Element element = new Element(Description.NAME, ns);
-        element.addContent(description.getText());
+        element.addContent(description.getValue());
         element.setAttribute(Description.DESCRIPTION_TYPE, description.getDescriptionType().getValue());
         if (description.lang != null) {
             element.setAttribute(Description.LANG, description.lang, Namespace.XML_NAMESPACE);
@@ -376,7 +376,7 @@ public class DoiWriter {
         Element element = new Element(DoiReader.SIZES, ns);
         for (Size size : sizes) {
             Element sizeElement = new Element(Size.NAME, ns);
-            sizeElement.setText(size.getText());
+            sizeElement.setText(size.getValue());
             element.addContent(sizeElement);
         }
         return element;
@@ -384,7 +384,7 @@ public class DoiWriter {
 
     protected Element getLanguageElement(Language language, Namespace ns) {
         Element languageEl = new Element(Language.NAME, ns);
-        languageEl.setText(language.getText());
+        languageEl.setText(language.getValue());
         return languageEl;
     }
 
@@ -398,11 +398,11 @@ public class DoiWriter {
 
     protected Element getRelatedIdentifierElement(RelatedIdentifier relatedIdentifier, Namespace ns) {
         Element element = new Element(RelatedIdentifier.NAME, ns);
-        element.setText(relatedIdentifier.getText());
+        element.setText(relatedIdentifier.getValue());
         element.setAttribute(RelatedIdentifier.RELATED_IDENTIFIER_TYPE, relatedIdentifier.getRelatedIdentifierType().getValue());
         element.setAttribute(RelatedIdentifier.RELATION_TYPE, relatedIdentifier.getRelationType().getValue());
-        if (relatedIdentifier.resourceTypeGeneral != null) {
-            element.setAttribute(RelatedIdentifier.RESOURCE_TYPE_GENERAL, relatedIdentifier.resourceTypeGeneral.getValue());
+        if (relatedIdentifier.dataCiteResourceTypeGeneral != null) {
+            element.setAttribute(RelatedIdentifier.RESOURCE_TYPE_GENERAL, relatedIdentifier.dataCiteResourceTypeGeneral.getValue());
         }
         if (StringUtil.hasText(relatedIdentifier.relatedMetadataScheme)) {
             element.setAttribute(RelatedIdentifier.RELATED_METADATA_SCHEME, relatedIdentifier.relatedMetadataScheme);

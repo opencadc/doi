@@ -129,7 +129,7 @@ public class DoiStatusReaderWriterTest
     
     private void compareIdentifier(Identifier id1, Identifier id2)
     {
-        Assert.assertEquals("Identifiers are different", id1.getText(), id2.getText());
+        Assert.assertEquals("Identifiers are different", id1.getValue(), id2.getValue());
         Assert.assertEquals("identifierTypes are different", id1.getIdentifierType(), id2.getIdentifierType());
     }
     
@@ -139,7 +139,7 @@ public class DoiStatusReaderWriterTest
     		Assert.assertNull("expected title is null, actual title is not null: " + t2);
     	} else {
 	        Assert.assertEquals("langs are different", t1.lang, t2.lang);
-	        Assert.assertEquals("titles are different", t1.getText(), t2.getText());
+	        Assert.assertEquals("titles are different", t1.getValue(), t2.getValue());
 	        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
     	}
     }

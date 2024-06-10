@@ -67,47 +67,33 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.util.StringUtil;
-import java.net.URI;
+import ca.nrc.cadc.doi.datacite.Creator;
+import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.PublicationYear;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.Title;
+import java.util.List;
+import org.jdom2.Namespace;
 
-/**
- * Uniquely identifies an affiliation, according to various identifier schemes.
- */
-public class Affiliation {
-
-    public static final String NAME = "affiliation";
-    public static final String AFFILIATION_IDENTIFIER = "affiliationIdentifier";
-    public static final String AFFILIATION_IDENTIFIER_SCHEME = "affiliationIdentifierScheme";
-    public static final String SCHEME_URI = "schemeURI";
-
-    private final String value;
-
-    public String affiliationIdentifier;
-    public String affiliationIdentifierScheme;
-    public URI schemeURI;
+public class CADCResource extends Resource {
 
     /**
-     * Affiliation constructor.
+     * CADCResource constructor.
      *
-     * @param value affiliation name, must not be null or an empty string.
-     * @throws IllegalArgumentException if value is null or an empty string.
+     * Resource with a CADC specific Publisher and ResourceType.
+     *
+     * @param namespace       resource namespace
+     * @param identifier      resource identifier
+     * @param creators        resource creators
+     * @param titles          resource titles
+     * @param publicationYear resource publication year
      */
-    public Affiliation(String value) {
-        if (!StringUtil.hasText(value)) {
-            throw new IllegalArgumentException("affiliation value cannot be null or empty");
-        }
-        this.value = value;
-    }
-
-    public String getValue() {
-        return this.value;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Affiliation[%s]", value);
+    public CADCResource(Namespace namespace, Identifier identifier, List<Creator> creators,
+                        List<Title> titles, PublicationYear publicationYear) {
+        super(namespace, identifier, creators, titles, new CADCPublisher(), publicationYear, new CADCResourceType());
     }
 
 }

@@ -75,6 +75,10 @@ import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.io.DoiParsingException;
+import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.io.DoiXmlReader;
+import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
@@ -161,7 +165,7 @@ public class PostAction extends DoiAction {
         targetResource.getCreators().addAll(sourceResource.getCreators());
         targetResource.getTitles().clear();
         targetResource.getTitles().addAll(sourceResource.getTitles());
-        targetResource.setPublicationYear(sourceResource.getPublicationYear());
+        targetResource.getPublicationYear().setValue(sourceResource.getPublicationYear().getValue());
         targetResource.language = sourceResource.language;
 
         return targetResource;
@@ -421,7 +425,7 @@ public class PostAction extends DoiAction {
             throw ex;
         }
     }
-    
+
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.MINT_ACTION)) {
 
@@ -530,7 +534,7 @@ public class PostAction extends DoiAction {
         }
     }
     
-    private void verifyResourceType(DoiResourceType rt1, DoiResourceType rt2) {
+    private void verifyResourceType(ResourceType rt1, ResourceType rt2) {
         verifyNull(rt1, rt2, "DoiResourceType");
         if (rt1.getResourceTypeGeneral() != rt2.getResourceTypeGeneral()) {
             String msg = String.format("resourceType update is not allowed, expected: %s, actual: %s",

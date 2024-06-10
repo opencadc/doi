@@ -98,7 +98,7 @@ public class Contributor {
      */
     public Contributor(ContributorName contributorName, ContributorType contributorType) {
         if (contributorName == null) {
-            throw new IllegalArgumentException("Contributor contributorType must be specified");
+            throw new IllegalArgumentException("Contributor contributorName cannot be null or empty");
         }
         if (contributorType == null) {
             throw new IllegalArgumentException("Contributor contributorType must be specified");

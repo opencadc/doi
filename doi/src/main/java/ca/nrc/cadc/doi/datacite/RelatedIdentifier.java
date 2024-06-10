@@ -71,8 +71,6 @@ package ca.nrc.cadc.doi.datacite;
 
 import java.net.URI;
 
-import ca.nrc.cadc.util.StringUtil;
-
 /**
  * An identifier of related resources. These must be globally unique identifiers..
  * 
@@ -88,11 +86,11 @@ public class RelatedIdentifier {
     public static final String SCHEME_URI = "schemeURI";
     public static final String SCHEME_TYPE = "schemeType";
 
-    private final String text;
+    private final String value;
     private final RelatedIdentifierType relatedIdentifierType;
     private final RelationType relationType;
 
-    public ResourceType resourceTypeGeneral;
+    public DataCiteResourceType dataCiteResourceTypeGeneral;
     public String relatedMetadataScheme;
     public URI schemeURI;
     public String schemeType;
@@ -100,27 +98,24 @@ public class RelatedIdentifier {
     /**
      * RelatedIdentifier constructor.
      * 
-     * @param text relatedIdentifier text
+     * @param value relatedIdentifier value, can be null or an empty string.
      * @param relatedIdentifierType related identifier type, e.g. DOI
      * @param relationType type of relationship between the related resources
      */
-    public RelatedIdentifier(String text, RelatedIdentifierType relatedIdentifierType, RelationType relationType) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("RelatedIdentifier text must be specified");
-        }
+    public RelatedIdentifier(String value, RelatedIdentifierType relatedIdentifierType, RelationType relationType) {
         if (relatedIdentifierType == null) {
             throw new IllegalArgumentException("RelatedIdentifier relatedIdentifierType must be specified");
         }
         if (relationType == null) {
             throw new IllegalArgumentException("RelatedIdentifier relationType must be specified");
         }
-        this.text = text;
+        this.value = value;
         this.relatedIdentifierType = relatedIdentifierType;
         this.relationType = relationType;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     public RelatedIdentifierType getRelatedIdentifierType() {
@@ -133,7 +128,7 @@ public class RelatedIdentifier {
 
     @Override
     public String toString() {
-        return String.format("RelatedIdentifier[%s, %s, %s]", text, relatedIdentifierType, relationType);
+        return String.format("RelatedIdentifier[%s, %s, %s]", value, relatedIdentifierType, relationType);
     }
 
 }

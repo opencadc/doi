@@ -84,7 +84,7 @@ public class Description {
     public static final String DESCRIPTION_TYPE = "descriptionType";
     public static final String LANG = "lang";
 
-    private final String text;
+    private final String value;
     private final DescriptionType descriptionType;
 
     public String lang;
@@ -92,22 +92,19 @@ public class Description {
     /**
      * Title constructor.
      *
-     * @param text description text
+     * @param value description, can be null or an empty string.
      * @param descriptionType type of description, e.g. Abstract
      */
-    public Description(String text, DescriptionType descriptionType) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Description text must be specified");
-        }
+    public Description(String value, DescriptionType descriptionType) {
         if (descriptionType == null) {
             throw new IllegalArgumentException("Description descriptionType must be specified");
         }
-        this.text = text;
+        this.value = value;
         this.descriptionType = descriptionType;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     public DescriptionType getDescriptionType() {
@@ -116,7 +113,7 @@ public class Description {
 
     @Override
     public String toString() {
-        return String.format("Description[%s, %s", this.text, this.descriptionType);
+        return String.format("Description[%s, %s]", value, descriptionType);
     }
 
 }

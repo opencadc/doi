@@ -85,9 +85,7 @@ public class Publisher {
     public static final String SCHEME_URI = "schemeURI";
     public static final String LANG = "lang";
 
-    public static final String VALID_PUBLISHER = "CADC";
-
-    private final String text;
+    private final String value;
 
     public String publisherIdentifier;
     public String publisherIdentifierScheme;
@@ -97,25 +95,22 @@ public class Publisher {
     /**
      * Publisher constructor.
      *
-     * @param text publisher name
+     * @param value publisher name, must not be null or an empty string.
      */
-    public Publisher(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Publisher text must be specified");
+    public Publisher(String value) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("Publisher value cannot be null or empty");
         }
-        if (text.equalsIgnoreCase(VALID_PUBLISHER)) {
-            throw new IllegalArgumentException("currently only supported publisher is CADC");
-        }
-        this.text = text;
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("Publisher[%s]", text);
+        return String.format("Publisher[%s]", value);
     }
 
 }

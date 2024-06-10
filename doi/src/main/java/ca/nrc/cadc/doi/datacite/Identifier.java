@@ -81,28 +81,29 @@ public class Identifier {
     public static final String NAME = "identifier";
     public static final String IDENTIFIER_TYPE = "identifierType";
 
-    private final String text;
+    private final String value;
     private final String identifierType;
 
     /**
      * Identifier constructor.
-     * 
+     *
+     * @param value name of the identifier
      * @param identifierType type of the identifier
      * 
      */
-    public Identifier(String text, String identifierType) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Identifier text must be specified");
+    public Identifier(String value, String identifierType) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("Identifier value cannot be null or empty");
         }
         if (!StringUtil.hasText(identifierType)) {
             throw new IllegalArgumentException("Identifier identifierType must be specified");
         }
-        this.text = text;
+        this.value = value;
         this.identifierType = identifierType;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     public String getIdentifierType() {
@@ -111,7 +112,7 @@ public class Identifier {
 
     @Override
     public String toString() {
-        return String.format("Identifier[%s, %s]", text, identifierType);
+        return String.format("Identifier[%s, %s]", value, identifierType);
     }
 
 }

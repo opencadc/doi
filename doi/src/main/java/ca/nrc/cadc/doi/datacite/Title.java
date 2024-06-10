@@ -82,7 +82,7 @@ public class Title {
     public static final String TITLE_TYPE = "titleType";
     public static final String LANG = "lang";
 
-    private final String text;
+    private final String value;
 
     public TitleType titleType;
     public String lang;
@@ -90,22 +90,22 @@ public class Title {
     /**
      * Title constructor.
      *
-     * @param text title text
+     * @param value title
      */
-    public Title(String text) {
-        if (!StringUtil.hasText(text)) {
-            throw new IllegalArgumentException("Title text must be specified");
+    public Title(String value) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("Title value cannot be null or empty");
         }
-        this.text = text;
+        this.value = value;
     }
 
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return String.format("Title[%s]", text);
+        return String.format("Title[%s]", value);
     }
 
 }
