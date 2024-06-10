@@ -67,8 +67,14 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Creator;
+import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.PublicationYear;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.Title;
 import java.util.List;
 import org.jdom2.Namespace;
 
@@ -84,12 +90,10 @@ public class CADCResource extends Resource {
      * @param creators        resource creators
      * @param titles          resource titles
      * @param publicationYear resource publication year
-     * @param resourceType    resource type
      */
     public CADCResource(Namespace namespace, Identifier identifier, List<Creator> creators,
-                        List<Title> titles, PublicationYear publicationYear, DataCiteResourceType resourceType) {
-        super(namespace, identifier, creators, titles, new CADCPublisher(),
-                publicationYear, resourceType);
+                        List<Title> titles, PublicationYear publicationYear) {
+        super(namespace, identifier, creators, titles, new CADCPublisher(), publicationYear, new CADCResourceType());
     }
 
 }

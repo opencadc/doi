@@ -84,7 +84,7 @@ import ca.nrc.cadc.doi.datacite.Description;
 import ca.nrc.cadc.doi.datacite.DescriptionType;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.io.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
@@ -178,7 +178,7 @@ public class PostAction extends DoiAction {
         targetResource.getCreators().addAll(sourceResource.getCreators());
         targetResource.getTitles().clear();
         targetResource.getTitles().addAll(sourceResource.getTitles());
-        targetResource.setPublicationYear(sourceResource.getPublicationYear());
+        targetResource.getPublicationYear().setValue(sourceResource.getPublicationYear().getValue());
         targetResource.language = sourceResource.language;
 
         return targetResource;
@@ -261,19 +261,19 @@ public class PostAction extends DoiAction {
         String lastName = inProgressDoi.getCreators().get(0).familyName;
         if (lastName == null) {
             // Use full name in a pinch
-            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getText();
+            lastName = inProgressDoi.getCreators().get(0).getCreatorName().getValue();
         }
 
         String description = null;
         if (StringUtil.hasText(journalRef)) {
-            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName) + ", " +journalRef;
+            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getValue(), lastName) + ", " +journalRef;
         } else {
-            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getText(), lastName);
+            description =  String.format(DESCRIPTION_TEMPLATE, inProgressDoi.getTitles().get(0).getValue(), lastName);
         }
         
         List<Description> descriptionList = new ArrayList<Description>();
         Description newDescrip = new Description(description, DescriptionType.OTHER);
-        newDescrip.lang = inProgressDoi.language.getText();
+        newDescrip.lang = inProgressDoi.language.getValue();
         descriptionList.add(newDescrip);
         inProgressDoi.descriptions = descriptionList;
         return inProgressDoi;
@@ -629,7 +629,7 @@ public class PostAction extends DoiAction {
         }
     }
     
-    private void verifyResourceType(DoiResourceType rt1, DoiResourceType rt2) {
+    private void verifyResourceType(ResourceType rt1, ResourceType rt2) {
         verifyNull(rt1, rt2, "DoiResourceType");
         if (rt1.getResourceTypeGeneral() != rt2.getResourceTypeGeneral()) {
             String msg = String.format("resourceType update is not allowed, expected: %s, actual: %s",

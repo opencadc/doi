@@ -67,7 +67,9 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.doi.datacite;
+package ca.nrc.cadc.doi;
+
+import ca.nrc.cadc.doi.datacite.Publisher;
 
 public class CADCPublisher extends Publisher {
 
