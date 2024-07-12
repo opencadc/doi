@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.doi;
 
-
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
@@ -82,13 +81,14 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
@@ -124,18 +124,18 @@ public class GetAction extends DoiAction {
         }
     }
     
-    private Title getTitle(Resource resource) {
-        Title title = null;
-        List<Title> titles = resource.getTitles();
-        for (Title t : titles) {
-            if (t.titleType == null) {
-                title = t;
-                break;
-            }
-        }
-        return title;
-    }
-    
+//    private Title getTitle(Resource resource) {
+//        Title title = null;
+//        List<Title> titles = resource.getTitles();
+//        for (Title t : titles) {
+//            if (t.titleType == null) {
+//                title = t;
+//                break;
+//            }
+//        }
+//        return title;
+//    }
+//
     private String updateMintingStatus(final ContainerNode doiContainerNode, final String status) throws Exception {
         return (String) Subject.doAs(getAdminSubject(), new PrivilegedExceptionAction<Object>() {
             @Override
@@ -187,7 +187,7 @@ public class GetAction extends DoiAction {
                         default:
                             // do nothing
                     }
-            	}
+                }
                 return localStatus;
             }
         });
@@ -195,8 +195,7 @@ public class GetAction extends DoiAction {
     
     private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
         DoiStatus doiStatus = null;
-        X500Principal adminX500 = new X500Principal(config.getFirstPropertyValue(DoiInitAction.ADMIN_DN_KEY));
-        if (vospaceDoiClient.isCallerAllowed(doiContainerNode, adminX500)) {
+        if (vospaceDoiClient.isCallerAllowed(doiContainerNode, DoiAction.DOIADMIN_X500)) {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
@@ -208,25 +207,29 @@ public class GetAction extends DoiAction {
             }
 
             // get the data directory
+            // TODO why do this when the data directory path is known???
             String dataDirectory = null;
             List<Node> doiContainedNodes = doiContainerNode.getNodes();
             for (Node node : doiContainedNodes) {
                 if (node.getName().equals("data")) {
-                    dataDirectory = String.format("%s/%s/data", vaultDOIParentPath, doiSuffixString);
+                    dataDirectory = String.format("%s/%s/data", doiParentPath, doiSuffixString);
+                    log.debug("dataDirectory: " + dataDirectory);
                     break;
                 }
             }
 
             // get title and construct DoiStatus instance
-            Title title = null;
-            try {
+//            Title title = null;
+//            try {
                 Resource resource = vospaceDoiClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
-                title = getTitle(resource);
+//                title = getTitle(resource);
+                Title title = resource.getTitles().get(0);
+                log.debug("title: " + title);
                 doiStatus = new DoiStatus(resource.getIdentifier(), title, dataDirectory, Status.toValue(status));
-            } catch (Exception ex) {
-                Identifier id = new Identifier(doiSuffixString, "DOI");
-                doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
-            }
+//            } catch (Exception ex) {
+//                Identifier id = new Identifier(doiSuffixString, "DOI");
+//                doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
+//            }
 
             // set journalRef
             doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
@@ -265,6 +268,7 @@ public class GetAction extends DoiAction {
         List<DoiStatus> doiStatusList = new ArrayList<>();
         List<Node> nodes = getOwnedDOIList();
         for (Node node : nodes) {
+            log.debug("StatusList node: " + node.getName());
             // Verify this is a container node before continuing
             if (node instanceof ContainerNode) {
                 try {
@@ -272,6 +276,7 @@ public class GetAction extends DoiAction {
                     DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
                     if (doiStatus != null) {
                         doiStatusList.add(doiStatus);
+                        log.debug("added doiStatus: " + doiStatus);
                     }
                 } catch (Exception ex) {
                     // skip
@@ -281,6 +286,7 @@ public class GetAction extends DoiAction {
                 log.warn("Non-container node found in DOI base directory. Skipping... ");
             }
         }
+        log.debug("doiStatusList size: " + doiStatusList.size());
 
         String docFormat = this.syncInput.getHeader("Accept");
         log.debug("'Accept' value in header is " + docFormat);
@@ -318,6 +324,7 @@ public class GetAction extends DoiAction {
         if (doiAction.equals(DoiAction.STATUS_ACTION)) {
             ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(doiSuffix);
             DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode);
+            log.debug("doiStatus: " + doiStatus.getTitle());
 
             String docFormat = this.syncInput.getHeader("Accept");
             log.debug("'Accept' value in header is " + docFormat);
@@ -330,6 +337,11 @@ public class GetAction extends DoiAction {
                 // xml document
                 syncOutput.setHeader("Content-Type", "text/xml");
                 DoiStatusXmlWriter writer = new DoiStatusXmlWriter();
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                writer.write(doiStatus, baos);
+                log.debug("doiStatus: " + baos.toString());
+
                 writer.write(doiStatus, syncOutput.getOutputStream());
             }
         } else {

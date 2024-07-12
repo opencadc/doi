@@ -74,24 +74,22 @@ import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.DateType;
-import ca.nrc.cadc.doi.datacite.DoiResourceType;
-import ca.nrc.cadc.doi.io.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.ResourceType;
-import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.InvalidConfigException;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
+import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -105,8 +103,11 @@ import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.security.auth.Subject;
@@ -153,6 +154,19 @@ public class PostAction extends DoiAction {
                 return null;
             }
         });
+    }
+
+    // methods to assign to private field in Identity
+    public static void assignIdentifier(Object ce, String identifier) {
+        try {
+            Field f = Identifier.class.getDeclaredField("value");
+            f.setAccessible(true);
+            f.set(ce, identifier);
+        } catch (NoSuchFieldException fex) {
+            throw new RuntimeException("Identifier class is missing the value field", fex);
+        } catch (IllegalAccessException bug) {
+            throw new RuntimeException("No access to Identifier value field", bug);
+        }
     }
 
     private Resource merge(Resource sourceResource, Resource targetResource) {
@@ -261,7 +275,7 @@ public class PostAction extends DoiAction {
 
         // post to DataCite
         HttpPost postToDataCite = new HttpPost(postURL, content, contentType, redirect);
-        postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));    	
+        postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
         postToDataCite.run();
 
         // process response
@@ -272,7 +286,7 @@ public class PostAction extends DoiAction {
     private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
         // form the upload endpoint
         String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
-        String path = String.format("%s/doi/%s/%s", dataCiteUrl, cadcDataCitePrefix, doiSuffix);
+        String path = String.format("%s/doi/%s/%s", dataCiteUrl, cadcPrefix, doiSuffix);
         URL doiURL = new URL(path);
         log.debug("makeFindable endpoint: " + doiURL);
 
@@ -319,7 +333,7 @@ public class PostAction extends DoiAction {
 
             // register DOI to DataCite
             String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
-            URL registerURL = new URL(String.format("%s/metadata/%s/%s", dataCiteUrl, cadcDataCitePrefix, doiSuffix));
+            URL registerURL = new URL(String.format("%s/metadata/%s/%s", dataCiteUrl, cadcPrefix, doiSuffix));
             String content = getDOIContent();
             String contentType = "application/xml;charset=UTF-8";
             registerDOI(registerURL, content, contentType, true);
@@ -541,7 +555,7 @@ public class PostAction extends DoiAction {
                     rt2.getResourceTypeGeneral().getValue(), rt1.getResourceTypeGeneral().getValue());
             throw new IllegalArgumentException(msg);
         } else {
-            verifyString(rt1.text, rt2.text, "resourceType description");
+            verifyString(rt1.value, rt2.value, "resourceType description");
         }
     }
     
@@ -564,26 +578,42 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        // Determine next DOI number   
-        // Note: The generated DOI number is the suffix which should be case insensitive.
-        //       Since we are using a number, it does not matter. However if we decide
-        //       to use a String, we should only generate either a lowercase or an
-        //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
-        VOSURI doiDataURI = vospaceDoiClient.getDoiBaseVOSURI();
-        String nextDoiSuffix = generateNextDOINumber(doiDataURI);
-        log.debug("Next DOI suffix: " + nextDoiSuffix);
+        boolean randomName = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.TEST_RANDOM_NAME_KEY));
+        String nextDoiSuffix;
+        if (randomName) {
+            nextDoiSuffix = getRandomDOISuffix();
+            log.warn("Random DOI suffix: " + nextDoiSuffix);
+        } else {
+            // Determine next DOI number
+            // Note: The generated DOI number is the suffix which should be case insensitive.
+            //       Since we are using a number, it does not matter. However if we decide
+            //       to use a String, we should only generate either a lowercase or an
+            //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
+            nextDoiSuffix = getNextDOISuffix(vospaceDoiClient.getDoiBaseVOSURI());
+            log.debug("Next DOI suffix: " + nextDoiSuffix);
+        }
 
         // update the template with the new DOI number
-        assignIdentifier(resource.getIdentifier(), cadcDataCitePrefix + "/" + nextDoiSuffix);
+        assignIdentifier(resource.getIdentifier(), cadcPrefix + "/" + nextDoiSuffix);
 
         //Add a Created date to the Resource object
-        String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+        LocalDate localDate = LocalDate.now();
+        String createdDate = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         Date doiDate = new Date(createdDate, DateType.CREATED);
+        doiDate.dateInformation = "The date the DOI was created";
         resource.dates = new ArrayList<>();
         resource.dates.add(doiDate);
 
-        // Create the group that is able to administer the DOI process
-        GroupURI guri = createDoiGroup(nextDoiSuffix);
+        // Create the group that is able to administer the DOI process, use configured test GroupURI if found
+        GroupURI guri;
+        String configuredGroupUri = config.getFirstPropertyValue(DoiInitAction.TEST_GROUP_URI_KEY);
+        if (StringUtil.hasText(configuredGroupUri)) {
+            guri = new GroupURI(URI.create(configuredGroupUri));
+            log.warn("Configured DOI group: " + guri);
+        } else {
+            guri = createDoiGroup(nextDoiSuffix);
+            log.debug("Created DOI group: " + guri);
+        }
         
         // Create the VOSpace area for DOI work
         ContainerNode doiFolder = createDOIDirectory(guri, nextDoiSuffix);
@@ -608,17 +638,9 @@ public class PostAction extends DoiAction {
     }
     
     private GroupURI createDoiGroup(String groupName) throws Exception {
-        // use configured GroupURI if found
-        String configuredGroupUri = DoiInitAction.getConfig().getFirstPropertyValue(DoiInitAction.DEFAULT_DOI_GROUP_URI_KEY);
-        if (configuredGroupUri != null) {
-            log.warn("using configured GroupURI: " + configuredGroupUri);
-            return new GroupURI(URI.create(configuredGroupUri));
-        }
-
         // Create group to use for applying permissions
-        GMSClient gmsClient = getGMSClient();
-
-        String group = String.format("%s?%s%s", GMS_SERVICE_URI.toASCIIString(), DOI_GROUP_PREFIX, groupName);
+        String gmsResourceID = config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY);
+        String group = String.format("%s?%s%s", gmsResourceID, DOI_GROUP_PREFIX, groupName);
         GroupURI guri = new GroupURI(URI.create(group));
         log.debug("creating group: " + guri);
 
@@ -627,8 +649,9 @@ public class PostAction extends DoiAction {
         member.getIdentities().addAll(callingSubject.getPrincipals());
         doiRWGroup.getUserMembers().add(member);
         doiRWGroup.getUserAdmins().add(member);
-        
+
         try {
+            GMSClient gmsClient = getGMSClient();
             gmsClient.createGroup(doiRWGroup);
         } catch (GroupAlreadyExistsException gaeex) {
             // expose it as a server error
@@ -674,10 +697,9 @@ public class PostAction extends DoiAction {
         throws URISyntaxException, ResourceNotFoundException {
 
         Transfer transfer = new Transfer(docVOSUIRI.getURI(), Direction.pushToVoSpace);
-        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
-        //put.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
+        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);  // anon for preauth url
         transfer.getProtocols().add(put);
-        
+
         ClientTransfer clientTransfer = vospaceDoiClient.getVOSpaceClient().createTransfer(transfer);
         DoiOutputStream outStream = new DoiOutputStream(resource);
         clientTransfer.setOutputStreamWrapper(outStream);
@@ -704,16 +726,14 @@ public class PostAction extends DoiAction {
         }
     }
 
-    private String generateNextDOINumber(VOSURI baseDoiURI)
+    // child nodes of baseNode should have name structure YY.XXXX
+    // go through list of child nodes
+    // extract XXXX
+    // track largest
+    // add 1
+    // reconstruct YY.XXXX structure and return
+    private String getNextDOISuffix(VOSURI baseDoiURI)
         throws Exception {
-        
-        // child nodes of baseNode should have name structure YY.XXXX
-        // go through list of child nodes
-        // extract XXXX
-        // track largest
-        // add 1
-        // reconstruct YY.XXXX structure and return
-        
         ContainerNode baseNode = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(baseDoiURI.getPath());
 
         // Look into the node list for folders from current year only
@@ -738,19 +758,24 @@ public class PostAction extends DoiAction {
         return currentYear + "." + formattedDOI;
     }
 
-    // methods to assign to private field in Identity
-    public static void assignIdentifier(Object ce, String identifier) {
-        try {
-            Field f = Identifier.class.getDeclaredField("text");
-            f.setAccessible(true);
-            f.set(ce, identifier);
-        } catch (NoSuchFieldException fex) {
-            throw new RuntimeException("Identifier class is missing the text field", fex);
-        } catch (IllegalAccessException bug) {
-            throw new RuntimeException("No access to Identifier text field", bug);
+    // Create a random DOI suffix using the DataCite suggested format xxxxx-xxxxx
+    // where x is either a char or digit.
+    // Skip i l o to avoid confusion with lowercase L and 0.
+    private String getRandomDOISuffix() {
+        String allowed = "abcdefghjkmnpqrstuvwxyz1234567890";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        while (sb.length() < 11) {
+            if (sb.length() == 5) {
+                sb.append("-");
+            } else {
+                int index = (int) (random.nextFloat() * allowed.length());
+                sb.append(allowed.charAt(index));
+            }
         }
+        sb.append(".test");
+        return sb.toString();
     }
-
 
     private class DoiOutputStream implements OutputStreamWrapper {
         private Resource streamResource;

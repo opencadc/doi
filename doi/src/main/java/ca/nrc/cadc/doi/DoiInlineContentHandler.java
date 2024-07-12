@@ -69,16 +69,14 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiJsonReader;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
@@ -110,8 +108,7 @@ public class DoiInlineContentHandler implements InlineContentHandler {
                 log.debug(dpe);
                 throw new InlineContentException(dpe.getMessage());
             }
-        }
-        else if (contentType.toLowerCase().contains("application/json")) {
+        } else if (contentType.toLowerCase().contains("application/json")) {
             try {
                 // read json file
                 DoiJsonReader reader = new DoiJsonReader();

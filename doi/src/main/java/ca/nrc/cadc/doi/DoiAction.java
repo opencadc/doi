@@ -74,22 +74,21 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
-
 import javax.security.auth.Subject;
+import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.VOSURI;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
 
-    public static final URI VAULT_SERVICE_URI = URI.create("ivo://cadc.nrc.ca/vault");
-    public static final URI GMS_SERVICE_URI = URI.create("ivo://cadc.nrc.ca/gms");
+    public static final X500Principal DOIADMIN_X500 = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
+
     public static final URI DOI_VOS_JOB_URL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#joburl");
     public static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
     public static final URI DOI_VOS_STATUS_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#status");
@@ -107,8 +106,10 @@ public abstract class DoiAction extends RestAction {
     protected Boolean includePublic = false;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
-    protected String cadcDataCitePrefix;
-    protected String vaultDOIParentPath;
+    protected URI vaultResourceID;
+    protected URI gmsResourceID;
+    protected String cadcPrefix;
+    protected String doiParentPath;
 
     public DoiAction() { }
 
@@ -128,13 +129,18 @@ public abstract class DoiAction extends RestAction {
         return new DoiInlineContentHandler();
     }
     
-    protected void init(boolean authorize) throws URISyntaxException, UnknownHostException {
+    protected void init(boolean authorize)
+            throws URISyntaxException, UnknownHostException {
         // load doi properties
-        // this.config = DoiInitAction.getConfig();
-        this.cadcDataCitePrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_PREFIX_KEY);
-        this.vaultDOIParentPath = config.getFirstPropertyValue(DoiInitAction.VAULT_DOI_PARENT_PATH_KEY);
+        this.config = DoiInitAction.getConfig();
+        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
+        log.info("vaultResourceID="+vaultResourceID);
+        this.gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
+        log.info("gmsResourceID="+gmsResourceID);
+        this.cadcPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_CADC_PREFIX_KEY);
+        this.doiParentPath = config.getFirstPropertyValue(DoiInitAction.VAULT_DOI_PARENT_PATH_KEY);
 
-    	// get calling subject
+        // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
         log.debug("subject: " + callingSubject);
         if (authorize) {
@@ -145,7 +151,8 @@ public abstract class DoiAction extends RestAction {
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
-        this.vospaceDoiClient = new VospaceDoiClient(VAULT_SERVICE_URI, vaultDOIParentPath, callingSubject, includePublic);
+        this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, doiParentPath,
+                callingSubject, includePublic);
     }
 
     protected String getDoiFilename(String suffix) {
@@ -154,11 +161,12 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected VOSURI getVOSURI(String path) throws URISyntaxException {
-        return new VOSURI(VAULT_SERVICE_URI, String.format("%s/%s", vaultDOIParentPath, path));
+        return new VOSURI(vaultResourceID, String.format("%s/%s", doiParentPath, path));
     }
 
     protected GMSClient getGMSClient() {
-        return new GMSClient(GMS_SERVICE_URI);
+        URI gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
+        return new GMSClient(gmsResourceID);
     }
 
     protected Subject getAdminSubject() {

@@ -70,7 +70,6 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.doi.datacite.Creator;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.PublicationYear;
 import ca.nrc.cadc.doi.datacite.Resource;
@@ -83,7 +82,7 @@ public class CADCResource extends Resource {
     /**
      * CADCResource constructor.
      *
-     * Resource with a CADC specific Publisher and ResourceType.
+     * <p>Resource with a CADC specific Publisher and ResourceType.
      *
      * @param namespace       resource namespace
      * @param identifier      resource identifier

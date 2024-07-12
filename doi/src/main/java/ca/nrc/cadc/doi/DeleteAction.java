@@ -67,12 +67,8 @@
 
 package ca.nrc.cadc.doi;
 
-
 import ca.nrc.cadc.ac.ACIdentityManager;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.status.Status;
-import java.io.File;
 import java.security.AccessControlException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
@@ -80,7 +76,6 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.client.VOSpaceClient;
 
 
 public class DeleteAction extends DoiAction {
@@ -112,7 +107,7 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-        String doiPath = String.format("%s/%s", vaultDOIParentPath, doiSuffix);
+        String doiPath = String.format("%s/%s", doiParentPath, doiSuffix);
         ContainerNode doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
         
         // check to see if this user has permission

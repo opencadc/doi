@@ -72,31 +72,29 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.rest.InitAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 
 public class DoiInitAction extends InitAction {
     private static final Logger log = Logger.getLogger(DoiInitAction.class);
 
-//    public static final String DEFAULT_CONFIG_DIR = System.getProperty("user.home") + "/config/";
-    public static final String DOI_PROPERTIES_FILE = "doi.properties";
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
-
-    public static final String ADMIN_DN_KEY = DOI_KEY + ".adminDN";
-    public static final String METADATA_FILE_PREFIX_KEY = DOI_KEY + "metadataFilePrefix";
+    public static final String VAULT_RESOURCE_ID_KEY = DOI_KEY + ".vault.resourceID";
+    public static final String GMS_RESOURCE_ID_KEY = DOI_KEY + ".gms.resourceID";
+    public static final String METADATA_FILE_PREFIX_KEY = DOI_KEY + ".metadataFilePrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
     public static final String VAULT_DOI_PARENT_PATH_KEY = DOI_KEY + ".vault.doiParentPath";
-    public static final String DATACITE_PREFIX_KEY = DOI_KEY + ".datacite.prefix";
+    public static final String DATACITE_CADC_PREFIX_KEY = DOI_KEY + ".datacite.cadcPrefix";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
 
     // optional properties
-    public static final String DEFAULT_DOI_GROUP_URI_KEY = DOI_KEY + ".defaultDoiGroupURI";
+    public static final String TEST_RANDOM_NAME_KEY = DOI_KEY + ".test.randomName";
+    public static final String TEST_GROUP_URI_KEY = DOI_KEY + ".test.groupURI";
 
+    @Override
     public void doInit() {
         getConfig(true);
     }
@@ -106,58 +104,45 @@ public class DoiInitAction extends InitAction {
     }
 
     private static MultiValuedProperties getConfig(boolean verify) {
-        PropertiesReader reader = new PropertiesReader(DOI_PROPERTIES_FILE);
+        PropertiesReader reader = new PropertiesReader("doi.properties");
         MultiValuedProperties props = reader.getAllProperties();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("incomplete config: ");
         boolean ok = true;
 
-        String adminDN = props.getFirstPropertyValue(ADMIN_DN_KEY);
-        sb.append(String.format("\n\t%s: ", ADMIN_DN_KEY));
-        if (adminDN == null) {
+        String vaultServiceUri = props.getFirstPropertyValue(VAULT_RESOURCE_ID_KEY);
+        sb.append(String.format("\n\t%s: ", VAULT_RESOURCE_ID_KEY));
+        if (vaultServiceUri == null) {
             sb.append("MISSING");
             ok = false;
         } else if (verify) {
             try {
-                new X500Principal(adminDN);
+                new URI(vaultServiceUri);
                 sb.append("OK");
-            } catch (IllegalArgumentException e) {
-                sb.append("INVALID DISTINGUISHED NAME: ").append(e.getMessage());
+            } catch (URISyntaxException e) {
+                sb.append("INVALID VAULT SERVICE URI: ").append(e.getMessage());
                 ok = false;
             }
         } else {
             sb.append("OK");
         }
 
-//        String adminCert = props.getFirstPropertyValue(ADMIN_CERT_KEY);
-//        sb.append(String.format("\n\t%s: ", ADMIN_CERT_KEY));
-//        if (adminCert == null) {
-//            sb.append("MISSING");
-//            ok = false;
-//        } else if (verify) {
-//            File file = new File(DEFAULT_CONFIG_DIR + adminCert);
-//            if (!file.exists()) {
-//                sb.append("FILE NOT FOUND");
-//                ok = false;
-//            } else if (!file.canRead()) {
-//                sb.append("FILE NOT READABLE");
-//                ok = false;
-//            } else {
-//                sb.append("OK");
-//            }
-//        } else {
-//            sb.append("OK");
-//        }
-
-//        String groupPrefix = props.getFirstPropertyValue(GROUP_PREFIX_KEY);
-//        sb.append(String.format("\n\t%s: ", GROUP_PREFIX_KEY));
-//        if (groupPrefix == null) {
-//            sb.append("MISSING");
-//            ok = false;
-//        } else {
-//            sb.append("OK");
-//        }
+        String gmsServiceUri = props.getFirstPropertyValue(GMS_RESOURCE_ID_KEY);
+        sb.append(String.format("\n\t%s: ", GMS_RESOURCE_ID_KEY));
+        if (gmsServiceUri == null) {
+            sb.append("MISSING");
+            ok = false;
+        } else if (verify) {
+            try {
+                new URI(gmsServiceUri);
+                sb.append("OK");
+            } catch (URISyntaxException e) {
+                sb.append("INVALID GMS SERVICE URI: ").append(e.getMessage());
+                ok = false;
+            }
+        } else {
+            sb.append("OK");
+        }
 
         String metadataFilePrefix = props.getFirstPropertyValue(METADATA_FILE_PREFIX_KEY);
         sb.append(String.format("\n\t%s: ", METADATA_FILE_PREFIX_KEY));
@@ -167,15 +152,6 @@ public class DoiInitAction extends InitAction {
         } else {
             sb.append("OK");
         }
-
-//        String description = props.getFirstPropertyValue(DESCRIPTION_KEY);
-//        sb.append(String.format("\n\t%s: ", DESCRIPTION_KEY));
-//        if (description == null) {
-//            sb.append("MISSING");
-//            ok = false;
-//        } else {
-//            sb.append("OK");
-//        }
 
         String landingUrl = props.getFirstPropertyValue(LANDING_URL_KEY);
         sb.append(String.format("\n\t%s: ", LANDING_URL_KEY));
@@ -194,40 +170,6 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-//        String gmsResourceID = props.getFirstPropertyValue(GMS_RESOURCE_ID_KEY);
-//        sb.append(String.format("\n\t%s: ", GMS_RESOURCE_ID_KEY));
-//        if (gmsResourceID == null) {
-//            sb.append("MISSING");
-//            ok = false;
-//        } else if (verify) {
-//            try {
-//                new URI(gmsResourceID);
-//                sb.append("OK");
-//            } catch (URISyntaxException e) {
-//                sb.append("INVALID URI");
-//                ok = false;
-//            }
-//        } else {
-//            sb.append("OK");
-//        }
-
-//        String vaultResourceID = props.getFirstPropertyValue(VAULT_RESOURCE_ID_KEY);
-//        sb.append(String.format("\n\t%s: ", VAULT_RESOURCE_ID_KEY));
-//        if (vaultResourceID == null) {
-//            sb.append("MISSING");
-//            ok = false;
-//        } else if (verify) {
-//            try {
-//                new URI(vaultResourceID);
-//                sb.append("OK");
-//            } catch (URISyntaxException e) {
-//                sb.append("INVALID URI");
-//                ok = false;
-//            }
-//        } else {
-//            sb.append("OK");
-//        }
-
         String parentPath = props.getFirstPropertyValue(VAULT_DOI_PARENT_PATH_KEY);
         sb.append(String.format("\n\t%s: ", VAULT_DOI_PARENT_PATH_KEY));
         if (parentPath == null) {
@@ -237,8 +179,8 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-        String cadcPrefix = props.getFirstPropertyValue(DATACITE_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_PREFIX_KEY));
+        String cadcPrefix = props.getFirstPropertyValue(DATACITE_CADC_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", DATACITE_CADC_PREFIX_KEY));
         if (cadcPrefix == null) {
             sb.append("MISSING");
             ok = false;
@@ -263,22 +205,23 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-//        String testSuffix = props.getFirstPropertyValue(TEST_SUFFIX_KEY);
-//        sb.append(String.format("\n\t%s: ", TEST_SUFFIX_KEY));
-//        if (testSuffix == null) {
-//            sb.append("MISSING");
-//            ok = false;
-//        } else {
-//            sb.append("OK");
-//        }
+        // optional properties
+        String testRandomName = props.getFirstPropertyValue(TEST_RANDOM_NAME_KEY);
+        sb.append(String.format("\n\t%s: ", TEST_RANDOM_NAME_KEY));
+        if (testRandomName == null) {
+            sb.append("MISSING");
+        } else {
+            sb.append("OK");
+        }
 
-        // optional property
-        String defaultDoiGroupURI = props.getFirstPropertyValue(DEFAULT_DOI_GROUP_URI_KEY);
-        if (defaultDoiGroupURI != null) {
-            sb.append(String.format("\n\t%s: ", DEFAULT_DOI_GROUP_URI_KEY));
+        String testGroupURI = props.getFirstPropertyValue(TEST_GROUP_URI_KEY);
+        sb.append(String.format("\n\t%s: ", TEST_GROUP_URI_KEY));
+        if (testGroupURI == null) {
+            sb.append("MISSING");
+        } else {
             if (verify) {
                 try {
-                    new URI(defaultDoiGroupURI);
+                    new URI(testGroupURI);
                     sb.append("OK");
                 } catch (URISyntaxException e) {
                     sb.append("INVALID URI");
@@ -288,9 +231,10 @@ public class DoiInitAction extends InitAction {
                 sb.append("OK");
             }
         }
+        log.info(sb.toString());
 
         if (!ok) {
-            throw new IllegalStateException(sb.toString());
+            throw new IllegalStateException("incomplete config: " + sb.toString());
         }
         return props;
     }

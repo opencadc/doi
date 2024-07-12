@@ -64,6 +64,7 @@
  *
  ************************************************************************
  */
+
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.auth.AuthMethod;
@@ -71,13 +72,13 @@ import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.vosi.AvailabilityPlugin;
+import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.vosi.Availability;
+import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
 import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -89,7 +90,6 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
     private static final Logger log = Logger.getLogger(ServiceAvailability.class);
 
-    private static final String DATACITE_URL = "https://mds.datacite.org";
     private static final File DOIADMIN_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
     private static final File AAI_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
 
@@ -110,17 +110,20 @@ public class ServiceAvailability implements AvailabilityPlugin {
         boolean isGood = true;
         String note = "service is accepting requests";
         try {
+            MultiValuedProperties config = DoiInitAction.getConfig();
+            URI vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
+            log.debug("vault resourceID: " + vaultResourceID);
+
             // check other services we depend on (vault, gms, datacite)
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
 
-            log.debug("vaultURI: " + DoiAction.VAULT_SERVICE_URI);
-            URL vaultURL = reg.getServiceURL(DoiAction.VAULT_SERVICE_URI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            URL vaultURL = reg.getServiceURL(vaultResourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             if (vaultURL != null) {
                 CheckResource checkResource = new CheckWebService(vaultURL);
                 checkResource.check();
             } else {
-                log.debug("check skipped: " + DoiAction.VAULT_SERVICE_URI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                log.debug("check skipped: " + vaultResourceID + " does not provide " + Standards.VOSI_AVAILABILITY);
             }
 
             URI credURI = null;
@@ -141,7 +144,8 @@ public class ServiceAvailability implements AvailabilityPlugin {
             URI usersURI = null;
             try {
                 usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_10.toString());
-                URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                log.debug("usersURI: " + usersURI.toASCIIString());
+                URL url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
                 if (url != null) {
                     CheckResource checkResource = new CheckWebService(url);
                     checkResource.check();
@@ -186,7 +190,8 @@ public class ServiceAvailability implements AvailabilityPlugin {
             }
 
             // check that datacite is available
-            URL docURL = new URL(DATACITE_URL);
+            String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
+            URL docURL = new URL(dataCiteUrl);
             HttpGet get = new HttpGet(docURL, true);
             get.setHeadOnly(true);
             get.setConnectionTimeout(9000);
@@ -198,7 +203,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
                     + ": " + get.getThrowable().getMessage());
             }
             if (responseCode != 200) {
-                throw new RuntimeException("response code from " + DATACITE_URL + ": " + responseCode);
+                throw new RuntimeException("response code from " + dataCiteUrl + ": " + responseCode);
             }
         } catch (CheckException ce) {
             // tests determined that the resource is not working
