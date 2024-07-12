@@ -75,21 +75,31 @@ import ca.nrc.cadc.doi.datacite.ContributorName;
 import ca.nrc.cadc.doi.datacite.ContributorType;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
+import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
 import ca.nrc.cadc.doi.datacite.Date;
+import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.DescriptionType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Language;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
+import ca.nrc.cadc.doi.datacite.NameType;
 import ca.nrc.cadc.doi.datacite.PublicationYear;
 import ca.nrc.cadc.doi.datacite.Publisher;
 import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
+import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
+import ca.nrc.cadc.doi.datacite.RelationType;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Size;
 import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.doi.datacite.TitleType;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +109,7 @@ import org.junit.Assert;
 /**
  *
  */
-public class BaseTest {
+public class TestBase {
 
     List<Path> getTestFiles(final String path) {
         if (path == null) {
@@ -112,15 +122,308 @@ public class BaseTest {
         return Stream.of(testDir.listFiles()).filter(file -> !file.isDirectory()).map(File::toPath).collect(Collectors.toList());
     }
 
+
+    /**
+     * Methods to build a resource for testing.
+     * <resource xmlns="http://datacite.org/schema/kernel-4">
+     *   <identifier identifierType="DOI">10.80791/6mtxj-tqwh1.test</identifier>
+     *   <creators>
+     *     <creator>
+     *       <creatorName nameType="Organizational" xml:lang="en-GB">One, Foo</creatorName>
+     *       <givenName>Jill</givenName>
+     *       <familyName>Smith</familyName>
+     *       <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://orcid.org/">0000-0001-5000-0007</nameIdentifier>
+     *       <affiliation affiliationIdentifier="https://ror.org/04wxnsj81" affiliationIdentifierScheme="ROR" schemeURI="https://ror.org">DataCite</affiliation>
+     *     </creator>
+     *   </creators>
+     *   <titles>
+     *     <title titleType="Subtitle">Test title One</title>
+     *   </titles>
+     *   <publisher>CADC</publisher>
+     *   <publicationYear>1999</publicationYear>
+     *   <resourceType resourceTypeGeneral="Dataset">XML</resourceType>
+     *   <dates>
+     *     <date dateType="Created">2024-07-02</date>
+     *   </dates>
+     * </resource>
+     */
+    Resource getTestResource(boolean optionalProperties, boolean optionalAttributes, boolean intTestProperties) {
+
+        Namespace namespace = getNamespace();
+        Identifier identifier = getIdentifier();
+        List<Creator> creators = getCreators(optionalProperties, optionalAttributes);
+        List<Title> titles = getTitles(optionalProperties, optionalAttributes);
+        Publisher publisher = getPublisher(optionalProperties);
+        PublicationYear publicationYear = getPublicationYear();
+        ResourceType resourceType = getResourceType();
+
+        Resource resource =  new Resource(namespace, identifier, creators, titles, publisher, publicationYear, resourceType);
+
+        if (optionalProperties) {
+            resource.contributors = getContributors(optionalAttributes);
+            resource.dates = getDates(optionalAttributes);
+            resource.sizes = getSizes(optionalAttributes);
+            resource.language = getLanguage();
+            resource.relatedIdentifiers = getRelatedIdentifiers(optionalAttributes);
+            resource.rightsList = getRightsList(optionalAttributes);
+            resource.descriptions = getDescriptions(optionalAttributes);
+            if (!intTestProperties) {
+
+            }
+        }
+        return resource;
+    }
+
+    protected Namespace getNamespace() {
+        return Namespace.getNamespace("http://datacite.org/schema/kernel-4");
+    }
+
+    // required
+    protected Identifier getIdentifier() {
+        return new Identifier("10.5072/example", "DOI");
+    }
+
+    protected List<Creator> getCreators(boolean optionalProperties, boolean optionalAttributes) {
+        List<Creator> creators = new ArrayList<>();
+        Creator creatorOne = new Creator(getCreatorName("One, Foo", optionalAttributes));
+        if (optionalAttributes) {
+            creatorOne.givenName = "Jill";
+            creatorOne.familyName = "Smith";
+            creatorOne.nameIdentifier = getNameIdentifier(optionalAttributes);
+            creatorOne.affiliation = getAffiliation(optionalAttributes);
+        }
+        creators.add(creatorOne);
+        if (optionalProperties) {
+            Creator creatorTwo = new Creator(getCreatorName("Two, Foo", optionalAttributes));
+            if (optionalAttributes) {
+                creatorTwo.givenName = "Jack";
+                creatorTwo.familyName = "Jones";
+                creatorTwo.nameIdentifier = getNameIdentifier(optionalAttributes);
+                creatorTwo.affiliation = getAffiliation(optionalAttributes);
+            }
+            creators.add(creatorTwo);
+        }
+        return creators;
+    }
+
+    protected CreatorName getCreatorName(String value, boolean optionalAttributes) {
+        CreatorName creatorName = new CreatorName(value);
+        if (optionalAttributes) {
+            creatorName.nameType = NameType.ORGANIZATIONAL;
+            creatorName.lang = "en-GB";
+        }
+        return creatorName;
+    }
+
+    protected List<Title> getTitles(boolean optionalProperties, boolean optionalAttributes) {
+        List<Title> titles = new ArrayList<>();
+        Title titleOne = new Title("Test title One");
+        if (optionalAttributes) {
+            titleOne.titleType = TitleType.SUBTITLE;
+        }
+        titles.add(titleOne);
+        if (optionalProperties) {
+            Title other = new Title("Test title Two");
+            if (optionalAttributes) {
+                other.titleType = TitleType.ALTERNATIVE_TITLE;
+            }
+            titles.add(other);
+        }
+        return titles;
+    }
+
+    protected Publisher getPublisher(boolean optionalAttributes) {
+        Publisher publisher = new CADCPublisher();
+        if (optionalAttributes) {
+            publisher.publisherIdentifier = "https://ror.org/04z8jg394";
+            publisher.publisherIdentifierScheme = "ROR";
+            publisher.schemeURI = URI.create("https://ror.org/");
+            publisher.lang = "en";
+        }
+        return publisher;
+    }
+
+    protected PublicationYear getPublicationYear() {
+        return new PublicationYear("1999");
+    }
+
+    protected ResourceType getResourceType() {
+        ResourceType resourceType = new CADCResourceType();
+        resourceType.value = "XML";
+        return resourceType;
+    }
+
+    // optional
+    protected List<Contributor> getContributors(boolean optionalAttributes) {
+        List<Contributor> contributors = new ArrayList<>();
+        ContributorName contributorNameOne = new ContributorName("Test ContributorName One");
+        if (optionalAttributes) {
+            contributorNameOne.nameType = NameType.ORGANIZATIONAL;
+        }
+        Contributor contributorOne = new Contributor(contributorNameOne, ContributorType.RESEARCHER);
+        if (optionalAttributes) {
+            contributorOne.givenName = "Given Name One";
+            contributorOne.familyName = "Family Name One";
+            contributorOne.nameIdentifier = getNameIdentifier(optionalAttributes);
+            contributorOne.affiliation = getAffiliation(optionalAttributes);
+        }
+        contributors.add(contributorOne);
+        ContributorName contributorNameTwo = new ContributorName("Test ContributorName Two");
+        if (optionalAttributes) {
+            contributorNameTwo.nameType = NameType.ORGANIZATIONAL;
+        }
+        Contributor contributorTwo = new Contributor(contributorNameTwo, ContributorType.RESEARCHER);
+        if (optionalAttributes) {
+            contributorTwo.givenName = "Given Name Two";
+            contributorTwo.familyName = "Family Name Two";
+            contributorTwo.nameIdentifier = getNameIdentifier(optionalAttributes);
+            contributorTwo.affiliation = getAffiliation(optionalAttributes);
+        }
+        contributors.add(contributorTwo);
+        return contributors;
+    }
+
+    protected List<Date> getDates(boolean optionalAttributes) {
+        List<Date> dates = new ArrayList<>();
+        String createdDate = new SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+        Date date = new Date(createdDate, DateType.CREATED);
+        if (optionalAttributes) {
+            date.dateInformation = "Date Info One";
+        }
+        dates.add(date);
+        Date other = new Date("2000-05-02", DateType.UPDATED);
+        if (optionalAttributes) {
+            other.dateInformation = "Date Info Two";
+        }
+        dates.add(other);
+        return dates;
+    }
+
+    protected Language getLanguage() {
+        return new Language("en-US");
+    }
+
+    protected List<RelatedIdentifier> getRelatedIdentifiers(boolean optionalAttributes) {
+        List<RelatedIdentifier> identifiers = new ArrayList<>();
+        RelatedIdentifier identifier = new RelatedIdentifier("Related Identifier One",
+                RelatedIdentifierType.URL, RelationType.IS_PUBLISHED_IN);
+        if (optionalAttributes) {
+            identifier.resourceTypeGeneral = DataCiteResourceType.CONFERENCE_PAPER;
+            identifier.relatedMetadataScheme = "Related Metadata Scheme One";
+            identifier.schemeURI = URI.create("http://example.com/one");
+            identifier.schemeType = "Scheme Type One";
+        }
+        identifiers.add(identifier);
+        if (optionalAttributes) {
+            RelatedIdentifier other = new RelatedIdentifier("Related Identifier Two",
+                    RelatedIdentifierType.ARK, RelationType.IS_REVIEWED_BY);
+            other.resourceTypeGeneral = DataCiteResourceType.INTERACTIVE_RESOURCE;
+            other.relatedMetadataScheme = "Related Metadata Scheme Two";
+            other.schemeURI = URI.create("http://example.com/two");
+            other.schemeType = "Scheme Type Two";
+            identifiers.add(other);
+        }
+        return identifiers;
+    }
+
+    protected List<Size> getSizes(boolean optionalAttributes) {
+        List<Size> sizes = new ArrayList<>();
+        sizes.add(new Size("1024 KB"));
+        if (optionalAttributes) {
+            sizes.add(new Size("43"));
+        }
+        return sizes;
+    }
+
+    protected List<Rights> getRightsList(boolean optionalAttributes) {
+        List<Rights> rightsList = new ArrayList<>();
+        rightsList.add(getRights("One", optionalAttributes));
+        rightsList.add(getRights("Two", optionalAttributes));
+        return rightsList;
+    }
+
+    protected Rights getRights(String value, boolean optionalAttributes) {
+        Rights rights = new Rights(value);
+        if (optionalAttributes) {
+            rights.rightsURI = URI.create("https://creativecommons.org/licenses/by/4.0/" + value);
+            rights.rightsIdentifier = "CC-BY-4.0-" + value;
+            rights.rightsIdentifierScheme = "ROR-" + value;
+            rights.schemeURI = URI.create("https://spdx.org/licenses/" + value);
+            rights.lang = "en-US";
+        }
+        return rights;
+    }
+
+    protected List<Description> getDescriptions(boolean optionalAttributes) {
+        List<Description> descriptions = new ArrayList<>();
+        Description descriptionOne = new Description("Description One", DescriptionType.ABSTRACT);
+        if (optionalAttributes) {
+            descriptionOne.lang = "en-US";
+        }
+        descriptions.add(descriptionOne);
+        if (optionalAttributes) {
+            Description descriptionTwo = new Description("Description Two", DescriptionType.OTHER);
+            descriptionTwo.lang = "en-GB";
+            descriptions.add(descriptionTwo);
+        }
+        return descriptions;
+    }
+
+    protected NameIdentifier getNameIdentifier(boolean optionalAttributes) {
+        NameIdentifier nameIdentifier = new NameIdentifier("0000-0001-5000-0007", "ORCID");
+        if (optionalAttributes) {
+            nameIdentifier.schemeURI = URI.create("http://orcid.org/");
+        }
+        return nameIdentifier;
+    }
+
+    protected Affiliation getAffiliation(boolean optionalAttributes) {
+        Affiliation affiliation = new Affiliation("DataCite");
+        if (optionalAttributes) {
+            affiliation.affiliationIdentifier = "https://ror.org/04wxnsj81";
+            affiliation.affiliationIdentifierScheme = "ROR";
+            affiliation.schemeURI = URI.create("https://ror.org");
+        }
+        return affiliation;
+    }
+
+    /*
+     * Method to update a resource from another resource.
+     *
+     * Resource resource =  new Resource(namespace, identifier, creators, titles, publisher, publicationYear, resourceType);
+
+        if (optionalProperties) {
+            resource.contributors = getContributors(optionalAttributes);
+            resource.dates = getDates(optionalAttributes);
+            resource.sizes = getSizes(optionalAttributes);
+            resource.language = getLanguage();
+            resource.relatedIdentifiers = getRelatedIdentifiers(optionalAttributes);
+            resource.rightsList = getRightsList(optionalAttributes);
+            resource.descriptions = getDescriptions(optionalAttributes);
+        }
+     */
+    void updateResource(Resource destination, Resource source) {
+
+    }
+
+    /*
+     * Methods to compare resource children.
+     */
     void compareResource(Resource expected, Resource actual) {
+        compareResource(expected, actual,true);
+    }
+
+    void compareResource(Resource expected, Resource actual, boolean compareIdentifier) {
         // required
         compareNamespace(expected.getNamespace(), actual.getNamespace());
-        compareIdentifier(expected.getIdentifier(), actual.getIdentifier());
+        if (compareIdentifier) {
+            compareIdentifier(expected.getIdentifier(), actual.getIdentifier());
+        }
         compareCreators(expected.getCreators(), actual.getCreators());
         compareTitles(expected.getTitles(), actual.getTitles());
         comparePublisher(expected.getPublisher(), actual.getPublisher());
         comparePublicationYear(expected.getPublicationYear(), actual.getPublicationYear());
-        compareDoiResourceType(expected.getResourceType(),actual.getResourceType());
+        compareResourceType(expected.getResourceType(),actual.getResourceType());
 
         // optional
         compareContributors(expected.contributors, actual.contributors);
@@ -209,11 +512,11 @@ public class BaseTest {
         Assert.assertEquals(expected.getValue(), actual.getValue());
     }
 
-    void compareDoiResourceType(ResourceType expected, ResourceType actual) {
+    void compareResourceType(ResourceType expected, ResourceType actual) {
         Assert.assertNotNull("expected ResourceType is null", expected);
         Assert.assertNotNull("actual ResourceType is null", actual);
         Assert.assertEquals(expected.getResourceTypeGeneral(), actual.getResourceTypeGeneral());
-        Assert.assertEquals(expected.text, actual.text);
+        Assert.assertEquals(expected.value, actual.value);
     }
 
     void compareContributors(List<Contributor> expected, List<Contributor> actual) {
@@ -288,7 +591,7 @@ public class BaseTest {
         Assert.assertEquals(expected.getValue(), actual.getValue());
         Assert.assertEquals(expected.getRelatedIdentifierType(), actual.getRelatedIdentifierType());
         Assert.assertEquals(expected.getRelationType(), actual.getRelationType());
-        Assert.assertEquals(expected.dataCiteResourceTypeGeneral, actual.dataCiteResourceTypeGeneral);
+        Assert.assertEquals(expected.resourceTypeGeneral, actual.resourceTypeGeneral);
         Assert.assertEquals(expected.relatedMetadataScheme, actual.relatedMetadataScheme);
         Assert.assertEquals(expected.schemeURI, actual.schemeURI);
         Assert.assertEquals(expected.schemeType, actual.schemeType);

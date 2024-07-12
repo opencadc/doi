@@ -75,6 +75,7 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.util.Log4jInit;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Random;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;

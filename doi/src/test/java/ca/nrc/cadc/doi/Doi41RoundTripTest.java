@@ -69,18 +69,24 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Affiliation;
+import ca.nrc.cadc.doi.datacite.CreatorName;
+import ca.nrc.cadc.doi.datacite.NameType;
+import ca.nrc.cadc.doi.datacite.Publisher;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.io.DoiJsonReader;
 import ca.nrc.cadc.doi.io.DoiJsonWriter;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class Doi41RoundTripTest extends TestBase {
+public class Doi41RoundTripTest extends Doi45RoundTripTest {
     private static final Logger log = Logger.getLogger(Doi41RoundTripTest.class);
 
     static {
@@ -89,60 +95,51 @@ public class Doi41RoundTripTest extends TestBase {
 
     @Test
     public void xmlMinSchemaTest() {
-        doXMLTest(false);
+        doXMLTest(false, false);
     }
 
     @Test
     public void xmlFullSchemaTest() {
-        doXMLTest(true);
+        doXMLTest(true, true);
     }
 
     @Test
     public void jsonMinSchemaTest() {
-        doJSONTest(false);
+        doJSONTest(false, false);
     }
 
     @Test
     public void jsonFullSchemaTest() {
-        doJSONTest(true);
+        doJSONTest(true, true);
     }
 
-    void doXMLTest(boolean full) {
-        try {
-            Resource expected = getTestResource(full);
-            StringBuilder sb = new StringBuilder();
-
-            DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(expected, sb);
-            log.debug(sb.toString());
-
-            DoiXmlReader reader = new DoiXmlReader();
-            Resource actual = reader.read(sb.toString());
-
-            compareResource(expected, actual);
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail(e.getMessage());
+    @Override
+    protected CreatorName getCreatorName(String value, boolean optionalAttributes) {
+        CreatorName creatorName = new CreatorName(value);
+        if (optionalAttributes) {
+            creatorName.nameType = NameType.ORGANIZATIONAL;
         }
+        return creatorName;
     }
 
-    void doJSONTest(boolean full) {
-        try {
-            Resource expected = getTestResource(full);
-            StringBuilder sb = new StringBuilder();
+    @Override
+    protected Publisher getPublisher(boolean full) {
+        return new CADCPublisher();
+    }
 
-            DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(expected, sb);
-            log.debug(sb.toString());
-
-            DoiJsonReader reader = new DoiJsonReader();
-            Resource actual = reader.read(sb.toString());
-
-            compareResource(expected, actual);
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail(e.getMessage());
+    @Override
+    protected Rights getRights(String value, boolean full) {
+        Rights rights = new Rights(value);
+        if (full) {
+            rights.rightsURI = URI.create("http://example.com/" + value);
+            rights.lang = "en-US";
         }
+        return rights;
+    }
+
+    @Override
+    protected Affiliation getAffiliation(boolean full) {
+        return new Affiliation("DataCite");
     }
 
 }
