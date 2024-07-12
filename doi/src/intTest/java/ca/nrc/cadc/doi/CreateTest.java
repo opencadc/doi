@@ -69,11 +69,11 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatus;
+import ca.nrc.cadc.doi.status.DoiStatusJsonReader;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
@@ -101,18 +101,17 @@ public class CreateTest extends IntTestBase {
     static final String JSON = "application/json";
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+//        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
     }
 
     @Test
     public void createDOIAndStatusTest() {
         try {
-            final Subject testSubject = SSLUtil.createSubject(CADCAuthTest1Cert);
-            Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
                 // create new doi
-                Resource testResource = getTestResource(true);
+                Resource testResource = getTestResource(false, true, true);
                 String testXML = getResourceXML(testResource);
 
                 String doiSuffix = null;
@@ -122,8 +121,8 @@ public class CreateTest extends IntTestBase {
                     DoiXmlReader reader = new DoiXmlReader();
                     Resource persistedResource = reader.read(persistedXml);
 
-                    String testIdentifier = testResource.getIdentifier().getText();
-                    String persistedIdentifier = persistedResource.getIdentifier().getText();
+                    String testIdentifier = testResource.getIdentifier().getValue();
+                    String persistedIdentifier = persistedResource.getIdentifier().getValue();
                     Assert.assertNotEquals("New identifier not received from doi service.",
                             testIdentifier, persistedIdentifier);
                     doiSuffix = getDOISuffix(persistedIdentifier);
@@ -134,34 +133,37 @@ public class CreateTest extends IntTestBase {
                     HttpGet get = new HttpGet(doiURL, bos);
                     get.setRequestProperty("Accept", JSON);
                     get.prepare();
-                    Assert.assertNull("GET error: " + get.getThrowable().getMessage(), get.getThrowable());
+                    Assert.assertNull("GET exception", get.getThrowable());
                     Assert.assertEquals(JSON, get.getContentType());
 
                     // Get the DOI status
                     URL statusURL = new URL(String.format("%s/%s", doiURL, DoiAction.STATUS_ACTION));
-                    bos = new ByteArrayOutputStream();
-                    HttpGet getStatus = new HttpGet(statusURL, bos);
-                    getStatus.prepare();
-                    Assert.assertNull("GET exception: " + get.getThrowable().getMessage(), get.getThrowable());
+                    log.debug("statusURL: " + statusURL);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    HttpGet getStatus = new HttpGet(statusURL, baos);
+                    getStatus.run();
+                    Assert.assertNull("GET exception", get.getThrowable());
+                    String status = baos.toString(StandardCharsets.UTF_8);
+                    log.debug("status: " + status);
 
                     DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
-                    DoiStatus doiStatus = statusReader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
+                    DoiStatus doiStatus = statusReader.read(new StringReader(status));
 
                     Assert.assertEquals("identifier mismatch",
-                            persistedIdentifier, doiStatus.getIdentifier().getText());
+                            persistedIdentifier, doiStatus.getIdentifier().getValue());
                     String expectedDataDirectory = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
                     Assert.assertEquals("dataDirectory mismatch",
                             expectedDataDirectory, doiStatus.getDataDirectory());
                     Title expectedTitle = testResource.getTitles().get(0);
                     Assert.assertEquals("title mismatch",
-                            expectedTitle.getText(), doiStatus.getTitle().getText());
+                            expectedTitle.getValue(), doiStatus.getTitle().getValue());
                     Assert.assertEquals("status mismatch",
                             Status.DRAFT, doiStatus.getStatus());
                     Assert.assertEquals("journalRef mismatch",
                             TEST_JOURNAL_REF, doiStatus.journalRef);
                 } finally {
                     if (doiSuffix != null) {
-                        cleanup(doiSuffix);
+//                        cleanup(doiSuffix);
                     }
                 }
                 return null;
@@ -175,23 +177,22 @@ public class CreateTest extends IntTestBase {
 
     @Test
     public void testGetStatusList() {
-        List<String> testDOIList = new ArrayList<String>();
+        List<String> testDOIList = new ArrayList<>();
         try {
             // create test DOI's
-            Subject testSubject = SSLUtil.createSubject(CADCAuthTest1Cert);
-            testDOIList.add(createDOI(testSubject));
-            testDOIList.add(createDOI(testSubject));
-            testDOIList.add(createDOI(testSubject));
+            testDOIList.add(createDOI(readWriteSubject));
+            testDOIList.add(createDOI(readWriteSubject));
+            testDOIList.add(createDOI(readWriteSubject));
 
             // invoke the doi list service
-            List<DoiStatus> doiStatusList = getDoiStatusList();
+            List<DoiStatus> doiStatusList = getDoiStatusList(readWriteSubject);
             Assert.assertEquals("test DOI list and status DOI list mismatch",
                     testDOIList.size(), doiStatusList.size());
 
             for (String doiSuffix : testDOIList) {
                 boolean found = false;
                 for (DoiStatus doiStatus : doiStatusList) {
-                    if (doiSuffix.equals(doiStatus.getIdentifier().getText())) {
+                    if (doiSuffix.equals(doiStatus.getIdentifier().getValue())) {
                         Assert.assertEquals("expected DOI status DRAFT",
                                 Status.DRAFT, doiStatus.getStatus());
                         String dataDirectory = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
@@ -215,14 +216,14 @@ public class CreateTest extends IntTestBase {
         }
     }
 
-    private List<DoiStatus> getDoiStatusList()
+    private List<DoiStatus> getDoiStatusList(Subject testSubject)
             throws PrivilegedActionException {
-        Subject testSubject = SSLUtil.createSubject(CADCAuthTest1Cert);
+        // TODO readWriteSubject
         return Subject.doAs(testSubject, (PrivilegedExceptionAction<List<DoiStatus>>) () -> {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpGet get = new HttpGet(doiServiceURL, bos);
             get.setRequestProperty("Accept", "text/xml");
-            get.prepare();
+            get.run();
             DoiStatusListXmlReader reader = new DoiStatusListXmlReader();
             return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
         });

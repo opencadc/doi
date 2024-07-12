@@ -107,8 +107,6 @@ public class MintTest extends IntTestBase {
         Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
-    final Subject testSubject = SSLUtil.createSubject(CADCAuthTest1Cert);
-    final Subject doiadminSubject = SSLUtil.createSubject(DOIAdminCert);
     static final String JSON = "application/json";
 
     private ContainerNode doiParentNode;
@@ -116,15 +114,15 @@ public class MintTest extends IntTestBase {
     // test minting DOI instance
     @Test
     public void testMintingDocument() throws Throwable {
-        final Resource testResource = getTestResource(true);
+        final Resource testResource = getTestResource(false, true, true);
         final String testXML = getResourceXML(testResource);
-        Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+        Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
             // Create the test DOI document in VOSpace
             String persistedXML = postDOI(doiServiceURL, testXML, TEST_JOURNAL_REF);
             DoiXmlReader reader = new DoiXmlReader();
             Resource presistedResource = reader.read(persistedXML);
-            String expectedIdentifier = presistedResource.getIdentifier().getText();
-            Assert.assertNotEquals("New identifier not received from doi service.", testResource.getIdentifier().getText(), expectedIdentifier);
+            String expectedIdentifier = presistedResource.getIdentifier().getValue();
+            Assert.assertNotEquals("New identifier not received from doi service.", testResource.getIdentifier().getValue(), expectedIdentifier);
 
             // Pull the suffix from the identifier
             String doiSuffix = expectedIdentifier.split("/")[1];
@@ -136,7 +134,7 @@ public class MintTest extends IntTestBase {
                 // Verify that the DOI document was created successfully
                 DoiStatus doiStatus = getStatus(doiURL);
                 Assert.assertEquals("identifier from DOI status is different", expectedIdentifier,
-                        doiStatus.getIdentifier().getText());
+                        doiStatus.getIdentifier().getValue());
                 Assert.assertEquals("status is incorrect", Status.DRAFT, doiStatus.getStatus());
                 Assert.assertEquals("journalRef is incorrect", TEST_JOURNAL_REF, doiStatus.journalRef);
 
@@ -181,7 +179,7 @@ public class MintTest extends IntTestBase {
 
                 // getStatus() changes LOCKING_DATA == > LOCKED_DATA
                 doiStatus = getStatus(doiURL);
-                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getText());
+                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getValue());
                 Assert.assertEquals("status is incorrect", Status.LOCKED_DATA, doiStatus.getStatus());
                 verifyLockedDataPropertyChanges(doiContainerNode, dataContainerNode, dataSubDirContainerNode);
 
@@ -198,7 +196,7 @@ public class MintTest extends IntTestBase {
                 // by doiadmin, so changes to it must be done with that cert.
                 doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
                 doiParentNode = doiContainerNode;
-                Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                Subject.doAs(adminSubject, new PrivilegedExceptionAction<Object>() {
                     @Override
                     public String run() throws Exception {
                         VOSURI parentVOSURI = getVOSURI(doiParentNode.getName());
@@ -216,7 +214,7 @@ public class MintTest extends IntTestBase {
 
                 // getStatus() changes REGISTERING == > MINTED
                 doiStatus = getStatus(doiURL);
-                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getText());
+                Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getValue());
                 Assert.assertEquals("status is incorrect", Status.MINTED, doiStatus.getStatus());
 
                 // verify the DOI containerNode properties
@@ -229,7 +227,7 @@ public class MintTest extends IntTestBase {
                 // node owner is doiadmin, and after minting the group permissions are removed, so
                 // cleanup needs to be done as doiadmin, not the test subject
 
-                Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+                Subject.doAs(adminSubject, new PrivilegedExceptionAction<Object>() {
                     @Override
                     public String run() throws Exception {
 
@@ -260,7 +258,7 @@ public class MintTest extends IntTestBase {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpGet get = new HttpGet(statusURL, bos);
         get.prepare();
-        Assert.assertNull("GET exception: " + get.getThrowable().getMessage(), get.getThrowable());
+        Assert.assertNull("GET exception", get.getThrowable());
         DoiStatusXmlReader reader = new DoiStatusXmlReader();
         return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
     }
@@ -323,18 +321,18 @@ public class MintTest extends IntTestBase {
 
     private ContainerNode createContainerNode(String path, String name) throws Exception {
         ContainerNode node = new ContainerNode(name);
-        VOSURI nodeURI = new VOSURI(DoiAction.VAULT_SERVICE_URI, path);
+        VOSURI nodeURI = getVOSURI(path);
         return (ContainerNode) vosClient.createNode(nodeURI, node);
     }
 
     private DataNode createDataNode(String path, String name) throws Exception {
         DataNode node = new DataNode(name);
-        VOSURI nodeURI = new VOSURI(DoiAction.VAULT_SERVICE_URI, path);
+        VOSURI nodeURI = getVOSURI(path);
         return (DataNode) vosClient.createNode(nodeURI, node);
     }
     
     private void setDataNodeRecursively(String doiSuffix) throws Exception {
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
+        Subject.doAs(adminSubject, new PrivilegedExceptionAction<Object>() {
             @Override
             public String run() throws Exception {
                 VOSURI vosuri = getVOSURI(String.format("%s/data", doiSuffix));

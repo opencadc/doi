@@ -84,7 +84,6 @@ import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
@@ -111,16 +110,11 @@ import org.opencadc.vospace.client.async.RecursiveDeleteNode;
 public abstract class IntTestBase extends TestBase {
     private static final Logger log = Logger.getLogger(IntTestBase.class);
 
-    public static final URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
-    public static final URI GMS_RESOURCE_ID = URI.create("gms://opencadc.org/gms");
-    public static final URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
-
     static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
-    static final String NEW_JOURNAL_REF = "2018, Test Journal ref. ApJ 2000,200";
 
-    static File CADCAuthTest1Cert;
-    static File CADCRegTest1Cert;
-    static File DOIAdminCert;
+    static Subject adminSubject;
+    static Subject readWriteSubject;
+    static Subject readOnlySubject;
     static URL doiServiceURL;
     static VOSpaceClient vosClient;
     static GMSClient gmsClient;
@@ -132,33 +126,24 @@ public abstract class IntTestBase extends TestBase {
 
     @BeforeClass
     public static void staticInit() throws Exception {
-        // CadcAuthtest1 has read/write access to DOI
-        // CadcRegtest1 has read only access to DOI
-        CADCAuthTest1Cert = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", IntTestBase.class);
-        CADCRegTest1Cert = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", IntTestBase.class);
-        DOIAdminCert = FileUtil.getFileFromResource("doiadmin.pem", IntTestBase.class);
+        adminSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.ADMIN_CERT, IntTestBase.class));
+        readWriteSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.READ_WRITE_CERT, IntTestBase.class));
+        readOnlySubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.READ_ONLY_CERT, IntTestBase.class));
 
         RegistryClient regClient = new RegistryClient();
-        doiServiceURL = regClient.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-
-        doiParentPathURI = new VOSURI(VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
-
-        vosClient = new VOSpaceClient(VAULT_RESOURCE_ID);
-        gmsClient = new GMSClient(GMS_RESOURCE_ID);
-    }
-
-    @Before
-    public void before() {
-
+        doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
+        vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
+        gmsClient = new GMSClient(TestUtil.GMS_RESOURCE_ID);
+        doiParentPathURI = new VOSURI(TestUtil.VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
     }
 
     protected VOSURI getVOSURI(String path) {
-        return new VOSURI(VAULT_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
+        return new VOSURI(TestUtil.VAULT_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
     }
 
-    protected String getDoiFilename(String doiSuffix) {
-        return String.format("%s%s.xml", TestUtil.METADATA_FILE_PREFIX, doiSuffix);
-    }
+//    protected String getDoiFilename(String doiSuffix) {
+//        return String.format("%s%s.xml", metadataFilePrefix, doiSuffix);
+//    }
 
     protected String getDOISuffix(String doiIdentifier) {
         String [] parts = doiIdentifier.split("/");
@@ -185,13 +170,13 @@ public abstract class IntTestBase extends TestBase {
 
     protected String createDOI(Subject testSubject)
             throws IOException, PrivilegedActionException {
-        Resource resource = getTestResource(true);
+        Resource resource = getTestResource(false, false, true);
         final String doiXML = getResourceXML(resource);
         return (String) Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
             String persistedXML = postDOI(doiServiceURL, doiXML, TEST_JOURNAL_REF);
             DoiXmlReader reader = new DoiXmlReader();
             Resource persistedResource = reader.read(persistedXML);
-            return getDOISuffix(persistedResource.getIdentifier().getText());
+            return getDOISuffix(persistedResource.getIdentifier().getValue());
         });
     }
 
@@ -211,16 +196,16 @@ public abstract class IntTestBase extends TestBase {
 
     protected void cleanup(String doiSuffix) {
         // delete doi as doiadmin
-        Subject adminSubject = SSLUtil.createSubject(DOIAdminCert);
         try {
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 log.debug("cleanup as doiadmin");
                 try {
-                    String groupToDelete = TestUtil.DOI_GROUP_PREFIX + doiSuffix;
-                    gmsClient.deleteGroup(groupToDelete);
-                    log.debug("deleted group: " + groupToDelete);
+//                    String groupToDelete = doiGroupPrefix + doiSuffix;
+//                    gmsClient.deleteGroup(groupToDelete);
+//                    log.debug("deleted group: " + groupToDelete);
 
                     VOSURI nodeUri = getVOSURI(doiSuffix);
+                    log.debug("recursiveDeleteNode: " + nodeUri);
                     RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
                     recursiveDeleteNode.setMonitor(true);
                     recursiveDeleteNode.run();

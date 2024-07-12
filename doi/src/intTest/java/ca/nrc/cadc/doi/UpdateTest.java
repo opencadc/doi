@@ -69,38 +69,24 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.Affiliation;
+import ca.nrc.cadc.doi.datacite.Date;
+import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Language;
-import ca.nrc.cadc.doi.datacite.PublicationYear;
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.net.HttpGet;
-import java.io.ByteArrayOutputStream;
-import java.io.StringReader;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
 import org.junit.Assert;
 import org.junit.Test;
-
-import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.doi.datacite.Creator;
-import ca.nrc.cadc.doi.datacite.CreatorName;
-import ca.nrc.cadc.doi.io.DoiReader;
-import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.NameIdentifier;
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.doi.status.DoiStatus;
-import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
-import ca.nrc.cadc.doi.status.Status;
-import ca.nrc.cadc.util.Log4jInit;
 
 /**
  * Persist a minimal instance
@@ -109,260 +95,105 @@ public class UpdateTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(UpdateTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
     }
 
+    @Override
+    protected List<Date> getDates(boolean optionalAttributes) {
+        List<Date> dates = new ArrayList<>();
+        LocalDate localDate = LocalDate.now(ZoneId.of("UTC"));
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+        String createdDate = localDate.format(formatter);
+        Date date = new Date(createdDate, DateType.CREATED);
+        if (optionalAttributes) {
+            date.dateInformation = "The date the DOI was created";
+        }
+        dates.add(date);
+        return dates;
+    }
+
+    @Test
     public void updateDOITest() {
         try {
-            // minimally populated doi
-            Resource minResource = getTestResource(false);
-            final String testXML = getResourceXML(minResource);
-            String persistedXml = postDOI(doiServiceURL, testXML, TEST_JOURNAL_REF);
-            DoiXmlReader reader = new DoiXmlReader();
-            Resource persistedResource = reader.read(persistedXml);
-            compareResource(minResource, persistedResource);
+            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
+                // minimally populated required properties
+                Resource expected = getTestResource(true, true, true);
+                expected.language = new Language("en-US");
+                String doiSuffix = null;
+                try {
+                    Resource actual = doTest(expected);
 
-            // fully populate the persisted doi
-            Resource maxResource = getTestResource(true);
-            minResource.
+                    Assert.assertNotEquals("Identifier's should not match",
+                            expected.getIdentifier().getValue(), actual.getIdentifier().getValue());
+                    compareResource(expected, actual, false);
 
+                    // get the URL to the new DOI
+                    doiSuffix = getDOISuffix(actual.getIdentifier().getValue());
+                    URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
 
+                    // fully populated required resource
+                    Resource maxResource = getTestResource(false, true, true);
+                    updateResource(expected, maxResource);
+                    actual = doTest(expected);
+                    compareResource(expected, actual);
+
+                    // back to minimally populated required resource
+                    Resource minResource = getTestResource(false, false, true);
+                    updateResource(expected, minResource);
+                    actual = doTest(expected);
+                    compareResource(expected, actual);
+
+                    // update PublicationYear
+                    expected.getPublicationYear().setValue("2001");
+                    actual = doTest(expected);
+                    compareResource(expected, actual);
+
+                    // update Language
+                    expected.language = new Language("en-GB");
+                    actual = doTest(expected);
+                    compareResource(expected, actual);
+                } finally {
+                    if (doiSuffix != null) {
+//                        cleanup(doiSuffix);
+                    }
+                }
+                return null;
+            });
         } catch (Exception e) {
             log.error("unexpected exception", e);
             Assert.fail("unexpected exception: " + e.getMessage());
         }
     }
 
-    // test update DOI instance
-    @Test
-    public void testUpdateDocument() throws Throwable {
+    protected void updateResource(Resource destination, Resource source) {
+        destination.getCreators().clear();
+        destination.getCreators().addAll(source.getCreators());
 
-        final Subject testSubject = SSLUtil.createSubject(CADCAuthTest1Cert);
-        Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
-            Resource testResource = getTestResource(true);
-            final String testXML = getResourceXML(testResource);
-            String doiSuffix = null;
-            try {
-                // check that the service processed the document and added an identifier
-                String persistedXml = postDOI(doiServiceURL, testXML, TEST_JOURNAL_REF);
-                DoiXmlReader reader = new DoiXmlReader();
-                Resource persistedResource = reader.read(persistedXml);
+        destination.getTitles().clear();
+        destination.getTitles().addAll(source.getTitles());
 
-                String testIdentifier = testResource.getIdentifier().getText();
-                String persistedIdentifier = persistedResource.getIdentifier().getText();
-                Assert.assertNotEquals("New identifier not received from doi service.",
-                        testIdentifier, persistedIdentifier);
-                doiSuffix = getDOISuffix(persistedIdentifier);
+        destination.getPublisher().publisherIdentifier = source.getPublisher().publisherIdentifier;
+        destination.getPublisher().publisherIdentifierScheme = source.getPublisher().publisherIdentifierScheme;
+        destination.getPublisher().schemeURI = source.getPublisher().schemeURI;
+        destination.getPublisher().lang = source.getPublisher().lang;
 
-                // Get the DOI status
-                URL doiURL = new URL(String.format("%s/%s", TestUtil.DOI_PARENT_PATH, doiSuffix));
-                DoiStatus doiStatus = getStatus(doiURL);
-                Assert.assertEquals("identifier mismatch", persistedIdentifier,
-                        doiStatus.getIdentifier().getText());
-                Assert.assertEquals("title mismatch", testResource.getTitles().get(0).getText(),
-                        doiStatus.getTitle().getText());
-                Assert.assertEquals("status mismatch", Status.DRAFT, doiStatus.getStatus());
-                Assert.assertEquals("journalRef mismatch", TEST_JOURNAL_REF, doiStatus.journalRef);
-
-                // update the title
-                Title expectedTitle = testResource.getTitles().get(0);
-                Title updatedTitle = new Title("new " + expectedTitle.getText());
-                updatedTitle.titleType = expectedTitle.titleType;
-                updatedTitle.lang = expectedTitle.lang;
-                persistedResource.getTitles().clear();
-                persistedResource.getTitles().add(updatedTitle);
-
-                // update the creator
-                Creator expectedCreator = testResource.getCreators().get(0);
-                CreatorName expectedCreatorName = expectedCreator.getCreatorName();
-                CreatorName updatedCreatorName = new CreatorName("new " + expectedCreatorName.getText());
-                updatedCreatorName.nameType = expectedCreatorName.nameType;
-                Creator updatedCreator = new Creator(updatedCreatorName);
-                updatedCreator.givenName = "new " + expectedCreator.givenName;
-                updatedCreator.familyName = "new " + expectedCreator.familyName;
-                updatedCreator.affiliation = new Affiliation("new " + expectedCreator.affiliation);
-                NameIdentifier expectedNameIdentifier = expectedCreator.nameIdentifier;
-                NameIdentifier updatedNameIdentifier = new NameIdentifier(
-                        "new" + expectedNameIdentifier.getText(),
-                        expectedNameIdentifier.getNameIdentifierScheme());
-                updatedNameIdentifier.schemeURI = expectedNameIdentifier.schemeURI;
-                updatedCreator.nameIdentifier = updatedNameIdentifier;
-                persistedResource.getCreators().clear();
-                persistedResource.getCreators().add(updatedCreator);
-
-                // get updated resource XML
-                String updatedXML = getResourceXML(persistedResource);
-
-                // TEST CASE 1: update both creators and title, and journalRef
-                Resource t1Resource = doTest(doiURL, updatedXML, persistedResource, NEW_JOURNAL_REF, NEW_JOURNAL_REF);
-
-                // TEST CASE 2: no update to document or journalRef
-                Resource t2Resource = doTest(doiURL, updatedXML, t1Resource, NEW_JOURNAL_REF, null);
-
-                // TEST CASE 3: title and creator with null optional elements, and delete journal reference
-                t2Resource.getTitles().add(new Title("NullTitleType"));
-                t2Resource.getCreators().add(new Creator(new CreatorName("NullOptionalFields")));
-                updatedXML = getResourceXML(t2Resource);
-                Resource t3Resource = doTest(doiURL, updatedXML, t2Resource, null, "");
-
-                // TEST CASE 4: creator with nameIdentifer but no optional schemeURI
-                Creator creatorWithNullSchemeURI = new Creator(new CreatorName("NullOptionalFields"));
-                NameIdentifier nameID = new NameIdentifier(expectedNameIdentifier.getText(),
-                        "nullSchemURI");
-                creatorWithNullSchemeURI.nameIdentifier = nameID;
-                List<Creator> t4ExpectedCreators = t3Resource.getCreators();
-                t4ExpectedCreators.add(creatorWithNullSchemeURI);
-                String t4GeneratedDoc = this.generateDocument(t3Resource);
-                Resource t4Resource = doTest(docURL, t4GeneratedDoc, t4ExpectedCreators, t3ExpectedTitles,
-                        returnedIdentifier, null, "");
-
-                // TEST CASE 5: update language
-                if (t4Resource.language.contains("en")) {
-                    t4Resource.language = "fr";
-                } else {
-                    t4Resource.language = "en-US";
-                }
-
-                String t5GeneratedDoc = this.generateDocument(t4Resource);
-                Resource t5Resource = doUpdateLanguageTest(docURL, t5GeneratedDoc, t4Resource.language);
-
-                // TEST CASE 6: update publicationYear
-                // update to a valid year
-                t5Resource.setPublicationYear("2010");
-                String t6GeneratedDoc = this.generateDocument(t5Resource);
-                doUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
-
-                // update to a year too far in the past
-                try {
-                    t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_LOWER_LIMIT - 1));
-                    t6GeneratedDoc = this.generateDocument(t5Resource);
-                    doUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
-                    Assert.fail("publicationiYear lower limit not detected");
-                } catch (Exception ex) {
-                    Assert.assertTrue("caught an unexpected exception",
-                            ex.getMessage().contains("publicationYear is not a recent year"));
-                }
-
-                // update to a year too far in the future
-                try {
-                    t5Resource.setPublicationYear(String.valueOf(Resource.PUBLICATION_YEAR_UPPER_LIMIT + 1));
-                    t6GeneratedDoc = this.generateDocument(t5Resource);
-                    doUpdatePublicationYearTest(docURL, t6GeneratedDoc, t5Resource.getPublicationYear());
-                    Assert.fail("publicationiYear upper limit not detected");
-                } catch (Exception ex) {
-                    Assert.assertTrue("caught an unexpected exception",
-                            ex.getMessage().contains("publicationYear is not a recent year"));
-                }
-
-                // TEST CASE 7: update to Resource.namespace is not allowed
-                // updating Namespace.predix should fail
-                String t7Prefix = t1Resource.getNamespace().getPrefix() + "a";
-                Namespace t7Namespace = Namespace.getNamespace(t7Prefix, t1Resource.getNamespace().getURI());
-                Resource t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(),
-                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
-                String t7GeneratedDoc = this.generateDocument(t7Resource);
-                try {
-                    doTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(),
-                            returnedIdentifier, null, null);
-                    Assert.fail("resource.namespace update failure not detected");
-                } catch (Exception ex) {
-                    Assert.assertTrue("caught an unexpected exception",
-                            ex.getMessage().contains("namespace update is not allowed"));
-                }
-
-                // updating Namespace.URI should fail
-                String t7NamespaceURI = t1Resource.getNamespace().getURI() + "a";
-                t7Namespace = Namespace.getNamespace(t1Resource.getNamespace().getPrefix(), t7NamespaceURI);
-                t7Resource = new Resource(t7Namespace, t1Resource.getIdentifier(), t1Resource.getCreators(),
-                        t1Resource.getTitles(), t1Resource.getPublicationYear());
-                t7GeneratedDoc = this.generateDocument(t7Resource);
-                try {
-                    doTest(docURL, t7GeneratedDoc, t7Resource.getCreators(), t7Resource.getTitles(),
-                            returnedIdentifier, null, null);
-                    Assert.fail("resource.namespace update failure not detected");
-                } catch (Exception ex) {
-                    Assert.assertTrue("caught an unexpected exception",
-                            ex.getMessage().contains("namespace update is not allowed"));
-                }
-
-                // TEST CASE 8: update to Resource.identifier is not allowed
-                // Note: IdentifierType is validated by xsd to be "DOI"
-                // updating Identifier text should fail
-                Identifier t8Identifier = t1Resource.getIdentifier();
-                DoiReader.assignIdentifier(t8Identifier, "test8");
-                Resource t8Resource = new Resource(t1Resource.getNamespace(), t8Identifier,
-                        t1Resource.getCreators(), t1Resource.getTitles(), t1Resource.getPublicationYear());
-                String t8GeneratedDoc = this.generateDocument(t8Resource);
-                try {
-                    doTest(docURL, t8GeneratedDoc, t8Resource.getCreators(), t8Resource.getTitles(),
-                            returnedIdentifier, null, null);
-                    Assert.fail("resource.identifier update failure not detected");
-                } catch (Exception ex) {
-                    Assert.assertTrue("caught an unexpected exception",
-                            ex.getMessage().contains("identifier update is not allowed"));
-                }
-            } finally {
-                if (doiSuffix != null) {
-                    cleanup(doiSuffix);
-                }
-            }
-            return null;
-        });
+        destination.getResourceType().value = source.getResourceType().value;
     }
 
-    private DoiStatus getStatus(URL doiURL)
-            throws Exception {
-        URL statusURL = new URL(doiURL + "/status");
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        HttpGet get = new HttpGet(statusURL, bos);
-        get.prepare();
-        Assert.assertNull("GET exception: " + get.getThrowable().getMessage(), get.getThrowable());
-        DoiStatusXmlReader reader = new DoiStatusXmlReader();
-        return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
-    }
-
-    private Resource doTest(URL doiURL, String doiXML, Resource expectedResource,
-                            String expectedJournalRef, String newJournalRef)
-            throws Exception {
-        String updatedDoiXML = postDOI(doiURL, doiXML, newJournalRef);
+    protected Resource doTest(Resource resource) throws Exception {
+        String testXML = getResourceXML(resource);
+        String persistedXml = postDOI(doiServiceURL, testXML, TEST_JOURNAL_REF);
         DoiXmlReader reader = new DoiXmlReader();
-        Resource updatedResource = reader.read(updatedDoiXML);
-
-        compareResource(expectedResource, updatedResource);
-
-        // check for same journal reference
-        DoiStatus updatedStatus = getStatus(doiURL);
-        Assert.assertEquals("identifier from DOI status is different",
-                expectedResource.getIdentifier().getText(), updatedStatus.getIdentifier().getText());
-        if (newJournalRef == null) {
-            Assert.assertEquals("journalRef has changed", expectedJournalRef, updatedStatus.journalRef);
-        } else if (!newJournalRef.isEmpty()) {
-            Assert.assertEquals("journalRef is incorrect", expectedJournalRef, updatedStatus.journalRef);
-        } else {
-            Assert.assertNull("journalRef was not deleted", updatedStatus.journalRef);
-        }
-        return updatedResource;
+        return reader.read(persistedXml);
     }
 
-    private Resource doUpdateLanguageTest(URL doiURL, String doiXML, Language expectedLanguage)
-            throws Exception {
-        String updateDoiXML = postDOI(doiURL, doiXML, null);
-        DoiXmlReader reader = new DoiXmlReader();
-        Resource updatedResource = reader.read(updateDoiXML);
-        compareLanguage(expectedLanguage, updatedResource.language);
-        return updatedResource;
-    }
-
-    private Resource doUpdatePublicationYearTest(URL doiURL, String doiXML,
-                                                 PublicationYear expectedPublicationYear)
-            throws Exception {
-        String updatedDoiXML = postDOI(doiURL, doiXML, null);
-        DoiXmlReader reader = new DoiXmlReader();
-        Resource updatedResource = reader.read(updatedDoiXML);
-        comparePublicationYear(expectedPublicationYear, updatedResource.getPublicationYear());
-        return updatedResource;
+    @Override
+    protected void compareResource(Resource expected, Resource actual) {
+        Assert.assertNotEquals("Identifier's should not match",
+                expected.getIdentifier().getValue(), actual.getIdentifier().getValue());
+        compareResource(expected, actual, false);
     }
 
 }

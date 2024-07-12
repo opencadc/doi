@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
@@ -100,8 +99,9 @@ public class InitFolderTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(InitFolderTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.vospace", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("org.opencadc.vospace", Level.DEBUG);
+        Log4jInit.setLevel("org.opencadc.vault", Level.DEBUG);
     }
 
     /**
@@ -112,14 +112,11 @@ public class InitFolderTest extends IntTestBase {
     @Test
     public void testInitDoi() {
         try {
-            final Subject writeSubject = SSLUtil.createSubject(CADCAuthTest1Cert);
-            final Subject readSubject = SSLUtil.createSubject(CADCRegTest1Cert);
-
-            Resource testResource = getTestResource(true);
+            Resource testResource = getTestResource(false, true, true);
             final String testXML = getResourceXML(testResource);
 
             // Create the folder for the test, and the initial XML file
-            Subject.doAs(writeSubject, (PrivilegedExceptionAction<Object>) () -> {
+            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
                 String doiSuffix = null;
                 try {
                     FileContent fileContent = new FileContent(testXML, "text/xml", StandardCharsets.UTF_8);
@@ -129,29 +126,28 @@ public class InitFolderTest extends IntTestBase {
                     HttpPost post = new HttpPost(doiServiceURL, params, false);
                     post.run();
 
-                    Assert.assertNull("POST exception: " + post.getThrowable().getMessage(), post.getThrowable());
+                    Assert.assertNull("POST exception", post.getThrowable());
                     Assert.assertEquals("expected 303 response code", 303, post.getResponseCode());
                     String doiPath = post.getRedirectURL().getPath();
-                    log.debug("new DOI path: " + doiPath);
+                    log.debug("redirectURL path: " + doiPath);
 
                     // Folder name should be /AstroDataCitationDOI/CISTI.CANFAR/<doiSuffix>
                     String[] doiNumberParts = doiPath.split("/");
                     doiSuffix = doiNumberParts[3];
 
-                    // Check access permissions for DOI Containing folder
-                    // (get DOI & parse suffix from <identifier> in document)
-                    String dataNodeName = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
+                    String dataNodeName = String.format("%s/data", doiSuffix);
                     log.debug("write to data folder " + dataNodeName);
 
                     // Test writing to the data directory
                     String fileName = "doi-test-write-file.txt";
                     String dataFileToWrite = dataNodeName + "/" + fileName;
 
-                    VOSURI target = new VOSURI(dataFileToWrite);
+                    VOSURI target = getVOSURI(dataFileToWrite);
                     DataNode dataNode = new DataNode(fileName);
+                    log.debug("PUT target:" + target.getURI());
                     vosClient.createNode(target, dataNode);
 
-                    Transfer transfer = new Transfer(new URI(dataFileToWrite), Direction.pushToVoSpace);
+                    Transfer transfer = new Transfer(target.getURI(), Direction.pushToVoSpace);
                     Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
                     transfer.getProtocols().add(put);
 
@@ -170,10 +166,10 @@ public class InitFolderTest extends IntTestBase {
                     final String writeFile = dataNodeName + "/" + writeName;
 
                     // Try to write to data directory as read only subject
-                    Subject.doAs(readSubject, (PrivilegedExceptionAction<Object>) () -> {
+                    Subject.doAs(readOnlySubject, (PrivilegedExceptionAction<Object>) () -> {
                         log.debug("write as read only subject");
                         try {
-                            VOSURI target1 = new VOSURI(writeFile);
+                            VOSURI target1 = getVOSURI(writeFile);
                             DataNode dataNode1 = new DataNode(writeName);
                             vosClient.createNode(target1, dataNode1);
                         } catch (AccessControlException e) {
@@ -185,9 +181,9 @@ public class InitFolderTest extends IntTestBase {
                     });
                     return null;
                 } finally {
-                    if (doiSuffix != null) {
-                        cleanup(doiSuffix);
-                    }
+//                    if (doiSuffix != null) {
+//                        cleanup(doiSuffix);
+//                    }
                 }
             });
         } catch (Exception e) {

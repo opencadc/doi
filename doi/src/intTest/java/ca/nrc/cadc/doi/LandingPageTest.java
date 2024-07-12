@@ -69,12 +69,8 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.net.HttpGet;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
@@ -102,9 +98,8 @@ public class LandingPageTest extends IntTestBase {
     @Test
     public void anonGetTest() {
         try {
-            RegistryClient registryClient = new RegistryClient();
-            URL instanceURL = registryClient.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-            URL doiURL = new URL(instanceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            log.debug("test url: " + doiURL.toExternalForm());
             Subject testSubject = AuthenticationUtil.getAnonSubject();
 
             Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
@@ -124,14 +119,11 @@ public class LandingPageTest extends IntTestBase {
     @Test
     public void authGetTest() {
         try {
-            RegistryClient registryClient = new RegistryClient();
-            URL instanceURL = registryClient.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-            log.debug("doi instances url: " + instanceURL);
-            URL doiURL = new URL(instanceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
-            log.debug("test url: " + instanceURL);
-            Subject testSubject = SSLUtil.createSubject(DOIAdminCert);
+            log.debug("doi instances url: " + doiServiceURL);
+            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            log.debug("test url: " + doiURL.toExternalForm());
 
-            Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+            Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 HttpGet get = new HttpGet(doiURL, true);
                 get.prepare();
 
