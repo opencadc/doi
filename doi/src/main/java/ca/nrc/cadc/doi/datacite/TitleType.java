@@ -92,9 +92,11 @@ public enum TitleType {
     }
 
     public static TitleType toValue(String s) {
-        for (TitleType type : values())
-            if (type.value.equals(s))
+        for (TitleType type : values()) {
+            if (type.value.equals(s)) {
                 return type;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 

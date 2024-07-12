@@ -90,9 +90,11 @@ public enum NameType {
     }
 
     public static NameType toValue(String s) {
-        for (NameType type : values())
-            if (type.value.equals(s))
+        for (NameType type : values()) {
+            if (type.value.equals(s)) {
                 return type;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 

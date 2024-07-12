@@ -125,9 +125,11 @@ public enum RelationType {
     }
 
     public static RelationType toValue(String s) {
-        for (RelationType type : values())
-            if (type.value.equals(s))
+        for (RelationType type : values()) {
+            if (type.value.equals(s)) {
                 return type;
+            }
+        }
         throw new IllegalArgumentException("RelationType invalid value: " + s);
     }
 

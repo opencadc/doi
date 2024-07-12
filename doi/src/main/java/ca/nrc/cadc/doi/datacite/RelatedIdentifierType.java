@@ -108,9 +108,11 @@ public enum RelatedIdentifierType {
     }
 
     public static RelatedIdentifierType toValue(String s) {
-        for (RelatedIdentifierType type : values())
-            if (type.value.equals(s))
+        for (RelatedIdentifierType type : values()) {
+            if (type.value.equals(s)) {
                 return type;
+            }
+        }
         throw new IllegalArgumentException("RelatedIdentifier invalid value: " + s);
     }
 
