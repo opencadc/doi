@@ -71,7 +71,6 @@ package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
-
 import org.jdom2.Element;
 import org.jdom2.Namespace;
 
@@ -96,7 +95,7 @@ public class DoiStatusWriter {
         element.addContent(getStatusElement(doiStatus.getStatus().getValue()));
         Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
         if (dataDirectoryElement != null) {
-	        element.addContent(dataDirectoryElement);
+            element.addContent(dataDirectoryElement);
         }
         if (doiStatus.journalRef != null) {
             element.addContent(getJournalRefElement(doiStatus.journalRef));

@@ -77,7 +77,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.JDOMException;
@@ -108,8 +107,9 @@ public class DoiStatusXmlReader extends DoiStatusReader {
      *             if there is an error parsing the XML.
      */
     public DoiStatus read(String xml) throws DoiParsingException {
-        if (xml == null)
+        if (xml == null) {
             throw new IllegalArgumentException("XML must not be null");
+        }
         try {
             return read(new StringReader(xml));
         } catch (IOException ioe) {
@@ -128,8 +128,9 @@ public class DoiStatusXmlReader extends DoiStatusReader {
      *             if there is an error parsing the XML.
      */
     public DoiStatus read(InputStream in) throws IOException, DoiParsingException {
-        if (in == null)
+        if (in == null) {
             throw new IOException("stream closed");
+        }
         try {
             return read(new InputStreamReader(in, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -147,8 +148,9 @@ public class DoiStatusXmlReader extends DoiStatusReader {
      *             if there is an error parsing the XML.
      */
     public DoiStatus read(Reader reader) throws DoiParsingException, IOException {
-        if (reader == null)
+        if (reader == null) {
             throw new IllegalArgumentException("reader must not be null");
+        }
 
         // Create a JDOM Document from the XML
         Document document;

@@ -99,8 +99,8 @@ public class DoiStatus {
 
         // title and dataDirectory can be null when status == Status.ERROR_*
         // this allows errored DOI's to be displayed when listing DOI statuses
-        if (status != Status.ERROR_REGISTERING && status != Status.ERROR_LOCKING_DATA && 
-        		(title == null || dataDirectory == null)) {
+        if (status != Status.ERROR_REGISTERING && status != Status.ERROR_LOCKING_DATA
+                && (title == null || dataDirectory == null)) {
             String msg = "title and dataDirectory must be specified.";
             throw new IllegalArgumentException(msg);
         }
@@ -121,10 +121,10 @@ public class DoiStatus {
 
     public Title getTitle() {
         return this.title;
-	}
+    }
 
     public String getDataDirectory() {
         return this.dataDirectory;
-	}
+    }
 
 }

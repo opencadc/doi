@@ -69,16 +69,12 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.datacite.TitleType;
-
-import java.util.List;
-import org.jdom2.Attribute;
+import ca.nrc.cadc.doi.io.DoiParsingException;
 import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.Namespace;
 
 /**
  * Constructs a DoiStatus instance from a Document instance.

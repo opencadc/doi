@@ -101,8 +101,9 @@ public class DoiStatusListJsonReader extends DoiStatusListReader {
      *             if there is an error parsing the JSON.
      */
     public List<DoiStatus> read(String json) throws DoiParsingException {
-        if (json == null)
+        if (json == null) {
             throw new IllegalArgumentException("JSON string must not be null");
+        }
         try {
             JsonInputter inputter = new JsonInputter();
             return this.buildStatusList(inputter.input(json));
