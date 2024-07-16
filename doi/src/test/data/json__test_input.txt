@@ -1,0 +1,28 @@
+{
+ "resource": {
+   "@xmlns": "http://datacite.org/schema/kernel-4",
+   "identifier": {
+     "@identifierType": "DOI",
+     "$": "10.11570/YY.xxxx"
+   },
+   "creators": {
+     "$": []
+   },
+   "titles": {
+     "$": [
+       {
+         "title": {
+           "@xml:lang": "en-US",
+           "$": ""
+         }
+       }
+     ]
+   },
+   "publisher": {"$": ""},
+   "publicationYear": {"$": new Date().getFullYear()},
+   "resourceType": {
+     "@resourceTypeGeneral": "Dataset",
+     "$": "Dataset"
+   }
+ }
+}
