@@ -1,0 +1,133 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+
+plugins {
+    id 'war'
+
+    // IntelliJ IDEA plugin here to allow integration tests to appear properly in IDEs.
+    id 'idea'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+
+    maven {
+        url = 'https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/m2repo'
+    }
+}
+
+dependencies {
+    implementation 'org.opencadc:cadc-vos:[1.2.2,2.0)'
+
+    runtimeOnly 'jstl:jstl:1.2'
+
+    testImplementation 'junit:junit:[4.12,5.0)'
+    testImplementation 'org.skyscreamer:jsonassert:[1.5,2.0)'
+    testImplementation 'org.easymock:easymock:[3.6,4.0)'
+    testImplementation 'org.apache.commons:commons-text:[1.3,)'
+    testImplementation 'org.opencadc:cadc-web-test:[2.1.1,3.0.0)'
+    testImplementation 'org.seleniumhq.selenium:selenium-java:[3.14,4.0)'
+}
+
+sourceCompatibility = '1.8'
+group = 'ca.nrc.cadc'
+version = '1012'
+
+war {
+    // Trying to fix static file caching on new build.
+    eachFile {
+        if (it.name.endsWith('.jsp')) {
+            filter(ReplaceTokens, tokens: [version: project.version])
+        }
+    }
+
+    archiveName = 'citation##' + project.version + '.war'
+}
+
+sourceSets {
+    intTest
+}
+
+configurations {
+    intTestImplementation
+    intTestImplementation.extendsFrom(testImplementation)
+}
+
+idea {
+    module {
+        //and some extra test source dirs
+        testSourceDirs += file('src/intTest/java')
+    }
+}
+
+tasks.withType(Test) {
+    // Assign all Java system properties from
+    // the command line to the tests
+    systemProperties System.properties
+}
+
+['firefox', 'chrome'].each { driver ->
+    task "intTest${driver.capitalize()}"(type: Test) { driverTest ->
+        testClassesDirs = sourceSets.intTest.output.classesDirs
+        classpath = sourceSets.intTest.runtimeClasspath
+        reports {
+            html.destination = reporting.file("$name/html")
+        }
+        dependencies {
+            intTestImplementation 'junit:junit:[4.12,5.0)'
+            intTestImplementation 'org.opencadc:cadc-web-test:[2.1.1,3.0.0)'
+            intTestImplementation 'org.seleniumhq.selenium:selenium-java:[3.14,4.0)'
+        }
+
+        // set the configuration context
+        testClassesDirs = sourceSets.intTest.output.classesDirs
+        classpath = sourceSets.intTest.runtimeClasspath
+
+        // run the tests always
+        outputs.upToDateWhen { false }
+
+        copy {
+            from System.getenv('A') + '/etc/'
+            into 'build/resources/intTest'
+            include 'DelegationTokenKey.priv'
+            rename 'DelegationTokenKey.priv', 'RsaSignaturePriv.key'
+        }
+        copy {
+            from System.getenv('A') + '/etc/'
+            into 'build/resources/intTest'
+            include 'DelegationTokenKey.pub'
+            rename 'DelegationTokenKey.pub', 'RsaSignaturePub.key'
+        }
+
+        systemProperty "driver", "${driver}"
+
+        if (!project.hasProperty('intTest_selenium_server_url')) {
+            systemProperty 'selenium.server.url', 'http://mach378.cadc.dao.nrc.ca:4444'
+        }
+        else {
+            systemProperty 'selenium.server.url', project.intTest_selenium_server_url
+            logger.info('Running browser tests on ' + project.intTest_selenium_server_url)
+        }
+
+        if (!project.hasProperty('intTest_web_app_url')) {
+            System.err.println("Please set the intTest_web_app_url property (-PintTest_web_app_url=https://www...).")
+        } else {
+            systemProperty 'web.app.url', project.intTest_web_app_url
+        }
+
+        if (!project.hasProperty('intTest_user_name')) {
+            System.err.println("Please set the intTest_user_name property (-PintTest_user_name=cadcuser).")
+        } else {
+            systemProperty 'user.name', project.intTest_user_name
+        }
+
+        if (!project.hasProperty('intTest_user_password')) {
+            System.err.println("Please set the intTest_user_password property (-intTest_user_password=1234pw).")
+        } else {
+            systemProperty 'user.password', project.intTest_user_password
+        }
+
+        maxParallelForks = 1
+    }
+}
