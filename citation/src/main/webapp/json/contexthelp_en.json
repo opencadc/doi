@@ -1,0 +1,82 @@
+{
+  "data_doi_number": {
+    "tipHTML": "This box will be automatically filled in by the system. It will be the actual DOI that will be issued.",
+    "placement": "top",
+    "title": "Data DOI Reference"
+  },
+  "publication_title": {
+    "tipHTML": "The title of the journal publication that this data is associated with. It should be complete and accurate.",
+    "placement": "top",
+    "title": "Publication Title"
+  },
+  "first_author": {
+    "tipHTML": " First Author name as is appears in the publication. A team or group name is acceptable if that matches what appears in the journal.",
+    "placement": "top",
+    "title": "First Author"
+  },
+  "additional_authors": {
+    "tipHTML": "Please list all authors if this is practical. A team or group name is acceptable.",
+    "placement": "top",
+    "title": "Additional Authors"
+  },
+  "journal_reference": {
+    "tipHTML": "The complete and accurate reference to the journal article that the data is associated with.",
+    "placement": "top",
+    "title": "Journal Reference"
+  },
+  "data_directory": {
+    "tipHTML": "The dataset associated with this DOI is housed at this location.",
+    "placement": "right",
+    "title": "Data Directory"
+  },
+  "new_doi": {
+    "tipHTML": "Discard all current information and start over with a new DOI.",
+    "placement": "auto",
+    "title": "New DOI"
+  },
+  "delete_doi": {
+    "tipHTML": "This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself.  You will start from scratch.",
+    "placement": "auto",
+    "title": "Delete DOI"
+  },
+  "mint_doi": {
+    "tipHTML": "<em>Caution</em>: The MINT button will register the DOI in the DataCite database and will lock the data directory so that no further changes can be made. The process is final although some information can be added later if necessary. Be sure that data folder is complete and final, refereeing is complete, and publication information is complete (if available).",
+    "placement": "auto",
+    "title": "Mint DOI"
+  },
+  "request_doi": {
+    "tipHTML": "<b>Request</b></br>Use the current DOI information to draft a DOI. The DOI number will be reserved, a data directory will be created to house the dataset, and user groups will be generated to control access to the data directory. The DOI is <b>NOT</b> minted (registered with DataCite) at this point.",
+    "placement": "auto",
+    "title": "Request DOI"
+  },
+  "update_doi": {
+    "tipHTML": "<b>Update</b></br>Update the DOI information.",
+    "placement": "auto",
+    "title": "Update DOI"
+  },
+  "new_only_buttonbar": {
+    "tipHTML": "<b>New</b></br>Press this button if you wish to discard all your input and start over with a new DOI.",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "update_buttonbar": {
+    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Delete</b></br>This will delete a) all DOI information. b) the directory where the data resides, and c) the DOI itself. You will start from scratch.</p><p><b>Publish</b></br>Register the DOI and associated landing page with DataCite. The DOI will be publicly available.</br><b>Caution</b>: The data directory will be locked so that no further changes can be made. Be sure the dataset and DOI information are finalized and refereeing is finished. </br><em>Note:</em></br>Related publication information can be added manually after this step. (Contact support.)</p>",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "minted_buttonbar": {
+    "tipHTML": "<b>New</b></br>Begin a new DOI.",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "locked_data_buttonbar": {
+    "tipHTML": "<p><b>New</b></br>Begin a new DOI.</p><p><b>Retry Publishing</b></br>If a retry as already been attempted, please contact support for further assistance.",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  },
+  "completed_buttonbar": {
+    "tipHTML": "<b>New</b></br>Begin a new DOI.",
+    "placement": "auto",
+    "title": "DOI Publication Help"
+  }
+}
