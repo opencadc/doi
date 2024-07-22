@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,52 +69,55 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-
 /**
  * The institution or person responsible for collecting, creating, or otherwise
- * contributing to the developement of the dataset. The personal name format
+ * contributing to the development of the dataset. The personal name format
  * should be: Family, Given.
  * 
  * @author yeunga
  */
 public class Contributor {
-    private static Logger log = Logger.getLogger(Contributor.class);
 
-    private ContributorName contributorName;
-    private ContributorType contributorType;
+    public static final String NAME = "contributor";
+    public static final String GIVEN_NAME = "givenName";
+    public static final String FAMILY_NAME = "familyName";
+
+    private final ContributorName contributorName;
+    private final ContributorType contributorType;
+
     public String givenName;
     public String familyName;
     public NameIdentifier nameIdentifier;
-    public String affiliation;
+    public Affiliation affiliation;
 
     /**
-     * Creator constructor.
+     * Contributor constructor.
      * 
-     * @param contributorName
-     *            type of this resource
-     * @param contributorType
-     *            additional text description for this resource type
+     * @param contributorName the ContributorName
+     * @param contributorType the ContributorType
      */
     public Contributor(ContributorName contributorName, ContributorType contributorType) {
-        if ((contributorName == null) || (contributorType == null)) {
-            String msg = "resourceTypeGeneral and resourceType must be specified.";
-            throw new IllegalArgumentException(msg);
+        if (contributorName == null) {
+            throw new IllegalArgumentException("Contributor contributorName cannot be null or empty");
         }
-
+        if (contributorType == null) {
+            throw new IllegalArgumentException("Contributor contributorType must be specified");
+        }
         this.contributorName = contributorName;
         this.contributorType = contributorType;
     }
 
-    /**
-     * @return name of the contributor.
-     */
     public ContributorName getContributorName() {
         return this.contributorName;
     }
 
     public ContributorType getContributorType() {
         return this.contributorType;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Contributor[%s, %s]", contributorName, contributorType);
     }
 
 }

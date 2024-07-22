@@ -69,9 +69,9 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.DoiJsonReader;
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiXmlReader;
+import ca.nrc.cadc.doi.io.DoiJsonReader;
+import ca.nrc.cadc.doi.io.DoiParsingException;
+import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;

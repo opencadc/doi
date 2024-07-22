@@ -123,10 +123,9 @@ public class DoiStatusListJsonWriter extends DoiStatusListWriter {
     /**
      * Write a list of DoiStatus instances to a StringBuilder.
      * 
-     * @param doiStatusList
-     *            List of DoiStatus instances to write.
-     * @param builder
-     * @throws IOException
+     * @param doiStatusList List of DoiStatus instances to write.
+     * @param builder the builder to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(List<DoiStatus> doiStatusList, StringBuilder builder) throws IOException {
         write(doiStatusList, new StringBuilderWriter(builder));
@@ -135,12 +134,9 @@ public class DoiStatusListJsonWriter extends DoiStatusListWriter {
     /**
      * Write the list of DoiStatus instances to a writer.
      *
-     * @param doiStatusList
-     *            List of DoiStatus instances to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param doiStatusList List of DoiStatus instances to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(List<DoiStatus> doiStatusList, Writer writer) throws IOException {
         long start = System.currentTimeMillis();
@@ -153,12 +149,9 @@ public class DoiStatusListJsonWriter extends DoiStatusListWriter {
     /**
      * Write a Document instance by providing the root element to a writer.
      *
-     * @param root
-     *            Root element to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     protected void write(Element root, Writer writer) throws IOException {
         JsonOutputter outputter = new JsonOutputter();

@@ -96,8 +96,10 @@ public enum RelatedIdentifierType {
     PMID("PMID"), 
     PURL("PURL"),
     UPC("UPC"), 
-    URL("URL"), 
-    URN("URN"); 
+    URL("URL"),
+    URN("URN"),
+    W3ID("w3id");
+
 
     private final String value;
 
@@ -109,15 +111,16 @@ public enum RelatedIdentifierType {
         for (RelatedIdentifierType type : values())
             if (type.value.equals(s))
                 return type;
-        throw new IllegalArgumentException("invalid value: " + s);
+        throw new IllegalArgumentException("RelatedIdentifier invalid value: " + s);
     }
 
     public String getValue() {
-        return value;
+        return this.value;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return String.format("RelatedIdentifierType[%s]", value);
     }
+
 }

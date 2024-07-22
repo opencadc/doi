@@ -68,6 +68,7 @@
 package ca.nrc.cadc.doi;
 
 
+import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.status.DoiStatus;
@@ -78,9 +79,9 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.doi.datacite.DoiJsonWriter;
-import ca.nrc.cadc.doi.datacite.DoiReader;
-import ca.nrc.cadc.doi.datacite.DoiXmlWriter;
+import ca.nrc.cadc.doi.io.DoiJsonWriter;
+import ca.nrc.cadc.doi.io.DoiReader;
+import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
@@ -236,8 +237,7 @@ public class GetAction extends DoiAction {
                 title = getTitle(resource);
                 doiStatus = new DoiStatus(resource.getIdentifier(), title, dataDirectory, Status.toValue(status));
             } catch (Exception ex) {
-                Identifier id = new Identifier("DOI");
-                DoiReader.assignIdentifier(id, doiSuffixString);
+                Identifier id = new Identifier(doiSuffixString, "DOI");
                 doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
             }
 

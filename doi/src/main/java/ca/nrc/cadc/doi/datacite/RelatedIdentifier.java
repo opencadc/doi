@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,10 +71,6 @@ package ca.nrc.cadc.doi.datacite;
 
 import java.net.URI;
 
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.util.StringUtil;
-
 /**
  * An identifier of related resources. These must be globally unique identifiers..
  * 
@@ -82,55 +78,57 @@ import ca.nrc.cadc.util.StringUtil;
  */
 public class RelatedIdentifier {
 
-    private static Logger log = Logger.getLogger(RelatedIdentifier.class);
+    public static final String NAME = "relatedIdentifier";
+    public static final String RELATED_IDENTIFIER_TYPE = "relatedIdentifierType";
+    public static final String RELATION_TYPE = "relationType";
+    public static final String RESOURCE_TYPE_GENERAL = "resourceTypeGeneral";
+    public static final String RELATED_METADATA_SCHEME = "relatedMetadataScheme";
+    public static final String SCHEME_URI = "schemeURI";
+    public static final String SCHEME_TYPE = "schemeType";
 
-    private String text;
-    private RelatedIdentifierType relatedIdentifierType;
-    private RelationType relationType;
-    public ResourceType resourceTypeGeneral;
-    // relatedMetadataScheme example: "citeproc+json"
-    public String relatedMetadataScheme; 
-    // The URI of the relatedMetadataScheme
+    private final String value;
+    private final RelatedIdentifierType relatedIdentifierType;
+    private final RelationType relationType;
+
+    public DataCiteResourceType dataCiteResourceTypeGeneral;
+    public String relatedMetadataScheme;
     public URI schemeURI;
-    // The type of the relatedMetadataScheme, linked with the schemeURI, e.g. XSD
     public String schemeType;
 
     /**
      * RelatedIdentifier constructor.
      * 
-     * @param text relatedIdentifier text
+     * @param value relatedIdentifier value, can be null or an empty string.
      * @param relatedIdentifierType related identifier type, e.g. DOI
      * @param relationType type of relationship between the related resources
      */
-    public RelatedIdentifier(String text, RelatedIdentifierType relatedIdentifierType, RelationType relationType) {
-        if (!StringUtil.hasText(text) || relatedIdentifierType == null || relationType == null) {
-            String msg = "text, relatedIdentifierType and relationTYpe must be specified.";
-            throw new IllegalArgumentException(msg);
+    public RelatedIdentifier(String value, RelatedIdentifierType relatedIdentifierType, RelationType relationType) {
+        if (relatedIdentifierType == null) {
+            throw new IllegalArgumentException("RelatedIdentifier relatedIdentifierType must be specified");
         }
-
-        this.text = text;
+        if (relationType == null) {
+            throw new IllegalArgumentException("RelatedIdentifier relationType must be specified");
+        }
+        this.value = value;
         this.relatedIdentifierType = relatedIdentifierType;
         this.relationType = relationType;
     }
 
-    /**
-     * @return relatedIdentifier text.
-     */
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
 
-    /**
-     * @return type of RelatedIdentifier.
-     */
     public RelatedIdentifierType getRelatedIdentifierType() {
         return this.relatedIdentifierType;
     }
 
-    /**
-     * @return description of the relationship of the related resources
-     */
     public RelationType getRelationType() {
         return this.relationType;
     }
+
+    @Override
+    public String toString() {
+        return String.format("RelatedIdentifier[%s, %s, %s]", value, relatedIdentifierType, relationType);
+    }
+
 }

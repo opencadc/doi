@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<resource xmlns="http://datacite.org/schema/kernel-4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd">
+  <identifier identifierType="DOI">10.15129/3DA7087A-91A3-40BE-9A83-7E412156DB59</identifier>
+  <creators>
+    <creator>
+      <creatorName>Herrnsdorf, Johannes</creatorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Johannes</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Herrnsdorf</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://www.orcid.org">0000-0002-3856-5782</nameIdentifier>
+      <affiliation xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">University Of Strathclyde</affiliation>
+    </creator>
+    <creator>
+      <creatorName>Griffiths, Alexander</creatorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Alexander</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Griffiths</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://www.orcid.org">0000-0002-1124-4751</nameIdentifier>
+      <affiliation xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">University Of Strathclyde</affiliation>
+    </creator>
+    <creator>
+      <creatorName>Strain, Michael</creatorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Michael</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Strain</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://www.orcid.org">0000-0002-9752-3144</nameIdentifier>
+      <affiliation xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">University Of Strathclyde</affiliation>
+    </creator>
+  </creators>
+  <titles>
+    <title xml:lang="en">Wireless data transmission at 20 Mb/s over 750 m distance using a single microscopic blue LED and a Single Photon Avalanche Diode detector chip</title>
+  </titles>
+  <publisher>University of Strathclyde</publisher>
+  <publicationYear>2020</publicationYear>
+  <resourceType resourceTypeGeneral="Dataset">Audiovisual</resourceType>
+  <contributors>
+    <contributor contributorType="ContactPerson">
+      <contributorName>Herrnsdorf, Johannes</contributorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Johannes</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Herrnsdorf</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://www.orcid.org">0000-0002-3856-5782</nameIdentifier>
+    </contributor>
+    <contributor contributorType="Other">
+      <contributorName>McKendry, Jonathan</contributorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Jonathan</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">McKendry</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://www.orcid.org">0000-0002-6379-3955</nameIdentifier>
+      <affiliation xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">University Of Strathclyde</affiliation>
+    </contributor>
+    <contributor contributorType="Other">
+      <contributorName>Maclure, Daniel</contributorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Daniel</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Maclure</familyName>
+      <affiliation xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">University Of Strathclyde</affiliation>
+    </contributor>
+    <contributor contributorType="Other">
+      <contributorName>Henderson, Robert</contributorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Robert</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Henderson</familyName>
+    </contributor>
+    <contributor contributorType="Supervisor">
+      <contributorName>Dawson, Martin</contributorName>
+      <givenName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Martin</givenName>
+      <familyName xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">Dawson</familyName>
+      <nameIdentifier nameIdentifierScheme="ORCID" schemeURI="http://www.orcid.org">0000-0002-6639-2989</nameIdentifier>
+      <affiliation xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">University Of Strathclyde</affiliation>
+    </contributor>
+  </contributors>
+  <dates>
+    <date dateType="Available">2020-02-04</date>
+    <date dateType="Collected">2019-12-09</date>
+  </dates>
+  <sizes>
+    <size>44MB</size>
+  </sizes>
+  <formats>
+    <format>video/mp4</format>
+  </formats>
+  <rightsList>
+    <rights rightsURI="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</rights>
+  </rightsList>
+  <descriptions>
+    <description descriptionType="Abstract" xml:lang="en">Video documentation of an optical wireless data transmission experiment between The Lighthouse, Glasgow, and the Livingstone Tower, Glasgow. The transmitter was a blue light-emitting diode (LED) with a digitally interfaced complementary metal-oxide semiconductor (CMOS) driver and placed on the viewing platform of The Lighthouse. The receiver was a CMOS single photon avalanche diode (SPAD) chip located on the top floor of the Livingstone Tower. Both, transmitter and receiver used simple lens optics of approximately 1 inch diameter. Data were transmitted error free (i.e. with a bit error rate below the detection limit of 1e-5) at a data rate of 20 Mb/s.
+The video contains photographic and video footage of the experiment as well as visualisations of the geographic location created in Google Earth. The background music is from http://www.bensound.com/royalty-free-music
+Thanks go to The Lighthouse for enabling access to their viewing platform.</description>
+  </descriptions>
+  <geoLocations>
+    <geoLocation>
+      <geoLocationPoint>
+        <pointLongitude>-4.25549</pointLongitude>
+        <pointLatitude>55.859623</pointLatitude>
+      </geoLocationPoint>
+      <geoLocationPolygon>
+        <polygonPoint>
+          <pointLongitude>-4.25549</pointLongitude>
+          <pointLatitude>55.859623</pointLatitude>
+        </polygonPoint>
+        <polygonPoint>
+          <pointLongitude>-4.24366</pointLongitude>
+          <pointLatitude>55.86096</pointLatitude>
+        </polygonPoint>
+        <polygonPoint>
+          <pointLongitude>-4.24366</pointLongitude>
+          <pointLatitude>55.86096</pointLatitude>
+        </polygonPoint>
+        <polygonPoint>
+          <pointLongitude>-4.25549</pointLongitude>
+          <pointLatitude>55.859623</pointLatitude>
+        </polygonPoint>
+      </geoLocationPolygon>
+    </geoLocation>
+  </geoLocations>
+  <fundingReferences>
+    <fundingReference>
+      <funderName>EPSRC (Engineering and Physical Sciences Research Council)</funderName>
+      <awardNumber>EP/S001751/1</awardNumber>
+      <awardTitle>Structured illumination and digital lighting at the few-photon level (full proposal)</awardTitle>
+    </fundingReference>
+  </fundingReferences>
+</resource>

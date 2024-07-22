@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.doi.status;
 
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
+import ca.nrc.cadc.doi.io.DoiParsingException;
 
 import java.util.ArrayList;
 import java.util.List;

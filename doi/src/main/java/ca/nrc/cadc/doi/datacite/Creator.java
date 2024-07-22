@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-
 /**
  * One of the main researchers or authors. The main researchers involved working
  * on the data, or the authors of the publication in priority order. May be a
@@ -80,22 +78,18 @@ import org.apache.log4j.Logger;
  */
 public class Creator {
 
-    private static Logger log = Logger.getLogger(Creator.class);
+    public static final String NAME = "creator";
+    public static final String GIVEN_NAME = "givenName";
+    public static final String FAMILY_NAME = "familyName";
+    public static final String LANG = "lang";
 
-    // Name of the creator.
-    private CreatorName creatorName;
+    private final CreatorName creatorName;
 
-    // Given name of the creator.
     public String givenName;
-
-    // Family name of the creator.
     public String familyName;
-
-    // Identifier of the name.
+    public String lang;
     public NameIdentifier nameIdentifier;
-
-    // Affiliation of the creator.
-    public String affiliation;
+    public Affiliation affiliation;
 
     /**
      * Creator constructor.
@@ -104,16 +98,18 @@ public class Creator {
      */
     public Creator(CreatorName creatorName) {
         if (creatorName == null) {
-            String msg = "creatorName must be specified.";
-            throw new IllegalArgumentException(msg);
+            throw new IllegalArgumentException("Creator creatorName must be specified");
         }
         this.creatorName = creatorName;
     }
 
-    /**
-     * @return creatorName of the creator.
-     */
     public CreatorName getCreatorName() {
         return this.creatorName;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Creator[%s]", creatorName);
+    }
+
 }

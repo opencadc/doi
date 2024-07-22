@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,7 +72,6 @@ package ca.nrc.cadc.doi.status;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
 
-import org.apache.log4j.Logger;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
 
@@ -82,87 +81,71 @@ import org.jdom2.Namespace;
  * @author yeunga
  */
 public class DoiStatusWriter {
-    private static Logger log = Logger.getLogger(DoiStatusWriter.class);
 
     public DoiStatusWriter() {
     }
 
     protected Element getRootElement(DoiStatus doiStatus) {
-        Element root = getDoiStatusElement(doiStatus);
-        return root;
+        return getDoiStatusElement(doiStatus);
     }
 
     public Element getDoiStatusElement(DoiStatus doiStatus) {
-        Element ret = new Element("doistatus");
-
-        // add identifier element
-        Element identifierElement = getIdentifierElement(doiStatus.getIdentifier());
-        ret.addContent(identifierElement);
-
-        // add title element
-        Element titlesElement = getTitleElement(doiStatus.getTitle());
-        ret.addContent(titlesElement);
-
-        // add data directory element
+        Element element = new Element("doistatus");
+        element.addContent(getIdentifierElement(doiStatus.getIdentifier()));
+        element.addContent(getTitleElement(doiStatus.getTitle()));
+        element.addContent(getStatusElement(doiStatus.getStatus().getValue()));
         Element dataDirectoryElement = getDataDirectoryElement(doiStatus.getDataDirectory());
         if (dataDirectoryElement != null) {
-	        ret.addContent(dataDirectoryElement);
+	        element.addContent(dataDirectoryElement);
         }
-
-        // add status element
-        Element resourceTypeElement = getStatusElement(doiStatus.getStatus().getValue());
-        ret.addContent(resourceTypeElement);
-
-        // add journalRef element
         if (doiStatus.journalRef != null) {
-            Element journalRefElement = getJournalRefElement(doiStatus.journalRef);
-            ret.addContent(journalRefElement);
+            element.addContent(getJournalRefElement(doiStatus.journalRef));
         }
-
-        return ret;
+        return element;
     }
 
     protected Element getIdentifierElement(Identifier identifier) {
-        Element ret = new Element("identifier");
-        ret.setAttribute("identifierType", identifier.getIdentifierType());
-        ret.setText(identifier.getText());
-        return ret;
+        Element element = new Element(Identifier.NAME);
+        element.setText(identifier.getValue());
+        element.setAttribute(Identifier.IDENTIFIER_TYPE, identifier.getIdentifierType());
+        return element;
 
     }
 
     protected Element getTitleElement(Title title) {
-        Element ret = null;
-        if (title != null) {
-            ret = new Element("title");
-            ret.setAttribute("lang", title.getLang(), Namespace.XML_NAMESPACE);
-	        ret.setText(title.getText());
-	        if (title.titleType != null) {
-	            // set title type attribute
-	            ret.setAttribute("titleType", title.titleType.getValue());
-	        }
+        if (title == null) {
+            return null;
         }
-
-        return ret;
+        Element element = new Element(Title.NAME);
+        element.setText(title.getValue());
+        if (title.titleType != null) {
+            element.setAttribute(Title.TITLE_TYPE, title.titleType.getValue());
+        }
+        if (title.lang != null) {
+            element.setAttribute(Title.LANG, title.lang, Namespace.XML_NAMESPACE);
+        }
+        return element;
     }
 
     protected Element getDataDirectoryElement(String dataDirectory) {
-        Element ret = null;
-        if (dataDirectory != null) {
-            ret = new Element("dataDirectory");
-	        ret.setText(dataDirectory);
+        if (dataDirectory == null) {
+            return null;
         }
-        return ret;
+        Element element = new Element("dataDirectory");
+        element.setText(dataDirectory);
+        return element;
     }
 
     protected Element getStatusElement(String status) {
-        Element ret = new Element("status");
-        ret.setText(status);
-        return ret;
+        Element element = new Element("status");
+        element.setText(status);
+        return element;
     }
 
     protected Element getJournalRefElement(String journalRef) {
-        Element ret = new Element("journalRef");
-        ret.setText(journalRef);
-        return ret;
+        Element element = new Element("journalRef");
+        element.setText(journalRef);
+        return element;
     }
+
 }

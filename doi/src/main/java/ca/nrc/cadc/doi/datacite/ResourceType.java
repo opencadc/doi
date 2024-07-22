@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -58,11 +58,7 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’esties(serverNode);
-
-            // return the node in xml format
-            NodeWriter nodeWriter = new NodeWriter();
-            return new NodeActionResult(new N
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -72,49 +68,40 @@
 */
 
 package ca.nrc.cadc.doi.datacite;
-
 /**
- * Enums for types of contributor.
+ * The type of a resource. Additional free text description can be entered into
+ * resourceTypeGeneral.
  * 
  * @author yeunga
- *
  */
-public enum ResourceType {
-    AUDIO_VISUAL("Audiovisual"), 
-    COLLECTION("Collection"), 
-    DATA_PAPER("DataPaper"), 
-    DATA_SET("Dataset"), 
-    EVENT("Event"), 
-    IMAGE("Image"), 
-    INTERACTIVE_RESOURCE("InteractiveResource"), 
-    MODEL("Model"), 
-    PHYSICAL_OBJECT("PhysicalObject"), 
-    SERVICE("Service"), 
-    SOFTWARE("Software"), 
-    SOUND("Sound"), 
-    TEXT("Text"), 
-    WORKFLOW("Workflow"), 
-    OTHER("Other");
+public class ResourceType {
 
-    private final String value;
+    public static final String NAME = "resourceType";
+    public static final String RESOURCE_TYPE_GENERAL = "resourceTypeGeneral";
 
-    private ResourceType(String value) {
-        this.value = value;
+    private final DataCiteResourceType resourceTypeGeneral;
+
+    public String text;
+
+    /**
+     * DOIResourceType constructor.
+     *
+     * @param resourceTypeGeneral the DataCite resource type
+     */
+    public ResourceType(DataCiteResourceType resourceTypeGeneral) {
+        if (resourceTypeGeneral == null) {
+            throw new IllegalArgumentException("ResourceType resourceTypeGeneral must be specified");
+        }
+        this.resourceTypeGeneral = resourceTypeGeneral;
     }
 
-    public static ResourceType toValue(String s) {
-        for (ResourceType type : values())
-            if (type.value.equals(s))
-                return type;
-        throw new IllegalArgumentException("invalid value: " + s);
-    }
-
-    public String getValue() {
-        return value;
+    public DataCiteResourceType getResourceTypeGeneral() {
+        return this.resourceTypeGeneral;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return String.format("ResourceType[%s]", resourceTypeGeneral);
     }
+
 }

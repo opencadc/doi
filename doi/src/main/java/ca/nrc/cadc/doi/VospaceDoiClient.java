@@ -69,8 +69,8 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.doi.datacite.DoiParsingException;
-import ca.nrc.cadc.doi.datacite.DoiXmlReader;
+import ca.nrc.cadc.doi.io.DoiParsingException;
+import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;

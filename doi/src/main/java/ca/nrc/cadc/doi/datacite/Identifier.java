@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,54 +69,50 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
+import ca.nrc.cadc.util.StringUtil;
 
 /**
- * A persistent identifier that identifies a resource. * To prevent the
- * identifier from being accidentally created, there is no method provided to
- * set the identifier. The identifier field is set by
- * DoiReader.assignIdentifier() via reflection.
+ * A persistent identifier that identifies a resource.
  * 
  * @author yeunga
  */
 public class Identifier {
 
-    private static Logger log = Logger.getLogger(Identifier.class);
+    public static final String NAME = "identifier";
+    public static final String IDENTIFIER_TYPE = "identifierType";
 
-    // currently, only DOI identifier type is allowed..
-    private String identifierType;
-
-    // the identifier
-    private String text;
+    private final String value;
+    private final String identifierType;
 
     /**
      * Identifier constructor.
-     * 
-     * @param identifierType
-     *            type of the identifier
+     *
+     * @param value name of the identifier
+     * @param identifierType type of the identifier
      * 
      */
-    public Identifier(String identifierType) {
-        if (!StringUtils.hasText(identifierType)) {
-            String msg = "identifierType must be specified.";
-            throw new IllegalArgumentException(msg);
+    public Identifier(String value, String identifierType) {
+        if (!StringUtil.hasText(value)) {
+            throw new IllegalArgumentException("Identifier value cannot be null or empty");
         }
-
+        if (!StringUtil.hasText(identifierType)) {
+            throw new IllegalArgumentException("Identifier identifierType must be specified");
+        }
+        this.value = value;
         this.identifierType = identifierType;
     }
 
-    /**
-     * @return type of this identifier.
-     */
+    public String getValue() {
+        return this.value;
+    }
+
     public String getIdentifierType() {
         return this.identifierType;
     }
 
-    /**
-     * @return the identifier text
-     */
-    public String getText() {
-        return this.text;
+    @Override
+    public String toString() {
+        return String.format("Identifier[%s, %s]", value, identifierType);
     }
+
 }

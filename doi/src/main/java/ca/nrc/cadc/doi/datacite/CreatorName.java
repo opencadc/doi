@@ -69,8 +69,7 @@
 
 package ca.nrc.cadc.doi.datacite;
 
-import org.apache.log4j.Logger;
-import org.springframework.util.StringUtils;
+import ca.nrc.cadc.util.StringUtil;
 
 /**
  * Name to identify a creator.
@@ -79,30 +78,31 @@ import org.springframework.util.StringUtils;
  */
 public class CreatorName {
 
-    private static Logger log = Logger.getLogger(CreatorName.class);
+    public static final String NAME = "creatorName";
+    public static final String NAME_TYPE = "nameType";
+    public static final String LANG = "lang";
 
-    // name of creator
-    private String text;
+    private final String value;
+
     public NameType nameType;
+    public String lang;
 
     /**
      * Constructor.
      * 
-     * @param creatorName name of creator
+     * @param value creator name, can be null or an empty string.
      */
-    public CreatorName(String creatorName) {
-        if (!StringUtils.hasText(creatorName)) {
-            String msg = "creatorName must be specified.";
-            throw new IllegalArgumentException(msg);
-        }
-
-        this.text = creatorName;
+    public CreatorName(String value) {
+        this.value = value;
     }
 
-    /**
-     * @return creator name.
-     */
-    public String getText() {
-        return this.text;
+    public String getValue() {
+        return this.value;
     }
+
+    @Override
+    public String toString() {
+        return String.format("CreatorName[%s]", value);
+    }
+
 }
