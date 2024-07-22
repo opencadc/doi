@@ -133,7 +133,8 @@ public abstract class DoiAction extends RestAction {
      * and to make the DOI findable. 
      * For DOI deletion, the service could delete the DOI irrespective of its status. 
      * However this has not been implemented.
-     * @return
+     *
+     * @return new DoiInlineContentHandler
      */
     @Override
     protected InlineContentHandler getInlineContentHandler() {

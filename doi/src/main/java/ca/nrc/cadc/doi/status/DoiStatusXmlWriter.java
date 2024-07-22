@@ -96,12 +96,9 @@ public class DoiStatusXmlWriter extends DoiStatusWriter {
     /**
      * Write a DoiStatus instance to an OutputStream using UTF-8 encoding.
      *
-     * @param doiStatus
-     *            DoiStatus instance to write.
-     * @param out
-     *            OutputStream to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param doiStatus DoiStatus instance to write.
+     * @param out OutputStream to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(DoiStatus doiStatus, OutputStream out) throws IOException {
         OutputStreamWriter outWriter;
@@ -116,10 +113,9 @@ public class DoiStatusXmlWriter extends DoiStatusWriter {
     /**
      * Write a DoiStatus instance to a StringBuilder.
      * 
-     * @param doiStatus
-     *            DoiStatus instance to write.
-     * @param builder
-     * @throws IOException
+     * @param doiStatus DoiStatus instance to write.
+     * @param builder builder to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(DoiStatus doiStatus, StringBuilder builder) throws IOException {
         write(doiStatus, new StringBuilderWriter(builder));
@@ -128,12 +124,9 @@ public class DoiStatusXmlWriter extends DoiStatusWriter {
     /**
      * Write a DoiStatus instance to a writer.
      *
-     * @param doiStatus
-     *            DoiStatus instance to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param doiStatus DoiStatus instance to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(DoiStatus doiStatus, Writer writer) throws IOException {
         long start = System.currentTimeMillis();
@@ -146,12 +139,9 @@ public class DoiStatusXmlWriter extends DoiStatusWriter {
     /**
      * Write a Document instance by providing the root element to a writer.
      *
-     * @param root
-     *            Root element to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     protected void write(Element root, Writer writer) throws IOException {
         XMLOutputter outputter = new XMLOutputter();

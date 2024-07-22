@@ -122,7 +122,8 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
      * Construct a list of DoiStatus from a InputStream.
      *
      * @param in InputStream.
-     * @return List of DoiStatus object .
+     * @return List of DoiStatus objects.
+     * @throws IOException if error reading InputStream.
      * @throws DoiParsingException if there is an error parsing the XML.
      */
     public List<DoiStatus> read(InputStream in) throws IOException, DoiParsingException {
@@ -140,6 +141,7 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
      *
      * @param reader Reader.
      * @return List of DoiStatus object containing the status of the specified DOI.
+     * @throws IOException if error reading InputStream.
      * @throws DoiParsingException if there is an error parsing the XML.
      */
     public List<DoiStatus> read(Reader reader) throws DoiParsingException, IOException {

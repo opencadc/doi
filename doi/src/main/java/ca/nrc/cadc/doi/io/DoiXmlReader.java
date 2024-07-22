@@ -111,7 +111,7 @@ public class DoiXmlReader extends DoiReader {
      * is likely to fail in horrible ways (e.g. NullPointerException) if it receives
      * invalid documents. However, performance may be improved.
      *
-     * @param enableSchemaValidation
+     * @param enableSchemaValidation enable XML schema validation of the document.
      */
     public DoiXmlReader(boolean enableSchemaValidation) {
         if (enableSchemaValidation) {
@@ -176,6 +176,7 @@ public class DoiXmlReader extends DoiReader {
      * @param reader Reader.
      * @return Resource object containing all doi metadata.
      * @throws IOException  when an I/O error prevents a document from being fully parsed
+     * @throws DoiParsingException when the document is invalid
      */
     public Resource read(Reader reader) throws DoiParsingException, IOException {
         if (reader == null) {
