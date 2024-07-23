@@ -1,0 +1,27 @@
+name: Java CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+
+#    - name: build and test cadc-doi
+#      run: cd cadc-doi && ../gradlew --info clean build javadoc install
+
+    - name: java build -- doi
+      run: cd doi && ../gradlew --info clean build javadoc
+
+    - name: build citation
+      run: cd citation && ../gradlew --info clean build
+

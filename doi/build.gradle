@@ -12,22 +12,11 @@ repositories {
     mavenLocal()
 }
 
-apply from: '../service.gradle'
+// apply from: '../service.gradle'
 
 sourceCompatibility = 11
 
 group = 'ca.nrc.cadc'
-
-configurations {
-    checkstyleDep
-}
-
-checkstyle {
-    ignoreFailures = false
-    config = resources.text.fromArchiveEntry(configurations.checkstyleDep, 'cadc_checkstyle.xml')
-    toolVersion = '8.2'
-    sourceSets = []
-}
 
 copy {
     from (System.getenv('A') + '/etc/') {
