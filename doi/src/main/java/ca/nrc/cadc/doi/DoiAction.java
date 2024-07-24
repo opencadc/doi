@@ -111,7 +111,8 @@ public abstract class DoiAction extends RestAction {
     protected String cadcPrefix;
     protected String doiParentPath;
 
-    public DoiAction() { }
+    public DoiAction() {
+    }
 
     /**
      * Parse input documents
@@ -122,7 +123,6 @@ public abstract class DoiAction extends RestAction {
      * and to make the DOI findable. 
      * For DOI deletion, the service could delete the DOI irrespective of its status. 
      * However this has not been implemented.
-     * @return
      */
     @Override
     protected InlineContentHandler getInlineContentHandler() {
@@ -134,9 +134,9 @@ public abstract class DoiAction extends RestAction {
         // load doi properties
         this.config = DoiInitAction.getConfig();
         this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
-        log.info("vaultResourceID="+vaultResourceID);
+        log.info("vaultResourceID=" + vaultResourceID);
         this.gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
-        log.info("gmsResourceID="+gmsResourceID);
+        log.info("gmsResourceID=" + gmsResourceID);
         this.cadcPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_CADC_PREFIX_KEY);
         this.doiParentPath = config.getFirstPropertyValue(DoiInitAction.VAULT_DOI_PARENT_PATH_KEY);
 
@@ -160,7 +160,7 @@ public abstract class DoiAction extends RestAction {
                 config.getFirstPropertyValue(DoiInitAction.METADATA_FILE_PREFIX_KEY), suffix);
     }
 
-    protected VOSURI getVOSURI(String path) throws URISyntaxException {
+    protected VOSURI getVOSURI(String path) {
         return new VOSURI(vaultResourceID, String.format("%s/%s", doiParentPath, path));
     }
 

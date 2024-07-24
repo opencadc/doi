@@ -83,21 +83,14 @@ import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Base64;
-import ca.nrc.cadc.util.FileUtil;
-import ca.nrc.cadc.util.InvalidConfigException;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
@@ -130,8 +123,6 @@ import org.opencadc.vospace.transfer.Transfer;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    private static final String DATACITE_CREDENTIALS = "datacite.pass";
-
     public PostAction() {
         super();
     }
@@ -141,18 +132,15 @@ public class PostAction extends DoiAction {
         super.init(true);
 
         // Do DOI creation work as doiadmin
-        Subject.doAs(getAdminSubject(), new PrivilegedExceptionAction<>() {
-            @Override
-            public String run() throws Exception {
-                if (doiAction != null) {
-                    performDoiAction();
-                } else if (doiSuffix == null) {
-                    createDOI();
-                } else {
-                    updateDOI();
-                }
-                return null;
+        Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
+            if (doiAction != null) {
+                performDoiAction();
+            } else if (doiSuffix == null) {
+                createDOI();
+            } else {
+                updateDOI();
             }
+            return null;
         });
     }
 
@@ -231,20 +219,9 @@ public class PostAction extends DoiAction {
     }
 
     private String getCredentials() {
-        File passwordFile;
-        try {
-            passwordFile = FileUtil.getFileFromResource(DATACITE_CREDENTIALS, PostAction.class);
-        } catch (InvalidConfigException e) {
-            throw new RuntimeException(String.format("Could not find password file '%s'", DATACITE_CREDENTIALS));
-        }
-        PropertiesReader reader = new PropertiesReader(passwordFile);
-        MultiValuedProperties properties = reader.getAllProperties();
-        String username = properties.getFirstPropertyValue("username");
-        String password = properties.getFirstPropertyValue("password");
-        if (username == null || password == null) {
-            throw new RuntimeException(String.format("Username or password are missing in '%s'", DATACITE_CREDENTIALS));
-        }
-        return String.format("%s:%s", username, password);
+        return String.format("%s:%s",
+                config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_USERNAME_KEY),
+                config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_PASSWORD_KEY));
     }
     
     private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg)
@@ -653,14 +630,11 @@ public class PostAction extends DoiAction {
         try {
             GMSClient gmsClient = getGMSClient();
             gmsClient.createGroup(doiRWGroup);
-        } catch (GroupAlreadyExistsException gaeex) {
+        } catch (GroupAlreadyExistsException | UserNotFoundException gaeex) {
             // expose it as a server error
             throw new RuntimeException(gaeex);
-        } catch (UserNotFoundException unfex) {
-            // expose it as a server error
-            throw new RuntimeException(unfex);
         }
-        
+
         log.debug("doi group created: " + guri);
         return guri;
     }
@@ -694,7 +668,7 @@ public class PostAction extends DoiAction {
     }
     
     private void uploadDOIDocument(Resource resource, VOSURI docVOSUIRI)
-        throws URISyntaxException, ResourceNotFoundException {
+        throws ResourceNotFoundException {
 
         Transfer transfer = new Transfer(docVOSUIRI.getURI(), Direction.pushToVoSpace);
         Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);  // anon for preauth url
@@ -777,8 +751,8 @@ public class PostAction extends DoiAction {
         return sb.toString();
     }
 
-    private class DoiOutputStream implements OutputStreamWrapper {
-        private Resource streamResource;
+    private static class DoiOutputStream implements OutputStreamWrapper {
+        private final Resource streamResource;
 
         public DoiOutputStream(Resource streamRes) {
             this.streamResource = streamRes;

@@ -81,7 +81,6 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -124,77 +123,74 @@ public class GetAction extends DoiAction {
         }
     }
     
-//    private Title getTitle(Resource resource) {
-//        Title title = null;
-//        List<Title> titles = resource.getTitles();
-//        for (Title t : titles) {
-//            if (t.titleType == null) {
-//                title = t;
-//                break;
-//            }
-//        }
-//        return title;
-//    }
-//
-    private String updateMintingStatus(final ContainerNode doiContainerNode, final String status) throws Exception {
-        return (String) Subject.doAs(getAdminSubject(), new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                // update status based on the result of the minting service
-                String localStatus = status;
-                String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
-                if (jobURLString != null) {
-                    URL jobURL = new URL(jobURLString);
-                    VOSURI vosuri = getVOSURI(doiContainerNode.getName());
-                    RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
-                    recursiveSetNode.setSchemaValidation(false);
-                    ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
-                    switch (phase) {
-                        case COMPLETED:
-                        case ARCHIVED:
-                            // job finished, set corresponding status
-                            if (status.equals(Status.LOCKING_DATA.getValue())) {
-                                localStatus = Status.LOCKED_DATA.getValue();
-                            } else if (status.equals(Status.REGISTERING.getValue())) {
-                                localStatus = Status.MINTED.getValue();
-                            }
-                            // delete jobURL property
-                            doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
-                            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
-                            vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
-                            break;
-                        case ERROR:
-                        case ABORTED:
-                        case UNKNOWN:
-                        case SUSPENDED:
-                        case HELD:
-                            // assume job resulted in error, set corresponding status
-                            if (status.equals(Status.LOCKING_DATA.getValue())) {
-                                localStatus = Status.ERROR_LOCKING_DATA.getValue();
-                            } else if (status.equals(Status.REGISTERING.getValue())) {
-                                localStatus = Status.ERROR_REGISTERING.getValue();
-                            }
-                            // delete jobURL property
-                            doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
-                            doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
-                            vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
-                            break;
-                        case PENDING:
-                        case QUEUED:
-                        case EXECUTING:
-                            // job is in progress, do nothing
-                            break;
-                        default:
-                            // do nothing
-                    }
-                }
-                return localStatus;
+    private Title getTitle(Resource resource) {
+        Title title = null;
+        List<Title> titles = resource.getTitles();
+        for (Title t : titles) {
+            if (t.titleType == null) {
+                title = t;
+                break;
             }
+        }
+        return title;
+    }
+
+    private String updateMintingStatus(final ContainerNode doiContainerNode, final String status) throws Exception {
+        return (String) Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
+            // update status based on the result of the minting service
+            String localStatus = status;
+            String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
+            if (jobURLString != null) {
+                URL jobURL = new URL(jobURLString);
+                VOSURI vosuri = getVOSURI(doiContainerNode.getName());
+                RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
+                recursiveSetNode.setSchemaValidation(false);
+                ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
+                switch (phase) {
+                    case COMPLETED:
+                    case ARCHIVED:
+                        // job finished, set corresponding status
+                        if (status.equals(Status.LOCKING_DATA.getValue())) {
+                            localStatus = Status.LOCKED_DATA.getValue();
+                        } else if (status.equals(Status.REGISTERING.getValue())) {
+                            localStatus = Status.MINTED.getValue();
+                        }
+                        // delete jobURL property
+                        doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
+                        doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+                        vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+                        break;
+                    case ERROR:
+                    case ABORTED:
+                    case UNKNOWN:
+                    case SUSPENDED:
+                    case HELD:
+                        // assume job resulted in error, set corresponding status
+                        if (status.equals(Status.LOCKING_DATA.getValue())) {
+                            localStatus = Status.ERROR_LOCKING_DATA.getValue();
+                        } else if (status.equals(Status.REGISTERING.getValue())) {
+                            localStatus = Status.ERROR_REGISTERING.getValue();
+                        }
+                        // delete jobURL property
+                        doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
+                        doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+                        vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+                        break;
+                    case PENDING:
+                    case QUEUED:
+                    case EXECUTING:
+                        // job is in progress, do nothing
+                        break;
+                    default:
+                        // do nothing
+                }
+            }
+            return localStatus;
         });
     }
     
     private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
-        DoiStatus doiStatus = null;
+        DoiStatus doiStatus;
         if (vospaceDoiClient.isCallerAllowed(doiContainerNode, DoiAction.DOIADMIN_X500)) {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
@@ -219,17 +215,16 @@ public class GetAction extends DoiAction {
             }
 
             // get title and construct DoiStatus instance
-//            Title title = null;
-//            try {
+            Title title = null;
+            try {
                 Resource resource = vospaceDoiClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
-//                title = getTitle(resource);
-                Title title = resource.getTitles().get(0);
+                title = getTitle(resource);
                 log.debug("title: " + title);
                 doiStatus = new DoiStatus(resource.getIdentifier(), title, dataDirectory, Status.toValue(status));
-//            } catch (Exception ex) {
-//                Identifier id = new Identifier(doiSuffixString, "DOI");
-//                doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
-//            }
+            } catch (Exception ex) {
+                Identifier id = new Identifier(doiSuffixString, "DOI");
+                doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
+            }
 
             // set journalRef
             doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
@@ -274,10 +269,8 @@ public class GetAction extends DoiAction {
                 try {
                     ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(node.getName());
                     DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
-                    if (doiStatus != null) {
-                        doiStatusList.add(doiStatus);
-                        log.debug("added doiStatus: " + doiStatus);
-                    }
+                    doiStatusList.add(doiStatus);
+                    log.debug("added doiStatus: " + doiStatus);
                 } catch (Exception ex) {
                     // skip
                     log.debug(ex);
@@ -340,7 +333,7 @@ public class GetAction extends DoiAction {
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 writer.write(doiStatus, baos);
-                log.debug("doiStatus: " + baos.toString());
+                log.debug("doiStatus: " + baos);
 
                 writer.write(doiStatus, syncOutput.getOutputStream());
             }

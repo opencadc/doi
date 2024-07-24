@@ -89,6 +89,9 @@ public class DoiInitAction extends InitAction {
     public static final String VAULT_DOI_PARENT_PATH_KEY = DOI_KEY + ".vault.doiParentPath";
     public static final String DATACITE_CADC_PREFIX_KEY = DOI_KEY + ".datacite.cadcPrefix";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
+    public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
+    public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
+
 
     // optional properties
     public static final String TEST_RANDOM_NAME_KEY = DOI_KEY + ".test.randomName";
@@ -201,6 +204,24 @@ public class DoiInitAction extends InitAction {
                 sb.append("INVALID URL");
                 ok = false;
             }
+        } else {
+            sb.append("OK");
+        }
+
+        String dataciteUsername = props.getFirstPropertyValue(DATACITE_MDS_USERNAME_KEY);
+        sb.append(String.format("\n\t%s: ", DATACITE_MDS_USERNAME_KEY));
+        if (dataciteUsername == null) {
+            sb.append("MISSING");
+            ok = false;
+        } else {
+            sb.append("OK");
+        }
+
+        String datacitePassword = props.getFirstPropertyValue(DATACITE_MDS_PASSWORD_KEY);
+        sb.append(String.format("\n\t%s: ", DATACITE_MDS_PASSWORD_KEY));
+        if (datacitePassword == null) {
+            sb.append("MISSING");
+            ok = false;
         } else {
             sb.append("OK");
         }
