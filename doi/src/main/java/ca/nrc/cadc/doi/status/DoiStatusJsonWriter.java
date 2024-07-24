@@ -122,10 +122,9 @@ public class DoiStatusJsonWriter extends DoiStatusWriter {
     /**
      * Write a DoiStatus instance to a StringBuilder.
      * 
-     * @param doiStatus
-     *            DoiStatus instance to write.
-     * @param builder
-     * @throws IOException
+     * @param doiStatus DoiStatus instance to write.
+     * @param builder write the DoiStatus to the builder
+     * @throws IOException is the writer fails to write.
      */
     public void write(DoiStatus doiStatus, StringBuilder builder) throws IOException {
         write(doiStatus, new StringBuilderWriter(builder));
@@ -134,12 +133,9 @@ public class DoiStatusJsonWriter extends DoiStatusWriter {
     /**
      * Write the DoiStatus instance to a writer.
      *
-     * @param doiStatus
-     *            DoiStatus instance to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param doiStatus DoiStatus instance to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     public void write(DoiStatus doiStatus, Writer writer) throws IOException {
         long start = System.currentTimeMillis();
@@ -152,12 +148,9 @@ public class DoiStatusJsonWriter extends DoiStatusWriter {
     /**
      * Write a Document instance by providing the root element to a writer.
      *
-     * @param root
-     *            Root element to write.
-     * @param writer
-     *            Writer to write to.
-     * @throws IOException
-     *             if the writer fails to write.
+     * @param root Root element to write.
+     * @param writer Writer to write to.
+     * @throws IOException if the writer fails to write.
      */
     protected void write(Element root, Writer writer) throws IOException {
         JsonOutputter outputter = new JsonOutputter();

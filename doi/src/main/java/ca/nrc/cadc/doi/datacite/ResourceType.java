@@ -87,6 +87,7 @@ public class ResourceType {
     /**
      * DOIResourceType constructor.
      *
+     * @param resourceTypeGeneral the DataCite resource type
      */
     public ResourceType(DataCiteResourceType resourceTypeGeneral) {
         if (resourceTypeGeneral == null) {
