@@ -24,64 +24,69 @@ See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-reg
 The doi.properties configures the DataCite service used to register new DOI's.
 
 ```
-# admin cert
-ca.nrc.cadc.dao.adminCert = 
-
 # vault resourceID
-ca.nrc.cadc.doi.vault.resourceID = 
+ca.nrc.cadc.doi.vaultResourceID = {vospace service resourceID}
 
 # gms resourceID
-ca.nrc.cadc.doi.gms.resourceID = 
+ca.nrc.cadc.doi.gmsResourceID = {GMS service resourceID}
 
 # prefix to DOI specific metadata file
-ca.nrc.cadc.doi.metadataFilePrefix = CISTI_CADC_
+ca.nrc.cadc.doi.metadataFilePrefix = {file prefix}
  
 # DOI landing page url
-ca.nrc.cadc.doi.landingUrl = https://www.canfar.net/citation/landing
+ca.nrc.cadc.doi.landingUrl = {landing page url}
 
 # path to the DOI parent folder
-ca.nrc.cadc.doi.vault.doiParentPath = /AstroDataCitationDOI/CISTI.CANFAR
+ca.nrc.cadc.doi.vault.doiParentPath = {DOI parent folder path}
 
-# CADC datacite prefix
-ca.nrc.cadc.doi.datacite.cadcPrefix = 10.11570
+# DataCite CADC prefix
+ca.nrc.cadc.doi.datacite.cadcPrefix = {CADC prefix}
 
-# Datacite MDS REST endpoint
-ca.nrc.cadc.doi.datacite.mdsUrl = https://mds.datacite.org
+# DataCite MDS REST endpoint
+ca.nrc.cadc.doi.datacite.mdsUrl = {MDS url}
 
-# Create a random DOI name for testing
-ca.nrc.cadc.doi.test.randomName = true
+# DataCite CADC username
+ca.nrc.cadc.doi.datacite.username = {username}
 
-# Group URI that owns test DOI's
-ca.nrc.cadc.doi.test.groupUri = ivo://cadc.nrc.ca/gms?CADC
+# DataCite CADC password
+ca.nrc.cadc.doi.datacite.password = {password}
+
+# (optinal) Create a random DOI name for testing
+ca.nrc.cadc.doi.test.randomName = {true|false}
+
+# (optional) Group URI that will own test DOI's
+ca.nrc.cadc.doi.test.groupUri = {group URI}
 
 ```
-_adminDN_ is the distinguished name of the account used to administer DOI's stored in VOSpace.
 
-_metadataPrefix_ is the prefix prepended to the DOI name to create the filename for the DOI specific metadata stored in VOSpace.
+_vaultResourceID_ the resourceID to the VOSpace service used to store DOI's.
+
+_gmsResourceID_ the resourceID to the GMS service used for authentication and authorization.
+
+_metadataFilePrefix_ is the prefix prepended to the DOI name to create the filename for the DOI specific metadata stored in VOSpace.
 
 _landingUrl_ is the base URL used to compose URLs to individual DOI's.
 
 _doiParentPath_ is the path in the VOSpace service to the DOI parent folder.
 
-_cadcPrefix_ is the registered prefix from Datacite for CADC account.
+_cadcPrefix_ is the registered prefix from Datacite for the CADC account.
 
 _mdsUrl_ is the URL to the Datacite MDS rest endpoint used to create and update DOI's.
 
-_testGroupUri_ is the group with read/write privileges for the test DOI.
+_username_ is the DataCite CADC username.
 
-### datacite.pass
-The datacite.pass contains the username and password for the DataCite service.
+_password_ is the DataCite CADC password.
 
-```
-machine mds.datacite.org login [username] password [password]
-machine mds.test.datacite.org login [username] password [password]
-```
+
+### doiadmin.pem
+This client certificate is used to make authenticated calls to a VOSpace service.
 
 ### cadcproxy.pem
 This client certificate is used to make authenticated server-to-server calls for system-level A&A purposes.
 
-### doiadmin.pem
-This client certificate is used to make authenticated calls to a VOSpace service.
+### cadc-log.properties (optional)
+See <a href="https://github.com/opencadc/core/tree/master/cadc-log">cadc-log</a> for common
+dynamic logging control.
 
 ## building it
 ```

@@ -12,18 +12,11 @@ repositories {
     mavenLocal()
 }
 
-// apply from: '../service.gradle'
+apply from: '../opencadc.gradle'
 
 sourceCompatibility = 11
 
 group = 'ca.nrc.cadc'
-
-copy {
-    from (System.getenv('A') + '/etc/') {
-        include 'datacite.pass'
-    }
-    into 'src/main/resources'
-}
 
 war {
     from(System.getenv('RPS') + '/resources/') {
@@ -40,10 +33,8 @@ dependencies {
     implementation 'org.opencadc:cadc-rest:[1.3.20,)'
     implementation 'org.opencadc:cadc-access-control-identity:[1.1.0,)'
     implementation 'org.opencadc:cadc-vosi:[1.4.3,2.0)'
-    implementation 'org.opencadc:cadc-vos:[2.0,3.0)'
+    implementation 'org.opencadc:cadc-vos:[2.0.7,3.0)'
     implementation 'org.opencadc:cadc-vos-client:[2.0.4,3.0)'
-    implementation 'org.opencadc:cadc-log:[1.0,)'
-    implementation 'com.puppycrawl.tools:checkstyle:8.2'
 
     runtimeOnly 'org.opencadc:cadc-registry:[1.7.2,)'
 
@@ -51,8 +42,6 @@ dependencies {
     testFixturesImplementation 'org.jdom:jdom2:[2.0,3.0)'
 
     testImplementation 'junit:junit:[4.0,5.0)'
-    intTestImplementation 'org.opencadc:cadc-test-vosi:[1.0.11,)'
-//    testImplementation(testFixtures(project(":lib")))
 
-    checkstyleDep 'org.opencadc:cadc-quality:1.+'
+    intTestImplementation 'org.opencadc:cadc-test-vosi:[1.0.14,)'
 }
