@@ -74,7 +74,6 @@ import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
@@ -99,9 +98,9 @@ public class InitFolderTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(InitFolderTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
-        Log4jInit.setLevel("org.opencadc.vospace", Level.DEBUG);
-        Log4jInit.setLevel("org.opencadc.vault", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.vospace", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.vault", Level.INFO);
     }
 
     /**
@@ -181,9 +180,9 @@ public class InitFolderTest extends IntTestBase {
                     });
                     return null;
                 } finally {
-//                    if (doiSuffix != null) {
-//                        cleanup(doiSuffix);
-//                    }
+                    if (doiSuffix != null) {
+                        cleanup(doiSuffix);
+                    }
                 }
             });
         } catch (Exception e) {

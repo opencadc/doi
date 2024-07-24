@@ -90,7 +90,7 @@ public class LandingPageTest extends IntTestBase {
         Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
     }
 
-    private final static String TEST_DOI = "13.0001";
+    private static final String TEST_DOI = "13.0001";
 
     public LandingPageTest() {
     }
@@ -132,7 +132,6 @@ public class LandingPageTest extends IntTestBase {
             });
 
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("Unexpected error", e);
             Assert.fail("Unexpected error: " + e);
         }

@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatus;
@@ -107,8 +106,6 @@ public class MintTest extends IntTestBase {
         Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
-    static final String JSON = "application/json";
-
     private ContainerNode doiParentNode;
 
     // test minting DOI instance
@@ -126,7 +123,7 @@ public class MintTest extends IntTestBase {
 
             // Pull the suffix from the identifier
             String doiSuffix = expectedIdentifier.split("/")[1];
-;
+
             try {
                 // For DOI tests below
                 URL doiURL = new URL(String.format("%s/%s", TestUtil.DOI_PARENT_PATH, doiSuffix));
@@ -196,13 +193,10 @@ public class MintTest extends IntTestBase {
                 // by doiadmin, so changes to it must be done with that cert.
                 doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
                 doiParentNode = doiContainerNode;
-                Subject.doAs(adminSubject, new PrivilegedExceptionAction<Object>() {
-                    @Override
-                    public String run() throws Exception {
-                        VOSURI parentVOSURI = getVOSURI(doiParentNode.getName());
-                        vosClient.setNode(parentVOSURI, doiParentNode);
-                        return null;
-                    }
+                Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+                    VOSURI parentVOSURI = getVOSURI(doiParentNode.getName());
+                    vosClient.setNode(parentVOSURI, doiParentNode);
+                    return null;
                 });
 
                 doMintTest(doiURL, persistedXML, expectedIdentifier, null);
@@ -227,25 +221,21 @@ public class MintTest extends IntTestBase {
                 // node owner is doiadmin, and after minting the group permissions are removed, so
                 // cleanup needs to be done as doiadmin, not the test subject
 
-                Subject.doAs(adminSubject, new PrivilegedExceptionAction<Object>() {
-                    @Override
-                    public String run() throws Exception {
+                Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+                    ContainerNode doiContainerNode = getContainerNode(doiSuffix);
+                    VOSURI vosuri = getVOSURI(doiContainerNode.getName());
+                    doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
+                    vosClient.setNode(vosuri, doiContainerNode);
 
-                        ContainerNode doiContainerNode = getContainerNode(doiSuffix);
-                        VOSURI vosuri = getVOSURI(doiContainerNode.getName());
-                        doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.DRAFT.getValue());
-                        vosClient.setNode(vosuri, doiContainerNode);
-
-                        // unlock the data directory and delete the DOI
-                        ContainerNode dataContainerNode = getContainerNode(doiSuffix + "/data");
-                        if (dataContainerNode.isLocked != null && dataContainerNode.isLocked) {
-                            dataContainerNode.getNodes().clear();
-                            setDataNodeRecursively(doiSuffix);
-                        }
-
-                        cleanup(doiSuffix);
-                        return null;
+                    // unlock the data directory and delete the DOI
+                    ContainerNode dataContainerNode = getContainerNode(doiSuffix + "/data");
+                    if (dataContainerNode.isLocked != null && dataContainerNode.isLocked) {
+                        dataContainerNode.getNodes().clear();
+                        setDataNodeRecursively(doiSuffix);
                     }
+
+                    cleanup(doiSuffix);
+                    return null;
                 });
             }
             return presistedResource;
@@ -270,7 +260,7 @@ public class MintTest extends IntTestBase {
     }
 
     private void verifyDataDirNodeProperties(ContainerNode dataContainerNode,
-                                             ContainerNode dataSubDirContainerNode) throws Exception {
+                                             ContainerNode dataSubDirContainerNode) {
         // verify the DOI data containerNode properties
         Assert.assertTrue("should be public", dataContainerNode.isPublic != null && dataContainerNode.isPublic);
         Assert.assertTrue("should not have group read", dataContainerNode.getReadOnlyGroup().isEmpty());
@@ -285,7 +275,7 @@ public class MintTest extends IntTestBase {
     }
 
     private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-    		ContainerNode dataSubDirContainerNode) throws Exception {
+    		ContainerNode dataSubDirContainerNode) {
         // verify the DOI containerNode properties
         Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
@@ -297,7 +287,7 @@ public class MintTest extends IntTestBase {
     }
 
     private void verifyLockedDataPropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-                                                 ContainerNode dataSubDirContainerNode) throws Exception {
+                                                 ContainerNode dataSubDirContainerNode) {
         // verify the DOI containerNode properties
         Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
@@ -309,7 +299,7 @@ public class MintTest extends IntTestBase {
     }
 
     private void verifyMintedStatePropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-                                                  ContainerNode dataSubDirContainerNode) throws Exception {
+                                                  ContainerNode dataSubDirContainerNode) {
         // verify the DOI containerNode properties
         Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertTrue("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
@@ -332,32 +322,29 @@ public class MintTest extends IntTestBase {
     }
     
     private void setDataNodeRecursively(String doiSuffix) throws Exception {
-        Subject.doAs(adminSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                VOSURI vosuri = getVOSURI(String.format("%s/data", doiSuffix));
-                ContainerNode dataContainerNode = new ContainerNode("data");
-                RecursiveSetNode recursiveSetNode = vosClient.createRecursiveSetNode(vosuri, dataContainerNode);
-                URL jobURL = recursiveSetNode.getJobURL();
+        Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+            VOSURI vosuri = getVOSURI(String.format("%s/data", doiSuffix));
+            ContainerNode dataContainerNode = new ContainerNode("data");
+            RecursiveSetNode recursiveSetNode = vosClient.createRecursiveSetNode(vosuri, dataContainerNode);
+            URL jobURL = recursiveSetNode.getJobURL();
 
-                // this is an async operation
-                Thread abortThread = new ClientAbortThread(jobURL);
-                Runtime.getRuntime().addShutdownHook(abortThread);
-                recursiveSetNode.setMonitor(true);
-                recursiveSetNode.run();
-                Runtime.getRuntime().removeShutdownHook(abortThread);
-                
-        		recursiveSetNode = new RecursiveSetNode(jobURL, dataContainerNode);
-                recursiveSetNode.setSchemaValidation(false);
-        		ExecutionPhase phase = recursiveSetNode.getPhase(20);
-                while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
-                	TimeUnit.SECONDS.sleep(1);
-            		phase = recursiveSetNode.getPhase();
-                }
+            // this is an async operation
+            Thread abortThread = new ClientAbortThread(jobURL);
+            Runtime.getRuntime().addShutdownHook(abortThread);
+            recursiveSetNode.setMonitor(true);
+            recursiveSetNode.run();
+            Runtime.getRuntime().removeShutdownHook(abortThread);
 
-                Assert.assertSame("Failed to unlock test data directory, phase = " + phase, ExecutionPhase.COMPLETED, phase);
-        		return phase.getValue();
+            recursiveSetNode = new RecursiveSetNode(jobURL, dataContainerNode);
+            recursiveSetNode.setSchemaValidation(false);
+            ExecutionPhase phase = recursiveSetNode.getPhase(20);
+            while (phase == ExecutionPhase.QUEUED || phase == ExecutionPhase.EXECUTING) {
+                TimeUnit.SECONDS.sleep(1);
+                phase = recursiveSetNode.getPhase();
             }
+
+            Assert.assertSame("Failed to unlock test data directory, phase = " + phase, ExecutionPhase.COMPLETED, phase);
+            return phase.getValue();
         });
     }
 

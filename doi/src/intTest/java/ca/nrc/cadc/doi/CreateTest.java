@@ -73,7 +73,6 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatus;
-import ca.nrc.cadc.doi.status.DoiStatusJsonReader;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatusXmlReader;
 import ca.nrc.cadc.doi.status.Status;
@@ -101,9 +100,8 @@ public class CreateTest extends IntTestBase {
     static final String JSON = "application/json";
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
-//        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
     @Test
@@ -163,7 +161,7 @@ public class CreateTest extends IntTestBase {
                             TEST_JOURNAL_REF, doiStatus.journalRef);
                 } finally {
                     if (doiSuffix != null) {
-//                        cleanup(doiSuffix);
+                        cleanup(doiSuffix);
                     }
                 }
                 return null;

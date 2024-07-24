@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.util.FileUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.net.URI;

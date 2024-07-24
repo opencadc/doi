@@ -156,7 +156,7 @@ public class UpdateTest extends IntTestBase {
                     compareResource(expected, actual);
                 } finally {
                     if (doiSuffix != null) {
-//                        cleanup(doiSuffix);
+                        cleanup(doiSuffix);
                     }
                 }
                 return null;

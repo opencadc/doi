@@ -82,7 +82,6 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -95,7 +94,6 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.VOSURI;
@@ -125,7 +123,7 @@ public abstract class IntTestBase extends TestBase {
     }
 
     @BeforeClass
-    public static void staticInit() throws Exception {
+    public static void staticInit() {
         adminSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.ADMIN_CERT, IntTestBase.class));
         readWriteSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.READ_WRITE_CERT, IntTestBase.class));
         readOnlySubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.READ_ONLY_CERT, IntTestBase.class));
@@ -140,10 +138,6 @@ public abstract class IntTestBase extends TestBase {
     protected VOSURI getVOSURI(String path) {
         return new VOSURI(TestUtil.VAULT_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
     }
-
-//    protected String getDoiFilename(String doiSuffix) {
-//        return String.format("%s%s.xml", metadataFilePrefix, doiSuffix);
-//    }
 
     protected String getDOISuffix(String doiIdentifier) {
         String [] parts = doiIdentifier.split("/");
@@ -200,9 +194,9 @@ public abstract class IntTestBase extends TestBase {
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 log.debug("cleanup as doiadmin");
                 try {
-//                    String groupToDelete = doiGroupPrefix + doiSuffix;
-//                    gmsClient.deleteGroup(groupToDelete);
-//                    log.debug("deleted group: " + groupToDelete);
+                    // String groupToDelete = doiGroupPrefix + doiSuffix;
+                    // gmsClient.deleteGroup(groupToDelete);
+                    // log.debug("deleted group: " + groupToDelete);
 
                     VOSURI nodeUri = getVOSURI(doiSuffix);
                     log.debug("recursiveDeleteNode: " + nodeUri);
