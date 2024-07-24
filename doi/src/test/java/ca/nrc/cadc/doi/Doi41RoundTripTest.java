@@ -73,17 +73,11 @@ import ca.nrc.cadc.doi.datacite.Affiliation;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.NameType;
 import ca.nrc.cadc.doi.datacite.Publisher;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Rights;
-import ca.nrc.cadc.doi.io.DoiJsonReader;
-import ca.nrc.cadc.doi.io.DoiJsonWriter;
-import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class Doi41RoundTripTest extends Doi45RoundTripTest {

@@ -121,7 +121,6 @@ public class Doi45RoundTripTest extends TestBase {
 
             compareResource(expected, actual);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("Unexpected exception", e);
             Assert.fail(e.getMessage());
         }

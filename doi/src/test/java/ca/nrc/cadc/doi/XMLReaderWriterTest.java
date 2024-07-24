@@ -75,7 +75,6 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.util.Log4jInit;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Random;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -127,7 +126,7 @@ public class XMLReaderWriterTest extends TestBase {
                 writer.write(expected, sb);
 
                 Resource actual = reader.read(sb.toString());
-                log.debug("actual: " + sb.toString());
+                log.debug("actual: " + sb);
                 compareResource(expected, actual);
             }
         } catch (Exception e) {
