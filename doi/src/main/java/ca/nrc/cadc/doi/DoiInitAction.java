@@ -82,16 +82,15 @@ public class DoiInitAction extends InitAction {
     private static final Logger log = Logger.getLogger(DoiInitAction.class);
 
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
-    public static final String VAULT_RESOURCE_ID_KEY = DOI_KEY + ".vault.resourceID";
+    public static final String VOSPACE_RESOURCE_ID_KEY = DOI_KEY + ".vospace.resourceID";
+    public static final String V0SPACE_DOI_PARENT_PATH_KEY = DOI_KEY + ".vospace.parentPath";
     public static final String GMS_RESOURCE_ID_KEY = DOI_KEY + ".gms.resourceID";
     public static final String METADATA_FILE_PREFIX_KEY = DOI_KEY + ".metadataFilePrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
-    public static final String VAULT_DOI_PARENT_PATH_KEY = DOI_KEY + ".vault.doiParentPath";
-    public static final String DATACITE_CADC_PREFIX_KEY = DOI_KEY + ".datacite.cadcPrefix";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
+    public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
-
 
     // optional properties
     public static final String TEST_RANDOM_NAME_KEY = DOI_KEY + ".test.randomName";
@@ -113,34 +112,34 @@ public class DoiInitAction extends InitAction {
         StringBuilder sb = new StringBuilder();
         boolean ok = true;
 
-        String vaultServiceUri = props.getFirstPropertyValue(VAULT_RESOURCE_ID_KEY);
-        sb.append(String.format("\n\t%s: ", VAULT_RESOURCE_ID_KEY));
-        if (vaultServiceUri == null) {
+        String vospaceResourceID = props.getFirstPropertyValue(VOSPACE_RESOURCE_ID_KEY);
+        sb.append(String.format("\n\t%s: ", VOSPACE_RESOURCE_ID_KEY));
+        if (vospaceResourceID == null) {
             sb.append("MISSING");
             ok = false;
         } else if (verify) {
             try {
-                new URI(vaultServiceUri);
+                new URI(vospaceResourceID);
                 sb.append("OK");
             } catch (URISyntaxException e) {
-                sb.append("INVALID VAULT SERVICE URI: ").append(e.getMessage());
+                sb.append("INVALID VOSPACE RESOURCE ID: ").append(e.getMessage());
                 ok = false;
             }
         } else {
             sb.append("OK");
         }
 
-        String gmsServiceUri = props.getFirstPropertyValue(GMS_RESOURCE_ID_KEY);
+        String gmsResourceID = props.getFirstPropertyValue(GMS_RESOURCE_ID_KEY);
         sb.append(String.format("\n\t%s: ", GMS_RESOURCE_ID_KEY));
-        if (gmsServiceUri == null) {
+        if (gmsResourceID == null) {
             sb.append("MISSING");
             ok = false;
         } else if (verify) {
             try {
-                new URI(gmsServiceUri);
+                new URI(gmsResourceID);
                 sb.append("OK");
             } catch (URISyntaxException e) {
-                sb.append("INVALID GMS SERVICE URI: ").append(e.getMessage());
+                sb.append("INVALID GMS RESOURCE ID: ").append(e.getMessage());
                 ok = false;
             }
         } else {
@@ -173,8 +172,8 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-        String parentPath = props.getFirstPropertyValue(VAULT_DOI_PARENT_PATH_KEY);
-        sb.append(String.format("\n\t%s: ", VAULT_DOI_PARENT_PATH_KEY));
+        String parentPath = props.getFirstPropertyValue(V0SPACE_DOI_PARENT_PATH_KEY);
+        sb.append(String.format("\n\t%s: ", V0SPACE_DOI_PARENT_PATH_KEY));
         if (parentPath == null) {
             sb.append("MISSING");
             ok = false;
@@ -182,9 +181,9 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-        String cadcPrefix = props.getFirstPropertyValue(DATACITE_CADC_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_CADC_PREFIX_KEY));
-        if (cadcPrefix == null) {
+        String accountPrefix = props.getFirstPropertyValue(DATACITE_ACCOUNT_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", DATACITE_ACCOUNT_PREFIX_KEY));
+        if (accountPrefix == null) {
             sb.append("MISSING");
             ok = false;
         } else {
