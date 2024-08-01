@@ -1,5 +1,4 @@
 plugins {
-    id 'idea'
     id 'java-test-fixtures'
     id 'war'
     id 'maven'
