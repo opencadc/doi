@@ -109,8 +109,7 @@ public abstract class IntTestBase extends TestBase {
 
     private static final Logger log = Logger.getLogger(IntTestBase.class);
 
-    static final String TEST_JOURNAL_REF =
-        "2018, Test Journal ref. ApJ 1000,100";
+    static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
 
     static Subject adminSubject;
     static Subject readWriteSubject;
@@ -130,30 +129,17 @@ public abstract class IntTestBase extends TestBase {
             FileUtil.getFileFromResource(TestUtil.ADMIN_CERT, IntTestBase.class)
         );
         readWriteSubject = SSLUtil.createSubject(
-            FileUtil.getFileFromResource(
-                TestUtil.READ_WRITE_CERT,
-                IntTestBase.class
-            )
+            FileUtil.getFileFromResource(TestUtil.READ_WRITE_CERT, IntTestBase.class)
         );
         readOnlySubject = SSLUtil.createSubject(
-            FileUtil.getFileFromResource(
-                TestUtil.READ_ONLY_CERT,
-                IntTestBase.class
-            )
+            FileUtil.getFileFromResource(TestUtil.READ_ONLY_CERT, IntTestBase.class)
         );
 
         RegistryClient regClient = new RegistryClient();
-        doiServiceURL = regClient.getServiceURL(
-            TestUtil.DOI_RESOURCE_ID,
-            Standards.DOI_INSTANCES_10,
-            AuthMethod.CERT
-        );
+        doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
         vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
         gmsClient = new GMSClient(TestUtil.GMS_RESOURCE_ID);
-        doiParentPathURI = new VOSURI(
-            TestUtil.VAULT_RESOURCE_ID,
-            TestUtil.DOI_PARENT_PATH
-        );
+        doiParentPathURI = new VOSURI(TestUtil.VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
     }
 
     protected VOSURI getVOSURI(String path) {
@@ -167,8 +153,7 @@ public abstract class IntTestBase extends TestBase {
         String[] parts = doiIdentifier.split("/");
         if (parts.length != 2) {
             throw new IllegalArgumentException(
-                "expected DOI identifier [prefix/suffix], found: " +
-                doiIdentifier
+                "expected DOI identifier [prefix/suffix], found: " + doiIdentifier
             );
         }
         return parts[1];
@@ -196,16 +181,10 @@ public abstract class IntTestBase extends TestBase {
         return (String) Subject.doAs(
             testSubject,
             (PrivilegedExceptionAction<Object>) () -> {
-                String persistedXML = postDOI(
-                    doiServiceURL,
-                    doiXML,
-                    TEST_JOURNAL_REF
-                );
+                String persistedXML = postDOI(doiServiceURL, doiXML, TEST_JOURNAL_REF);
                 DoiXmlReader reader = new DoiXmlReader();
                 Resource persistedResource = reader.read(persistedXML);
-                return getDOISuffix(
-                    persistedResource.getIdentifier().getValue()
-                );
+                return getDOISuffix(persistedResource.getIdentifier().getValue());
             }
         );
     }
@@ -213,26 +192,15 @@ public abstract class IntTestBase extends TestBase {
     protected String postDOI(URL postUrl, String doiXML, String journalRef)
         throws Exception {
         Map<String, Object> params = new HashMap<>();
-        FileContent fileContent = new FileContent(
-            doiXML,
-            "text/xml",
-            StandardCharsets.UTF_8
-        );
+        FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
         params.put("doiMetadata", fileContent);
         params.put("journalref", journalRef == null ? "" : journalRef);
         HttpPost post = new HttpPost(postUrl, params, true);
         post.prepare();
 
         Assert.assertNull("POST exception", post.getThrowable());
-        Assert.assertEquals(
-            "non 200 response code",
-            post.getResponseCode(),
-            200
-        );
-        return new String(
-            post.getInputStream().readAllBytes(),
-            StandardCharsets.UTF_8
-        );
+        Assert.assertEquals("non 200 response code", post.getResponseCode(), 200);
+        return new String(post.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     protected void cleanup(String doiSuffix) {
@@ -249,12 +217,10 @@ public abstract class IntTestBase extends TestBase {
 
                         VOSURI nodeUri = getVOSURI(doiSuffix);
                         log.debug("recursiveDeleteNode: " + nodeUri);
-                        RecursiveDeleteNode recursiveDeleteNode =
-                            vosClient.createRecursiveDelete(nodeUri);
+                        RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
                         recursiveDeleteNode.setMonitor(true);
                         recursiveDeleteNode.run();
-                        log.info(
-                            String.format(
+                        log.info(String.format(
                                 "RecursiveDeleteNode done, phase: %s  exception: %s",
                                 recursiveDeleteNode.getPhase(),
                                 recursiveDeleteNode.getException()

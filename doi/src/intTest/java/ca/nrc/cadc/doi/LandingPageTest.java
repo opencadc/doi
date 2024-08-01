@@ -96,58 +96,32 @@ public class LandingPageTest extends IntTestBase {
     public LandingPageTest() {}
 
     @Test
-    public void anonGetTest() {
-        try {
-            URL doiURL = new URL(
-                doiServiceURL.toExternalForm() +
-                "/" +
-                TEST_DOI +
-                "/status/public"
-            );
-            log.debug("test url: " + doiURL.toExternalForm());
-            Subject testSubject = AuthenticationUtil.getAnonSubject();
+    public void anonGetTest() throws Exception {
+        URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+        log.debug("test url: " + doiURL.toExternalForm());
+        Subject testSubject = AuthenticationUtil.getAnonSubject();
 
-            Subject.doAs(
-                testSubject,
-                (PrivilegedExceptionAction<Object>) () -> {
-                    HttpGet get = new HttpGet(doiURL, true);
-                    get.prepare();
+        Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+            HttpGet get = new HttpGet(doiURL, true);
+            get.prepare();
 
-                    Assert.assertEquals(200, get.getResponseCode());
-                    return null;
-                }
-            );
-        } catch (Exception e) {
-            log.error("Unexpected error", e);
-            Assert.fail("Unexpected error: " + e);
-        }
+            Assert.assertEquals(200, get.getResponseCode());
+            return null;
+        });
     }
 
     @Test
-    public void authGetTest() {
-        try {
-            log.debug("doi instances url: " + doiServiceURL);
-            URL doiURL = new URL(
-                doiServiceURL.toExternalForm() +
-                "/" +
-                TEST_DOI +
-                "/status/public"
-            );
-            log.debug("test url: " + doiURL.toExternalForm());
+    public void authGetTest() throws Exception {
+        log.debug("doi instances url: " + doiServiceURL);
+        URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+        log.debug("test url: " + doiURL.toExternalForm());
 
-            Subject.doAs(
-                adminSubject,
-                (PrivilegedExceptionAction<Object>) () -> {
-                    HttpGet get = new HttpGet(doiURL, true);
-                    get.prepare();
+        Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+            HttpGet get = new HttpGet(doiURL, true);
+            get.prepare();
 
-                    Assert.assertEquals(200, get.getResponseCode());
-                    return null;
-                }
-            );
-        } catch (Exception e) {
-            log.error("Unexpected error", e);
-            Assert.fail("Unexpected error: " + e);
-        }
+            Assert.assertEquals(200, get.getResponseCode());
+            return null;
+        });
     }
 }
