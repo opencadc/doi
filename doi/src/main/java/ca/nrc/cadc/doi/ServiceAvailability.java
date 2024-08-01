@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2021.                            (c) 2021.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -85,16 +85,20 @@ import java.net.URL;
 import java.util.NoSuchElementException;
 import org.apache.log4j.Logger;
 
-
 public class ServiceAvailability implements AvailabilityPlugin {
 
-    private static final Logger log = Logger.getLogger(ServiceAvailability.class);
+    private static final Logger log = Logger.getLogger(
+        ServiceAvailability.class
+    );
 
-    private static final File DOIADMIN_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-    private static final File AAI_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
+    private static final File DOIADMIN_PEM_FILE = new File(
+        System.getProperty("user.home") + "/.ssl/doiadmin.pem"
+    );
+    private static final File AAI_PEM_FILE = new File(
+        System.getProperty("user.home") + "/.ssl/cadcproxy.pem"
+    );
 
-    public ServiceAvailability() {
-    }
+    public ServiceAvailability() {}
 
     @Override
     public void setAppName(String appName) {
@@ -111,31 +115,55 @@ public class ServiceAvailability implements AvailabilityPlugin {
         String note = "service is accepting requests";
         try {
             MultiValuedProperties config = DoiInitAction.getConfig();
-            URI vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
+            URI vaultResourceID = URI.create(
+                config.getFirstPropertyValue(
+                    DoiInitAction.VOSPACE_RESOURCE_ID_KEY
+                )
+            );
             log.debug("vault resourceID: " + vaultResourceID);
 
             // check other services we depend on (vault, gms, datacite)
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
 
-            URL vaultURL = reg.getServiceURL(vaultResourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            URL vaultURL = reg.getServiceURL(
+                vaultResourceID,
+                Standards.VOSI_AVAILABILITY,
+                AuthMethod.ANON
+            );
             if (vaultURL != null) {
                 CheckResource checkResource = new CheckWebService(vaultURL);
                 checkResource.check();
             } else {
-                log.debug("check skipped: " + vaultResourceID + " does not provide " + Standards.VOSI_AVAILABILITY);
+                log.debug(
+                    "check skipped: " +
+                    vaultResourceID +
+                    " does not provide " +
+                    Standards.VOSI_AVAILABILITY
+                );
             }
 
             URI credURI = null;
             try {
-                credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
+                credURI = localAuthority.getServiceURI(
+                    Standards.CRED_PROXY_10.toString()
+                );
                 log.debug("credURI: " + credURI.toASCIIString());
-                URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                URL url = reg.getServiceURL(
+                    credURI,
+                    Standards.VOSI_AVAILABILITY,
+                    AuthMethod.ANON
+                );
                 if (url != null) {
                     CheckResource checkResource = new CheckWebService(url);
                     checkResource.check();
                 } else {
-                    log.debug("check skipped: " + credURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                    log.debug(
+                        "check skipped: " +
+                        credURI +
+                        " does not provide " +
+                        Standards.VOSI_AVAILABILITY
+                    );
                 }
             } catch (NoSuchElementException ex) {
                 log.debug("not configured: " + Standards.CRED_PROXY_10);
@@ -143,14 +171,25 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             URI usersURI = null;
             try {
-                usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_10.toString());
+                usersURI = localAuthority.getServiceURI(
+                    Standards.UMS_USERS_10.toString()
+                );
                 log.debug("usersURI: " + usersURI.toASCIIString());
-                URL url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                URL url = reg.getServiceURL(
+                    usersURI,
+                    Standards.VOSI_AVAILABILITY,
+                    AuthMethod.ANON
+                );
                 if (url != null) {
                     CheckResource checkResource = new CheckWebService(url);
                     checkResource.check();
                 } else {
-                    log.debug("check skipped: " + usersURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                    log.debug(
+                        "check skipped: " +
+                        usersURI +
+                        " does not provide " +
+                        Standards.VOSI_AVAILABILITY
+                    );
                 }
             } catch (NoSuchElementException ex) {
                 log.debug("not configured: " + Standards.UMS_USERS_10);
@@ -158,14 +197,25 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             URI groupsURI = null;
             try {
-                groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_10.toString());
+                groupsURI = localAuthority.getServiceURI(
+                    Standards.GMS_SEARCH_10.toString()
+                );
                 if (!groupsURI.equals(usersURI)) {
-                    URL url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                    URL url = reg.getServiceURL(
+                        groupsURI,
+                        Standards.VOSI_AVAILABILITY,
+                        AuthMethod.ANON
+                    );
                     if (url != null) {
                         CheckResource checkResource = new CheckWebService(url);
                         checkResource.check();
                     } else {
-                        log.debug("check skipped: " + groupsURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                        log.debug(
+                            "check skipped: " +
+                            groupsURI +
+                            " does not provide " +
+                            Standards.VOSI_AVAILABILITY
+                        );
                     }
                 }
             } catch (NoSuchElementException ex) {
@@ -175,14 +225,18 @@ public class ServiceAvailability implements AvailabilityPlugin {
             if (credURI != null || usersURI != null) {
                 if (DOIADMIN_PEM_FILE.exists() && DOIADMIN_PEM_FILE.canRead()) {
                     // certificate needed to do any actions with VOSpace Client
-                    CheckCertificate checkCert = new CheckCertificate(DOIADMIN_PEM_FILE);
+                    CheckCertificate checkCert = new CheckCertificate(
+                        DOIADMIN_PEM_FILE
+                    );
                     checkCert.check();
                 } else {
                     log.debug("DOIADMIN cert not found or unreadable");
                 }
                 if (AAI_PEM_FILE.exists() && AAI_PEM_FILE.canRead()) {
                     // certificate needed to do any A&A actions
-                    CheckCertificate checkCert = new CheckCertificate(AAI_PEM_FILE);
+                    CheckCertificate checkCert = new CheckCertificate(
+                        AAI_PEM_FILE
+                    );
                     checkCert.check();
                 } else {
                     log.debug("AAI cert not found or unreadable");
@@ -190,7 +244,9 @@ public class ServiceAvailability implements AvailabilityPlugin {
             }
 
             // check that datacite is available
-            String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
+            String dataCiteUrl = config.getFirstPropertyValue(
+                DoiInitAction.DATACITE_MDS_URL_KEY
+            );
             URL docURL = new URL(dataCiteUrl);
             HttpGet get = new HttpGet(docURL, true);
             get.setHeadOnly(true);
@@ -199,11 +255,16 @@ public class ServiceAvailability implements AvailabilityPlugin {
             get.run();
             int responseCode = get.getResponseCode();
             if (get.getThrowable() != null) {
-                throw new CheckException(get.getThrowable().getClass().getSimpleName()
-                    + ": " + get.getThrowable().getMessage());
+                throw new CheckException(
+                    get.getThrowable().getClass().getSimpleName() +
+                    ": " +
+                    get.getThrowable().getMessage()
+                );
             }
             if (responseCode != 200) {
-                throw new RuntimeException("response code from " + dataCiteUrl + ": " + responseCode);
+                throw new RuntimeException(
+                    "response code from " + dataCiteUrl + ": " + responseCode
+                );
             }
         } catch (CheckException ce) {
             // tests determined that the resource is not working

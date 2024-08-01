@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,9 +69,9 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.util.Log4jInit;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,7 +81,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class XMLReaderWriterTest extends TestBase {
-    private static final Logger log = Logger.getLogger(XMLReaderWriterTest.class);
+
+    private static final Logger log = Logger.getLogger(
+        XMLReaderWriterTest.class
+    );
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
@@ -134,5 +137,4 @@ public class XMLReaderWriterTest extends TestBase {
             Assert.fail("unexpected exception: " + e.getMessage());
         }
     }
-
 }

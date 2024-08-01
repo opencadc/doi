@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -81,6 +81,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class LandingPageTest extends IntTestBase {
+
     private static final Logger log = Logger.getLogger(LandingPageTest.class);
 
     static {
@@ -92,24 +93,30 @@ public class LandingPageTest extends IntTestBase {
 
     private static final String TEST_DOI = "13.0001";
 
-    public LandingPageTest() {
-    }
+    public LandingPageTest() {}
 
     @Test
     public void anonGetTest() {
         try {
-            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            URL doiURL = new URL(
+                doiServiceURL.toExternalForm() +
+                "/" +
+                TEST_DOI +
+                "/status/public"
+            );
             log.debug("test url: " + doiURL.toExternalForm());
             Subject testSubject = AuthenticationUtil.getAnonSubject();
 
-            Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
-                HttpGet get = new HttpGet(doiURL, true);
-                get.prepare();
+            Subject.doAs(
+                testSubject,
+                (PrivilegedExceptionAction<Object>) () -> {
+                    HttpGet get = new HttpGet(doiURL, true);
+                    get.prepare();
 
-                Assert.assertEquals(200, get.getResponseCode());
-                return null;
-            });
-
+                    Assert.assertEquals(200, get.getResponseCode());
+                    return null;
+                }
+            );
         } catch (Exception e) {
             log.error("Unexpected error", e);
             Assert.fail("Unexpected error: " + e);
@@ -120,21 +127,27 @@ public class LandingPageTest extends IntTestBase {
     public void authGetTest() {
         try {
             log.debug("doi instances url: " + doiServiceURL);
-            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            URL doiURL = new URL(
+                doiServiceURL.toExternalForm() +
+                "/" +
+                TEST_DOI +
+                "/status/public"
+            );
             log.debug("test url: " + doiURL.toExternalForm());
 
-            Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
-                HttpGet get = new HttpGet(doiURL, true);
-                get.prepare();
+            Subject.doAs(
+                adminSubject,
+                (PrivilegedExceptionAction<Object>) () -> {
+                    HttpGet get = new HttpGet(doiURL, true);
+                    get.prepare();
 
-                Assert.assertEquals(200, get.getResponseCode());
-                return null;
-            });
-
+                    Assert.assertEquals(200, get.getResponseCode());
+                    return null;
+                }
+            );
         } catch (Exception e) {
             log.error("Unexpected error", e);
             Assert.fail("Unexpected error: " + e);
         }
     }
-
 }

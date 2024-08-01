@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2018.                            (c) 2018.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,65 +71,86 @@ package ca.nrc.cadc.doi.status;
 
 import static org.junit.Assert.fail;
 
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.util.Log4jInit;
 import java.io.FileInputStream;
 import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.util.Log4jInit;
-
 /**
- * Test read-write of an XML document containing a list of doi statuses using the 
- * DoiStatusListXmlReader and DoiStatusListXmlWriter. Every test here performs a 
+ * Test read-write of an XML document containing a list of doi statuses using the
+ * DoiStatusListXmlReader and DoiStatusListXmlWriter. Every test here performs a
  * round trip: read document in xml format, write document in xml format
  * and compare to original document.
- * 
+ *
  * @author yeunga
  */
 public class DoiStatusReaderWriterTest {
-    private static final Logger log = Logger.getLogger(DoiStatusReaderWriterTest.class);
-    static
-    {
+
+    private static final Logger log = Logger.getLogger(
+        DoiStatusReaderWriterTest.class
+    );
+
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.vos", Level.INFO);
     }
 
-    public DoiStatusReaderWriterTest() {
-    }
+    public DoiStatusReaderWriterTest() {}
 
     private void compareIdentifier(Identifier id1, Identifier id2) {
-        Assert.assertEquals("Identifiers are different", id1.getValue(), id2.getValue());
-        Assert.assertEquals("identifierTypes are different", id1.getIdentifierType(), id2.getIdentifierType());
+        Assert.assertEquals(
+            "Identifiers are different",
+            id1.getValue(),
+            id2.getValue()
+        );
+        Assert.assertEquals(
+            "identifierTypes are different",
+            id1.getIdentifierType(),
+            id2.getIdentifierType()
+        );
     }
-    
+
     private void compareTitle(Title t1, Title t2) {
-    	if (t1 == null) {
-    		Assert.assertNull("expected title is null, actual title is not null: " + t2);
-    	} else {
-	        Assert.assertEquals("langs are different", t1.lang, t2.lang);
-	        Assert.assertEquals("titles are different", t1.getValue(), t2.getValue());
-	        Assert.assertEquals("titleTypes are different", t1.titleType, t2.titleType);
-    	}
+        if (t1 == null) {
+            Assert.assertNull(
+                "expected title is null, actual title is not null: " + t2
+            );
+        } else {
+            Assert.assertEquals("langs are different", t1.lang, t2.lang);
+            Assert.assertEquals(
+                "titles are different",
+                t1.getValue(),
+                t2.getValue()
+            );
+            Assert.assertEquals(
+                "titleTypes are different",
+                t1.titleType,
+                t2.titleType
+            );
+        }
     }
-    
+
     private void compareJournalRef(String p1, String p2) {
         Assert.assertEquals("journalRefs are different", p1, p2);
     }
-    
+
     private void compareStatus(String s1, String s2) {
         Assert.assertEquals("statuses are different", s1, s2);
     }
 
     private void compareDataDir(String s1, String s2) {
-    	if (s1 == null) {
-    		Assert.assertNull("expected dataDirectory is null, actual dataDirectory is not null: ", s2);
-    	} else {
-	        Assert.assertEquals("data directories are different", s1, s2);
-    	}
+        if (s1 == null) {
+            Assert.assertNull(
+                "expected dataDirectory is null, actual dataDirectory is not null: ",
+                s2
+            );
+        } else {
+            Assert.assertEquals("data directories are different", s1, s2);
+        }
     }
 
     private void compareDoiStatus(DoiStatus s1, DoiStatus s2) {
@@ -139,7 +160,7 @@ public class DoiStatusReaderWriterTest {
         compareStatus(s1.getStatus().getValue(), s2.getStatus().getValue());
         compareJournalRef(s1.journalRef, s2.journalRef);
     }
-    
+
     private void compareDoiStatusList(List<DoiStatus> l1, List<DoiStatus> l2) {
         Assert.assertEquals("size are different", l1.size(), l2.size());
         DoiStatus[] a1 = l1.toArray(new DoiStatus[l1.size()]);
@@ -148,27 +169,27 @@ public class DoiStatusReaderWriterTest {
             compareDoiStatus(a1[i], a2[i]);
         }
     }
-    
+
     @Test
     public void testXmlStatusReaderWriter() {
         try {
             log.debug("testXmlReaderWriter");
             DoiStatusXmlReader xmlReader = new DoiStatusXmlReader();
-            
+
             // read test xml file
             String fileName = "src/test/resources/doi-status.xml";
             FileInputStream fis = new FileInputStream(fileName);
             DoiStatus doiStatusFromReader = xmlReader.read(fis);
             fis.close();
-            
+
             // write DoiStatus instance in XMl format
             StringBuilder builder = new StringBuilder();
             DoiStatusXmlWriter writer = new DoiStatusXmlWriter();
             writer.write(doiStatusFromReader, builder);
-            
+
             // read document generated by writer
             DoiStatus doiStatusFromWriter = xmlReader.read(builder.toString());
-            
+
             // compare DOiStatus instance generated by reader to DoiStatus instance generated by writer
             compareDoiStatus(doiStatusFromReader, doiStatusFromWriter);
         } catch (Exception ex) {
@@ -176,29 +197,34 @@ public class DoiStatusReaderWriterTest {
             fail(ex.getMessage());
         }
     }
-    
+
     @Test
     public void testXmlStatusesReaderWriter() {
         try {
             log.debug("testXmlReaderWriter");
             DoiStatusListXmlReader xmlReader = new DoiStatusListXmlReader();
-            
+
             // read test xml file
             String fileName = "src/test/resources/doi-statuses.xml";
             FileInputStream fis = new FileInputStream(fileName);
             List<DoiStatus> doiStatusListFromReader = xmlReader.read(fis);
             fis.close();
-            
+
             // write DoiStatus instance in XMl format
             StringBuilder builder = new StringBuilder();
             DoiStatusListXmlWriter writer = new DoiStatusListXmlWriter();
             writer.write(doiStatusListFromReader, builder);
-            
+
             // read document generated by writer
-            List<DoiStatus> doiStatusListFromWriter = xmlReader.read(builder.toString());
-            
+            List<DoiStatus> doiStatusListFromWriter = xmlReader.read(
+                builder.toString()
+            );
+
             // compare DOiStatus instance generated by reader to DoiStatus instance generated by writer
-            compareDoiStatusList(doiStatusListFromReader, doiStatusListFromWriter);
+            compareDoiStatusList(
+                doiStatusListFromReader,
+                doiStatusListFromWriter
+            );
         } catch (Exception ex) {
             log.error(ex);
             fail(ex.getMessage());
@@ -210,13 +236,13 @@ public class DoiStatusReaderWriterTest {
         try {
             log.debug("testJsonReaderWriter");
             DoiStatusXmlReader xmlReader = new DoiStatusXmlReader();
-            
+
             // read test xml file
             String fileName = "src/test/resources/doi-status.xml";
             FileInputStream fis = new FileInputStream(fileName);
             DoiStatus doiStatusFromReader = xmlReader.read(fis);
             fis.close();
-            
+
             // write DoiStatus instance in JSON format
             StringBuilder builder = new StringBuilder();
             DoiStatusJsonWriter writer = new DoiStatusJsonWriter();
@@ -239,13 +265,13 @@ public class DoiStatusReaderWriterTest {
         try {
             log.debug("testJsonReaderWriter");
             DoiStatusListXmlReader xmlReader = new DoiStatusListXmlReader();
-            
+
             // read test xml file
             String fileName = "src/test/resources/doi-statuses.xml";
             FileInputStream fis = new FileInputStream(fileName);
             List<DoiStatus> doiStatusListFromReader = xmlReader.read(fis);
             fis.close();
-            
+
             // write DoiStatus instance in JSON format
             StringBuilder builder = new StringBuilder();
             DoiStatusListJsonWriter writer = new DoiStatusListJsonWriter();
@@ -253,14 +279,18 @@ public class DoiStatusReaderWriterTest {
 
             // read document generated by writer
             DoiStatusListJsonReader jsonReader = new DoiStatusListJsonReader();
-            List<DoiStatus> doiStatusListFromWriter = jsonReader.read(builder.toString());
+            List<DoiStatus> doiStatusListFromWriter = jsonReader.read(
+                builder.toString()
+            );
 
             // compare DoiStatus instance generated by reader to DoiStatus instance generated by writer
-            compareDoiStatusList(doiStatusListFromReader, doiStatusListFromWriter);
+            compareDoiStatusList(
+                doiStatusListFromReader,
+                doiStatusListFromWriter
+            );
         } catch (Exception ex) {
             log.error(ex);
             fail(ex.getMessage());
         }
     }
-
 }

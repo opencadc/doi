@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -75,31 +75,30 @@ package ca.nrc.cadc.doi.datacite;
 
 /**
  * The type of the RelatedIdentifier.
- * 
+ *
  * @author yeunga
  *
  */
 public enum RelatedIdentifierType {
-    ARK("ARK"), 
-    ARXIV("arXiv"), 
-    BIDCODE("bibcode"), 
-    DOI("DOI"), 
-    EAN13("EAN13"), 
-    EISSN("EISSN"), 
-    HANDLE("Handle"), 
-    IGSN("IGSN"), 
-    ISBN("ISBN"), 
-    ISSN("ISSN"), 
-    ISTC("ISTC"), 
-    LISSN("LISSN"), 
-    LSID("LSID"), 
-    PMID("PMID"), 
+    ARK("ARK"),
+    ARXIV("arXiv"),
+    BIDCODE("bibcode"),
+    DOI("DOI"),
+    EAN13("EAN13"),
+    EISSN("EISSN"),
+    HANDLE("Handle"),
+    IGSN("IGSN"),
+    ISBN("ISBN"),
+    ISSN("ISSN"),
+    ISTC("ISTC"),
+    LISSN("LISSN"),
+    LSID("LSID"),
+    PMID("PMID"),
     PURL("PURL"),
-    UPC("UPC"), 
+    UPC("UPC"),
     URL("URL"),
     URN("URN"),
     W3ID("w3id");
-
 
     private final String value;
 
@@ -113,7 +112,9 @@ public enum RelatedIdentifierType {
                 return type;
             }
         }
-        throw new IllegalArgumentException("RelatedIdentifier invalid value: " + s);
+        throw new IllegalArgumentException(
+            "RelatedIdentifier invalid value: " + s
+        );
     }
 
     public String getValue() {
@@ -124,5 +125,4 @@ public enum RelatedIdentifierType {
     public String toString() {
         return String.format("RelatedIdentifierType[%s]", value);
     }
-
 }

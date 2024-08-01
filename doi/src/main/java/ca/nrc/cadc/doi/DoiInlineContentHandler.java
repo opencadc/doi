@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2016.                            (c) 2016.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -81,6 +81,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 public class DoiInlineContentHandler implements InlineContentHandler {
+
     private static Logger log = Logger.getLogger(DoiInlineContentHandler.class);
 
     public static final String CONTENT_KEY = "DOImetadata";
@@ -90,14 +91,18 @@ public class DoiInlineContentHandler implements InlineContentHandler {
     /**
      * Receive data.
      */
-    public Content accept(String name, String contentType, InputStream inputStream)
-            throws InlineContentException, IOException {
+    public Content accept(
+        String name,
+        String contentType,
+        InputStream inputStream
+    ) throws InlineContentException, IOException {
         if (inputStream == null) {
             throw new IOException("The InputStream is closed");
         }
 
         Resource userInput = null;
-        InlineContentHandler.Content content = new InlineContentHandler.Content();
+        InlineContentHandler.Content content =
+            new InlineContentHandler.Content();
 
         if (contentType.toLowerCase().contains("text/xml")) {
             try {
