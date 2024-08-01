@@ -191,7 +191,7 @@ public class GetAction extends DoiAction {
     
     private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
         DoiStatus doiStatus;
-        if (vospaceDoiClient.isCallerAllowed(doiContainerNode, DoiAction.DOIADMIN_X500)) {
+        if (vospaceDoiClient.isCallerAllowed(doiContainerNode, getAdminSubject())) {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
@@ -209,7 +209,6 @@ public class GetAction extends DoiAction {
             for (Node node : doiContainedNodes) {
                 if (node.getName().equals("data")) {
                     dataDirectory = String.format("%s/%s/data", doiParentPath, doiSuffixString);
-                    log.debug("dataDirectory: " + dataDirectory);
                     break;
                 }
             }
@@ -219,7 +218,6 @@ public class GetAction extends DoiAction {
             try {
                 Resource resource = vospaceDoiClient.getResource(doiSuffixString, getDoiFilename(doiSuffixString));
                 title = getTitle(resource);
-                log.debug("title: " + title);
                 doiStatus = new DoiStatus(resource.getIdentifier(), title, dataDirectory, Status.toValue(status));
             } catch (Exception ex) {
                 Identifier id = new Identifier(doiSuffixString, "DOI");
@@ -263,17 +261,15 @@ public class GetAction extends DoiAction {
         List<DoiStatus> doiStatusList = new ArrayList<>();
         List<Node> nodes = getOwnedDOIList();
         for (Node node : nodes) {
-            log.debug("StatusList node: " + node.getName());
             // Verify this is a container node before continuing
             if (node instanceof ContainerNode) {
                 try {
                     ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(node.getName());
                     DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
                     doiStatusList.add(doiStatus);
-                    log.debug("added doiStatus: " + doiStatus);
                 } catch (Exception ex) {
                     // skip
-                    log.debug(ex);
+                    log.debug(String.format("skipping %s because %s", node.getName(), ex.getMessage()));
                 }
             } else {
                 log.warn("Non-container node found in DOI base directory. Skipping... ");
@@ -317,7 +313,6 @@ public class GetAction extends DoiAction {
         if (doiAction.equals(DoiAction.STATUS_ACTION)) {
             ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(doiSuffix);
             DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode);
-            log.debug("doiStatus: " + doiStatus.getTitle());
 
             String docFormat = this.syncInput.getHeader("Accept");
             log.debug("'Accept' value in header is " + docFormat);
@@ -333,7 +328,6 @@ public class GetAction extends DoiAction {
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 writer.write(doiStatus, baos);
-                log.debug("doiStatus: " + baos);
 
                 writer.write(doiStatus, syncOutput.getOutputStream());
             }

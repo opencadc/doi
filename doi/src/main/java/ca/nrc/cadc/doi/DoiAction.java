@@ -88,10 +88,6 @@ public abstract class DoiAction extends RestAction {
 
     private static final Logger log = Logger.getLogger(DoiAction.class);
 
-    public static final X500Principal DOIADMIN_X500 = new X500Principal(
-        "C=ca,O=hia,OU=cadc,CN=doiadmin_045"
-    );
-
     public static final URI DOI_VOS_JOB_URL_PROP = URI.create(
         "ivo://cadc.nrc.ca/vospace/doi#joburl"
     );
@@ -202,9 +198,7 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected Subject getAdminSubject() {
-        return SSLUtil.createSubject(
-            new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem")
-        );
+        return SSLUtil.createSubject(new File("/config/doiadmin.pem"));
     }
 
     private void authorizeUser(Subject s) {

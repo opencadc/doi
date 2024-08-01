@@ -116,7 +116,7 @@ public class LandingPageTest extends IntTestBase {
         URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
         log.debug("test url: " + doiURL.toExternalForm());
 
-        Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+        Subject.doAs(readOnlySubject, (PrivilegedExceptionAction<Object>) () -> {
             HttpGet get = new HttpGet(doiURL, true);
             get.prepare();
 

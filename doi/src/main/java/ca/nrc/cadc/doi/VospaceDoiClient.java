@@ -69,6 +69,7 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.HttpPrincipal;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
@@ -181,22 +182,20 @@ public class VospaceDoiClient {
     }
 
     //  doi admin should have access as well
-    public boolean isCallerAllowed(Node node, X500Principal adminDN) {
+    public boolean isCallerAllowed(Node node, Subject adminSubject) {
         boolean isRequesterNode = false;
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
             isRequesterNode = true;
         } else {
-            String requester = node.getPropertyValue(
-                DoiAction.DOI_VOS_REQUESTER_PROP
-            );
+            X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
+            String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
             log.debug("requester for node: " + requester);
             if (callersNumericId != null && StringUtil.hasText(requester)) {
                 isRequesterNode = requester.equals(callersNumericId.toString());
-                Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject()
-                    .getPrincipals(X500Principal.class);
+                Set<X500Principal> xset =
+                        AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
                 for (X500Principal p : xset) {
-                    isRequesterNode = isRequesterNode ||
-                    AuthenticationUtil.equals(p, adminDN);
+                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminX500);
                 }
             }
         }
@@ -224,10 +223,7 @@ public class VospaceDoiClient {
             // the throwable itself
             String message = clientTransfer.getThrowable().getMessage();
             if (message.contains("NodeNotFound")) {
-                throw new ResourceNotFoundException(
-                    message,
-                    clientTransfer.getThrowable()
-                );
+                throw new ResourceNotFoundException(message, clientTransfer.getThrowable());
             }
             if (message.contains("PermissionDenied")) {
                 throw new AccessControlException(message);
@@ -249,10 +245,7 @@ public class VospaceDoiClient {
                 DoiXmlReader reader = new DoiXmlReader(true);
                 resource = reader.read(in);
             } catch (DoiParsingException dpe) {
-                throw new IOException(
-                    "Error parsing " + xmlFilename + ": ",
-                    dpe
-                );
+                throw new IOException("Error parsing " + xmlFilename + ": ", dpe);
             }
         }
 
@@ -260,4 +253,5 @@ public class VospaceDoiClient {
             return resource;
         }
     }
+
 }
