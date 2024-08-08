@@ -110,7 +110,7 @@ public class MintTest extends IntTestBase {
 
     // test minting DOI instance
     @Test
-    public void testMintingDocument() throws Throwable {
+    public void testMintingDocument() throws Exception {
         final Resource testResource = getTestResource(false, true, true);
         final String testXML = getResourceXML(testResource);
         Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {

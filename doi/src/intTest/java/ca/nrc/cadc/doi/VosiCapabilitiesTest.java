@@ -84,6 +84,7 @@ import org.junit.Assert;
  */
 public class VosiCapabilitiesTest extends CapabilitiesTest {
     private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
+
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
@@ -101,7 +102,6 @@ public class VosiCapabilitiesTest extends CapabilitiesTest {
 
         // interfaces that should be present (anon not supported)
         Assert.assertNotNull("cert", tap.findInterface(Standards.SECURITY_METHOD_CERT, Standards.INTERFACE_PARAM_HTTP));
-        Assert.assertNotNull("cookie",
-                tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
+        Assert.assertNotNull("cookie", tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
     }
 }

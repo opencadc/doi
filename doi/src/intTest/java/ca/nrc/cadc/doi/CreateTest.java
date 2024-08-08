@@ -105,71 +105,66 @@ public class CreateTest extends IntTestBase {
     }
 
     @Test
-    public void createDOIAndStatusTest() {
-        try {
-            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
-                // create new doi
-                Resource testResource = getTestResource(false, true, true);
-                String testXML = getResourceXML(testResource);
+    public void createDOIAndStatusTest() throws Exception {
+        Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
+            // create new doi
+            Resource testResource = getTestResource(false, true, true);
+            String testXML = getResourceXML(testResource);
 
-                String doiSuffix = null;
-                try {
-                    // check that the service processed the document and added an identifier
-                    String persistedXml = postDOI(doiServiceURL, testXML, TEST_JOURNAL_REF);
-                    DoiXmlReader reader = new DoiXmlReader();
-                    Resource persistedResource = reader.read(persistedXml);
+            String doiSuffix = null;
+            try {
+                // check that the service processed the document and added an identifier
+                String persistedXml = postDOI(doiServiceURL, testXML, TEST_JOURNAL_REF);
+                DoiXmlReader reader = new DoiXmlReader();
+                Resource persistedResource = reader.read(persistedXml);
 
-                    String testIdentifier = testResource.getIdentifier().getValue();
-                    String persistedIdentifier = persistedResource.getIdentifier().getValue();
-                    Assert.assertNotEquals("New identifier not received from doi service.",
-                            testIdentifier, persistedIdentifier);
-                    doiSuffix = getDOISuffix(persistedIdentifier);
+                String testIdentifier = testResource.getIdentifier().getValue();
+                String persistedIdentifier = persistedResource.getIdentifier().getValue();
+                Assert.assertNotEquals("New identifier not received from doi service.",
+                        testIdentifier, persistedIdentifier);
+                doiSuffix = getDOISuffix(persistedIdentifier);
 
-                    // Get the DOI in JSON format
-                    URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    HttpGet get = new HttpGet(doiURL, bos);
-                    get.setRequestProperty("Accept", JSON);
-                    get.prepare();
-                    Assert.assertNull("GET exception", get.getThrowable());
-                    Assert.assertEquals(JSON, get.getContentType());
+                // Get the DOI in JSON format
+                URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                HttpGet get = new HttpGet(doiURL, bos);
+                get.setRequestProperty("Accept", JSON);
+                get.prepare();
+                Assert.assertNull("GET exception", get.getThrowable());
+                Assert.assertEquals(JSON, get.getContentType());
 
-                    // Get the DOI status
-                    URL statusURL = new URL(String.format("%s/%s", doiURL, DoiAction.STATUS_ACTION));
-                    log.debug("statusURL: " + statusURL);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    HttpGet getStatus = new HttpGet(statusURL, baos);
-                    getStatus.run();
-                    Assert.assertNull("GET exception", get.getThrowable());
-                    String status = baos.toString(StandardCharsets.UTF_8);
-                    log.debug("status: " + status);
+                // Get the DOI status
+                URL statusURL = new URL(String.format("%s/%s", doiURL, DoiAction.STATUS_ACTION));
+                log.debug("statusURL: " + statusURL);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                HttpGet getStatus = new HttpGet(statusURL, baos);
+                getStatus.run();
+                Assert.assertNull("GET exception", get.getThrowable());
+                String status = baos.toString(StandardCharsets.UTF_8);
+                log.debug("status: " + status);
 
-                    DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
-                    DoiStatus doiStatus = statusReader.read(new StringReader(status));
+                DoiStatusXmlReader statusReader = new DoiStatusXmlReader();
+                DoiStatus doiStatus = statusReader.read(new StringReader(status));
 
-                    Assert.assertEquals("identifier mismatch",
-                            persistedIdentifier, doiStatus.getIdentifier().getValue());
-                    String expectedDataDirectory = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
-                    Assert.assertEquals("dataDirectory mismatch",
-                            expectedDataDirectory, doiStatus.getDataDirectory());
-                    Title expectedTitle = testResource.getTitles().get(0);
-                    Assert.assertEquals("title mismatch",
-                            expectedTitle.getValue(), doiStatus.getTitle().getValue());
-                    Assert.assertEquals("status mismatch",
-                            Status.DRAFT, doiStatus.getStatus());
-                    Assert.assertEquals("journalRef mismatch",
-                            TEST_JOURNAL_REF, doiStatus.journalRef);
-                } finally {
-                    if (doiSuffix != null) {
-                        cleanup(doiSuffix);
-                    }
+                Assert.assertEquals("identifier mismatch",
+                        persistedIdentifier, doiStatus.getIdentifier().getValue());
+                String expectedDataDirectory = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
+                Assert.assertEquals("dataDirectory mismatch",
+                        expectedDataDirectory, doiStatus.getDataDirectory());
+                Title expectedTitle = testResource.getTitles().get(0);
+                Assert.assertEquals("title mismatch",
+                        expectedTitle.getValue(), doiStatus.getTitle().getValue());
+                Assert.assertEquals("status mismatch",
+                        Status.DRAFT, doiStatus.getStatus());
+                Assert.assertEquals("journalRef mismatch",
+                        TEST_JOURNAL_REF, doiStatus.journalRef);
+            } finally {
+                if (doiSuffix != null) {
+                    cleanup(doiSuffix);
                 }
-                return null;
-            });
-        } catch (Exception e) {
-            log.error("unexpected exception", e);
-            Assert.fail("unexpected exception: " + e.getMessage());
-        }
+            }
+            return null;
+        });
     }
 
 
@@ -216,7 +211,6 @@ public class CreateTest extends IntTestBase {
 
     private List<DoiStatus> getDoiStatusList(Subject testSubject)
             throws PrivilegedActionException {
-        // TODO readWriteSubject
         return Subject.doAs(testSubject, (PrivilegedExceptionAction<List<DoiStatus>>) () -> {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpGet get = new HttpGet(doiServiceURL, bos);

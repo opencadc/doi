@@ -85,9 +85,6 @@ public class LandingPageTest extends IntTestBase {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
     }
 
     private static final String TEST_DOI = "13.0001";

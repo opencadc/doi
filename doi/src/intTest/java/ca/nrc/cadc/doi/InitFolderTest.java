@@ -100,7 +100,6 @@ public class InitFolderTest extends IntTestBase {
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
         Log4jInit.setLevel("org.opencadc.vospace", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.vault", Level.INFO);
     }
 
     /**
@@ -109,86 +108,81 @@ public class InitFolderTest extends IntTestBase {
      * data folder created - calling user should have write access
      */
     @Test
-    public void testInitDoi() {
-        try {
-            Resource testResource = getTestResource(false, true, true);
-            final String testXML = getResourceXML(testResource);
+    public void testInitDoi() throws Exception {
+        Resource testResource = getTestResource(false, true, true);
+        final String testXML = getResourceXML(testResource);
 
-            // Create the folder for the test, and the initial XML file
-            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
-                String doiSuffix = null;
-                try {
-                    FileContent fileContent = new FileContent(testXML, "text/xml", StandardCharsets.UTF_8);
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("doiMetadata", fileContent);
-                    params.put("journalref", TEST_JOURNAL_REF);
-                    HttpPost post = new HttpPost(doiServiceURL, params, false);
-                    post.run();
+        // Create the folder for the test, and the initial XML file
+        Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
+            String doiSuffix = null;
+            try {
+                FileContent fileContent = new FileContent(testXML, "text/xml", StandardCharsets.UTF_8);
+                Map<String, Object> params = new HashMap<>();
+                params.put("doiMetadata", fileContent);
+                params.put("journalref", TEST_JOURNAL_REF);
+                HttpPost post = new HttpPost(doiServiceURL, params, false);
+                post.run();
 
-                    Assert.assertNull("POST exception", post.getThrowable());
-                    Assert.assertEquals("expected 303 response code", 303, post.getResponseCode());
-                    String doiPath = post.getRedirectURL().getPath();
-                    log.debug("redirectURL path: " + doiPath);
+                Assert.assertNull("POST exception", post.getThrowable());
+                Assert.assertEquals("expected 303 response code", 303, post.getResponseCode());
+                String doiPath = post.getRedirectURL().getPath();
+                log.debug("redirectURL path: " + doiPath);
 
-                    // Folder name should be /AstroDataCitationDOI/CISTI.CANFAR/<doiSuffix>
-                    String[] doiNumberParts = doiPath.split("/");
-                    doiSuffix = doiNumberParts[3];
+                // Folder name should be /AstroDataCitationDOI/CISTI.CANFAR/<doiSuffix>
+                String[] doiNumberParts = doiPath.split("/");
+                doiSuffix = doiNumberParts[3];
 
-                    String dataNodeName = String.format("%s/data", doiSuffix);
-                    log.debug("write to data folder " + dataNodeName);
+                String dataNodeName = String.format("%s/data", doiSuffix);
+                log.debug("write to data folder " + dataNodeName);
 
-                    // Test writing to the data directory
-                    String fileName = "doi-test-write-file.txt";
-                    String dataFileToWrite = dataNodeName + "/" + fileName;
+                // Test writing to the data directory
+                String fileName = "doi-test-write-file.txt";
+                String dataFileToWrite = dataNodeName + "/" + fileName;
 
-                    VOSURI target = getVOSURI(dataFileToWrite);
-                    DataNode dataNode = new DataNode(fileName);
-                    log.debug("PUT target:" + target.getURI());
-                    vosClient.createNode(target, dataNode);
+                VOSURI target = getVOSURI(dataFileToWrite);
+                DataNode dataNode = new DataNode(fileName);
+                log.debug("PUT target:" + target.getURI());
+                vosClient.createNode(target, dataNode);
 
-                    Transfer transfer = new Transfer(target.getURI(), Direction.pushToVoSpace);
-                    Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
-                    transfer.getProtocols().add(put);
+                Transfer transfer = new Transfer(target.getURI(), Direction.pushToVoSpace);
+                Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+                transfer.getProtocols().add(put);
 
-                    log.debug("file to be written: " + dataFileToWrite);
-                    ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
-                    File testFile = new File("src/intTest/resources/" + fileName);
-                    clientTransfer.setFile(testFile);
-                    clientTransfer.run();
+                log.debug("file to be written: " + dataFileToWrite);
+                ClientTransfer clientTransfer = vosClient.createTransfer(transfer);
+                File testFile = new File("src/intTest/resources/" + fileName);
+                clientTransfer.setFile(testFile);
+                clientTransfer.run();
 
-                    // Check that file is there.
-                    String newFilePath = target.getPath();
-                    vosClient.getNode(newFilePath);
+                // Check that file is there.
+                String newFilePath = target.getPath();
+                vosClient.getNode(newFilePath);
 
-                    // Test that read only subject CAN'T write to the same folder
-                    String writeName = "doi-test-write-failed.txt";
-                    final String writeFile = dataNodeName + "/" + writeName;
+                // Test that read only subject CAN'T write to the same folder
+                String writeName = "doi-test-write-failed.txt";
+                final String writeFile = dataNodeName + "/" + writeName;
 
-                    // Try to write to data directory as read only subject
-                    Subject.doAs(readOnlySubject, (PrivilegedExceptionAction<Object>) () -> {
-                        log.debug("write as read only subject");
-                        try {
-                            VOSURI target1 = getVOSURI(writeFile);
-                            DataNode dataNode1 = new DataNode(writeName);
-                            vosClient.createNode(target1, dataNode1);
-                        } catch (AccessControlException e) {
-                            log.info("expected exception: " + e.getMessage());
-                        } catch (Exception e) {
-                            Assert.fail("exception writing file: " + e.getMessage());
-                        }
-                        return null;
-                    });
-                    return null;
-                } finally {
-                    if (doiSuffix != null) {
-                        cleanup(doiSuffix);
+                // Try to write to data directory as read only subject
+                Subject.doAs(readOnlySubject, (PrivilegedExceptionAction<Object>) () -> {
+                    log.debug("write as read only subject");
+                    try {
+                        VOSURI target1 = getVOSURI(writeFile);
+                        DataNode dataNode1 = new DataNode(writeName);
+                        vosClient.createNode(target1, dataNode1);
+                    } catch (AccessControlException e) {
+                        log.info("expected exception: " + e.getMessage());
+                    } catch (Exception e) {
+                        Assert.fail("exception writing file: " + e.getMessage());
                     }
+                    return null;
+                });
+                return null;
+            } finally {
+                if (doiSuffix != null) {
+                    cleanup(doiSuffix);
                 }
-            });
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail("Unexpected exception: " + e.getMessage());
-        }
+            }
+        });
     }
 
 }

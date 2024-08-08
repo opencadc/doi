@@ -96,8 +96,6 @@ public class UpdateTest extends IntTestBase {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.DEBUG);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
     }
 
     @Override
@@ -115,56 +113,51 @@ public class UpdateTest extends IntTestBase {
     }
 
     @Test
-    public void updateDOITest() {
-        try {
-            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
-                // minimally populated required properties
-                Resource expected = getTestResource(true, true, true);
-                expected.language = new Language("en-US");
-                String doiSuffix = null;
-                try {
-                    Resource actual = doTest(expected);
+    public void updateDOITest() throws Exception {
+        Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
+            // minimally populated required properties
+            Resource expected = getTestResource(true, true, true);
+            expected.language = new Language("en-US");
+            String doiSuffix = null;
+            try {
+                Resource actual = doTest(expected);
 
-                    Assert.assertNotEquals("Identifier's should not match",
-                            expected.getIdentifier().getValue(), actual.getIdentifier().getValue());
-                    compareResource(expected, actual, false);
+                Assert.assertNotEquals("Identifier's should not match",
+                        expected.getIdentifier().getValue(), actual.getIdentifier().getValue());
+                compareResource(expected, actual, false);
 
-                    // get the URL to the new DOI
-                    doiSuffix = getDOISuffix(actual.getIdentifier().getValue());
-                    URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
+                // get the URL to the new DOI
+                doiSuffix = getDOISuffix(actual.getIdentifier().getValue());
+                URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
 
-                    // fully populated required resource
-                    Resource maxResource = getTestResource(false, true, true);
-                    updateResource(expected, maxResource);
-                    actual = doTest(expected);
-                    compareResource(expected, actual);
+                // fully populated required resource
+                Resource maxResource = getTestResource(false, true, true);
+                updateResource(expected, maxResource);
+                actual = doTest(expected);
+                compareResource(expected, actual);
 
-                    // back to minimally populated required resource
-                    Resource minResource = getTestResource(false, false, true);
-                    updateResource(expected, minResource);
-                    actual = doTest(expected);
-                    compareResource(expected, actual);
+                // back to minimally populated required resource
+                Resource minResource = getTestResource(false, false, true);
+                updateResource(expected, minResource);
+                actual = doTest(expected);
+                compareResource(expected, actual);
 
-                    // update PublicationYear
-                    expected.getPublicationYear().setValue("2001");
-                    actual = doTest(expected);
-                    compareResource(expected, actual);
+                // update PublicationYear
+                expected.getPublicationYear().setValue("2001");
+                actual = doTest(expected);
+                compareResource(expected, actual);
 
-                    // update Language
-                    expected.language = new Language("en-GB");
-                    actual = doTest(expected);
-                    compareResource(expected, actual);
-                } finally {
-                    if (doiSuffix != null) {
-                        cleanup(doiSuffix);
-                    }
+                // update Language
+                expected.language = new Language("en-GB");
+                actual = doTest(expected);
+                compareResource(expected, actual);
+            } finally {
+                if (doiSuffix != null) {
+                    cleanup(doiSuffix);
                 }
-                return null;
-            });
-        } catch (Exception e) {
-            log.error("unexpected exception", e);
-            Assert.fail("unexpected exception: " + e.getMessage());
-        }
+            }
+            return null;
+        });
     }
 
     protected void updateResource(Resource destination, Resource source) {
