@@ -95,7 +95,7 @@ public class UpdateTest extends IntTestBase {
     private static final Logger log = Logger.getLogger(UpdateTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     @Override

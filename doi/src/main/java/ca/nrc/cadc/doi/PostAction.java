@@ -260,10 +260,11 @@ public class PostAction extends DoiAction {
         processResponse(postToDataCite.getThrowable(), postToDataCite.getResponseCode(), postToDataCite.getResponseBody(), msg);
     }
     
-    private void makeDOIFindable(ContainerNode doiContainerNode) throws Exception {
+    private void makeDOIFindable(ContainerNode doiContainerNode)
+            throws Exception {
         // form the upload endpoint
         String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
-        String path = String.format("%s/doi/%s/%s", dataCiteUrl, cadcPrefix, doiSuffix);
+        String path = String.format("%s/doi/%s/%s", dataCiteUrl, accountPrefix, doiSuffix);
         URL doiURL = new URL(path);
         log.debug("makeFindable endpoint: " + doiURL);
 
@@ -310,7 +311,7 @@ public class PostAction extends DoiAction {
 
             // register DOI to DataCite
             String dataCiteUrl = config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_URL_KEY);
-            URL registerURL = new URL(String.format("%s/metadata/%s/%s", dataCiteUrl, cadcPrefix, doiSuffix));
+            URL registerURL = new URL(String.format("%s/metadata/%s/%s", dataCiteUrl, accountPrefix, doiSuffix));
             String content = getDOIContent();
             String contentType = "application/xml;charset=UTF-8";
             registerDOI(registerURL, content, contentType, true);
@@ -420,7 +421,7 @@ public class PostAction extends DoiAction {
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.MINT_ACTION)) {
 
-            // start minting process            
+            // start minting process
             // check minting status
             ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(doiSuffix);
             Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP));
@@ -571,7 +572,7 @@ public class PostAction extends DoiAction {
         }
 
         // update the template with the new DOI number
-        assignIdentifier(resource.getIdentifier(), cadcPrefix + "/" + nextDoiSuffix);
+        assignIdentifier(resource.getIdentifier(), accountPrefix + "/" + nextDoiSuffix);
 
         //Add a Created date to the Resource object
         LocalDate localDate = LocalDate.now();

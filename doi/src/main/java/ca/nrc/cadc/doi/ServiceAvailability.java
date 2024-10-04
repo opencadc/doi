@@ -111,19 +111,19 @@ public class ServiceAvailability implements AvailabilityPlugin {
         String note = "service is accepting requests";
         try {
             MultiValuedProperties config = DoiInitAction.getConfig();
-            URI vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
-            log.debug("vault resourceID: " + vaultResourceID);
+            URI vospaceResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_RESOURCE_ID_KEY));
+            log.debug("vault resourceID: " + vospaceResourceID);
 
             // check other services we depend on (vault, gms, datacite)
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
 
-            URL vaultURL = reg.getServiceURL(vaultResourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            URL vaultURL = reg.getServiceURL(vospaceResourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             if (vaultURL != null) {
                 CheckResource checkResource = new CheckWebService(vaultURL);
                 checkResource.check();
             } else {
-                log.debug("check skipped: " + vaultResourceID + " does not provide " + Standards.VOSI_AVAILABILITY);
+                log.debug("check skipped: " + vospaceResourceID + " does not provide " + Standards.VOSI_AVAILABILITY);
             }
 
             URI credURI = null;

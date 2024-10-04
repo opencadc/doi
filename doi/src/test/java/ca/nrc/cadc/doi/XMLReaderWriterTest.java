@@ -84,7 +84,7 @@ public class XMLReaderWriterTest extends TestBase {
     private static final Logger log = Logger.getLogger(XMLReaderWriterTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     @Test

@@ -106,9 +106,9 @@ public abstract class DoiAction extends RestAction {
     protected Boolean includePublic = false;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
-    protected URI vaultResourceID;
+    protected URI vospaceResourceID;
     protected URI gmsResourceID;
-    protected String cadcPrefix;
+    protected String accountPrefix;
     protected String doiParentPath;
 
     public DoiAction() {
@@ -133,12 +133,14 @@ public abstract class DoiAction extends RestAction {
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
-        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
-        log.info("vaultResourceID=" + vaultResourceID);
+        this.vospaceResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_RESOURCE_ID_KEY));
+        log.debug("vospaceResourceID=" + vospaceResourceID);
         this.gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
-        log.info("gmsResourceID=" + gmsResourceID);
-        this.cadcPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_CADC_PREFIX_KEY);
-        this.doiParentPath = config.getFirstPropertyValue(DoiInitAction.VAULT_DOI_PARENT_PATH_KEY);
+        log.debug("gmsResourceID=" + gmsResourceID);
+        this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
+        log.debug("accountPrefix=" + accountPrefix);
+        this.doiParentPath = config.getFirstPropertyValue(DoiInitAction.V0SPACE_DOI_PARENT_PATH_KEY);
+        log.debug("doiParentPath=" + doiParentPath);
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
@@ -151,7 +153,7 @@ public abstract class DoiAction extends RestAction {
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
-        this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, doiParentPath,
+        this.vospaceDoiClient = new VospaceDoiClient(vospaceResourceID, doiParentPath,
                 callingSubject, includePublic);
     }
 
@@ -161,7 +163,7 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected VOSURI getVOSURI(String path) {
-        return new VOSURI(vaultResourceID, String.format("%s/%s", doiParentPath, path));
+        return new VOSURI(vospaceResourceID, String.format("%s/%s", doiParentPath, path));
     }
 
     protected GMSClient getGMSClient() {
