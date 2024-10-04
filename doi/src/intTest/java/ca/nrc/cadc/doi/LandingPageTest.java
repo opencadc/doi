@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,12 +69,8 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.net.HttpGet;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
@@ -85,16 +81,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class LandingPageTest extends IntTestBase {
-    private static final Logger log = Logger.getLogger(DocumentTest.class);
+    private static final Logger log = Logger.getLogger(LandingPageTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
     }
 
-    private final static String TEST_DOI = "13.0001";
+    private static final String TEST_DOI = "13.0001";
 
     public LandingPageTest() {
     }
@@ -102,9 +95,8 @@ public class LandingPageTest extends IntTestBase {
     @Test
     public void anonGetTest() {
         try {
-            RegistryClient registryClient = new RegistryClient();
-            URL instanceURL = registryClient.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-            URL doiURL = new URL(instanceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            log.debug("test url: " + doiURL.toExternalForm());
             Subject testSubject = AuthenticationUtil.getAnonSubject();
 
             Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
@@ -124,14 +116,11 @@ public class LandingPageTest extends IntTestBase {
     @Test
     public void authGetTest() {
         try {
-            RegistryClient registryClient = new RegistryClient();
-            URL instanceURL = registryClient.getServiceURL(DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-            log.debug("doi instances url: " + instanceURL);
-            URL doiURL = new URL(instanceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
-            log.debug("test url: " + instanceURL);
-            Subject testSubject = SSLUtil.createSubject(DOIADMIN_CERT);
+            log.debug("doi instances url: " + doiServiceURL);
+            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            log.debug("test url: " + doiURL.toExternalForm());
 
-            Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
+            Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 HttpGet get = new HttpGet(doiURL, true);
                 get.prepare();
 
@@ -140,7 +129,6 @@ public class LandingPageTest extends IntTestBase {
             });
 
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("Unexpected error", e);
             Assert.fail("Unexpected error: " + e);
         }

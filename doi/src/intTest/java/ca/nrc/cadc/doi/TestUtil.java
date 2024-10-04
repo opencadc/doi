@@ -69,70 +69,89 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.io.DoiXmlWriter;
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.util.Log4jInit;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import org.apache.log4j.Level;
+import java.io.File;
+import java.io.FileReader;
+import java.net.URI;
+import java.util.Properties;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
-public class XMLReaderWriterTest extends TestBase {
-    private static final Logger log = Logger.getLogger(XMLReaderWriterTest.class);
+public class TestUtil {
+    private static final Logger log = Logger.getLogger(TestUtil.class);
+
+    public static URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
+    public static URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
+    public static URI GMS_RESOURCE_ID = URI.create("ivo://ca.nrc.cadc/gms");
+
+    // adminCert has full access to DOI
+    // readWriteCert has read/write access to DOI
+    // readOnlyCert has read only access to DOI
+    public static String ADMIN_CERT = "doiadmin.pem";
+    public static String READ_WRITE_CERT = "x509_CADCAuthtest1.pem";
+    public static String READ_ONLY_CERT = "x509_CADCRegtest1.pem";
+
+    public static String DOI_PARENT_PATH = "/AstroDataCitationDOI/CISTI.CANFAR";
+    public static String METADATA_FILE_PREFIX = "DOI-";
+    public static String DOI_GROUP_PREFIX = "CISTI_CADC_";
+    public static boolean RANDOM_DOI_SUFFIX = true;
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-    }
-
-    @Test
-    public void v41RoundTripTest() {
         try {
-            String testDir = "src/test/resources/xml-4.1";
-            for (Path filePath : getTestFiles(testDir)) {
-                log.info("test file: " + filePath.toString());
-                String xml = Files.readString(filePath);
-                DoiXmlReader reader = new DoiXmlReader();
-                Resource expected = reader.read(xml);
+            File opt = new File("intTest.properties");
+            if (opt.exists()) {
+                Properties props = new Properties();
+                props.load(new FileReader(opt));
 
-                StringBuilder sb = new StringBuilder();
-                DoiXmlWriter writer = new DoiXmlWriter();
-                writer.write(expected, sb);
+                String s = props.getProperty("doiResourceID");
+                if (s != null) {
+                    DOI_RESOURCE_ID = URI.create(s.trim());
+                }
+                s = props.getProperty("vaultResourceID");
+                if (s != null) {
+                    VAULT_RESOURCE_ID = URI.create(s.trim());
+                }
+                s = props.getProperty("gmsResourceID");
+                if (s != null) {
+                    GMS_RESOURCE_ID = URI.create(s.trim());
+                }
 
-                Resource actual = reader.read(sb.toString());
+                s = props.getProperty("adminCert");
+                if (s != null) {
+                    ADMIN_CERT = s.trim();
+                }
+                s = props.getProperty("readWriteCert");
+                if (s != null) {
+                    READ_WRITE_CERT = s.trim();
+                }
+                s = props.getProperty("readOnlyCert");
+                if (s != null) {
+                    READ_ONLY_CERT = s.trim();
+                }
 
-                compareResource(expected, actual);
+                s = props.getProperty("doiParentPath");
+                if (s != null) {
+                    DOI_PARENT_PATH = s.trim();
+                }
+                s = props.getProperty("metadataFilePrefix");
+                if (s != null) {
+                    METADATA_FILE_PREFIX = s.trim();
+                }
+                s = props.getProperty("doiGroupPrefix");
+                if (s != null) {
+                    DOI_GROUP_PREFIX = s.trim();
+                }
+                s = props.getProperty("randomDoiSuffix");
+                if (s != null) {
+                    RANDOM_DOI_SUFFIX = Boolean.parseBoolean(s.trim());
+                }
             }
-        } catch (Exception e) {
-            log.error("unexpected exception", e);
-            Assert.fail("unexpected exception: " + e.getMessage());
+            log.info(String.format("intTest config: %s %s %s %s %s",
+                    ADMIN_CERT, DOI_PARENT_PATH, METADATA_FILE_PREFIX, DOI_GROUP_PREFIX, RANDOM_DOI_SUFFIX));
+        } catch (Exception oops) {
+            log.info("failed to load/read optional config", oops);
         }
     }
 
-    @Test
-    public void v45RoundTripTest() {
-        try {
-            String testDir = "src/test/resources/xml-4.5";
-            for (Path filePath : getTestFiles(testDir)) {
-                log.info("test file: " + filePath.toString());
-                String xml = Files.readString(filePath);
-                DoiXmlReader reader = new DoiXmlReader();
-                Resource expected = reader.read(xml);
-
-                StringBuilder sb = new StringBuilder();
-                DoiXmlWriter writer = new DoiXmlWriter();
-                writer.write(expected, sb);
-
-                Resource actual = reader.read(sb.toString());
-                log.debug("actual: " + sb);
-                compareResource(expected, actual);
-            }
-        } catch (Exception e) {
-            log.error("unexpected exception", e);
-            Assert.fail("unexpected exception: " + e.getMessage());
-        }
+    private TestUtil() {
     }
 
 }

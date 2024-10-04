@@ -70,315 +70,70 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.doi.datacite.Affiliation;
-import ca.nrc.cadc.doi.datacite.Contributor;
-import ca.nrc.cadc.doi.datacite.ContributorName;
-import ca.nrc.cadc.doi.datacite.ContributorType;
-import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
-import ca.nrc.cadc.doi.datacite.Date;
-import ca.nrc.cadc.doi.datacite.DateType;
-import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.DescriptionType;
-import ca.nrc.cadc.doi.datacite.ResourceType;
-import ca.nrc.cadc.doi.datacite.Identifier;
-import ca.nrc.cadc.doi.datacite.Language;
-import ca.nrc.cadc.doi.datacite.NameIdentifier;
 import ca.nrc.cadc.doi.datacite.NameType;
-import ca.nrc.cadc.doi.datacite.PublicationYear;
 import ca.nrc.cadc.doi.datacite.Publisher;
-import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
-import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
-import ca.nrc.cadc.doi.datacite.RelationType;
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
-import ca.nrc.cadc.doi.datacite.Size;
-import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.doi.datacite.TitleType;
-import ca.nrc.cadc.doi.io.DoiJsonReader;
-import ca.nrc.cadc.doi.io.DoiJsonWriter;
-import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.jdom2.Namespace;
-import org.junit.Assert;
 import org.junit.Test;
 
-public class Doi41RoundTripTest extends BaseTest {
+public class Doi41RoundTripTest extends Doi45RoundTripTest {
     private static final Logger log = Logger.getLogger(Doi41RoundTripTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     @Test
     public void xmlMinSchemaTest() {
-        doXMLTest(false);
+        doXMLTest(false, false);
     }
 
     @Test
     public void xmlFullSchemaTest() {
-        doXMLTest(true);
+        doXMLTest(true, true);
     }
 
     @Test
     public void jsonMinSchemaTest() {
-        doJSONTest(false);
+        doJSONTest(false, false);
     }
 
     @Test
     public void jsonFullSchemaTest() {
-        doJSONTest(true);
+        doJSONTest(true, true);
     }
 
-    void doXMLTest(boolean full) {
-        try {
-            Resource expected = getResource(full);
-            StringBuilder sb = new StringBuilder();
-
-            DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(expected, sb);
-            log.debug(sb.toString());
-
-            DoiXmlReader reader = new DoiXmlReader();
-            Resource actual = reader.read(sb.toString());
-
-            compareResource(expected, actual);
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    void doJSONTest(boolean full) {
-        try {
-            Resource expected = getResource(full);
-            StringBuilder sb = new StringBuilder();
-
-            DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(expected, sb);
-            log.debug(sb.toString());
-
-            DoiJsonReader reader = new DoiJsonReader();
-            Resource actual = reader.read(sb.toString());
-
-            compareResource(expected, actual);
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    /**
-     *
-     */
-    Resource getResource(boolean full) {
-
-        Resource resource =  new Resource(getNamespace(), getIdentifier(), getCreators(full),
-                getTitles(full), getPublisher(full), getPublicationYear(), getDoiResourceType());
-        if (full) {
-            resource.contributors = getContributors(full);
-            resource.dates = getDates(full);
-            resource.sizes = getSizes(full);
-            resource.language = getLanguage();
-            resource.relatedIdentifiers = getRelatedIdentifiers(full);
-            resource.rightsList = getRightsList(full);
-            resource.descriptions = getDescriptions(full);
-        }
-        return resource;
-    }
-
-    protected Namespace getNamespace() {
-        return Namespace.getNamespace("http://datacite.org/schema/kernel-4");
-    }
-
-    // required
-    protected Identifier getIdentifier() {
-        return new Identifier("10.5072/example", "DOI");
-    }
-
-    protected List<Creator> getCreators(boolean full) {
-        List<Creator> creators = new ArrayList<>();
-        Creator creator = new Creator(getCreatorName(full));
-        if (full) {
-            creator.givenName = "Jill";
-            creator.familyName = "Smith";
-            creator.nameIdentifier = getNameIdentifier(full);
-            creator.affiliation = getAffiliation(full);
-        }
-        creators.add(creator);
-        if (full) {
-            Creator other = new Creator(getCreatorName(full));
-            other.givenName = "Jack";
-            other.familyName = "Jones";
-            other.nameIdentifier = getNameIdentifier(full);
-            other.affiliation = getAffiliation(full);
-            creators.add(other);
-        }
-        return creators;
-    }
-
-    protected List<Title> getTitles(boolean full) {
-        List<Title> titles = new ArrayList<>();
-        Title title = new Title("Test title one");
-        if (full) {
-            title.titleType = TitleType.SUBTITLE;
-        }
-        titles.add(title);
-        if (full) {
-            Title other = new Title("Test title two");
-            other.titleType = TitleType.ALTERNATIVE_TITLE;
-            titles.add(other);
-        }
-        return titles;
-    }
-
-    protected Publisher getPublisher(boolean full) {
-        return new Publisher("Test publisher");
-    }
-
-    protected PublicationYear getPublicationYear() {
-        return new PublicationYear("1999");
-    }
-
-    protected ResourceType getDoiResourceType() {
-        ResourceType resourceType = new ResourceType(DataCiteResourceType.DATA_SET);
-        resourceType.text = "XML";
-        return resourceType;
-    }
-
-    // optional
-    protected List<Contributor> getContributors(boolean full) {
-        List<Contributor> contributors = new ArrayList<>();
-        ContributorName contributorName = new ContributorName("Test contributor");
-        if (full) {
-            contributorName.nameType = NameType.ORGANIZATIONAL;
-        }
-        Contributor contributor = new Contributor(contributorName, ContributorType.RESEARCHER);
-        if (full) {
-            contributor.givenName = "Jack";
-            contributor.familyName = "Jones";
-            contributor.nameIdentifier = getNameIdentifier(full);
-            contributor.affiliation = getAffiliation(full);
-        }
-        contributors.add(contributor);
-        if (full) {
-            Contributor other = new Contributor(contributorName, ContributorType.RESEARCHER);
-            other.givenName = "Jill";
-            other.familyName = "Smith";
-            other.nameIdentifier = getNameIdentifier(full);
-            other.affiliation = getAffiliation(full);
-            contributors.add(other);
-        }
-        return contributors;
-    }
-
-    protected List<Date> getDates(boolean full) {
-        List<Date> dates = new ArrayList<>();
-        Date date = new Date("1999-12-31", DateType.ACCEPTED);
-        if (full) {
-            date.dateInformation = "Some date info";
-        }
-        dates.add(date);
-        if (full) {
-            Date other = new Date("2000-05-04", DateType.UPDATED);
-            other.dateInformation = "More date info";
-            dates.add(other);
-        }
-        return dates;
-    }
-
-    protected Language getLanguage() {
-        return new Language("en-US");
-    }
-
-    protected List<RelatedIdentifier> getRelatedIdentifiers(boolean full) {
-        List<RelatedIdentifier> identifiers = new ArrayList<>();
-        RelatedIdentifier identifier = new RelatedIdentifier("Related identifier one",
-                        RelatedIdentifierType.URL, RelationType.IS_PUBLISHED_IN);
-        if (full) {
-            identifier.dataCiteResourceTypeGeneral = DataCiteResourceType.CONFERENCE_PAPER;
-            identifier.relatedMetadataScheme = "Related Metadata Scheme one";
-            identifier.schemeURI = URI.create("http://example.com");
-            identifier.schemeType = "Scheme type one";
-        }
-        identifiers.add(identifier);
-        if (full) {
-            RelatedIdentifier other = new RelatedIdentifier("Related identifier two",
-                    RelatedIdentifierType.ARK, RelationType.IS_REVIEWED_BY);
-            other.dataCiteResourceTypeGeneral = DataCiteResourceType.INTERACTIVE_RESOURCE;
-            other.relatedMetadataScheme = "Related metadata scheme two";
-            other.schemeURI = URI.create("http://example.com");
-            other.schemeType = "Scheme type two";
-            identifiers.add(other);
-        }
-        return identifiers;
-    }
-
-    protected List<Size> getSizes(boolean full) {
-        List<Size> sizes = new ArrayList<>();
-        sizes.add(new Size("1024 KB"));
-        if (full) {
-            sizes.add(new Size("43"));
-        }
-        return sizes;
-    }
-
-    protected List<Rights> getRightsList(boolean full) {
-        List<Rights> rightsList = new ArrayList<>();
-        rightsList.add(getRights(full));
-        rightsList.add(getRights(full));
-        return rightsList;
-    }
-
-    protected Rights getRights(boolean full) {
-        Rights rights = new Rights("Rights");
-        if (full) {
-            rights.rightsURI = URI.create("http://example.com");
-            rights.lang = "en-US";
-        }
-        return rights;
-    }
-
-    protected List<Description> getDescriptions(boolean full) {
-        List<Description> descriptions = new ArrayList<>();
-        Description description = new Description("Description one", DescriptionType.ABSTRACT);
-        if (full) {
-            description.lang = "en-US";
-        }
-        descriptions.add(description);
-        if (full) {
-            Description other = new Description("Description two", DescriptionType.OTHER);
-            other.lang = "en-GB";
-            descriptions.add(other);
-        }
-        return descriptions;
-    }
-
-    protected CreatorName getCreatorName(boolean full) {
-        CreatorName creatorName = new CreatorName("Miller, Elizabeth");
-        if (full) {
+    @Override
+    protected CreatorName getCreatorName(String value, boolean optionalAttributes) {
+        CreatorName creatorName = new CreatorName(value);
+        if (optionalAttributes) {
             creatorName.nameType = NameType.ORGANIZATIONAL;
         }
         return creatorName;
     }
 
-    protected NameIdentifier getNameIdentifier(boolean full) {
-        NameIdentifier nameIdentifier = new NameIdentifier("0000-0001-5000-0007", "ORCID");
-        if (full) {
-            nameIdentifier.schemeURI = URI.create("http://orcid.org/");
-        }
-        return nameIdentifier;
+    @Override
+    protected Publisher getPublisher(boolean full) {
+        return new CADCPublisher();
     }
 
+    @Override
+    protected Rights getRights(String value, boolean full) {
+        Rights rights = new Rights(value);
+        if (full) {
+            rights.rightsURI = URI.create("http://example.com/" + value);
+            rights.lang = "en-US";
+        }
+        return rights;
+    }
+
+    @Override
     protected Affiliation getAffiliation(boolean full) {
         return new Affiliation("DataCite");
     }
-
 
 }

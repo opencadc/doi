@@ -77,7 +77,6 @@ import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.Description;
-import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Language;
 import ca.nrc.cadc.doi.datacite.NameIdentifier;
@@ -85,13 +84,12 @@ import ca.nrc.cadc.doi.datacite.PublicationYear;
 import ca.nrc.cadc.doi.datacite.Publisher;
 import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
 import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Size;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.util.StringUtil;
-
 import java.util.List;
-
 import org.jdom2.Element;
 import org.jdom2.Namespace;
 
@@ -263,7 +261,7 @@ public class DoiWriter {
 
     protected Element getDoiResourceTypeElement(ResourceType resourceType, Namespace ns) {
         Element element = new Element(ResourceType.NAME, ns);
-        element.setText(resourceType.text);
+        element.setText(resourceType.value);
         element.setAttribute(ResourceType.RESOURCE_TYPE_GENERAL, resourceType.getResourceTypeGeneral().getValue());
         return element;
     }
@@ -401,8 +399,8 @@ public class DoiWriter {
         element.setText(relatedIdentifier.getValue());
         element.setAttribute(RelatedIdentifier.RELATED_IDENTIFIER_TYPE, relatedIdentifier.getRelatedIdentifierType().getValue());
         element.setAttribute(RelatedIdentifier.RELATION_TYPE, relatedIdentifier.getRelationType().getValue());
-        if (relatedIdentifier.dataCiteResourceTypeGeneral != null) {
-            element.setAttribute(RelatedIdentifier.RESOURCE_TYPE_GENERAL, relatedIdentifier.dataCiteResourceTypeGeneral.getValue());
+        if (relatedIdentifier.resourceTypeGeneral != null) {
+            element.setAttribute(RelatedIdentifier.RESOURCE_TYPE_GENERAL, relatedIdentifier.resourceTypeGeneral.getValue());
         }
         if (StringUtil.hasText(relatedIdentifier.relatedMetadataScheme)) {
             element.setAttribute(RelatedIdentifier.RELATED_METADATA_SCHEME, relatedIdentifier.relatedMetadataScheme);

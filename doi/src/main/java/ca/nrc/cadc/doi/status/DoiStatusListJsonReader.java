@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -101,8 +101,9 @@ public class DoiStatusListJsonReader extends DoiStatusListReader {
      *             if there is an error parsing the JSON.
      */
     public List<DoiStatus> read(String json) throws DoiParsingException {
-        if (json == null)
+        if (json == null) {
             throw new IllegalArgumentException("JSON string must not be null");
+        }
         try {
             JsonInputter inputter = new JsonInputter();
             return this.buildStatusList(inputter.input(json));

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,7 +75,6 @@ package ca.nrc.cadc.doi.status;
 
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -85,12 +84,11 @@ import org.apache.log4j.Logger;
  *
  */
 public class DoiStatus {
-    private static Logger log = Logger.getLogger(DoiStatus.class);
 
-    private Identifier identifier;
-    private Status status;
-    private Title title;
-    private String dataDirectory;
+    private final Identifier identifier;
+    private final Status status;
+    private final Title title;
+    private final String dataDirectory;
     public String journalRef;
 
     public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) {
@@ -101,8 +99,8 @@ public class DoiStatus {
 
         // title and dataDirectory can be null when status == Status.ERROR_*
         // this allows errored DOI's to be displayed when listing DOI statuses
-        if (status != Status.ERROR_REGISTERING && status != Status.ERROR_LOCKING_DATA && 
-        		(title == null || dataDirectory == null)) {
+        if (status != Status.ERROR_REGISTERING && status != Status.ERROR_LOCKING_DATA
+                && (title == null || dataDirectory == null)) {
             String msg = "title and dataDirectory must be specified.";
             throw new IllegalArgumentException(msg);
         }
@@ -120,12 +118,13 @@ public class DoiStatus {
     public Status getStatus() {
         return this.status;
     }
-    
-	public Title getTitle() {
-		return this.title;
-	}
 
-	public String getDataDirectory() {
-	    	return this.dataDirectory;
-	}
+    public Title getTitle() {
+        return this.title;
+    }
+
+    public String getDataDirectory() {
+        return this.dataDirectory;
+    }
+
 }

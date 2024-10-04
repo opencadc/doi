@@ -174,10 +174,6 @@ public class Resource {
         return this.publicationYear;
     }
 
-//    public void setPublicationYear(PublicationYear publicationYear) {
-//        this.publicationYear = publicationYear;
-//    }
-
     @Override
     public String toString() {
         return String.format("Resource[%s, %s, %s, %s, %s, %s, %s]",

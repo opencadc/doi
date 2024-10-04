@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -78,7 +78,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.JDOMException;
@@ -108,8 +107,9 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
      *             if there is an error parsing the XML.
      */
     public List<DoiStatus> read(String xml) throws DoiParsingException {
-        if (xml == null)
+        if (xml == null) {
             throw new IllegalArgumentException("XML must not be null");
+        }
         try {
             return read(new StringReader(xml));
         } catch (IOException ioe) {
@@ -127,8 +127,9 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
      * @throws DoiParsingException if there is an error parsing the XML.
      */
     public List<DoiStatus> read(InputStream in) throws IOException, DoiParsingException {
-        if (in == null)
+        if (in == null) {
             throw new IOException("stream closed");
+        }
         try {
             return read(new InputStreamReader(in, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -145,8 +146,9 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
      * @throws DoiParsingException if there is an error parsing the XML.
      */
     public List<DoiStatus> read(Reader reader) throws DoiParsingException, IOException {
-        if (reader == null)
+        if (reader == null) {
             throw new IllegalArgumentException("reader must not be null");
+        }
 
         // Create a JDOM Document from the XML
         Document document;
@@ -160,4 +162,5 @@ public class DoiStatusListXmlReader extends DoiStatusListReader {
         // build a list of DoiStatus from the document
         return this.buildStatusList(document);
     }
+
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,16 +69,15 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.util.Set;
 import javax.security.auth.Subject;
@@ -99,8 +98,6 @@ import org.opencadc.vospace.transfer.Transfer;
 public class VospaceDoiClient {
 
     private static final Logger log = Logger.getLogger(VospaceDoiClient.class);
-    protected static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
-    private static final X500Principal DOIADMIN = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
 
     private final Long callersNumericId;
     private VOSpaceClient vosClient = null;
@@ -108,8 +105,9 @@ public class VospaceDoiClient {
     private String xmlFilename = "";
     private boolean includePublicNodes = false;
 
-    public VospaceDoiClient(Subject callingSubject, Boolean includePublicNodes) throws URISyntaxException {
-        this.baseDataURI = new VOSURI(DoiAction.VAULT_RESOURCE_ID, DoiAction.DOI_BASE_FILEPATH);
+    public VospaceDoiClient(URI resourceID, String doiParentPath, Subject callingSubject,
+                            Boolean includePublicNodes) {
+        this.baseDataURI = new VOSURI(resourceID, doiParentPath);
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
@@ -127,7 +125,8 @@ public class VospaceDoiClient {
         return this.baseDataURI;
     }
 
-    public ContainerNode getContainerNode(String path) throws NodeNotFoundException, AccessControlException {
+    public ContainerNode getContainerNode(String path)
+            throws NodeNotFoundException, AccessControlException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -147,7 +146,8 @@ public class VospaceDoiClient {
         return requestedNode;
     }
 
-    public DataNode getDataNode(String path) throws NodeNotFoundException, AccessControlException {
+    public DataNode getDataNode(String path)
+            throws NodeNotFoundException, AccessControlException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -155,7 +155,7 @@ public class VospaceDoiClient {
         DataNode requestedNode = null;
 
         try {
-            requestedNode =  (DataNode) vosClient.getNode(nodePath);
+            requestedNode = (DataNode) vosClient.getNode(nodePath);
         } catch (AccessControlException ef) {
             throw ef;
         } catch (ResourceNotFoundException e) {
@@ -167,25 +167,27 @@ public class VospaceDoiClient {
         return requestedNode;
     }
 
-    public Resource getResource(String doiSuffixString, String doiFilename) throws Exception {
+    public Resource getResource(String doiSuffixString, String doiFilename)
+            throws Exception {
         VOSURI docDataURI = new VOSURI(baseDataURI.toString() + "/" + doiSuffixString + "/" + doiFilename);
 
         return getDoiDocFromVOSpace(docDataURI);
     }
 
     //  doi admin should have access as well
-    public boolean isCallerAllowed(Node node) {
+    public boolean isCallerAllowed(Node node, Subject adminSubject) {
         boolean isRequesterNode = false;
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
             isRequesterNode = true;
         } else {
-            String requester = node.getPropertyValue(DOI_VOS_REQUESTER_PROP);
+            X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
+            String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
             log.debug("requester for node: " + requester);
             if (callersNumericId != null && StringUtil.hasText(requester)) {
                 isRequesterNode = requester.equals(callersNumericId.toString());
                 Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
                 for (X500Principal p : xset) {
-                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, DOIADMIN);
+                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminX500);
                 }
             }
         }

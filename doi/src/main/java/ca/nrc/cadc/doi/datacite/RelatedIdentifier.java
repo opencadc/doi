@@ -90,7 +90,7 @@ public class RelatedIdentifier {
     private final RelatedIdentifierType relatedIdentifierType;
     private final RelationType relationType;
 
-    public DataCiteResourceType dataCiteResourceTypeGeneral;
+    public DataCiteResourceType resourceTypeGeneral;
     public String relatedMetadataScheme;
     public URI schemeURI;
     public String schemeType;

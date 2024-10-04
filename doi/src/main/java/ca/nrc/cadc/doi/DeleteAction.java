@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,23 +67,15 @@
 
 package ca.nrc.cadc.doi;
 
-
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.ac.ACIdentityManager;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSLUtil;
-import java.io.File;
-import java.net.URI;
+import ca.nrc.cadc.doi.status.Status;
 import java.security.AccessControlException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
-import java.util.Iterator;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.VOSURI;
-import org.opencadc.vospace.client.VOSpaceClient;
 
 
 public class DeleteAction extends DoiAction {
@@ -99,23 +91,14 @@ public class DeleteAction extends DoiAction {
         super.init(true);
 
         // Do all subsequent work as doiadmin
-        File pemFile = new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem");
-        Subject doiadminSubject = SSLUtil.createSubject(pemFile);
-        Subject.doAs(doiadminSubject, new PrivilegedExceptionAction<Object>() {
-            @Override
-            public String run() throws Exception {
-                doActionImpl();
-                return null;
-            }
+        Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
+            doActionImpl();
+            return null;
         });
     }
 
 
     private void doActionImpl() throws Exception {
-
-        VOSURI doiDataURI = new VOSURI(VAULT_RESOURCE_ID, DOI_BASE_FILEPATH);
-        VOSpaceClient vosClient = new VOSpaceClient(doiDataURI.getServiceURI());
-
         if (doiSuffix == null) {
             throw new IllegalArgumentException("DOI number required.");
         }
@@ -124,58 +107,50 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-        String doiParentPath = doiDataURI.getPath() + "/" + doiSuffix;
-        ContainerNode doiContainer = (ContainerNode) vosClient.getNode(doiParentPath);
+        String doiPath = String.format("%s/%s", doiParentPath, doiSuffix);
+        ContainerNode doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
         
         // check to see if this user has permission
         String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
         if (doiRequester == null) {
-            throw new IllegalStateException("No requester associated with DOI.");
+            throw new IllegalStateException("No requester associated with DOI: " + doiSuffix);
         }
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         Integer numericID = Integer.parseInt(doiRequester);
         Subject requestorSubject = acIdentMgr.toSubject(numericID);
-
-        Subject doiAdminSubject = AuthenticationUtil.getCurrentSubject();
-
-
         if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
             // if doiadmin is the calling user, it has permission to delete any of the DOIs as well
-            if (!checkSubjectsMatch(callingSubject, doiAdminSubject)) {
+            if (!checkSubjectsMatch(callingSubject, getAdminSubject())) {
                 throw new AccessControlException("Not permitted to delete DOI");
             }
         }
 
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
-        if (doiStatus != null && doiStatus.equals(DOI_VOS_STATUS_MINTED)) {
+        if (doiStatus != null && doiStatus.equals(Status.MINTED.getValue())) {
             throw new AccessControlException("Unable to delete " + doiSuffix + "DOI already minted.\n");
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        GMSClient gmsClient = new GMSClient(new URI(GMS_RESOURCE_ID));
         String groupToDelete = DOI_GROUP_PREFIX + doiSuffix;
-        log.debug("deleting this group: " + groupToDelete);
-        gmsClient.deleteGroup(groupToDelete);
+        log.debug("deleting group: " + groupToDelete);
+        getGMSClient().deleteGroup(groupToDelete);
 
-        log.debug("deleting this node: " + doiParentPath);
-        vosClient.deleteNode(doiParentPath);
+        log.debug("deleting node: " + doiPath);
+        vospaceDoiClient.getVOSpaceClient().deleteNode(doiPath);
     }
 
     private boolean checkSubjectsMatch(Subject subA, Subject subB) {
         Set<Principal> subAPrincipals = subA.getPrincipals();
         Set<Principal> subBPrincipals = subB.getPrincipals();
-        Iterator iter = subAPrincipals.iterator();
 
-        while (iter.hasNext()) {
-            if (subBPrincipals.contains(iter.next())) {
+        for (Principal subAPrincipal : subAPrincipals) {
+            if (subBPrincipals.contains(subAPrincipal)) {
                 // Return if one of the principals matches
                 return true;
             }
         }
-
         return false;
-
     }
 
 }

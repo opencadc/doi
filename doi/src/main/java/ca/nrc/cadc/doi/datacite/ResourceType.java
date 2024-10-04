@@ -68,6 +68,7 @@
 */
 
 package ca.nrc.cadc.doi.datacite;
+
 /**
  * The type of a resource. Additional free text description can be entered into
  * resourceTypeGeneral.
@@ -81,7 +82,7 @@ public class ResourceType {
 
     private final DataCiteResourceType resourceTypeGeneral;
 
-    public String text;
+    public String value;
 
     /**
      * DOIResourceType constructor.

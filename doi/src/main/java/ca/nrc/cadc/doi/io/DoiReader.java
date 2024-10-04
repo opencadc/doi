@@ -75,7 +75,7 @@ import ca.nrc.cadc.doi.datacite.ContributorName;
 import ca.nrc.cadc.doi.datacite.ContributorType;
 import ca.nrc.cadc.doi.datacite.Creator;
 import ca.nrc.cadc.doi.datacite.CreatorName;
-import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
 import ca.nrc.cadc.doi.datacite.Date;
 import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Description;
@@ -90,7 +90,7 @@ import ca.nrc.cadc.doi.datacite.RelatedIdentifier;
 import ca.nrc.cadc.doi.datacite.RelatedIdentifierType;
 import ca.nrc.cadc.doi.datacite.RelationType;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.DataCiteResourceType;
+import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Rights;
 import ca.nrc.cadc.doi.datacite.Size;
 import ca.nrc.cadc.doi.datacite.Title;
@@ -324,7 +324,7 @@ public class DoiReader {
         } catch (IllegalArgumentException e) {
             throw new DoiParsingException(e.getMessage());
         }
-        resourceType.text = resourceTypeElement.getText();
+        resourceType.value = resourceTypeElement.getText();
         return resourceType;
     }
 
@@ -572,7 +572,7 @@ public class DoiReader {
         // optional attributes
         String resourceTypeGeneral = element.getAttributeValue(RelatedIdentifier.RESOURCE_TYPE_GENERAL);
         if (resourceTypeGeneral != null) {
-            relatedIdentifier.dataCiteResourceTypeGeneral = DataCiteResourceType.toValue(resourceTypeGeneral);
+            relatedIdentifier.resourceTypeGeneral = DataCiteResourceType.toValue(resourceTypeGeneral);
         }
         String schemeURI = element.getAttributeValue(RelatedIdentifier.SCHEME_URI);
         if (schemeURI != null) {

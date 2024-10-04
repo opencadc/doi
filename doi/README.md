@@ -24,47 +24,70 @@ See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-reg
 The doi.properties configures the DataCite service used to register new DOI's.
 
 ```
-# DataCite host used to look up username/password in datacite.pass
-PROD_HOST = mds.datacite.org
-DEV_HOST = mds.test.datacite.org
+# VOSpace Service resourceID
+ca.nrc.cadc.doi.vospace.resourceID = {vospace service resourceID}
 
-# DataCite url used to register a DOI and make the DOI findable
-PROD_URL = https://mds.datacite.org
-DEV_URL = https://mds.test.datacite.org
+# Path in VOSpace to the parent folder containing the DOI's.
+ca.nrc.cadc.doi.vospace.parentPath = {DOI parent folder path}
 
+# Group Management Service (GMS) resourceID
+ca.nrc.cadc.doi.gms.resourceID = {GMS service resourceID}
+
+# Prefix to the DOI metadata file
+ca.nrc.cadc.doi.metadataFilePrefix = {file prefix}
+ 
 # DOI landing page url
-LANDING_PAGE_URL = http://www.canfar.net/citation/landing
+ca.nrc.cadc.doi.landingUrl = {landing page url}
+
+# DataCite MDS REST endpoint
+ca.nrc.cadc.doi.datacite.mdsUrl = {MDS url}
+
+# DataCite account prefix
+ca.nrc.cadc.doi.datacite.accountPrefix = {account prefix}
+
+# DataCite account username
+ca.nrc.cadc.doi.datacite.username = {username}
+
+# DataCite account password
+ca.nrc.cadc.doi.datacite.password = {password}
 ```
 
-_PROD_HOST_ is the key used to lookup a username/password in datacite.pass for the DataCite production service, 
-currently `mds.datacite.org`.
+_vospace.resourceID_ the resourceID to the VOSpace service used to store the DOI metadata and files.
 
-_DEV_HOST_ is the key used to lookup a username/password in datacite.pass for the DataCite development service,
-currently `mds.test.datacite.org`.
+_vospace.parentPath_ is the path in the VOSpace service to the DOI parent folder.
 
-_PROD_URL_ is the URL to a DataCite service, currently `https://mds.datacite.org`.
+_gms.ResourceID_ the resourceID to the GMS service used for authentication and authorization.
 
-_PROD_URL_ is the URL to a DataCite service, currently `https://mds.test.datacite.org`.
+_metadataFilePrefix_ is the prefix prepended to the DOI name to create the filename for the DOI specific metadata stored in VOSpace.
 
-The development DataCite service URL must be used for integration testing, and integration tests should not be
-run against a production DOI service.
+_landingUrl_ is the base URL used to compose URLs to individual DOI's.
 
-_LANDING_PAGE_URL_ is the base URL used to compose URLs to individual DOI's. 
-For production `http://www.canfar.net/citation/landing`.
+_mdsUrl_ is the URL to the Datacite MDS rest endpoint used to create and update DOI's.
 
-### datacite.pass
-The datacite.pass contains the username and password for the DataCite service.
+_accountPrefix_ is the registered prefix for the DataCite account.
 
+_username_ is the DataCite account username.
+
+_password_ is the DataCite account password.
+
+### Optional properties useful for integration testing.
 ```
-machine mds.datacite.org login [username] password [password]
-machine mds.test.datacite.org login [username] password [password]
+# (optional) Create a random DOI name for testing
+ca.nrc.cadc.doi.test.randomName = {true|false}
+
+# (optional) Group URI that will own test DOI's
+ca.nrc.cadc.doi.test.groupUri = {group URI}
 ```
+
+### doiadmin.pem
+This client certificate is used to make authenticated calls to a VOSpace service.
 
 ### cadcproxy.pem
 This client certificate is used to make authenticated server-to-server calls for system-level A&A purposes.
 
-### doiadmin.pem
-This client certificate is used to make authenticated calls to a VOSpace service.
+### cadc-log.properties (optional)
+See <a href="https://github.com/opencadc/core/tree/master/cadc-log">cadc-log</a> for common
+dynamic logging control.
 
 ## building it
 ```

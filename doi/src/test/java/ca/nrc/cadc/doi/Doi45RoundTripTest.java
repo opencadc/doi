@@ -69,86 +69,80 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.Affiliation;
-import ca.nrc.cadc.doi.datacite.CreatorName;
-import ca.nrc.cadc.doi.datacite.Publisher;
-import ca.nrc.cadc.doi.datacite.Rights;
+import ca.nrc.cadc.doi.datacite.Resource;
+import ca.nrc.cadc.doi.io.DoiJsonReader;
+import ca.nrc.cadc.doi.io.DoiJsonWriter;
+import ca.nrc.cadc.doi.io.DoiXmlReader;
+import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class Doi45RoundTripTest extends Doi41RoundTripTest {
+public class Doi45RoundTripTest extends TestBase {
     private static final Logger log = Logger.getLogger(Doi45RoundTripTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     @Test
     public void xmlMinSchemaTest() {
-        doXMLTest(false);
+        doXMLTest(false, false);
     }
 
     @Test
     public void xmlFullSchemaTest() {
-        doXMLTest(true);
+        doXMLTest(true, true);
     }
 
     @Test
     public void jsonMinSchemaTest() {
-        doJSONTest(false);
+        doJSONTest(false, false);
     }
 
     @Test
     public void jsonFullSchemaTest() {
-        doJSONTest(true);
+        doJSONTest(true, true);
     }
 
-    @Override
-    protected CreatorName getCreatorName(boolean full) {
-        CreatorName creatorName = super.getCreatorName(full);
-        if (full) {
-            creatorName.lang = "en-GB";
+    void doXMLTest(boolean optionalProperties, boolean optionalAttributes) {
+        try {
+            Resource expected = getTestResource(optionalProperties, optionalAttributes, false);
+            StringBuilder sb = new StringBuilder();
+
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(expected, sb);
+            log.debug(sb.toString());
+
+            DoiXmlReader reader = new DoiXmlReader();
+            Resource actual = reader.read(sb.toString());
+
+            compareResource(expected, actual);
+        } catch (Exception e) {
+            log.error("Unexpected exception", e);
+            Assert.fail(e.getMessage());
         }
-        return creatorName;
     }
 
-    @Override
-    protected Publisher getPublisher(boolean full) {
-        Publisher publisher = super.getPublisher(full);
-        if (full) {
-            publisher.publisherIdentifier = "https://ror.org/04z8jg394";
-            publisher.publisherIdentifierScheme = "ROR";
-            publisher.schemeURI = URI.create("https://ror.org/");
-            publisher.lang = "en";
-        }
-        return publisher;
-    }
+    void doJSONTest(boolean optionalProperties, boolean optionalAttributes) {
+        try {
+            Resource expected = getTestResource(optionalProperties, optionalAttributes, false);
+            StringBuilder sb = new StringBuilder();
 
-    @Override
-    protected Rights getRights(boolean full) {
-        Rights rights = super.getRights(full);
-        if (full) {
-            rights.rightsURI = URI.create("https://creativecommons.org/licenses/by/4.0/");
-            rights.rightsIdentifier = "CC-BY-4.0";
-            rights.rightsIdentifierScheme = "ROR";
-            rights.schemeURI = URI.create("https://spdx.org/licenses/");
-            rights.lang = "en";
-        }
-        return rights;
-    }
+            DoiJsonWriter writer = new DoiJsonWriter();
+            writer.write(expected, sb);
+            log.debug(sb.toString());
 
-    @Override
-    protected Affiliation getAffiliation(boolean full) {
-        Affiliation affiliation = super.getAffiliation(full);
-        if (full) {
-            affiliation.affiliationIdentifier = "https://ror.org/04wxnsj81";
-            affiliation.affiliationIdentifierScheme = "ROR";
-            affiliation.schemeURI = URI.create("https://ror.org");
+            DoiJsonReader reader = new DoiJsonReader();
+            Resource actual = reader.read(sb.toString());
+
+            compareResource(expected, actual);
+        } catch (Exception e) {
+            log.error("Unexpected exception", e);
+            Assert.fail(e.getMessage());
         }
-        return affiliation;
     }
 
 }

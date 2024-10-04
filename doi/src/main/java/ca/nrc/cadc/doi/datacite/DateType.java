@@ -99,9 +99,11 @@ public enum DateType {
     }
 
     public static DateType toValue(String s) {
-        for (DateType status : values())
-            if (status.value.equals(s))
+        for (DateType status : values()) {
+            if (status.value.equals(s)) {
                 return status;
+            }
+        }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 

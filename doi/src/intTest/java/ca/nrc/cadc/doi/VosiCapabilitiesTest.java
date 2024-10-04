@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -84,12 +84,13 @@ import org.junit.Assert;
  */
 public class VosiCapabilitiesTest extends CapabilitiesTest {
     private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
+
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
     public VosiCapabilitiesTest() {
-        super(IntTestBase.RESOURCE_ID);
+        super(TestUtil.DOI_RESOURCE_ID);
     }
 
     @Override
@@ -101,7 +102,6 @@ public class VosiCapabilitiesTest extends CapabilitiesTest {
 
         // interfaces that should be present (anon not supported)
         Assert.assertNotNull("cert", tap.findInterface(Standards.SECURITY_METHOD_CERT, Standards.INTERFACE_PARAM_HTTP));
-        Assert.assertNotNull("cookie",
-                tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
+        Assert.assertNotNull("cookie", tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
     }
 }

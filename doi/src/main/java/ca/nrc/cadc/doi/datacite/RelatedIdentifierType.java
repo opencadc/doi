@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -108,9 +108,11 @@ public enum RelatedIdentifierType {
     }
 
     public static RelatedIdentifierType toValue(String s) {
-        for (RelatedIdentifierType type : values())
-            if (type.value.equals(s))
+        for (RelatedIdentifierType type : values()) {
+            if (type.value.equals(s)) {
                 return type;
+            }
+        }
         throw new IllegalArgumentException("RelatedIdentifier invalid value: " + s);
     }
 
