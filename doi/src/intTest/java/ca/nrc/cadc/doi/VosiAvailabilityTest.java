@@ -69,7 +69,9 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.vosi.AvailabilityTest;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -81,4 +83,5 @@ public class VosiAvailabilityTest extends AvailabilityTest {
     public VosiAvailabilityTest() {
         super(TestUtil.DOI_RESOURCE_ID);
     }
+
 }

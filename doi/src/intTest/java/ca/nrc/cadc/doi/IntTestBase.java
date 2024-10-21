@@ -177,9 +177,14 @@ public abstract class IntTestBase extends TestBase {
     protected String postDOI(URL postUrl, String doiXML, String journalRef)
             throws Exception {
         Map<String, Object> params = new HashMap<>();
-        FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
-        params.put("doiMetadata", fileContent);
-        params.put("journalref", journalRef == null ? "" : journalRef);
+        if (StringUtil.hasText(doiXML)) {
+            FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
+            params.put("doiMetadata", fileContent);
+        }
+        if (StringUtil.hasText(journalRef)) {
+            params.put("journalref", journalRef == null ? "" : journalRef);
+        }
+
         HttpPost post = new HttpPost(postUrl, params, true);
         post.prepare();
 
@@ -203,7 +208,7 @@ public abstract class IntTestBase extends TestBase {
                     RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
                     recursiveDeleteNode.setMonitor(true);
                     recursiveDeleteNode.run();
-                    log.info(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",
+                    log.debug(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",
                             recursiveDeleteNode.getPhase(), recursiveDeleteNode.getException()));
                     log.debug("deleted node: " + nodeUri.getPath());
                 } catch (AccessControlException e) {

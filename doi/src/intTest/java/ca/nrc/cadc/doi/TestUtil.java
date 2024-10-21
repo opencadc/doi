@@ -81,18 +81,16 @@ public class TestUtil {
     public static URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
     public static URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
     public static URI GMS_RESOURCE_ID = URI.create("ivo://ca.nrc.cadc/gms");
+    public static URI PROD_DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
 
-    // adminCert has full access to DOI
-    // readWriteCert has read/write access to DOI
-    // readOnlyCert has read only access to DOI
+    // adminCert has full access to a DOI
+    // readWriteCert has read/write access to a DOI
+    // readOnlyCert has read only access to a DOI
     public static String ADMIN_CERT = "doiadmin.pem";
     public static String READ_WRITE_CERT = "x509_CADCAuthtest1.pem";
     public static String READ_ONLY_CERT = "x509_CADCRegtest1.pem";
 
     public static String DOI_PARENT_PATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    public static String METADATA_FILE_PREFIX = "DOI-";
-    public static String DOI_GROUP_PREFIX = "CISTI_CADC_";
-    public static boolean RANDOM_DOI_SUFFIX = true;
 
     static {
         try {
@@ -113,6 +111,10 @@ public class TestUtil {
                 if (s != null) {
                     GMS_RESOURCE_ID = URI.create(s.trim());
                 }
+                s = props.getProperty("prodDoiResourceID");
+                if (s != null) {
+                    PROD_DOI_RESOURCE_ID = URI.create(s.trim());
+                }
 
                 s = props.getProperty("adminCert");
                 if (s != null) {
@@ -131,21 +133,11 @@ public class TestUtil {
                 if (s != null) {
                     DOI_PARENT_PATH = s.trim();
                 }
-                s = props.getProperty("metadataFilePrefix");
-                if (s != null) {
-                    METADATA_FILE_PREFIX = s.trim();
-                }
-                s = props.getProperty("doiGroupPrefix");
-                if (s != null) {
-                    DOI_GROUP_PREFIX = s.trim();
-                }
-                s = props.getProperty("randomDoiSuffix");
-                if (s != null) {
-                    RANDOM_DOI_SUFFIX = Boolean.parseBoolean(s.trim());
-                }
             }
-            log.info(String.format("intTest config: %s %s %s %s %s",
-                    ADMIN_CERT, DOI_PARENT_PATH, METADATA_FILE_PREFIX, DOI_GROUP_PREFIX, RANDOM_DOI_SUFFIX));
+            log.info(String.format("intTest config: %s %s %s %s %s %s %s %s",
+                    DOI_RESOURCE_ID, VAULT_RESOURCE_ID, GMS_RESOURCE_ID, PROD_DOI_RESOURCE_ID,
+                    ADMIN_CERT, READ_WRITE_CERT, READ_ONLY_CERT, DOI_PARENT_PATH));
+
         } catch (Exception oops) {
             log.info("failed to load/read optional config", oops);
         }

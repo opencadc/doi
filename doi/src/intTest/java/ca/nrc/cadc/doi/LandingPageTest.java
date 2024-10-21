@@ -69,8 +69,11 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.HttpGet;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
@@ -78,6 +81,7 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class LandingPageTest extends IntTestBase {
@@ -88,14 +92,22 @@ public class LandingPageTest extends IntTestBase {
     }
 
     private static final String TEST_DOI = "13.0001";
+    private static URL prodDoiServiceURL;
 
     public LandingPageTest() {
     }
 
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        RegistryClient regClient = new RegistryClient();
+        prodDoiServiceURL = regClient.getServiceURL(TestUtil.PROD_DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
+    }
+
     @Test
     public void anonGetTest() {
+        log.info("anonGetTest");
         try {
-            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            URL doiURL = new URL(prodDoiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
             log.debug("test url: " + doiURL.toExternalForm());
             Subject testSubject = AuthenticationUtil.getAnonSubject();
 
@@ -115,9 +127,10 @@ public class LandingPageTest extends IntTestBase {
 
     @Test
     public void authGetTest() {
+        log.info("authGetTest");
         try {
             log.debug("doi instances url: " + doiServiceURL);
-            URL doiURL = new URL(doiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
+            URL doiURL = new URL(prodDoiServiceURL.toExternalForm() + "/" + TEST_DOI + "/status/public");
             log.debug("test url: " + doiURL.toExternalForm());
 
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {

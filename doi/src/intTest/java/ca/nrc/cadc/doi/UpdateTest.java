@@ -114,11 +114,12 @@ public class UpdateTest extends IntTestBase {
 
     @Test
     public void updateDOITest() throws Exception {
+        log.info("updateDOITest");
         Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
             // minimally populated required properties
             Resource expected = getTestResource(true, true, true);
             expected.language = new Language("en-US");
-            String doiSuffix = null;
+            List<String> testDOIList = new ArrayList<>();
             try {
                 Resource actual = doTest(expected);
 
@@ -127,32 +128,37 @@ public class UpdateTest extends IntTestBase {
                 compareResource(expected, actual, false);
 
                 // get the URL to the new DOI
-                doiSuffix = getDOISuffix(actual.getIdentifier().getValue());
+                String doiSuffix = getDOISuffix(actual.getIdentifier().getValue());
+                testDOIList.add(doiSuffix);
                 URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
 
                 // fully populated required resource
                 Resource maxResource = getTestResource(false, true, true);
                 updateResource(expected, maxResource);
                 actual = doTest(expected);
+                testDOIList.add(getDOISuffix(actual.getIdentifier().getValue()));
                 compareResource(expected, actual);
 
                 // back to minimally populated required resource
                 Resource minResource = getTestResource(false, false, true);
                 updateResource(expected, minResource);
                 actual = doTest(expected);
+                testDOIList.add(getDOISuffix(actual.getIdentifier().getValue()));
                 compareResource(expected, actual);
 
                 // update PublicationYear
                 expected.getPublicationYear().setValue("2001");
                 actual = doTest(expected);
+                testDOIList.add(getDOISuffix(actual.getIdentifier().getValue()));
                 compareResource(expected, actual);
 
                 // update Language
                 expected.language = new Language("en-GB");
                 actual = doTest(expected);
+                testDOIList.add(getDOISuffix(actual.getIdentifier().getValue()));
                 compareResource(expected, actual);
             } finally {
-                if (doiSuffix != null) {
+                for (String doiSuffix : testDOIList) {
                     cleanup(doiSuffix);
                 }
             }

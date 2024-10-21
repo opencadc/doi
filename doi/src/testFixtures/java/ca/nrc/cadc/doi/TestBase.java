@@ -388,25 +388,6 @@ public class TestBase {
     }
 
     /*
-     * Method to update a resource from another resource.
-     *
-     * Resource resource =  new Resource(namespace, identifier, creators, titles, publisher, publicationYear, resourceType);
-
-        if (optionalProperties) {
-            resource.contributors = getContributors(optionalAttributes);
-            resource.dates = getDates(optionalAttributes);
-            resource.sizes = getSizes(optionalAttributes);
-            resource.language = getLanguage();
-            resource.relatedIdentifiers = getRelatedIdentifiers(optionalAttributes);
-            resource.rightsList = getRightsList(optionalAttributes);
-            resource.descriptions = getDescriptions(optionalAttributes);
-        }
-     */
-    void updateResource(Resource destination, Resource source) {
-
-    }
-
-    /*
      * Methods to compare resource children.
      */
     void compareResource(Resource expected, Resource actual) {

@@ -107,7 +107,7 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-        String doiPath = String.format("%s/%s", doiParentPath, doiSuffix);
+        String doiPath = String.format("%s/%s", parentPath, doiSuffix);
         ContainerNode doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
         
         // check to see if this user has permission

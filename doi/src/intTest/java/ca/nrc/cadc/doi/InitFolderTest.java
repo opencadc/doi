@@ -99,7 +99,6 @@ public class InitFolderTest extends IntTestBase {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.vospace", Level.INFO);
     }
 
     /**
@@ -109,6 +108,7 @@ public class InitFolderTest extends IntTestBase {
      */
     @Test
     public void testInitDoi() throws Exception {
+        log.info("testInitDoi");
         Resource testResource = getTestResource(false, true, true);
         final String testXML = getResourceXML(testResource);
 
@@ -170,7 +170,7 @@ public class InitFolderTest extends IntTestBase {
                         DataNode dataNode1 = new DataNode(writeName);
                         vosClient.createNode(target1, dataNode1);
                     } catch (AccessControlException e) {
-                        log.info("expected exception: " + e.getMessage());
+                        log.debug("expected exception: " + e.getMessage());
                     } catch (Exception e) {
                         Assert.fail("exception writing file: " + e.getMessage());
                     }

@@ -24,14 +24,14 @@ See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-reg
 The doi.properties configures the DataCite service used to register new DOI's.
 
 ```
-# VOSpace Service resourceID
-ca.nrc.cadc.doi.vospace.resourceID = {vospace service resourceID}
-
-# Path in VOSpace to the parent folder containing the DOI's.
-ca.nrc.cadc.doi.vospace.parentPath = {DOI parent folder path}
+# Vault Service resourceID
+ca.nrc.cadc.doi.vaultResourceID = {vault service resourceID}
 
 # Group Management Service (GMS) resourceID
-ca.nrc.cadc.doi.gms.resourceID = {GMS service resourceID}
+ca.nrc.cadc.doi.gmsResourceID = {GMS service resourceID}
+
+# Path in vault to the parent folder containing the DOI's.
+ca.nrc.cadc.doi.parentPath = {DOI parent folder path}
 
 # Prefix to the DOI metadata file
 ca.nrc.cadc.doi.metadataFilePrefix = {file prefix}
@@ -52,11 +52,11 @@ ca.nrc.cadc.doi.datacite.username = {username}
 ca.nrc.cadc.doi.datacite.password = {password}
 ```
 
-_vospace.resourceID_ the resourceID to the VOSpace service used to store the DOI metadata and files.
+_vaultResourceID_ the resourceID to the vault service used to store the DOI metadata and files.
 
-_vospace.parentPath_ is the path in the VOSpace service to the DOI parent folder.
+_gmsResourceID_ the resourceID to the GMS service used for authentication and authorization.
 
-_gms.ResourceID_ the resourceID to the GMS service used for authentication and authorization.
+_parentPath_ is the path in the vault service to the DOI parent folder.
 
 _metadataFilePrefix_ is the prefix prepended to the DOI name to create the filename for the DOI specific metadata stored in VOSpace.
 
