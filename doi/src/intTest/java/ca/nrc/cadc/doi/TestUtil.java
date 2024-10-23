@@ -82,9 +82,6 @@ public class TestUtil {
     // resourceID for the vault service (used to store the DOI metadata)
     public static URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
 
-    // resourceID for a GMS service used to verify group memberships
-    public static URI GMS_RESOURCE_ID = URI.create("ivo://ca.nrc.cadc/gms");
-
     // ADMIN_CERT has full access to a test DOI
     public static String ADMIN_CERT = "doiadmin.pem";
 

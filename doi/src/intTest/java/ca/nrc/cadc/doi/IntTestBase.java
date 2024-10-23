@@ -115,7 +115,6 @@ public abstract class IntTestBase extends TestBase {
     static Subject readOnlySubject;
     static URL doiServiceURL;
     static VOSpaceClient vosClient;
-    static GMSClient gmsClient;
     static VOSURI doiParentPathURI;
 
     static {
@@ -130,9 +129,8 @@ public abstract class IntTestBase extends TestBase {
 
         RegistryClient regClient = new RegistryClient();
         doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
-        gmsClient = new GMSClient(TestUtil.GMS_RESOURCE_ID);
         doiParentPathURI = new VOSURI(TestUtil.VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
+        vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
     }
 
     protected VOSURI getVOSURI(String path) {
@@ -199,10 +197,6 @@ public abstract class IntTestBase extends TestBase {
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 log.debug("cleanup as doiadmin");
                 try {
-                    // String groupToDelete = doiGroupPrefix + doiSuffix;
-                    // gmsClient.deleteGroup(groupToDelete);
-                    // log.debug("deleted group: " + groupToDelete);
-
                     VOSURI nodeUri = getVOSURI(doiSuffix);
                     log.debug("recursiveDeleteNode: " + nodeUri);
                     RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
