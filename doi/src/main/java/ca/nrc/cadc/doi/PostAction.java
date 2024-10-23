@@ -81,6 +81,7 @@ import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -280,7 +281,7 @@ public class PostAction extends DoiAction {
         HttpUpload put = new HttpUpload(inputStream, doiURL);
         put.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
         put.setBufferSize(64 * 1024);
-        put.setRequestProperty("Content-Type", "text/plain;charset=UTF-8");
+        put.setRequestProperty(HttpTransfer.CONTENT_TYPE, "text/plain;charset=UTF-8");
         put.prepare();
 
         // process response

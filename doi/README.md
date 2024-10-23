@@ -75,7 +75,7 @@ _password_ is the DataCite account password.
 # (optional) Create a random DOI name for testing
 ca.nrc.cadc.doi.test.randomName = {true|false}
 
-# (optional) Group URI that will own test DOI's
+# (optional) Group URI for a group that has read/write permissions to test DOI's
 ca.nrc.cadc.doi.test.groupUri = {group URI}
 ```
 ### required certificates
