@@ -70,7 +70,7 @@ _username_ is the DataCite account username.
 
 _password_ is the DataCite account password.
 
-### Optional properties useful for integration testing.
+**For developer testing only:**
 ```
 # (optional) Create a random DOI name for testing
 ca.nrc.cadc.doi.test.randomName = {true|false}
@@ -78,11 +78,13 @@ ca.nrc.cadc.doi.test.randomName = {true|false}
 # (optional) Group URI that will own test DOI's
 ca.nrc.cadc.doi.test.groupUri = {group URI}
 ```
+### required certificates
+The following certificates are required to run the service, and are expected to be in the `/config` directory.
 
-### doiadmin.pem
+## doiadmin.pem
 This client certificate is used to make authenticated calls to a VOSpace service.
 
-### cadcproxy.pem
+## cadcproxy.pem
 This client certificate is used to make authenticated server-to-server calls for system-level A&A purposes.
 
 ### cadc-log.properties (optional)

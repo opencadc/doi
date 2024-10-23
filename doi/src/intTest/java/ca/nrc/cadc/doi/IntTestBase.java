@@ -181,8 +181,8 @@ public abstract class IntTestBase extends TestBase {
             FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
             params.put("doiMetadata", fileContent);
         }
-        if (StringUtil.hasText(journalRef)) {
-            params.put("journalref", journalRef == null ? "" : journalRef);
+        if (journalRef != null) {
+            params.put("journalref", journalRef);
         }
 
         HttpPost post = new HttpPost(postUrl, params, true);

@@ -282,6 +282,8 @@ public class DoiInitAction extends InitAction {
         adminSubject = AuthenticationUtil.augmentSubject(adminSubject);
         String adminUsername = getUsername(adminSubject);
 
+        // TODO is it necessary to check all nodes in the path for ownership and permissions,
+        // or is it sufficient to check the last node?
         VOSpaceClient vosClient = new VOSpaceClient(vospaceResourceID);
         String currentPath = "";
         String[] paths = parentPath.split("/");
