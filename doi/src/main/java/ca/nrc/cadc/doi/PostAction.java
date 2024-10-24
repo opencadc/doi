@@ -79,7 +79,9 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -92,6 +94,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
@@ -118,7 +121,6 @@ import org.opencadc.vospace.client.async.RecursiveSetNode;
 import org.opencadc.vospace.transfer.Direction;
 import org.opencadc.vospace.transfer.Protocol;
 import org.opencadc.vospace.transfer.Transfer;
-
 
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
@@ -223,17 +225,18 @@ public class PostAction extends DoiAction {
                 config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_USERNAME_KEY),
                 config.getFirstPropertyValue(DoiInitAction.DATACITE_MDS_PASSWORD_KEY));
     }
-    
-    private void processResponse(Throwable throwable, int responseCode, String responseBody, String msg)
+
+    private void processResponse(Throwable throwable, int responseCode, InputStream inputStream, String msg)
             throws IOException {
         log.debug("response code from DataCite: " + responseCode);
+        String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
         // check if an exception was thrown
         if (throwable != null) {
             if ((responseCode == 401) || (responseCode == 403)) {
                 throw new AccessControlException(throwable.getMessage());
             } else {
-                throw new RuntimeException(responseBody + ", " + throwable);
+                throw new RuntimeException(body + ", " + throwable);
             }
         }
         
@@ -241,23 +244,23 @@ public class PostAction extends DoiAction {
         if (responseCode == 200 || responseCode == 201) {
             log.debug(msg);
         } else {
-            throw new IOException("HttpResponse (" + responseCode + ") - " + responseBody);
+            throw new IOException("HttpResponse (" + responseCode + ") - " + body);
         }
     }
-    
-    private void registerDOI(URL postURL, String content, String contentType, boolean redirect)
-            throws IOException {
+
+    private void registerDOI(URL postURL, FileContent fileContent, boolean redirect)
+            throws Exception {
         log.debug("post to DataCite URL: " + postURL);
-        log.debug("contentType: " + contentType);
+        log.debug("contentType: " + fileContent.getContentType());
 
         // post to DataCite
-        HttpPost postToDataCite = new HttpPost(postURL, content, contentType, redirect);
+        HttpPost postToDataCite = new HttpPost(postURL, fileContent, redirect);
         postToDataCite.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
-        postToDataCite.run();
+        postToDataCite.prepare();
 
         // process response
         String msg = "Successfully registered DOI " + doiSuffix;
-        processResponse(postToDataCite.getThrowable(), postToDataCite.getResponseCode(), postToDataCite.getResponseBody(), msg);
+        processResponse(postToDataCite.getThrowable(), postToDataCite.getResponseCode(), postToDataCite.getInputStream(), msg);
     }
     
     private void makeDOIFindable(ContainerNode doiContainerNode)
@@ -270,7 +273,7 @@ public class PostAction extends DoiAction {
 
         // add the landing page URL
         String landingPageUrl = config.getFirstPropertyValue(DoiInitAction.LANDING_URL_KEY);
-        String content = String.format("doi=%s\nurl=%s?doi=%s", doiURL, landingPageUrl, doiSuffix);
+        String content = String.format("doi=%s/%s\nurl=%s?doi=%s", accountPrefix, doiSuffix, landingPageUrl, doiSuffix);
         log.debug("content: " + content);
         InputStream inputStream = new ByteArrayInputStream(content.getBytes());
 
@@ -278,12 +281,12 @@ public class PostAction extends DoiAction {
         HttpUpload put = new HttpUpload(inputStream, doiURL);
         put.setRequestProperty("Authorization", "Basic " + Base64.encodeString(getCredentials()));
         put.setBufferSize(64 * 1024);
-        put.setContentType("text/plain;charset=UTF-8");
-        put.run();
+        put.setRequestProperty(HttpTransfer.CONTENT_TYPE, "text/plain;charset=UTF-8");
+        put.prepare();
 
         // process response
         String msg = "Successfully made DOI " + doiSuffix + " findable";
-        processResponse(put.getThrowable(), put.getResponseCode(), put.getResponseBody(), msg);
+        processResponse(put.getThrowable(), put.getResponseCode(), put.getInputStream(), msg);
     }
    
     private String getDOIContent() throws Exception  {
@@ -314,7 +317,8 @@ public class PostAction extends DoiAction {
             URL registerURL = new URL(String.format("%s/metadata/%s/%s", dataCiteUrl, accountPrefix, doiSuffix));
             String content = getDOIContent();
             String contentType = "application/xml;charset=UTF-8";
-            registerDOI(registerURL, content, contentType, true);
+            FileContent fileContent = new FileContent(content, contentType, StandardCharsets.UTF_8);
+            registerDOI(registerURL, fileContent, true);
 
             // success, add landing page to the DOI instance
             makeDOIFindable(doiContainerNode);
@@ -372,11 +376,11 @@ public class PostAction extends DoiAction {
         VOSURI dataVOSURI = getVOSURI(doiDataPath);
         try {
             // update status
-            ContainerNode dataContainerNode = vospaceDoiClient.getContainerNode(doiDataPath);
             doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(Status.LOCKING_DATA.getValue());
             vospaceDoiClient.getVOSpaceClient().setNode(containerVOSURI, doiContainerNode);
 
             // lock data directory and subdirectories, make them public
+            ContainerNode dataContainerNode = vospaceDoiClient.getContainerNode(doiDataPath);
             dataContainerNode.isPublic = true;
             dataContainerNode.clearReadOnlyGroups = true;
             dataContainerNode.getReadOnlyGroup().clear();

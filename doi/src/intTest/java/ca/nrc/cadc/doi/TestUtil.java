@@ -69,89 +69,29 @@
 
 package ca.nrc.cadc.doi;
 
-import java.io.File;
-import java.io.FileReader;
 import java.net.URI;
-import java.util.Properties;
-import org.apache.log4j.Logger;
 
 public class TestUtil {
-    private static final Logger log = Logger.getLogger(TestUtil.class);
 
+    // resourceID for the local test DOI service
     public static URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
+
+    // resourceID for the production DOI service
+    public static URI PROD_DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
+
+    // resourceID for the vault service (used to store the DOI metadata)
     public static URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
-    public static URI GMS_RESOURCE_ID = URI.create("ivo://ca.nrc.cadc/gms");
 
-    // adminCert has full access to DOI
-    // readWriteCert has read/write access to DOI
-    // readOnlyCert has read only access to DOI
+    // ADMIN_CERT has full access to a test DOI
     public static String ADMIN_CERT = "doiadmin.pem";
-    public static String READ_WRITE_CERT = "x509_CADCAuthtest1.pem";
-    public static String READ_ONLY_CERT = "x509_CADCRegtest1.pem";
 
+    // AUTH_CERT has read/write access to a test DOI
+    public static String AUTH_CERT = "doi-auth.pem";
+
+    // NO_AUTH_CERT has read only access to a test DOI
+    public static String NO_AUTH_CERT = "doi-noauth.pem";
+
+    // expected path for the DOI parent node
     public static String DOI_PARENT_PATH = "/AstroDataCitationDOI/CISTI.CANFAR";
-    public static String METADATA_FILE_PREFIX = "DOI-";
-    public static String DOI_GROUP_PREFIX = "CISTI_CADC_";
-    public static boolean RANDOM_DOI_SUFFIX = true;
-
-    static {
-        try {
-            File opt = new File("intTest.properties");
-            if (opt.exists()) {
-                Properties props = new Properties();
-                props.load(new FileReader(opt));
-
-                String s = props.getProperty("doiResourceID");
-                if (s != null) {
-                    DOI_RESOURCE_ID = URI.create(s.trim());
-                }
-                s = props.getProperty("vaultResourceID");
-                if (s != null) {
-                    VAULT_RESOURCE_ID = URI.create(s.trim());
-                }
-                s = props.getProperty("gmsResourceID");
-                if (s != null) {
-                    GMS_RESOURCE_ID = URI.create(s.trim());
-                }
-
-                s = props.getProperty("adminCert");
-                if (s != null) {
-                    ADMIN_CERT = s.trim();
-                }
-                s = props.getProperty("readWriteCert");
-                if (s != null) {
-                    READ_WRITE_CERT = s.trim();
-                }
-                s = props.getProperty("readOnlyCert");
-                if (s != null) {
-                    READ_ONLY_CERT = s.trim();
-                }
-
-                s = props.getProperty("doiParentPath");
-                if (s != null) {
-                    DOI_PARENT_PATH = s.trim();
-                }
-                s = props.getProperty("metadataFilePrefix");
-                if (s != null) {
-                    METADATA_FILE_PREFIX = s.trim();
-                }
-                s = props.getProperty("doiGroupPrefix");
-                if (s != null) {
-                    DOI_GROUP_PREFIX = s.trim();
-                }
-                s = props.getProperty("randomDoiSuffix");
-                if (s != null) {
-                    RANDOM_DOI_SUFFIX = Boolean.parseBoolean(s.trim());
-                }
-            }
-            log.info(String.format("intTest config: %s %s %s %s %s",
-                    ADMIN_CERT, DOI_PARENT_PATH, METADATA_FILE_PREFIX, DOI_GROUP_PREFIX, RANDOM_DOI_SUFFIX));
-        } catch (Exception oops) {
-            log.info("failed to load/read optional config", oops);
-        }
-    }
-
-    private TestUtil() {
-    }
 
 }

@@ -115,7 +115,6 @@ public abstract class IntTestBase extends TestBase {
     static Subject readOnlySubject;
     static URL doiServiceURL;
     static VOSpaceClient vosClient;
-    static GMSClient gmsClient;
     static VOSURI doiParentPathURI;
 
     static {
@@ -125,14 +124,13 @@ public abstract class IntTestBase extends TestBase {
     @BeforeClass
     public static void staticInit() {
         adminSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.ADMIN_CERT, IntTestBase.class));
-        readWriteSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.READ_WRITE_CERT, IntTestBase.class));
-        readOnlySubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.READ_ONLY_CERT, IntTestBase.class));
+        readWriteSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.AUTH_CERT, IntTestBase.class));
+        readOnlySubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.NO_AUTH_CERT, IntTestBase.class));
 
         RegistryClient regClient = new RegistryClient();
         doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
-        gmsClient = new GMSClient(TestUtil.GMS_RESOURCE_ID);
         doiParentPathURI = new VOSURI(TestUtil.VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
+        vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
     }
 
     protected VOSURI getVOSURI(String path) {
@@ -177,9 +175,14 @@ public abstract class IntTestBase extends TestBase {
     protected String postDOI(URL postUrl, String doiXML, String journalRef)
             throws Exception {
         Map<String, Object> params = new HashMap<>();
-        FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
-        params.put("doiMetadata", fileContent);
-        params.put("journalref", journalRef == null ? "" : journalRef);
+        if (StringUtil.hasText(doiXML)) {
+            FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
+            params.put("doiMetadata", fileContent);
+        }
+        if (journalRef != null) {
+            params.put("journalref", journalRef);
+        }
+
         HttpPost post = new HttpPost(postUrl, params, true);
         post.prepare();
 
@@ -194,16 +197,12 @@ public abstract class IntTestBase extends TestBase {
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 log.debug("cleanup as doiadmin");
                 try {
-                    // String groupToDelete = doiGroupPrefix + doiSuffix;
-                    // gmsClient.deleteGroup(groupToDelete);
-                    // log.debug("deleted group: " + groupToDelete);
-
                     VOSURI nodeUri = getVOSURI(doiSuffix);
                     log.debug("recursiveDeleteNode: " + nodeUri);
                     RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
                     recursiveDeleteNode.setMonitor(true);
                     recursiveDeleteNode.run();
-                    log.info(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",
+                    log.debug(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",
                             recursiveDeleteNode.getPhase(), recursiveDeleteNode.getException()));
                     log.debug("deleted node: " + nodeUri.getPath());
                 } catch (AccessControlException e) {

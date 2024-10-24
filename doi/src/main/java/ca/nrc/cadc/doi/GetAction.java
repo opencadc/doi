@@ -81,7 +81,6 @@ import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
-import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
@@ -127,7 +126,7 @@ public class GetAction extends DoiAction {
         Title title = null;
         List<Title> titles = resource.getTitles();
         for (Title t : titles) {
-            if (t.titleType == null) {
+            if (StringUtil.hasText(t.getValue())) {
                 title = t;
                 break;
             }
@@ -194,7 +193,6 @@ public class GetAction extends DoiAction {
         if (vospaceDoiClient.isCallerAllowed(doiContainerNode, getAdminSubject())) {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
-            log.debug("node: " + doiContainerNode.getName() + ", status: " + status);
             if (StringUtil.hasText(status)
                     && !status.equals(Status.ERROR_REGISTERING.getValue())
                     && !status.equals(Status.ERROR_LOCKING_DATA.getValue())) {
@@ -208,7 +206,7 @@ public class GetAction extends DoiAction {
             List<Node> doiContainedNodes = doiContainerNode.getNodes();
             for (Node node : doiContainedNodes) {
                 if (node.getName().equals("data")) {
-                    dataDirectory = String.format("%s/%s/data", doiParentPath, doiSuffixString);
+                    dataDirectory = String.format("%s/%s/data", parentPath, doiSuffixString);
                     break;
                 }
             }

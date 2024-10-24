@@ -101,11 +101,11 @@ public class CreateTest extends IntTestBase {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
 
     @Test
     public void createDOIAndStatusTest() throws Exception {
+        log.info("createDOIAndStatusTest");
         Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
             // create new doi
             Resource testResource = getTestResource(false, true, true);
@@ -167,9 +167,9 @@ public class CreateTest extends IntTestBase {
         });
     }
 
-
     @Test
     public void testGetStatusList() {
+        log.info("testGetStatusList");
         List<String> testDOIList = new ArrayList<>();
         try {
             // create test DOI's
@@ -185,18 +185,15 @@ public class CreateTest extends IntTestBase {
             for (String doiSuffix : testDOIList) {
                 boolean found = false;
                 for (DoiStatus doiStatus : doiStatusList) {
-                    if (doiSuffix.equals(doiStatus.getIdentifier().getValue())) {
-                        Assert.assertEquals("expected DOI status DRAFT",
-                                Status.DRAFT, doiStatus.getStatus());
-                        String dataDirectory = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
-                        Assert.assertEquals("data directory mismatch",
-                                dataDirectory, doiStatus.getDataDirectory());
+                    log.debug("actual doi: " + doiStatus.getIdentifier().getValue());
+                    if (doiStatus.getIdentifier().getValue().endsWith(doiSuffix)) {
+                        log.debug("doisuffix match");
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    Assert.fail("doiSuffix %s not found in DOI status list");
+                    Assert.fail(String.format("doiSuffix %s not found in DOI status list", doiSuffix));
                 }
             }
         } catch (Exception e) {

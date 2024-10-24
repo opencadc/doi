@@ -106,19 +106,16 @@ public abstract class DoiAction extends RestAction {
     protected Boolean includePublic = false;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
-    protected URI vospaceResourceID;
+    protected URI vaultResourceID;
     protected URI gmsResourceID;
     protected String accountPrefix;
-    protected String doiParentPath;
+    protected String parentPath;
 
     public DoiAction() {
     }
 
     /**
      * Parse input documents
-     * When parameter runId="TEST" is present, the service treats the request as a test. 
-     * For DOI creation, the service will append '.test' to the suffix of the created DOI
-     * and add a VOS.PROPERTY_URI_RUNID node property to DOI container node.
      * For DOI minting, the service will use the DataCite test system to register the DOI
      * and to make the DOI findable. 
      * For DOI deletion, the service could delete the DOI irrespective of its status. 
@@ -133,27 +130,23 @@ public abstract class DoiAction extends RestAction {
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
-        this.vospaceResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_RESOURCE_ID_KEY));
-        log.debug("vospaceResourceID=" + vospaceResourceID);
+        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
         this.gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
-        log.debug("gmsResourceID=" + gmsResourceID);
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
-        log.debug("accountPrefix=" + accountPrefix);
-        this.doiParentPath = config.getFirstPropertyValue(DoiInitAction.V0SPACE_DOI_PARENT_PATH_KEY);
-        log.debug("doiParentPath=" + doiParentPath);
+        this.parentPath = config.getFirstPropertyValue(DoiInitAction.PARENT_PATH_KEY);
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
-        log.debug("subject: " + callingSubject);
         if (authorize) {
             authorizeUser(callingSubject);
         }
+        logInfo.setSubject(callingSubject);
 
         parsePath();
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
-        this.vospaceDoiClient = new VospaceDoiClient(vospaceResourceID, doiParentPath,
+        this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, parentPath,
                 callingSubject, includePublic);
     }
 
@@ -163,7 +156,7 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected VOSURI getVOSURI(String path) {
-        return new VOSURI(vospaceResourceID, String.format("%s/%s", doiParentPath, path));
+        return new VOSURI(vaultResourceID, String.format("%s/%s", parentPath, path));
     }
 
     protected GMSClient getGMSClient() {
@@ -172,7 +165,7 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected Subject getAdminSubject() {
-        return SSLUtil.createSubject(new File(System.getProperty("user.home") + "/.ssl/doiadmin.pem"));
+        return SSLUtil.createSubject(new File("/config/doiadmin.pem"));
     }
 
     private void authorizeUser(Subject s) {
@@ -184,19 +177,17 @@ public abstract class DoiAction extends RestAction {
 
     private void parsePath() {
         String path = syncInput.getPath();
-        log.debug("http request path: " + path);
+        logInfo.setPath(path);
 
         if (path != null) {
             String[] parts = path.split("/");
             // Parse the request path to see if a DOI suffix has been provided
             // A full DOI number for CANFAR will be: 10.11570/<DOISuffix>
             if (parts.length > 3) {
-                log.debug("DOI ACTION BAD REQUEST: " + path);
                 throw new IllegalArgumentException("Bad request: " + path);
             }
             if (parts.length > 0) {
                 doiSuffix = parts[0];
-                log.debug("DOI Number: " + doiSuffix);
                 if (parts.length > 1) {
                     doiAction = parts[1];
                 }

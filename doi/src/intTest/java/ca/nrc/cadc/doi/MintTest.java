@@ -79,6 +79,7 @@ import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
@@ -90,7 +91,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
-import org.opencadc.vospace.VOS;
+import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientAbortThread;
 import org.opencadc.vospace.client.async.RecursiveSetNode;
@@ -102,15 +103,16 @@ public class MintTest extends IntTestBase {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.auth", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.net", Level.INFO);
     }
+
+    private static final URI DOI_VOS_IS_LOCKED_PROP = URI.create("ivo://cadc.nrc.ca/vospace/core#islocked");
 
     private ContainerNode doiParentNode;
 
     // test minting DOI instance
     @Test
     public void testMintingDocument() throws Exception {
+        log.info("testMintingDocument");
         final Resource testResource = getTestResource(false, true, true);
         final String testXML = getResourceXML(testResource);
         Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<Object>) () -> {
@@ -121,12 +123,11 @@ public class MintTest extends IntTestBase {
             String expectedIdentifier = presistedResource.getIdentifier().getValue();
             Assert.assertNotEquals("New identifier not received from doi service.", testResource.getIdentifier().getValue(), expectedIdentifier);
 
-            // Pull the suffix from the identifier
-            String doiSuffix = expectedIdentifier.split("/")[1];
-
+            // Get the DOI suffix from the identifier
+            String doiSuffix = getDOISuffix(expectedIdentifier);
             try {
                 // For DOI tests below
-                URL doiURL = new URL(String.format("%s/%s", TestUtil.DOI_PARENT_PATH, doiSuffix));
+                URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
 
                 // Verify that the DOI document was created successfully
                 DoiStatus doiStatus = getStatus(doiURL);
@@ -144,49 +145,53 @@ public class MintTest extends IntTestBase {
 
                 // add a file and a subdirectory with a file to the data directory
                 String testFile1 = "test-file-1.txt";
-                String testFile1Path = String.format("%s/%s/data/%s", TestUtil.DOI_PARENT_PATH, doiSuffix, testFile1);
+                String testFile1Path = String.format("%s/data/%s", doiSuffix, testFile1);
                 DataNode testFileNode = createDataNode(testFile1Path, testFile1);
 
                 String subDir = "subDir";
-                String subDirPath = String.format("%s/%s/data/%s", TestUtil.DOI_PARENT_PATH, doiSuffix, subDir);
+                String subDirPath = String.format("%s/data/%s", doiSuffix, subDir);
                 ContainerNode dataSubDirContainerNode = createContainerNode(subDirPath, subDir);
 
                 String testFile2 = "test-file-2.txt";
-                String testFile2Path = String.format("%s/%s/data/%s/%s", TestUtil.DOI_PARENT_PATH, doiSuffix, subDir, testFile2);
+                String testFile2Path = String.format("%s/data/%s/%s", doiSuffix, subDir, testFile2);
                 DataNode testFile2Node = createDataNode(testFile2Path, testFile2);
 
                 // mint the document, DRAFT ==> LOCKING_DATA
-                doMintTest(doiURL, persistedXML, expectedIdentifier, null);
+                doMintTest(doiURL);
                 doiContainerNode = getContainerNode(doiSuffix);
                 dataContainerNode = getContainerNode(doiSuffix + "/data");
                 dataSubDirContainerNode = getContainerNode(doiSuffix + "/data/" + subDir);
                 Assert.assertEquals("incorrect status", Status.LOCKING_DATA.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
                 verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode);
+                log.debug("locking data");
 
                 // mint the document, ERROR_LOCKING_DATA ==> LOCKING_DATA
                 doiContainerNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());
                 VOSURI vosuri = getVOSURI(doiContainerNode.getName());
                 vosClient.setNode(vosuri, doiContainerNode);
-                doMintTest(doiURL, persistedXML, expectedIdentifier, null);
+                doMintTest(doiURL);
                 doiContainerNode = getContainerNode(doiSuffix);
                 dataContainerNode = getContainerNode(doiSuffix + "/data");
                 dataSubDirContainerNode = getContainerNode(doiSuffix + "/data/" + subDir);
                 Assert.assertEquals("incorrect status", Status.LOCKING_DATA.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
                 verifyNodeProperties(doiContainerNode, dataContainerNode, dataSubDirContainerNode);
+                log.debug("locking data again");
 
                 // getStatus() changes LOCKING_DATA == > LOCKED_DATA
                 doiStatus = getStatus(doiURL);
                 Assert.assertEquals("identifier from DOI status is different", expectedIdentifier, doiStatus.getIdentifier().getValue());
                 Assert.assertEquals("status is incorrect", Status.LOCKED_DATA, doiStatus.getStatus());
                 verifyLockedDataPropertyChanges(doiContainerNode, dataContainerNode, dataSubDirContainerNode);
+                log.debug("locked data");
 
                 // mint the document, LOCKED_DATA == REGISTERING
-                doMintTest(doiURL, persistedXML, expectedIdentifier, null);
+                doMintTest(doiURL);
                 doiContainerNode = getContainerNode(doiSuffix);
                 dataContainerNode = getContainerNode(doiSuffix + "/data");
                 dataSubDirContainerNode = getContainerNode(doiSuffix + "/data/" + subDir);
                 Assert.assertEquals("incorrect status", Status.MINTED.getValue(), doiContainerNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
                 verifyMintedStatePropertyChanges(doiContainerNode, dataContainerNode, dataSubDirContainerNode);
+                log.debug("registering");
 
                 // mint the document, ERROR_REGISTERING ==> REGISTERING
                 // the doiContainerNode doesn't have group read & write anymore, and is owned
@@ -198,8 +203,9 @@ public class MintTest extends IntTestBase {
                     vosClient.setNode(parentVOSURI, doiParentNode);
                     return null;
                 });
+                log.debug("registering again");
 
-                doMintTest(doiURL, persistedXML, expectedIdentifier, null);
+                doMintTest(doiURL);
                 doiContainerNode = getContainerNode(doiSuffix);
                 dataContainerNode = getContainerNode(doiSuffix + "/data");
                 dataSubDirContainerNode = getContainerNode(doiSuffix + "/data/" + subDir);
@@ -220,7 +226,6 @@ public class MintTest extends IntTestBase {
                 // cannot delete a DOI when it is in 'MINTED' state, change its state to 'DRAFT'
                 // node owner is doiadmin, and after minting the group permissions are removed, so
                 // cleanup needs to be done as doiadmin, not the test subject
-
                 Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                     ContainerNode doiContainerNode = getContainerNode(doiSuffix);
                     VOSURI vosuri = getVOSURI(doiContainerNode.getName());
@@ -228,12 +233,7 @@ public class MintTest extends IntTestBase {
                     vosClient.setNode(vosuri, doiContainerNode);
 
                     // unlock the data directory and delete the DOI
-                    ContainerNode dataContainerNode = getContainerNode(doiSuffix + "/data");
-                    if (dataContainerNode.isLocked != null && dataContainerNode.isLocked) {
-                        dataContainerNode.getNodes().clear();
-                        setDataNodeRecursively(doiSuffix);
-                    }
-
+                    setDataNodeRecursively(doiSuffix);
                     cleanup(doiSuffix);
                     return null;
                 });
@@ -247,16 +247,17 @@ public class MintTest extends IntTestBase {
         URL statusURL = new URL(doiURL + "/" + DoiAction.STATUS_ACTION);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpGet get = new HttpGet(statusURL, bos);
-        get.prepare();
+        get.setRequestProperty("Accept", "text/xml");
+        get.run();
         Assert.assertNull("GET exception", get.getThrowable());
         DoiStatusXmlReader reader = new DoiStatusXmlReader();
         return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
     }
 
-    private void doMintTest(URL doiURL, String doiXML, String expectedIdentifier, String journalRef)
+    private void doMintTest(URL doiURL)
             throws Exception {
         URL mintURL = new URL(doiURL + "/" + DoiAction.MINT_ACTION);
-        postDOI(mintURL, doiXML, journalRef);
+        postDOI(mintURL, null, null);
     }
 
     private void verifyDataDirNodeProperties(ContainerNode dataContainerNode,
@@ -275,9 +276,8 @@ public class MintTest extends IntTestBase {
     }
 
     private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-    		ContainerNode dataSubDirContainerNode) {
+                                      ContainerNode dataSubDirContainerNode) {
         // verify the DOI containerNode properties
-        Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
         Assert.assertFalse("should have group read", doiContainerNode.getReadWriteGroup().isEmpty());
         Assert.assertFalse("should have group write", doiContainerNode.getReadWriteGroup().isEmpty());
@@ -289,7 +289,6 @@ public class MintTest extends IntTestBase {
     private void verifyLockedDataPropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
                                                  ContainerNode dataSubDirContainerNode) {
         // verify the DOI containerNode properties
-        Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
         Assert.assertFalse("should have group read", doiContainerNode.getReadWriteGroup().isEmpty());
         Assert.assertFalse("should have group write", doiContainerNode.getReadWriteGroup().isEmpty());
@@ -301,7 +300,6 @@ public class MintTest extends IntTestBase {
     private void verifyMintedStatePropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
                                                   ContainerNode dataSubDirContainerNode) {
         // verify the DOI containerNode properties
-        Assert.assertEquals("incorrect runId property", "TEST", doiContainerNode.getPropertyValue(VOS.PROPERTY_URI_RUNID));
         Assert.assertTrue("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
         Assert.assertTrue("should not have group read", doiContainerNode.getReadWriteGroup().isEmpty());
         Assert.assertTrue("should not have group write", doiContainerNode.getReadWriteGroup().isEmpty());
@@ -325,6 +323,7 @@ public class MintTest extends IntTestBase {
         Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
             VOSURI vosuri = getVOSURI(String.format("%s/data", doiSuffix));
             ContainerNode dataContainerNode = new ContainerNode("data");
+            dataContainerNode.getProperties().add(new NodeProperty(DOI_VOS_IS_LOCKED_PROP, "false"));
             RecursiveSetNode recursiveSetNode = vosClient.createRecursiveSetNode(vosuri, dataContainerNode);
             URL jobURL = recursiveSetNode.getJobURL();
 

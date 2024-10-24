@@ -83,6 +83,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 
@@ -111,24 +112,28 @@ public class ServiceAvailability implements AvailabilityPlugin {
         String note = "service is accepting requests";
         try {
             MultiValuedProperties config = DoiInitAction.getConfig();
-            URI vospaceResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_RESOURCE_ID_KEY));
-            log.debug("vault resourceID: " + vospaceResourceID);
+            URI vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
+            log.debug("vault resourceID: " + vaultResourceID);
 
             // check other services we depend on (vault, gms, datacite)
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
 
-            URL vaultURL = reg.getServiceURL(vospaceResourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            URL vaultURL = reg.getServiceURL(vaultResourceID, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
             if (vaultURL != null) {
                 CheckResource checkResource = new CheckWebService(vaultURL);
                 checkResource.check();
             } else {
-                log.debug("check skipped: " + vospaceResourceID + " does not provide " + Standards.VOSI_AVAILABILITY);
+                log.debug("check skipped: " + vaultResourceID + " does not provide " + Standards.VOSI_AVAILABILITY);
             }
 
             URI credURI = null;
             try {
-                credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
+                Set<URI> credURIs = localAuthority.getServiceURIs(Standards.CRED_PROXY_10);
+                if (credURIs.size() > 1) {
+                    throw new IllegalStateException(String.format("multiple serviceURI's found for %s", Standards.CRED_PROXY_10));
+                }
+                credURI = credURIs.iterator().next();
                 log.debug("credURI: " + credURI.toASCIIString());
                 URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
                 if (url != null) {
@@ -143,7 +148,11 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             URI usersURI = null;
             try {
-                usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_10.toString());
+                Set<URI> usersURIs = localAuthority.getServiceURIs(Standards.UMS_USERS_10);
+                if (usersURIs.size() > 1) {
+                    throw new IllegalStateException(String.format("multiple serviceURI's found for %s", Standards.UMS_USERS_10));
+                }
+                usersURI = usersURIs.iterator().next();
                 log.debug("usersURI: " + usersURI.toASCIIString());
                 URL url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
                 if (url != null) {
@@ -156,9 +165,13 @@ public class ServiceAvailability implements AvailabilityPlugin {
                 log.debug("not configured: " + Standards.UMS_USERS_10);
             }
 
-            URI groupsURI = null;
+            URI groupsURI;
             try {
-                groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_10.toString());
+                Set<URI> groupsURIs = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
+                if (groupsURIs.size() > 1) {
+                    throw new IllegalStateException(String.format("multiple serviceURI's found for %s", Standards.GMS_SEARCH_10));
+                }
+                groupsURI = groupsURIs.iterator().next();
                 if (!groupsURI.equals(usersURI)) {
                     URL url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
                     if (url != null) {

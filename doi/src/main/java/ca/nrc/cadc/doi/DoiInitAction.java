@@ -69,22 +69,34 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.HttpPrincipal;
+import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InitAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
+import ca.nrc.cadc.util.StringUtil;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.Principal;
+import java.util.Set;
+import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.Node;
+import org.opencadc.vospace.client.VOSpaceClient;
 
 public class DoiInitAction extends InitAction {
     private static final Logger log = Logger.getLogger(DoiInitAction.class);
 
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
-    public static final String VOSPACE_RESOURCE_ID_KEY = DOI_KEY + ".vospace.resourceID";
-    public static final String V0SPACE_DOI_PARENT_PATH_KEY = DOI_KEY + ".vospace.parentPath";
-    public static final String GMS_RESOURCE_ID_KEY = DOI_KEY + ".gms.resourceID";
+    public static final String VAULT_RESOURCE_ID_KEY = DOI_KEY + ".vaultResourceID";
+    public static final String GMS_RESOURCE_ID_KEY = DOI_KEY + ".gmsResourceID";
+    public static final String PARENT_PATH_KEY = DOI_KEY + ".parentPath";
     public static final String METADATA_FILE_PREFIX_KEY = DOI_KEY + ".metadataFilePrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
@@ -99,6 +111,7 @@ public class DoiInitAction extends InitAction {
     @Override
     public void doInit() {
         getConfig(true);
+        checkParentFolders();
     }
 
     public static MultiValuedProperties getConfig() {
@@ -112,17 +125,17 @@ public class DoiInitAction extends InitAction {
         StringBuilder sb = new StringBuilder();
         boolean ok = true;
 
-        String vospaceResourceID = props.getFirstPropertyValue(VOSPACE_RESOURCE_ID_KEY);
-        sb.append(String.format("\n\t%s: ", VOSPACE_RESOURCE_ID_KEY));
-        if (vospaceResourceID == null) {
+        String vaultResourceID = props.getFirstPropertyValue(VAULT_RESOURCE_ID_KEY);
+        sb.append(String.format("\n\t%s: ", VAULT_RESOURCE_ID_KEY));
+        if (vaultResourceID == null) {
             sb.append("MISSING");
             ok = false;
         } else if (verify) {
             try {
-                new URI(vospaceResourceID);
+                new URI(vaultResourceID);
                 sb.append("OK");
             } catch (URISyntaxException e) {
-                sb.append("INVALID VOSPACE RESOURCE ID: ").append(e.getMessage());
+                sb.append("INVALID VAULT RESOURCE ID: ").append(e.getMessage());
                 ok = false;
             }
         } else {
@@ -172,8 +185,8 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-        String parentPath = props.getFirstPropertyValue(V0SPACE_DOI_PARENT_PATH_KEY);
-        sb.append(String.format("\n\t%s: ", V0SPACE_DOI_PARENT_PATH_KEY));
+        String parentPath = props.getFirstPropertyValue(PARENT_PATH_KEY);
+        sb.append(String.format("\n\t%s: ", PARENT_PATH_KEY));
         if (parentPath == null) {
             sb.append("MISSING");
             ok = false;
@@ -251,12 +264,78 @@ public class DoiInitAction extends InitAction {
                 sb.append("OK");
             }
         }
-        log.info(sb.toString());
 
         if (!ok) {
-            throw new IllegalStateException("incomplete config: " + sb.toString());
+            throw new IllegalStateException("incomplete config: " + sb);
         }
         return props;
+    }
+
+    // check that the DOI parent node path, configured with the V0SPACE_PARENT_PATH_KEY property,
+    // exists and has the expected properties.
+    private static void checkParentFolders() {
+        MultiValuedProperties config = getConfig();
+        URI vospaceResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
+        String parentPath = config.getFirstPropertyValue(PARENT_PATH_KEY);
+
+        Subject adminSubject = SSLUtil.createSubject(new File("/config/doiadmin.pem"));
+        adminSubject = AuthenticationUtil.augmentSubject(adminSubject);
+        String adminUsername = getUsername(adminSubject);
+
+        // TODO is it necessary to check all nodes in the path for ownership and permissions,
+        // or is it sufficient to check the last node?
+        VOSpaceClient vosClient = new VOSpaceClient(vospaceResourceID);
+        String currentPath = "";
+        String[] paths = parentPath.split("/");
+        for (String path : paths) {
+            // skip first empty path if parentPath begins with a /
+            if (!StringUtil.hasText(path)) {
+                continue;
+            }
+            currentPath = String.format("%s/%s", currentPath, path);
+
+            Node node;
+            try {
+                node = vosClient.getNode(currentPath);
+            } catch (ResourceNotFoundException e) {
+                throw new IllegalStateException(String.format("node %s not found", path));
+            } catch (Exception e) {
+                throw new IllegalStateException(String.format("node %s error because %s", path, e.getMessage()));
+            }
+
+            // confirm it's a ContainerNode
+            if (!(node instanceof ContainerNode)) {
+                throw new IllegalStateException(String.format("node %s is not a ContainerNode", path));
+            }
+            ContainerNode containerNode = (ContainerNode) node;
+
+            // check node owner
+            String ownerID = containerNode.ownerDisplay;
+            if (!adminUsername.equals(ownerID)) {
+                throw new IllegalStateException(String.format("node %s owner %s doesn't match configured admin user %s", path, ownerID, adminUsername));
+            }
+
+            // check node has public access
+            if (!containerNode.isPublic) {
+                throw new IllegalStateException(String.format("node %s must have isPublic set to true", path));
+            }
+
+            // check inheritPermissions is true (does inheritPermissions need to be true?)
+            if (!containerNode.inheritPermissions) {
+                throw new IllegalStateException(String.format("node %s must have inheritPermissions set to true", path));
+            }
+        }
+    }
+
+    private static String getUsername(Subject subject) {
+        Set<Principal> principals = subject.getPrincipals();
+        for (Principal principal : principals) {
+            if (principal instanceof HttpPrincipal) {
+                HttpPrincipal httpPrincipal = (HttpPrincipal) principal;
+                return httpPrincipal.getName();
+            }
+        }
+        throw new IllegalStateException(String.format("no HttpPrincipal found for %s", subject));
     }
 
 }
