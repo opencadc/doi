@@ -76,7 +76,6 @@ import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InitAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -94,19 +93,21 @@ public class DoiInitAction extends InitAction {
     private static final Logger log = Logger.getLogger(DoiInitAction.class);
 
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
-    public static final String VAULT_RESOURCE_ID_KEY = DOI_KEY + ".vaultResourceID";
-    public static final String GMS_RESOURCE_ID_KEY = DOI_KEY + ".gmsResourceID";
-    public static final String PARENT_PATH_KEY = DOI_KEY + ".parentPath";
-    public static final String METADATA_FILE_PREFIX_KEY = DOI_KEY + ".metadataFilePrefix";
+    public static final String VOSPACE_PARENT_URI_KEY = DOI_KEY + ".vospace.parentUri";
+    public static final String METADATA_PREFIX_KEY = DOI_KEY + ".metaDataPrefix";
+    public static final String GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
-    public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
+    public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
 
     // optional properties
-    public static final String TEST_RANDOM_NAME_KEY = DOI_KEY + ".test.randomName";
-    public static final String TEST_GROUP_URI_KEY = DOI_KEY + ".test.groupURI";
+    public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
+
+    // derived properties
+    public static final String VOSPACE_RESOURCE_ID_KEY = DOI_KEY + ".vospace.resourceId";
+    public static final String PARENT_PATH_KEY = DOI_KEY + ".parentPath";
 
     @Override
     public void doInit() {
@@ -125,43 +126,39 @@ public class DoiInitAction extends InitAction {
         StringBuilder sb = new StringBuilder();
         boolean ok = true;
 
-        String vaultResourceID = props.getFirstPropertyValue(VAULT_RESOURCE_ID_KEY);
-        sb.append(String.format("\n\t%s: ", VAULT_RESOURCE_ID_KEY));
-        if (vaultResourceID == null) {
+        String parentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
+        sb.append(String.format("\n\t%s: ", VOSPACE_PARENT_URI_KEY));
+        if (parentUri == null) {
             sb.append("MISSING");
             ok = false;
-        } else if (verify) {
+        } else {
             try {
-                new URI(vaultResourceID);
+                URI parentURI = new URI(parentUri);
+                String[] paths = parentURI.getPath().split("/");
+
                 sb.append("OK");
             } catch (URISyntaxException e) {
-                sb.append("INVALID VAULT RESOURCE ID: ").append(e.getMessage());
+                sb.append("INVALID VOSPACE URI: ").append(e.getMessage());
                 ok = false;
             }
+        }
+
+        // vospace resourceID and parent path from the parent URI
+        String[] paths = URI.create(parentUri).getPath().split("/");
+
+
+        String metaDataPrefix = props.getFirstPropertyValue(METADATA_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", METADATA_PREFIX_KEY));
+        if (metaDataPrefix == null) {
+            sb.append("MISSING");
+            ok = false;
         } else {
             sb.append("OK");
         }
 
-        String gmsResourceID = props.getFirstPropertyValue(GMS_RESOURCE_ID_KEY);
-        sb.append(String.format("\n\t%s: ", GMS_RESOURCE_ID_KEY));
-        if (gmsResourceID == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else if (verify) {
-            try {
-                new URI(gmsResourceID);
-                sb.append("OK");
-            } catch (URISyntaxException e) {
-                sb.append("INVALID GMS RESOURCE ID: ").append(e.getMessage());
-                ok = false;
-            }
-        } else {
-            sb.append("OK");
-        }
-
-        String metadataFilePrefix = props.getFirstPropertyValue(METADATA_FILE_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", METADATA_FILE_PREFIX_KEY));
-        if (metadataFilePrefix == null) {
+        String groupPrefix = props.getFirstPropertyValue(GROUP_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", GROUP_PREFIX_KEY));
+        if (groupPrefix == null) {
             sb.append("MISSING");
             ok = false;
         } else {
@@ -181,24 +178,6 @@ public class DoiInitAction extends InitAction {
                 sb.append("INVALID URL");
                 ok = false;
             }
-        } else {
-            sb.append("OK");
-        }
-
-        String parentPath = props.getFirstPropertyValue(PARENT_PATH_KEY);
-        sb.append(String.format("\n\t%s: ", PARENT_PATH_KEY));
-        if (parentPath == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else {
-            sb.append("OK");
-        }
-
-        String accountPrefix = props.getFirstPropertyValue(DATACITE_ACCOUNT_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_ACCOUNT_PREFIX_KEY));
-        if (accountPrefix == null) {
-            sb.append("MISSING");
-            ok = false;
         } else {
             sb.append("OK");
         }
@@ -238,92 +217,72 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
-        // optional properties
-        String testRandomName = props.getFirstPropertyValue(TEST_RANDOM_NAME_KEY);
-        sb.append(String.format("\n\t%s: ", TEST_RANDOM_NAME_KEY));
-        if (testRandomName == null) {
+        String accountPrefix = props.getFirstPropertyValue(DATACITE_ACCOUNT_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", DATACITE_ACCOUNT_PREFIX_KEY));
+        if (accountPrefix == null) {
             sb.append("MISSING");
+            ok = false;
         } else {
             sb.append("OK");
         }
 
-        String testGroupURI = props.getFirstPropertyValue(TEST_GROUP_URI_KEY);
-        sb.append(String.format("\n\t%s: ", TEST_GROUP_URI_KEY));
-        if (testGroupURI == null) {
+        // optional properties
+        String randomTestID = props.getFirstPropertyValue(RANDOM_TEST_ID_KEY);
+        sb.append(String.format("\n\t%s: ", RANDOM_TEST_ID_KEY));
+        if (randomTestID == null) {
             sb.append("MISSING");
         } else {
-            if (verify) {
-                try {
-                    new URI(testGroupURI);
-                    sb.append("OK");
-                } catch (URISyntaxException e) {
-                    sb.append("INVALID URI");
-                    ok = false;
-                }
-            } else {
-                sb.append("OK");
-            }
+            sb.append("OK");
         }
-
         if (!ok) {
             throw new IllegalStateException("incomplete config: " + sb);
         }
         return props;
     }
 
-    // check that the DOI parent node path, configured with the V0SPACE_PARENT_PATH_KEY property,
+    // check that the DOI parent node uri, configured with the VOSPACE_PARENT_URI_KEY property,
     // exists and has the expected properties.
     private static void checkParentFolders() {
-        MultiValuedProperties config = getConfig();
-        URI vospaceResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
-        String parentPath = config.getFirstPropertyValue(PARENT_PATH_KEY);
 
         Subject adminSubject = SSLUtil.createSubject(new File("/config/doiadmin.pem"));
         adminSubject = AuthenticationUtil.augmentSubject(adminSubject);
         String adminUsername = getUsername(adminSubject);
 
-        // TODO is it necessary to check all nodes in the path for ownership and permissions,
-        // or is it sufficient to check the last node?
+        MultiValuedProperties config = getConfig();
+        URI vospaceParentURI = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_PARENT_URI_KEY));
+        URI vospaceResourceID = URI.create(vospaceParentURI.getAuthority());
         VOSpaceClient vosClient = new VOSpaceClient(vospaceResourceID);
-        String currentPath = "";
-        String[] paths = parentPath.split("/");
-        for (String path : paths) {
-            // skip first empty path if parentPath begins with a /
-            if (!StringUtil.hasText(path)) {
-                continue;
-            }
-            currentPath = String.format("%s/%s", currentPath, path);
 
-            Node node;
-            try {
-                node = vosClient.getNode(currentPath);
-            } catch (ResourceNotFoundException e) {
-                throw new IllegalStateException(String.format("node %s not found", path));
-            } catch (Exception e) {
-                throw new IllegalStateException(String.format("node %s error because %s", path, e.getMessage()));
-            }
+        Node node;
+        String parentPath = vospaceParentURI.getPath();
+        try {
+            node = vosClient.getNode(parentPath);
+        } catch (ResourceNotFoundException e) {
+            throw new IllegalStateException(String.format("node %s not found", parentPath));
+        } catch (Exception e) {
+            throw new IllegalStateException(String.format("node %s error because %s", parentPath, e.getMessage()));
+        }
 
-            // confirm it's a ContainerNode
-            if (!(node instanceof ContainerNode)) {
-                throw new IllegalStateException(String.format("node %s is not a ContainerNode", path));
-            }
-            ContainerNode containerNode = (ContainerNode) node;
+        // confirm it's a ContainerNode
+        if (!(node instanceof ContainerNode)) {
+            throw new IllegalStateException(String.format("node %s is not a ContainerNode", parentPath));
+        }
+        ContainerNode containerNode = (ContainerNode) node;
 
-            // check node owner
-            String ownerID = containerNode.ownerDisplay;
-            if (!adminUsername.equals(ownerID)) {
-                throw new IllegalStateException(String.format("node %s owner %s doesn't match configured admin user %s", path, ownerID, adminUsername));
-            }
+        // check node owner
+        String ownerID = containerNode.ownerDisplay;
+        if (!adminUsername.equals(ownerID)) {
+            throw new IllegalStateException(String.format("node %s owner %s doesn't match configured admin user %s", parentPath, ownerID, adminUsername));
+        }
 
-            // check node has public access
-            if (!containerNode.isPublic) {
-                throw new IllegalStateException(String.format("node %s must have isPublic set to true", path));
-            }
+        // check node has public access
+        if (!containerNode.isPublic) {
+            throw new IllegalStateException(String.format("node %s must have isPublic set to true", parentPath));
+        }
 
-            // check inheritPermissions is true (does inheritPermissions need to be true?)
-            if (!containerNode.inheritPermissions) {
-                throw new IllegalStateException(String.format("node %s must have inheritPermissions set to true", path));
-            }
+        // check inheritPermissions is true (does inheritPermissions need to be true?)
+        if (!containerNode.inheritPermissions) {
+            throw new IllegalStateException(String.format("node %s must have inheritPermissions set to true", parentPath));
         }
     }
 

@@ -71,6 +71,8 @@ import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
@@ -79,6 +81,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
+import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
@@ -86,8 +89,6 @@ import org.opencadc.vospace.VOSURI;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
-
-    public static final X500Principal DOIADMIN_X500 = new X500Principal("C=ca,O=hia,OU=cadc,CN=doiadmin_045");
 
     public static final URI DOI_VOS_JOB_URL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#joburl");
     public static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
@@ -98,6 +99,7 @@ public abstract class DoiAction extends RestAction {
     public static final String MINT_ACTION = "mint";
     public static final String JOURNALREF_PARAM = "journalref";
     public static final String DOI_GROUP_PREFIX = "DOI-";
+    public static final String TEST_DOI_GROUP_PREFIX = "TEST.DOI-";
 
     protected Subject callingSubject;
     protected Long callersNumericId;
@@ -130,10 +132,18 @@ public abstract class DoiAction extends RestAction {
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
-        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VAULT_RESOURCE_ID_KEY));
-        this.gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
+        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_RESOURCE_ID_KEY));
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.parentPath = config.getFirstPropertyValue(DoiInitAction.PARENT_PATH_KEY);
+
+        LocalAuthority localAuthority = new LocalAuthority();
+        Set<URI> gmsServices = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
+        if (gmsServices.isEmpty()) {
+            throw new IllegalStateException("GMS service not found");
+        } else if (gmsServices.size() > 1) {
+            throw new IllegalStateException("multiple GMS services found");
+        }
+        this.gmsResourceID = gmsServices.iterator().next();
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
@@ -152,7 +162,7 @@ public abstract class DoiAction extends RestAction {
 
     protected String getDoiFilename(String suffix) {
         return String.format("%s%s.xml",
-                config.getFirstPropertyValue(DoiInitAction.METADATA_FILE_PREFIX_KEY), suffix);
+                config.getFirstPropertyValue(DoiInitAction.METADATA_PREFIX_KEY), suffix);
     }
 
     protected VOSURI getVOSURI(String path) {
@@ -160,7 +170,6 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected GMSClient getGMSClient() {
-        URI gmsResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY));
         return new GMSClient(gmsResourceID);
     }
 

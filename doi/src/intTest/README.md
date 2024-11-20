@@ -5,7 +5,7 @@ and a vault service defined by the `ivo://opencadc.org/vault` resourceID'.
 
 Client test certificates in the `$A/test-certificates/` directory are used to authenticate to the doi service.
 The following certificates are expected.
-- `doiadmin.pem` owns and has full access to a test DOI.
+- `doi-admin.pem` owns and has full access to a test DOI.
 - `doi-auth.pem` has read-write access to a test DOI.
 - `doi-noauth.pem` has read-only access to a test DOI.
 

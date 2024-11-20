@@ -560,14 +560,14 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        boolean randomName = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.TEST_RANDOM_NAME_KEY));
+        boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
         String nextDoiSuffix;
-        if (randomName) {
+        if (randomTestID) {
             nextDoiSuffix = getRandomDOISuffix();
             log.warn("Random DOI suffix: " + nextDoiSuffix);
         } else {
-            // Determine next DOI number
-            // Note: The generated DOI number is the suffix which should be case insensitive.
+            // Determine next DOI ID
+            // Note: The generated DOI ID is the suffix which should be case insensitive.
             //       Since we are using a number, it does not matter. However if we decide
             //       to use a String, we should only generate either a lowercase or an
             //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
@@ -575,10 +575,10 @@ public class PostAction extends DoiAction {
             log.debug("Next DOI suffix: " + nextDoiSuffix);
         }
 
-        // update the template with the new DOI number
+        // Update the resource with the DOI ID
         assignIdentifier(resource.getIdentifier(), accountPrefix + "/" + nextDoiSuffix);
 
-        //Add a Created date to the Resource object
+        // Add a Created date to the Resource object
         LocalDate localDate = LocalDate.now();
         String createdDate = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         Date doiDate = new Date(createdDate, DateType.CREATED);
@@ -586,17 +586,16 @@ public class PostAction extends DoiAction {
         resource.dates = new ArrayList<>();
         resource.dates.add(doiDate);
 
-        // Create the group that is able to administer the DOI process, use configured test GroupURI if found
-        GroupURI guri;
-        String configuredGroupUri = config.getFirstPropertyValue(DoiInitAction.TEST_GROUP_URI_KEY);
-        if (StringUtil.hasText(configuredGroupUri)) {
-            guri = new GroupURI(URI.create(configuredGroupUri));
-            log.warn("Configured DOI group: " + guri);
+        // Create the group that is able to administer the DOI process
+        String groupName;
+        if (randomTestID) {
+            groupName = TEST_DOI_GROUP_PREFIX + nextDoiSuffix;
         } else {
-            guri = createDoiGroup(nextDoiSuffix);
-            log.debug("Created DOI group: " + guri);
+            groupName = DOI_GROUP_PREFIX + nextDoiSuffix;
         }
-        
+        GroupURI guri = createDoiGroup(groupName);
+        log.debug("Created DOI group: " + guri);
+
         // Create the VOSpace area for DOI work
         ContainerNode doiFolder = createDOIDirectory(guri, nextDoiSuffix);
         
@@ -621,8 +620,7 @@ public class PostAction extends DoiAction {
     
     private GroupURI createDoiGroup(String groupName) throws Exception {
         // Create group to use for applying permissions
-        String gmsResourceID = config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY);
-        String group = String.format("%s?%s%s", gmsResourceID, DOI_GROUP_PREFIX, groupName);
+        String group = String.format("%s?%s", gmsResourceID, groupName);
         GroupURI guri = new GroupURI(URI.create(group));
         log.debug("creating group: " + guri);
 
@@ -639,7 +637,6 @@ public class PostAction extends DoiAction {
             // expose it as a server error
             throw new RuntimeException(gaeex);
         }
-
         log.debug("doi group created: " + guri);
         return guri;
     }
