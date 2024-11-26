@@ -90,7 +90,7 @@ public class DeleteAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        // Do all subsequent work as doiadmin
+        // Do all subsequent work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             doActionImpl();
             return null;
@@ -119,7 +119,7 @@ public class DeleteAction extends DoiAction {
         Integer numericID = Integer.parseInt(doiRequester);
         Subject requestorSubject = acIdentMgr.toSubject(numericID);
         if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
-            // if doiadmin is the calling user, it has permission to delete any of the DOIs as well
+            // if doi admin is the calling user, it has permission to delete any of the DOIs as well
             if (!checkSubjectsMatch(callingSubject, getAdminSubject())) {
                 throw new AccessControlException("Not permitted to delete DOI");
             }

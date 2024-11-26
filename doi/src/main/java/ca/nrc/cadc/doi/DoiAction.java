@@ -83,7 +83,6 @@ import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.util.Set;
 import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.VOSURI;
 
@@ -132,9 +131,9 @@ public abstract class DoiAction extends RestAction {
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
-        this.vaultResourceID = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_RESOURCE_ID_KEY));
+        this.vaultResourceID = DoiInitAction.getVospaceResourceID(config);
+        this.parentPath = DoiInitAction.getParentPath(config);
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
-        this.parentPath = config.getFirstPropertyValue(DoiInitAction.PARENT_PATH_KEY);
 
         LocalAuthority localAuthority = new LocalAuthority();
         Set<URI> gmsServices = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);

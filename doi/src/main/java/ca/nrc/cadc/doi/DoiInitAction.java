@@ -87,15 +87,15 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
+import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
 
 public class DoiInitAction extends InitAction {
     private static final Logger log = Logger.getLogger(DoiInitAction.class);
 
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
-    public static final String VOSPACE_PARENT_URI_KEY = DOI_KEY + ".vospace.parentUri";
+    public static final String VOSPACE_PARENT_URI_KEY = DOI_KEY + ".vospaceParentUri";
     public static final String METADATA_PREFIX_KEY = DOI_KEY + ".metaDataPrefix";
-    public static final String GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
@@ -105,10 +105,6 @@ public class DoiInitAction extends InitAction {
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
 
-    // derived properties
-    public static final String VOSPACE_RESOURCE_ID_KEY = DOI_KEY + ".vospace.resourceId";
-    public static final String PARENT_PATH_KEY = DOI_KEY + ".parentPath";
-
     @Override
     public void doInit() {
         getConfig(true);
@@ -117,6 +113,28 @@ public class DoiInitAction extends InitAction {
 
     public static MultiValuedProperties getConfig() {
         return getConfig(false);
+    }
+
+    public static URI getVospaceResourceID(MultiValuedProperties props) {
+        String vospaceParentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
+        VOSURI vosURI;
+        try {
+            vosURI = new VOSURI(vospaceParentUri);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("invalid VOSpace URI: " + vospaceParentUri);
+        }
+        return vosURI.getServiceURI();
+    }
+
+    public static String getParentPath(MultiValuedProperties props) {
+        String vospaceParentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
+        VOSURI vosURI;
+        try {
+            vosURI = new VOSURI(vospaceParentUri);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("invalid VOSpace URI: " + vospaceParentUri);
+        }
+        return vosURI.getPath();
     }
 
     private static MultiValuedProperties getConfig(boolean verify) {
@@ -133,9 +151,7 @@ public class DoiInitAction extends InitAction {
             ok = false;
         } else {
             try {
-                URI parentURI = new URI(parentUri);
-                String[] paths = parentURI.getPath().split("/");
-
+                new VOSURI(parentUri);
                 sb.append("OK");
             } catch (URISyntaxException e) {
                 sb.append("INVALID VOSPACE URI: ").append(e.getMessage());
@@ -143,22 +159,9 @@ public class DoiInitAction extends InitAction {
             }
         }
 
-        // vospace resourceID and parent path from the parent URI
-        String[] paths = URI.create(parentUri).getPath().split("/");
-
-
         String metaDataPrefix = props.getFirstPropertyValue(METADATA_PREFIX_KEY);
         sb.append(String.format("\n\t%s: ", METADATA_PREFIX_KEY));
         if (metaDataPrefix == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else {
-            sb.append("OK");
-        }
-
-        String groupPrefix = props.getFirstPropertyValue(GROUP_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", GROUP_PREFIX_KEY));
-        if (groupPrefix == null) {
             sb.append("MISSING");
             ok = false;
         } else {
@@ -249,40 +252,39 @@ public class DoiInitAction extends InitAction {
         String adminUsername = getUsername(adminSubject);
 
         MultiValuedProperties config = getConfig();
-        URI vospaceParentURI = URI.create(config.getFirstPropertyValue(DoiInitAction.VOSPACE_PARENT_URI_KEY));
-        URI vospaceResourceID = URI.create(vospaceParentURI.getAuthority());
+        URI vospaceResourceID = DoiInitAction.getVospaceResourceID(config);
+        String parentPath = DoiInitAction.getParentPath(config);
         VOSpaceClient vosClient = new VOSpaceClient(vospaceResourceID);
 
         Node node;
-        String parentPath = vospaceParentURI.getPath();
         try {
             node = vosClient.getNode(parentPath);
         } catch (ResourceNotFoundException e) {
-            throw new IllegalStateException(String.format("node %s not found", parentPath));
+            throw new IllegalStateException(String.format("DOI parent node %s not found", parentPath));
         } catch (Exception e) {
-            throw new IllegalStateException(String.format("node %s error because %s", parentPath, e.getMessage()));
+            throw new IllegalStateException(String.format("DOI parent node %s error because %s", parentPath, e.getMessage()));
         }
 
         // confirm it's a ContainerNode
         if (!(node instanceof ContainerNode)) {
-            throw new IllegalStateException(String.format("node %s is not a ContainerNode", parentPath));
+            throw new IllegalStateException(String.format("DOI parent node %s is not a ContainerNode", parentPath));
         }
         ContainerNode containerNode = (ContainerNode) node;
 
         // check node owner
         String ownerID = containerNode.ownerDisplay;
         if (!adminUsername.equals(ownerID)) {
-            throw new IllegalStateException(String.format("node %s owner %s doesn't match configured admin user %s", parentPath, ownerID, adminUsername));
+            throw new IllegalStateException(String.format("DOI parent node %s owner %s doesn't match configured admin user %s", parentPath, ownerID, adminUsername));
         }
 
         // check node has public access
         if (!containerNode.isPublic) {
-            throw new IllegalStateException(String.format("node %s must have isPublic set to true", parentPath));
+            throw new IllegalStateException(String.format("DOI parent node %s must have isPublic set to true", parentPath));
         }
 
         // check inheritPermissions is true (does inheritPermissions need to be true?)
         if (!containerNode.inheritPermissions) {
-            throw new IllegalStateException(String.format("node %s must have inheritPermissions set to true", parentPath));
+            throw new IllegalStateException(String.format("DOI parent node %s must have inheritPermissions set to true", parentPath));
         }
     }
 

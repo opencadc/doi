@@ -133,7 +133,7 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        // Do DOI creation work as doiadmin
+        // Do DOI creation work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             if (doiAction != null) {
                 performDoiAction();
@@ -494,7 +494,7 @@ public class PostAction extends DoiAction {
             String msg = String.format("namespace update is not allowed, expected: %s, actual: %s",
                     r2.getNamespace(), r1.getNamespace());
             throw new IllegalArgumentException(msg);
-        } else if (!r1.getPublisher().equals(r2.getPublisher())) {
+        } else if (!r1.getPublisher().getValue().equals(r2.getPublisher().getValue())) {
             String msg = String.format("software error, publisher is different, expected: %s, actual: %s",
                     r2.getPublisher(), r1.getPublisher());
             throw new IllegalArgumentException(msg);
@@ -523,7 +523,7 @@ public class PostAction extends DoiAction {
     }
 
     private void verifyIdentifier(Identifier i1, Identifier i2) {
-        if (!i1.equals(i2)) {
+        if (!i1.getValue().equals(i2.getValue()) && !i1.getIdentifierType().equals(i2.getIdentifierType())) {
             String msg = String.format("identifier update is not allowed, expected: %s, actual: %s",
                     i2, i1);
             throw new IllegalArgumentException(msg);
@@ -543,7 +543,7 @@ public class PostAction extends DoiAction {
     
     private void setPermissions(Node node, GroupURI doiGroup) {
         // Before completion, directory is visible in AstroDataCitationDOI directory, but not readable
-        // except by doiadmin and calling user's group
+        // except by doi admin and calling user's group
         node.isPublic = false;
 
         // All folders will be only readable by requester
@@ -661,7 +661,7 @@ public class PostAction extends DoiAction {
         ContainerNode newFolder = new ContainerNode(folderName);
 
         // Before completion, directory is visible in AstroDataCitationDOI directory,
-        // but not readable except by doiadmin and calling user's group
+        // but not readable except by doi admin and calling user's group
         setPermissions(newFolder, guri);
 
         newFolder.getProperties().addAll(properties);

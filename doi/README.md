@@ -25,7 +25,7 @@ The doi.properties configures the DataCite service used to register new DOI's.
 
 ```
 # VOSpace uri to the parent DOI folder.
-ca.nrc.cadc.doi.vospace.parentUri = {parent folder URI}
+ca.nrc.cadc.doi.vospaceParentUri = {parent folder URI}
 
 # Prefix to the DOI metadata file
 ca.nrc.cadc.doi.metaDataPrefix = {metadata file prefix}
