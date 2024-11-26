@@ -1,18 +1,13 @@
 # doi service integration tests
 
-The integration tests run against a local doi instance defined by the `ivo://opencadc.org/doi` resourceID, 
-and a vault service defined by the `ivo://opencadc.org/vault` resourceID'.
+The integration tests can run against a local `doi` service, and either a local or remove VOSpace service.
+
+The integration tests expect the following entries in `intTest.properties` in the root of the doi module.
+`doiResoruceID` is the resourceID of the doi service.
+`vospaceParentUri` is the VOSURI of the DOI parent folder in the VOSpace service.
 
 Client test certificates in the `$A/test-certificates/` directory are used to authenticate to the doi service.
 The following certificates are expected.
-- `doi-admin.pem` owns and has full access to a test DOI.
-- `doi-auth.pem` has read-write access to a test DOI.
-- `doi-noauth.pem` has read-only access to a test DOI.
-
-The integration tests expect the following entries in `doi.properties`.
-
-`ca.nrc.cadc.doi.test.randomName = true` to create random DOI names for testing.
-
-`ca.nrc.cadc.doi.test.groupUri = {group URI}` to specify the group URI that will have read/write permissions to a test DOI.
-The `doi-auth.pem` user is a member of this group, giving this user read/write access to a test DOI.
-The `doi-noauth.pem` user is not a member of this group, giving this user read-only access to a test DOI.
+- `doi-admin.pem` owns and has full permissions to a test DOI.
+- `doi-auth.pem` has read-write permissions to a test DOI.
+- `doi-noauth.pem` has read-only permissions to a test DOI.

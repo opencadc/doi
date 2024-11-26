@@ -69,29 +69,88 @@
 
 package ca.nrc.cadc.doi;
 
+import java.io.File;
+import java.io.FileReader;
 import java.net.URI;
+import java.util.Properties;
+import org.apache.log4j.Logger;
+import org.opencadc.vospace.VOSURI;
 
 public class TestUtil {
+    private static final Logger log = Logger.getLogger(TestUtil.class);
+
+    // ADMIN_CERT is the owner of the test DOI
+    static String ADMIN_CERT = "doi-admin.pem";
+
+    // AUTH_CERT has read/write access to the test DOI
+    static String AUTH_CERT = "doi-auth.pem";
+
+    // NO_AUTH_CERT has read only access to the test DOI
+    static String NO_AUTH_CERT = "doi-noauth.pem";
 
     // resourceID for the local test DOI service
-    public static URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
+    static URI DOI_RESOURCE_ID;
 
-    // resourceID for the production DOI service
-    public static URI PROD_DOI_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/doi");
+    // vospace URI to the DOI parent node
+    static URI VOSPACE_PARENT_URI;
 
-    // resourceID for the vault service (used to store the DOI metadata)
-    public static URI VAULT_RESOURCE_ID = URI.create("ivo://opencadc.org/vault");
+    // expected prefix for the metadata file
+//    static String DOI_METADATA_PREFIX;
 
-    // ADMIN_CERT has full access to a test DOI
-    public static String ADMIN_CERT = "doiadmin.pem";
-
-    // AUTH_CERT has read/write access to a test DOI
-    public static String AUTH_CERT = "doi-auth.pem";
-
-    // NO_AUTH_CERT has read only access to a test DOI
-    public static String NO_AUTH_CERT = "doi-noauth.pem";
+    // following derived from the VOSPACE_PARENT_URI
+    // resourceID for the local test VOSpace service
+    static URI VOSPACE_RESOURCE_ID;
 
     // expected path for the DOI parent node
-    public static String DOI_PARENT_PATH = "/AstroDataCitationDOI/CISTI.CANFAR";
+    static String DOI_PARENT_PATH;
 
-}
+    static {
+        try {
+            File config = new File("intTest.properties");
+            if (!config.exists()) {
+                throw new IllegalStateException("expected config file not found: " + config.getAbsolutePath());
+            }
+
+            StringBuilder sb = new StringBuilder();
+            boolean ok = true;
+
+            Properties props = new Properties();
+            props.load(new FileReader(config));
+
+            String s = props.getProperty("doiResourceID");
+            if (s == null) {
+                sb.append("missing doiResourceID\n");
+                ok = false;
+            } else {
+                DOI_RESOURCE_ID = URI.create(s.trim());
+            }
+
+            s = props.getProperty("vospaceParentUri");
+            if (s == null) {
+                sb.append("missing vospaceParentUri\n");
+                ok = false;
+            } else {
+                VOSPACE_PARENT_URI = URI.create(s.trim());
+                VOSURI vosURI = new VOSURI(VOSPACE_PARENT_URI);
+                VOSPACE_RESOURCE_ID = vosURI.getServiceURI();
+                DOI_PARENT_PATH = vosURI.getPath();
+            }
+
+//            s = props.getProperty("metadataFilePrefix");
+//            if (s == null) {
+//                sb.append("missing metadataFilePrefix\n");
+//                ok = false;
+//            } else {
+//                DOI_METADATA_PREFIX = s.trim();
+//            }
+
+            log.info(String.format("intTest config: doiResourceID=%s vospaceParentUri=%s" +
+                            " vospaceResourceID=%s parentPath=%s",
+                    DOI_RESOURCE_ID, VOSPACE_PARENT_URI, VOSPACE_RESOURCE_ID, DOI_PARENT_PATH));
+        } catch (Exception e) {
+            log.info("failed to load/read config", e);
+        }
+
+    }
+
+ }
