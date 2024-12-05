@@ -282,7 +282,7 @@ public class DoiInitAction extends InitAction {
             throw new IllegalStateException(String.format("DOI parent node %s must have isPublic set to true", parentPath));
         }
 
-        // check inheritPermissions is true (does inheritPermissions need to be true?)
+        // check inheritPermissions is true
         if (!containerNode.inheritPermissions) {
             throw new IllegalStateException(String.format("DOI parent node %s must have inheritPermissions set to true", parentPath));
         }

@@ -21,7 +21,7 @@ See <a href="https://github.com/opencadc/core/tree/master/cadc-util">cadc-util</
 See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-registry</a>.
 
 ### doi.properties
-The doi.properties configures the DataCite service used to register new DOI's.
+The doi.properties configures the DataCite service used to register new DOIs.
 
 ```
 # VOSpace uri to the parent DOI folder.
@@ -55,9 +55,9 @@ _metaDataPrefix_ is the prefix prepended to the DOI name used to create the file
 
 _groupPrefix_ is the prefix prepended to the DOI name to create the group name for the DOI.
 
-_landingUrl_ is the base URL used to compose URLs to individual DOI's.
+_landingUrl_ is the base URL used to compose URLs to individual DOIs.
 
-_mdsUrl_ is the URL to the DataCite MDS rest endpoint used to create and update DOI's.
+_mdsUrl_ is the URL to the DataCite MDS rest endpoint used to create and update DOIs.
 
 _username_ is the DataCite account username.
 
@@ -71,7 +71,7 @@ _accountPrefix_ is the registered prefix for a DataCite account.
 ca.nrc.cadc.doi.randomTestID = {true|false}
 ```
 
-_randomID_ is a flag to create a random DOI ID for testing purposes, to avoid conflicts with existing DOI's in vospace or DOI groups in GMS.
+_randomID_ is a flag to create a random DOI ID for testing purposes, to avoid conflicts with existing DOIs in VOSpace or DOI groups in GMS.
 
 ### required certificates
 The following certificates are required to run the service, and are expected to be in the `/config` directory.
