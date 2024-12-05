@@ -123,32 +123,23 @@ public class LifecycleTest extends IntTestBase {
     public void testLifecycle() throws Exception {
         log.debug("testLifecycle()");
 
-        String doiSuffix = null;
-        try {
-            // Create a new DOI
-            Resource expected = getTestResource(true, true, true);
+        // Create a new DOI
+        Resource expected = getTestResource(true, true, true);
 
-            doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+        String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
-                // create a new DOI
-                Resource actual = create(expected);
-                String doiID = getDOISuffix(actual.getIdentifier().getValue());
+            // create a new DOI
+            Resource actual = create(expected);
+            String doiID = getDOISuffix(actual.getIdentifier().getValue());
 
-                // update the DOI
-                update(actual, doiID);
+            // update the DOI
+            update(actual, doiID);
 
-                // publish the DOI
-                publish(actual, doiID);
+            // publish the DOI
+            publish(actual, doiID);
 
-                return doiID;
-            });
-        } finally {
-            // clean up
-            if (doiSuffix != null) {
-                cleanup(doiSuffix);
-            }
-        }
-
+            return doiID;
+        });
     }
 
     Resource create(Resource expected) throws Exception {
