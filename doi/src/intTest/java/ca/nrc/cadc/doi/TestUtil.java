@@ -69,15 +69,26 @@
 
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.MissingResourceException;
 import java.util.Properties;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.VOSURI;
 
 public class TestUtil {
     private static final Logger log = Logger.getLogger(TestUtil.class);
+
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+    }
 
     // ADMIN_CERT is the owner of the test DOI
     static String ADMIN_CERT = "doi-admin.pem";
@@ -89,68 +100,46 @@ public class TestUtil {
     static String NO_AUTH_CERT = "doi-noauth.pem";
 
     // resourceID for the local test DOI service
-    static URI DOI_RESOURCE_ID;
+    static URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
 
-    // vospace URI to the DOI parent node
-    static URI VOSPACE_PARENT_URI;
+    // VOSpace URI to the DOI parent node,
+    static URI VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi");
 
-    // expected prefix for the metadata file
-//    static String DOI_METADATA_PREFIX;
-
-    // following derived from the VOSPACE_PARENT_URI
-    // resourceID for the local test VOSpace service
+    // following derived from VOSPACE_PARENT_URI
+    // resourceID for the local VOSpace service
     static URI VOSPACE_RESOURCE_ID;
 
-    // expected path for the DOI parent node
+    // path for the DOI parent node in VOSpace
     static String DOI_PARENT_PATH;
 
     static {
+
         try {
-            File config = new File("intTest.properties");
-            if (!config.exists()) {
-                throw new IllegalStateException("expected config file not found: " + config.getAbsolutePath());
+            File opt = FileUtil.getFileFromResource("intTest.properties", TestUtil.class);
+            if (opt.exists()) {
+                Properties props = new Properties();
+                props.load(new FileReader(opt));
+
+                if (props.containsKey("doiResourceID")) {
+                    DOI_RESOURCE_ID = URI.create(props.getProperty("doiResourceID").trim());
+                }
+                if (props.containsKey("vospaceParentUri")) {
+                    VOSPACE_PARENT_URI = URI.create(props.getProperty("vospaceParentUri").trim());
+                }
             }
-
-            StringBuilder sb = new StringBuilder();
-            boolean ok = true;
-
-            Properties props = new Properties();
-            props.load(new FileReader(config));
-
-            String s = props.getProperty("doiResourceID");
-            if (s == null) {
-                sb.append("missing doiResourceID\n");
-                ok = false;
-            } else {
-                DOI_RESOURCE_ID = URI.create(s.trim());
-            }
-
-            s = props.getProperty("vospaceParentUri");
-            if (s == null) {
-                sb.append("missing vospaceParentUri\n");
-                ok = false;
-            } else {
-                VOSPACE_PARENT_URI = URI.create(s.trim());
-                VOSURI vosURI = new VOSURI(VOSPACE_PARENT_URI);
-                VOSPACE_RESOURCE_ID = vosURI.getServiceURI();
-                DOI_PARENT_PATH = vosURI.getPath();
-            }
-
-//            s = props.getProperty("metadataFilePrefix");
-//            if (s == null) {
-//                sb.append("missing metadataFilePrefix\n");
-//                ok = false;
-//            } else {
-//                DOI_METADATA_PREFIX = s.trim();
-//            }
-
-            log.info(String.format("intTest config: doiResourceID=%s vospaceParentUri=%s" +
-                            " vospaceResourceID=%s parentPath=%s",
-                    DOI_RESOURCE_ID, VOSPACE_PARENT_URI, VOSPACE_RESOURCE_ID, DOI_PARENT_PATH));
-        } catch (Exception e) {
-            log.info("failed to load/read config", e);
+        }
+        catch (MissingResourceException | FileNotFoundException noFileException) {
+            log.debug("No intTest.properties supplied.  Using defaults.");
+        } catch (IOException oops) {
+            throw new RuntimeException(oops.getMessage(), oops);
         }
 
+        VOSURI vosURI = new VOSURI(VOSPACE_PARENT_URI);
+        VOSPACE_RESOURCE_ID = vosURI.getServiceURI();
+        DOI_PARENT_PATH = vosURI.getPath();
+
+        log.debug(String.format("intTest config: %s %s %s %s",
+                DOI_RESOURCE_ID, VOSPACE_PARENT_URI, VOSPACE_RESOURCE_ID, DOI_PARENT_PATH));
     }
 
  }
