@@ -237,7 +237,7 @@ public class GetAction extends DoiAction {
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         if (doiRootNode != null) {
             for (Node childNode : doiRootNode.getNodes()) {
-                // TODO: configure doiadmin viewing of all nodes
+                // TODO: configure doi admin viewing of all nodes
                 NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
                 if (requester != null && requester.getValue() != null) {
                     try {

@@ -69,11 +69,9 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
@@ -96,6 +94,7 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
 import org.opencadc.vospace.client.async.RecursiveDeleteNode;
@@ -108,6 +107,8 @@ import org.opencadc.vospace.client.async.RecursiveDeleteNode;
 public abstract class IntTestBase extends TestBase {
     private static final Logger log = Logger.getLogger(IntTestBase.class);
 
+    static final String JSON = "application/json";
+    static final String XML = "text/xml";
     static final String TEST_JOURNAL_REF = "2018, Test Journal ref. ApJ 1000,100";
 
     static Subject adminSubject;
@@ -129,12 +130,12 @@ public abstract class IntTestBase extends TestBase {
 
         RegistryClient regClient = new RegistryClient();
         doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        doiParentPathURI = new VOSURI(TestUtil.VAULT_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
-        vosClient = new VOSpaceClient(TestUtil.VAULT_RESOURCE_ID);
+        doiParentPathURI = new VOSURI(TestUtil.VOSPACE_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
+        vosClient = new VOSpaceClient(TestUtil.VOSPACE_RESOURCE_ID);
     }
 
     protected VOSURI getVOSURI(String path) {
-        return new VOSURI(TestUtil.VAULT_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
+        return new VOSURI(TestUtil.VOSPACE_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
     }
 
     protected String getDOISuffix(String doiIdentifier) {
@@ -152,6 +153,18 @@ public abstract class IntTestBase extends TestBase {
         return sb.toString();
     }
 
+    protected ContainerNode createContainerNode(String path, String name) throws Exception {
+        ContainerNode node = new ContainerNode(name);
+        VOSURI nodeURI = getVOSURI(path);
+        return (ContainerNode) vosClient.createNode(nodeURI, node);
+    }
+
+    protected DataNode createDataNode(String path, String name) throws Exception {
+        DataNode node = new DataNode(name);
+        VOSURI nodeURI = getVOSURI(path);
+        return (DataNode) vosClient.createNode(nodeURI, node);
+    }
+
     protected ContainerNode getContainerNode(String path) throws Exception {
         String nodePath = doiParentPathURI.getPath();
         if (StringUtil.hasText(path)) {
@@ -160,23 +173,11 @@ public abstract class IntTestBase extends TestBase {
         return (ContainerNode) vosClient.getNode(nodePath);
     }
 
-    protected String createDOI(Subject testSubject)
-            throws IOException, PrivilegedActionException {
-        Resource resource = getTestResource(false, false, true);
-        final String doiXML = getResourceXML(resource);
-        return (String) Subject.doAs(testSubject, (PrivilegedExceptionAction<Object>) () -> {
-            String persistedXML = postDOI(doiServiceURL, doiXML, TEST_JOURNAL_REF);
-            DoiXmlReader reader = new DoiXmlReader();
-            Resource persistedResource = reader.read(persistedXML);
-            return getDOISuffix(persistedResource.getIdentifier().getValue());
-        });
-    }
-
     protected String postDOI(URL postUrl, String doiXML, String journalRef)
             throws Exception {
         Map<String, Object> params = new HashMap<>();
         if (StringUtil.hasText(doiXML)) {
-            FileContent fileContent = new FileContent(doiXML, "text/xml", StandardCharsets.UTF_8);
+            FileContent fileContent = new FileContent(doiXML, XML, StandardCharsets.UTF_8);
             params.put("doiMetadata", fileContent);
         }
         if (journalRef != null) {
@@ -187,15 +188,15 @@ public abstract class IntTestBase extends TestBase {
         post.prepare();
 
         Assert.assertNull("POST exception", post.getThrowable());
-        Assert.assertEquals("non 200 response code", post.getResponseCode(), 200);
+        Assert.assertEquals("non 200 response code", 200, post.getResponseCode());
         return new String(post.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     protected void cleanup(String doiSuffix) {
-        // delete doi as doiadmin
+        // delete doi as admin
         try {
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
-                log.debug("cleanup as doiadmin");
+                log.debug("cleanup as doi admin");
                 try {
                     VOSURI nodeUri = getVOSURI(doiSuffix);
                     log.debug("recursiveDeleteNode: " + nodeUri);

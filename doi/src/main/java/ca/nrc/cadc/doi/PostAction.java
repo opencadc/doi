@@ -86,7 +86,6 @@ import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
-import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -133,7 +132,7 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        // Do DOI creation work as doiadmin
+        // Do DOI creation work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             if (doiAction != null) {
                 performDoiAction();
@@ -494,7 +493,7 @@ public class PostAction extends DoiAction {
             String msg = String.format("namespace update is not allowed, expected: %s, actual: %s",
                     r2.getNamespace(), r1.getNamespace());
             throw new IllegalArgumentException(msg);
-        } else if (!r1.getPublisher().equals(r2.getPublisher())) {
+        } else if (!r1.getPublisher().getValue().equals(r2.getPublisher().getValue())) {
             String msg = String.format("software error, publisher is different, expected: %s, actual: %s",
                     r2.getPublisher(), r1.getPublisher());
             throw new IllegalArgumentException(msg);
@@ -523,7 +522,7 @@ public class PostAction extends DoiAction {
     }
 
     private void verifyIdentifier(Identifier i1, Identifier i2) {
-        if (!i1.equals(i2)) {
+        if (!i1.getValue().equals(i2.getValue()) && !i1.getIdentifierType().equals(i2.getIdentifierType())) {
             String msg = String.format("identifier update is not allowed, expected: %s, actual: %s",
                     i2, i1);
             throw new IllegalArgumentException(msg);
@@ -543,7 +542,7 @@ public class PostAction extends DoiAction {
     
     private void setPermissions(Node node, GroupURI doiGroup) {
         // Before completion, directory is visible in AstroDataCitationDOI directory, but not readable
-        // except by doiadmin and calling user's group
+        // except by doi admin and calling user's group
         node.isPublic = false;
 
         // All folders will be only readable by requester
@@ -560,14 +559,14 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException("No content");
         }
 
-        boolean randomName = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.TEST_RANDOM_NAME_KEY));
+        boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
         String nextDoiSuffix;
-        if (randomName) {
+        if (randomTestID) {
             nextDoiSuffix = getRandomDOISuffix();
             log.warn("Random DOI suffix: " + nextDoiSuffix);
         } else {
-            // Determine next DOI number
-            // Note: The generated DOI number is the suffix which should be case insensitive.
+            // Determine next DOI ID
+            // Note: The generated DOI ID is the suffix which should be case insensitive.
             //       Since we are using a number, it does not matter. However if we decide
             //       to use a String, we should only generate either a lowercase or an
             //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
@@ -575,10 +574,10 @@ public class PostAction extends DoiAction {
             log.debug("Next DOI suffix: " + nextDoiSuffix);
         }
 
-        // update the template with the new DOI number
+        // Update the resource with the DOI ID
         assignIdentifier(resource.getIdentifier(), accountPrefix + "/" + nextDoiSuffix);
 
-        //Add a Created date to the Resource object
+        // Add a Created date to the Resource object
         LocalDate localDate = LocalDate.now();
         String createdDate = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         Date doiDate = new Date(createdDate, DateType.CREATED);
@@ -586,17 +585,16 @@ public class PostAction extends DoiAction {
         resource.dates = new ArrayList<>();
         resource.dates.add(doiDate);
 
-        // Create the group that is able to administer the DOI process, use configured test GroupURI if found
-        GroupURI guri;
-        String configuredGroupUri = config.getFirstPropertyValue(DoiInitAction.TEST_GROUP_URI_KEY);
-        if (StringUtil.hasText(configuredGroupUri)) {
-            guri = new GroupURI(URI.create(configuredGroupUri));
-            log.warn("Configured DOI group: " + guri);
+        // Create the group that is able to administer the DOI process
+        String groupName;
+        if (randomTestID) {
+            groupName = TEST_DOI_GROUP_PREFIX + nextDoiSuffix;
         } else {
-            guri = createDoiGroup(nextDoiSuffix);
-            log.debug("Created DOI group: " + guri);
+            groupName = DOI_GROUP_PREFIX + nextDoiSuffix;
         }
-        
+        GroupURI guri = createDoiGroup(groupName);
+        log.debug("Created DOI group: " + guri);
+
         // Create the VOSpace area for DOI work
         ContainerNode doiFolder = createDOIDirectory(guri, nextDoiSuffix);
         
@@ -621,8 +619,7 @@ public class PostAction extends DoiAction {
     
     private GroupURI createDoiGroup(String groupName) throws Exception {
         // Create group to use for applying permissions
-        String gmsResourceID = config.getFirstPropertyValue(DoiInitAction.GMS_RESOURCE_ID_KEY);
-        String group = String.format("%s?%s%s", gmsResourceID, DOI_GROUP_PREFIX, groupName);
+        String group = String.format("%s?%s", gmsResourceID, groupName);
         GroupURI guri = new GroupURI(URI.create(group));
         log.debug("creating group: " + guri);
 
@@ -639,7 +636,6 @@ public class PostAction extends DoiAction {
             // expose it as a server error
             throw new RuntimeException(gaeex);
         }
-
         log.debug("doi group created: " + guri);
         return guri;
     }
@@ -664,7 +660,7 @@ public class PostAction extends DoiAction {
         ContainerNode newFolder = new ContainerNode(folderName);
 
         // Before completion, directory is visible in AstroDataCitationDOI directory,
-        // but not readable except by doiadmin and calling user's group
+        // but not readable except by doi admin and calling user's group
         setPermissions(newFolder, guri);
 
         newFolder.getProperties().addAll(properties);

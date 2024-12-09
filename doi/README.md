@@ -21,20 +21,17 @@ See <a href="https://github.com/opencadc/core/tree/master/cadc-util">cadc-util</
 See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-registry</a>.
 
 ### doi.properties
-The doi.properties configures the DataCite service used to register new DOI's.
+The doi.properties configures the DataCite service used to register new DOIs.
 
 ```
-# Vault Service resourceID
-ca.nrc.cadc.doi.vaultResourceID = {vault service resourceID}
-
-# Group Management Service (GMS) resourceID
-ca.nrc.cadc.doi.gmsResourceID = {GMS service resourceID}
-
-# Path in vault to the parent folder containing the DOI's.
-ca.nrc.cadc.doi.parentPath = {DOI parent folder path}
+# VOSpace uri to the parent DOI folder.
+ca.nrc.cadc.doi.vospaceParentUri = {parent folder URI}
 
 # Prefix to the DOI metadata file
-ca.nrc.cadc.doi.metadataFilePrefix = {file prefix}
+ca.nrc.cadc.doi.metaDataPrefix = {metadata file prefix}
+
+# Prefix to the DOI GMS Group name
+ca.nrc.cadc.doi.groupPrefix = {group prefix}
  
 # DOI landing page url
 ca.nrc.cadc.doi.landingUrl = {landing page url}
@@ -42,42 +39,40 @@ ca.nrc.cadc.doi.landingUrl = {landing page url}
 # DataCite MDS REST endpoint
 ca.nrc.cadc.doi.datacite.mdsUrl = {MDS url}
 
-# DataCite account prefix
-ca.nrc.cadc.doi.datacite.accountPrefix = {account prefix}
-
 # DataCite account username
 ca.nrc.cadc.doi.datacite.username = {username}
 
 # DataCite account password
 ca.nrc.cadc.doi.datacite.password = {password}
+
+# DataCite account prefix
+ca.nrc.cadc.doi.datacite.accountPrefix = {account prefix}
 ```
 
-_vaultResourceID_ the resourceID to the vault service used to store the DOI metadata and files.
+_parentUri_ is the URI to the DOI parent folder in the VOSpace service.
 
-_gmsResourceID_ the resourceID to the GMS service used for authentication and authorization.
+_metaDataPrefix_ is the prefix prepended to the DOI name used to create the file for the DOI specific metadata stored in VOSpace.
 
-_parentPath_ is the path in the vault service to the DOI parent folder.
+_groupPrefix_ is the prefix prepended to the DOI name to create the group name for the DOI.
 
-_metadataFilePrefix_ is the prefix prepended to the DOI name to create the filename for the DOI specific metadata stored in VOSpace.
+_landingUrl_ is the base URL used to compose URLs to individual DOIs.
 
-_landingUrl_ is the base URL used to compose URLs to individual DOI's.
-
-_mdsUrl_ is the URL to the Datacite MDS rest endpoint used to create and update DOI's.
-
-_accountPrefix_ is the registered prefix for the DataCite account.
+_mdsUrl_ is the URL to the DataCite MDS rest endpoint used to create and update DOIs.
 
 _username_ is the DataCite account username.
 
 _password_ is the DataCite account password.
 
+_accountPrefix_ is the registered prefix for a DataCite account.
+
 **For developer testing only:**
 ```
-# (optional) Create a random DOI name for testing
-ca.nrc.cadc.doi.test.randomName = {true|false}
-
-# (optional) Group URI for a group that has read/write permissions to test DOI's
-ca.nrc.cadc.doi.test.groupUri = {group URI}
+# (optional) Create a random DOI ID for testing
+ca.nrc.cadc.doi.randomTestID = {true|false}
 ```
+
+_randomID_ is a flag to create a random DOI ID for testing purposes, to avoid conflicts with existing DOIs in VOSpace or DOI groups in GMS.
+
 ### required certificates
 The following certificates are required to run the service, and are expected to be in the `/config` directory.
 
@@ -113,10 +108,10 @@ Usage of this service can be divided into three distinct phases described below.
 ### DOI creation
 1. user enters metadata of a publication using a GUI
    - title
-   - first auther
+   - first author
    - additional authors
    - journal reference
-2. user submits the metdata
+2. user submits the metadata
 3. this service then:
    - validates the metadata 
    - assigns a DOI for the metadata 
