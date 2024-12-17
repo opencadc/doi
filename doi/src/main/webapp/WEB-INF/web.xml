@@ -17,6 +17,11 @@
             <param-value>
                 ca.nrc.cadc.doi
                 org.opencadc.vospace
+                ca.nrc.cadc.ac
+                ca.nrc.cadc.auth
+                ca.nrc.cadc.reg
+                ca.nrc.cadc.rest
+                ca.nrc.cadc.vosi
             </param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
