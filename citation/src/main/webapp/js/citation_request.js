@@ -463,6 +463,15 @@
 
       doiDoc.setAuthorList(additionalAuthors)
 
+      // Set a dummy entry that gets checked server-side, but also gets replaced.
+      // This will need revisiting sometime, but the Citation web application
+      // needs rework to properly support CORS.
+      // jenkinsd 2024.12.18
+      //
+      if (!doiDoc.getDOINumber()) {
+        doiDoc.setDOINumber('NEWIDENTIFIER')
+      }
+
       page.setProgressBar('busy')
 
       // Set up the multi part data to be submitted to the doi web service

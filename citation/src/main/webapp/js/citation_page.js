@@ -432,6 +432,16 @@
                 }
               }
             ]
+          },
+          publisher: {
+            $: 'CADC'
+          },
+          publicationYear: {
+            $: `${new Date().getUTCFullYear()}`
+          },
+          resourceType: {
+            '@resourceTypeGeneral': 'Dataset',
+            $: ''
           }
         }
       }
