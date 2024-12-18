@@ -20,20 +20,19 @@
    *
    * @constructor
    * @param {{}} inputs   Input configuration.
-   * @param {String} [inputs.baseURL='https://www.canfar.net/'] URL of the /reg web service
+   * @param {String} [inputs.baseURL='https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/'] URL of the /reg web service
    * needed by the Registry to look up web service and ui URLs for use in ajax calls by this page.
    */
   function CitationPage(inputs) {
 
     var _selfCitationPage = this
-    var baseURL =
-            inputs && inputs.hasOwnProperty('baseURL')
-                ? inputs.baseURL
-                : 'https://www.canfar.net'
+    const registryOpts = {}
 
-    var _registryClient = new Registry({
-      baseURL: baseURL
-    })
+    if (inputs && inputs.hasOwnProperty('baseURL')) {
+      registryOpts.baseURL = inputs.baseURL
+    }
+
+    const _registryClient = new Registry(registryOpts)
 
     var _runid = ''
     var _ajaxCallCount = 1
@@ -480,9 +479,7 @@
     }
 
     function setDOINumber(identifier) {
-      if (identifier !== '') {
-        _selfDoc._badgerfishDoc.resource.identifier['$'] = identifier
-      }
+      _selfDoc._badgerfishDoc.resource.identifier['$'] = identifier === '' ? 'NEWIDENTIFIER' : identifier
     }
 
     function setTitle(title) {

@@ -18,8 +18,6 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.opencadc:cadc-vos:[1.2.2,2.0)'
-
     runtimeOnly 'jstl:jstl:1.2'
 
     testImplementation 'junit:junit:[4.12,5.0)'
@@ -32,7 +30,6 @@ dependencies {
 
 sourceCompatibility = '1.8'
 group = 'ca.nrc.cadc'
-version = '1013'
 
 war {
     // Trying to fix static file caching on new build.
@@ -42,7 +39,7 @@ war {
         }
     }
 
-    archiveName = 'citation##' + project.version + '.war'
+    archiveName = 'citation.war'
 }
 
 sourceSets {
