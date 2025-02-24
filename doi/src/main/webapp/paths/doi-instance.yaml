@@ -1,0 +1,43 @@
+post:
+  tags:
+    - "instances"
+  summary: "Initialize a new DOI"
+  description: "Generates a VOSpace directory the calling user will have permission to upload DOI data to, and an XML file using DataCite metadata XSD format."
+  operationId: "createDOI"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/doi-meta-schema.yaml#/DOIMeta"
+      application/xml:
+        schema:
+          $ref: "../components/schemas/doi-meta-schema.yaml#/DOIMeta"
+  responses:
+    200:
+      $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
+    400:
+      $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
+    403:
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    409:
+      description: "DOI already exists"
+    500:
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    503:
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
+get:
+  tags:
+    - "instances"
+  summary: "Get a list of DOI statuses"
+  description: "List the statuses of all DOIs created by the user."
+  operationId: "getAllDOI"
+  responses:
+    200:
+      $ref: "../components/responses/doi-responses.yaml#/get-doi-statuslist-success"
+    403:
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    500:
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    503:
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"

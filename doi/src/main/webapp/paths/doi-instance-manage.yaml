@@ -1,0 +1,66 @@
+post:
+  tags:
+    - "instances"
+  summary: "Update a DOI instance"
+  description: "Multipart update request. One part contains the DOI instance. Another part contains the optional journal reference"
+  requestBody:
+    required: true
+    content:
+      multipart/mixed:
+        schema:
+          type: "object"
+          properties:
+            fc:
+              $ref: "../components/schemas/doi-meta-schema.yaml#/DOIMeta"
+            journalRef:
+              type: "string"
+              example: "10.5072/example-full"
+  parameters:
+    - $ref: ../components/parameters/doi-doinum.yaml
+  responses:
+    200:
+      $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
+    400:
+      $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
+    403:
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    500:
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    503:
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
+get:
+  tags:
+    - "instances"
+  summary: "Get a DOI instance"
+  description: "Get specified DOI for authenticated user. Calling user must have access."
+  operationId: "getDOI"
+  parameters:
+    - $ref: ../components/parameters/doi-doinum.yaml
+  responses:
+    200:
+      $ref: "../components/responses/doi-responses.yaml#/get-doi-success"
+    403:
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    404:
+      $ref: "../components/responses/doi-std-responses.yaml#/not-found"
+    500:
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    503:
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
+delete:
+  tags:
+    - "instances"
+  summary: "Delete a DOI instance"
+  description: "Delete specified DOI for authenticated user, including associated VOSpace data directory. Calling user must have access."
+  operationId: "deleteDOI"
+  parameters:
+    - $ref: ../components/parameters/doi-doinum.yaml
+  responses:
+    200:
+      $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
+    403:
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    500:
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    503:
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"

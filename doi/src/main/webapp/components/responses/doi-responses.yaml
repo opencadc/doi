@@ -1,0 +1,47 @@
+get-doi-success:
+  description: "successful operation"
+  content:
+    application/json:
+      schema:
+        type: "array"
+        items:
+          $ref: "../schemas/doi-meta-schema.yaml#/DOIMeta"
+    application/xml:
+      schema:
+        type: "array"
+        xml:
+          name: "doi"
+        items:
+          $ref: "../schemas/doi-meta-schema.yaml#/DOIMeta"
+
+get-doi-status-success:
+  description: "successful operation"
+  content:
+    application/json:
+      schema:
+        type: "array"
+        items:
+          $ref: "../schemas/doi-status-schema.yaml#/DOIStatus"
+    application/xml:
+      schema:
+        type: "array"
+        xml:
+          name: "doiStatus"
+        items:
+          $ref: "../schemas/doi-status-schema.yaml#/DOIStatus"
+
+get-doi-statuslist-success:
+  description: "successful operation"
+  content:
+    application/json:
+      schema:
+        type: "array"
+        items:
+          $ref: "../schemas/doi-statuslist-schema.yaml#/DOIStatusList"
+    application/xml:
+      schema:
+        type: "array"
+        xml:
+          name: "doiStatuses"
+        items:
+          $ref: "../schemas/doi-statuslist-schema.yaml#/DOIStatusList"

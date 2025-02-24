@@ -1,0 +1,19 @@
+get:
+  tags:
+    - "instances"
+  summary: "Get the status of a DOI instance"
+  description: "Get the status of the specified DOI for authenticated user. Calling user must have access."
+  operationId: "getDOIStatus"
+  parameters:
+    - $ref: "../components/parameters/doi-doinum.yaml"
+  responses:
+    200:
+      $ref: "../components/responses/doi-responses.yaml#/get-doi-status-success"
+    403:
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    404:
+      $ref: "../components/responses/doi-std-responses.yaml#/not-found"
+    500:
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    503:
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"

@@ -1,0 +1,32 @@
+DOIStatus:
+  type: "object"
+  required:
+    - "identifier"
+    - "title"
+    - "publicationYear"
+    - "status"
+  properties:
+    identifier:
+      type: "string"
+      example: "10.5072/example-full"
+      properties:
+        identifierType:
+          type: "string"
+          example: "DOI"
+          xml:
+            attribute: true
+    title:
+      type: "string"
+      example: "Full DataCite XML Example"
+      properties:
+        xml:lang:
+          type: "string"
+          example: "en-US"
+          xml:
+            attribute: true
+    dataDirectory:
+      type: "string"
+      example: "/AstroDataCitationDOI/CISTI.CANFAR/18.0100/data"
+    status:
+      type: "string"
+      example: "draft"
