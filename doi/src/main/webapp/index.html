@@ -66,84 +66,84 @@
 
   <script type="text/javascript">
     $(function ()
-    {
-      var url = "openapi.yaml";
-
-      hljs.configure({
-        highlightSizeThreshold: 5000
-      });
-
-      // Pre load translate...
-      if (window.SwaggerTranslator)
       {
-        window.SwaggerTranslator.translate();
-      }
-      window.swaggerUi = new SwaggerUi({
-        url: url,
-        dom_id: "swagger-ui-container",
-        supportedSubmitMethods: ['get'],
-        onComplete: function (swaggerApi, swaggerUi)
-        {
-          if (typeof initOAuth == "function")
-          {
-            initOAuth({
-              clientId: "your-client-id",
-              clientSecret: "your-client-secret-if-required",
-              realm: "your-realms",
-              appName: "your-app-name",
-              scopeSeparator: ",",
-              additionalQueryStringParams: {}
-            });
-          }
+        var url = "openapi.yaml";
 
-          if (window.SwaggerTranslator)
-          {
-            window.SwaggerTranslator.translate();
-          }
+        hljs.configure({
+                         highlightSizeThreshold: 5000
+                       });
 
-          // addApiKeyAuthorization();
-        },
-        onFailure: function (data)
+        // Pre load translate...
+        if (window.SwaggerTranslator)
         {
-          log("Unable to Load SwaggerUI");
-        },
-        docExpansion: "list",
-        jsonEditor: false,
-        apisSorter: "alpha",
-        defaultModelRendering: 'schema',
-        showRequestHeaders: true,
-        validatorUrl: null
-      });
-
-      function addApiKeyAuthorization()
-      {
-        var key = encodeURIComponent($('#input_apiKey')[0].value);
-        if (key && key.trim() != "")
-        {
-          var apiKeyAuth = new SwaggerClient.ApiKeyAuthorization("api_key", key, "query");
-          window.swaggerUi.api.clientAuthorizations.add("api_key", apiKeyAuth);
-          log("added key " + key);
+          window.SwaggerTranslator.translate();
         }
-      }
+        window.swaggerUi = new SwaggerUi({
+          url: url,
+          dom_id: "swagger-ui-container",
+          supportedSubmitMethods: ['get'],
+          onComplete: function (swaggerApi, swaggerUi)
+          {
+            if (typeof initOAuth == "function")
+            {
+              initOAuth({
+                          clientId: "your-client-id",
+                          clientSecret: "your-client-secret-if-required",
+                          realm: "your-realms",
+                          appName: "your-app-name",
+                          scopeSeparator: ",",
+                          additionalQueryStringParams: {}
+                        });
+            }
 
-      $('#input_apiKey').change(addApiKeyAuthorization);
+            if (window.SwaggerTranslator)
+            {
+              window.SwaggerTranslator.translate();
+            }
 
-      // if you have an apiKey you would like to pre-populate on the page for demonstration purposes...
-      /*
-       var apiKey = "myApiKeyXXXX123456789";
-       $('#input_apiKey').val(apiKey);
-       */
+            // addApiKeyAuthorization();
+          },
+          onFailure: function (data)
+          {
+            log("Unable to Load SwaggerUI");
+          },
+          docExpansion: "list",
+          jsonEditor: false,
+          apisSorter: "alpha",
+          defaultModelRendering: 'schema',
+          showRequestHeaders: true,
+          validatorUrl: null
+        });
 
-      window.swaggerUi.load();
-
-      function log()
-      {
-        if ('console' in window)
+        function addApiKeyAuthorization()
         {
-          console.log.apply(console, arguments);
+          var key = encodeURIComponent($('#input_apiKey')[0].value);
+          if (key && key.trim() != "")
+          {
+            var apiKeyAuth = new SwaggerClient.ApiKeyAuthorization("api_key", key, "query");
+            window.swaggerUi.api.clientAuthorizations.add("api_key", apiKeyAuth);
+            log("added key " + key);
+          }
         }
-      }
-    });
+
+        $('#input_apiKey').change(addApiKeyAuthorization);
+
+        // if you have an apiKey you would like to pre-populate on the page for demonstration purposes...
+        /*
+         var apiKey = "myApiKeyXXXX123456789";
+         $('#input_apiKey').val(apiKey);
+         */
+
+        window.swaggerUi.load();
+
+        function log()
+        {
+          if ('console' in window)
+          {
+            console.log.apply(console, arguments);
+          }
+        }
+      });
   </script>
 </head>
 
