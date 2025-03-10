@@ -159,6 +159,30 @@ DOIMeta:
     language:
       type: "string"
       example: "en-US"
+    relatedIdentifiers:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          relatedIdentifier:
+            type: "string"
+            example: "10.1016/j.epsl.2011.11.037"
+            properties:
+              relatedIdentifierType:
+                type: "string"
+                example: "DOI"
+                xml:
+                  attribute: true
+              relationType:
+                type: "string"
+                example: "IsContinuedBy"
+                xml:
+                  attribute: true
+              resourceTypeGeneral:
+                type: "string"
+                example: "Collection"
+                xml:
+                  attribute: true
   xml:
     name: "resource"
     namespace: "http://datacite.org/schema/kernel-4"
