@@ -1,3 +1,4 @@
+doiNum:
   name: "DOINum"
   in: "path"
   description: "Digital Object Identifier number"

@@ -5,7 +5,7 @@ get:
   description: "Get the status of the specified DOI for authenticated user. Calling user must have access."
   operationId: "getDOIStatus"
   parameters:
-    - $ref: "../components/parameters/doi-doinum.yaml"
+    - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
     200:
       $ref: "../components/responses/doi-responses.yaml#/get-doi-status-success"

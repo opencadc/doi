@@ -3,6 +3,7 @@ post:
     - "instances"
   summary: "Update a DOI instance"
   description: "Multipart update request. One part contains the DOI instance. Another part contains the optional journal reference"
+  operationId: "updateDOI"
   requestBody:
     required: true
     content:
@@ -16,7 +17,7 @@ post:
               type: "string"
               example: "10.5072/example-full"
   parameters:
-    - $ref: ../components/parameters/doi-doinum.yaml
+    - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
     200:
       $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
@@ -35,7 +36,7 @@ get:
   description: "Get specified DOI for authenticated user. Calling user must have access."
   operationId: "getDOI"
   parameters:
-    - $ref: ../components/parameters/doi-doinum.yaml
+    - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
     200:
       $ref: "../components/responses/doi-responses.yaml#/get-doi-success"
@@ -54,7 +55,7 @@ delete:
   description: "Delete specified DOI for authenticated user, including associated VOSpace data directory. Calling user must have access."
   operationId: "deleteDOI"
   parameters:
-    - $ref: ../components/parameters/doi-doinum.yaml
+    - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
     200:
       $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"

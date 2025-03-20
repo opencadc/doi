@@ -5,16 +5,16 @@ post:
   description: "A multi-step process that freezes the DOI data from further changes, registers the DOI to DataCite and makes the DOI findable from DataCite. The DOI status indicates the progress of the finalize process."
   operationId: "mintDOI"
   parameters:
-    - $ref: ../components/parameters/doi-doinum.yaml
+    - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
     200:
-      $ref: ../components/responses/doi-std-responses.yaml#/successful-operation
+      $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
     400:
-      $ref: ../components/responses/doi-std-responses.yaml#/bad-request
+      $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
     403:
-      $ref: ../components/responses/doi-std-responses.yaml#/permission-denied
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
     500:
-      $ref: ../components/responses/doi-std-responses.yaml#/unexpected-server-error
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
     503:
-      $ref: ../components/responses/doi-std-responses.yaml#/temporarily-unavailable
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 

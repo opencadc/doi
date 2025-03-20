@@ -22,6 +22,7 @@ get:
   tags:
     - "Support Interfaces"
   description: "Provides the service metadata in the form of a list of Capability descriptions. Each of these descriptions is an XML element that:\n<ul>\n<li>states that the service provides a particular, IVOA-standard function;</li>\n<li>lists the interfaces for invoking that function;</li>\n<li>records any details of the implementation of the function that are not defined as default or constant in the standard for that function.</li>\n</ul>\n"
+  operationId: capabilities
   responses:
     200:
       description: "A VOSI Capabilities document in XML."
@@ -77,3 +78,16 @@ components:
                   format: "uri"
                   xml:
                     attribute: true
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          example: 500
+        message:
+          type: string
+          example: "Unexpected error"
