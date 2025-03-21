@@ -9,13 +9,16 @@ post:
     content:
       application/json:
         schema:
-          $ref: "../components/schemas/doi-meta-schema.yaml#/DOIMeta"
+          type: "string"
       application/xml:
         schema:
-          $ref: "../components/schemas/doi-meta-schema.yaml#/DOIMeta"
+          type: "object"
+          xml:
+            name: "resource"
+            namespace: "http://datacite.org/schema/kernel-4"
   responses:
-    200:
-      $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
+    303:
+      $ref: "../components/responses/doi-responses.yaml#/created"
     400:
       $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
     403:

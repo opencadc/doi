@@ -7,8 +7,8 @@ post:
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
-    200:
-      $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
+    303:
+      $ref: "../components/responses/doi-responses.yaml#/minted"
     400:
       $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
     403:

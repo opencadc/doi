@@ -1,30 +1,26 @@
 get-doi-success:
-  description: "successful operation"
   content:
     application/json:
       schema:
-        type: "array"
-        items:
-          $ref: "../schemas/doi-meta-schema.yaml#/DOIMeta"
+        type: "string"
     application/xml:
       schema:
-        type: "array"
+        type: "object"
         xml:
-          name: "doi"
-        items:
-          $ref: "../schemas/doi-meta-schema.yaml#/DOIMeta"
+          name: "resource"
+          namespace: "http://datacite.org/schema/kernel-4"
 
 get-doi-status-success:
   description: "successful operation"
   content:
     application/json:
       schema:
-        type: "array"
+        type: "object"
         items:
           $ref: "../schemas/doi-status-schema.yaml#/DOIStatus"
     application/xml:
       schema:
-        type: "array"
+        type: "object"
         xml:
           name: "doiStatus"
         items:
@@ -45,3 +41,27 @@ get-doi-statuslist-success:
           name: "doiStatuses"
         items:
           $ref: "../schemas/doi-statuslist-schema.yaml#/DOIStatusList"
+
+created:
+  description: standard redirect to the created doi URL
+  headers:
+    location:
+      schema:
+        type: string
+        format: uri
+
+updated:
+  description: standard redirect to the updated doi URL
+  headers:
+    location:
+      schema:
+        type: string
+        format: uri
+
+minted:
+  description: standard redirect to the minted doi URL
+  headers:
+    location:
+      schema:
+        type: string
+        format: uri

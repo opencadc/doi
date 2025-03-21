@@ -39,22 +39,14 @@ get:
 components:
   schemas:
     availability:
-      type: "object"
-      xml:
-        name: "availability"
-        namespace: "http://www.ivoa.net/xml/VOSIAvailability/v1.0"
-        prefix: "vosi"
-      properties:
-        available:
-          type: "boolean"
-          xml:
-            attribute: true
-            prefix: "vosi"
-        note:
-          type: "string"
-          xml:
-            attribute: true
-            prefix: "vosi"
+      content:
+        text/xml:
+          schema:
+            type: object
+            xml:
+              name: availability
+              prefix: vosi
+              namespace: http://www.ivoa.net/xml/VOSIAvailability/v1.0
     Error:
       type: object
       required:
