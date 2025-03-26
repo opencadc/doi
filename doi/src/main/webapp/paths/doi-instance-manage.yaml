@@ -22,22 +22,21 @@ post:
                 application/json:
                   schema:
                     type: "object"
-                    $ref: "http://datacite.org/schema/kernel-4"
             journalRef:
               type: "string"
               example: "10.5072/example-full"
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
-    303:
+    "303":
       $ref: "../components/responses/doi-responses.yaml#/updated"
-    400:
+    "400":
       $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 
 get:
@@ -49,15 +48,15 @@ get:
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
-    200:
+    "200":
       $ref: "../components/responses/doi-responses.yaml#/get-doi-success"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    404:
+    "404":
       $ref: "../components/responses/doi-std-responses.yaml#/not-found"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 
 delete:
@@ -69,11 +68,11 @@ delete:
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
-    200:
+    "200":
       $ref: "../components/responses/doi-std-responses.yaml#/successful-operation"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"

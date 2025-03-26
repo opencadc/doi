@@ -7,27 +7,27 @@ post:
   requestBody:
     required: true
     content:
-      application/json:
-        schema:
-          type: "string"
       application/xml:
         schema:
           type: "object"
           xml:
             name: "resource"
             namespace: "http://datacite.org/schema/kernel-4"
+      application/json:
+        schema:
+          type: "object"
   responses:
-    303:
+    "303":
       $ref: "../components/responses/doi-responses.yaml#/created"
-    400:
+    "400":
       $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    409:
+    "409":
       description: "DOI already exists"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 get:
   tags:
@@ -36,11 +36,11 @@ get:
   description: "List the statuses of all DOIs created by the user."
   operationId: "getAllDOI"
   responses:
-    200:
+    "200":
       $ref: "../components/responses/doi-responses.yaml#/get-doi-statuslist-success"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"

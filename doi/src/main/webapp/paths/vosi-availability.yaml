@@ -6,7 +6,7 @@ head:
     Perform a minimal check that the service is reachable and running. This
     check is intended to be very fast and lightweight.
   responses:
-    200:
+    "200":
       description: service is reachable
 
 get:
@@ -23,7 +23,7 @@ get:
       schema:
         type: "string"
   responses:
-    200:
+    "200":
       description: "A VOSI availability document in XML."
       content:
         text/xml:
@@ -39,14 +39,11 @@ get:
 components:
   schemas:
     availability:
-      content:
-        text/xml:
-          schema:
-            type: object
-            xml:
-              name: availability
-              prefix: vosi
-              namespace: http://www.ivoa.net/xml/VOSIAvailability/v1.0
+      type: object
+      xml:
+        name: availability
+        prefix: vosi
+        namespace: http://www.ivoa.net/xml/VOSIAvailability/v1.0
     Error:
       type: object
       required:
