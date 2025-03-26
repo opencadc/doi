@@ -67,12 +67,9 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.doi.status.Status;
 import java.security.AccessControlException;
-import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
-import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
@@ -108,16 +105,9 @@ public class DeleteAction extends DoiAction {
         
         // Get container node for DOI
         String doiPath = String.format("%s/%s", parentPath, doiSuffix);
-        ContainerNode doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
-        
-        // check to see if this user has permission
-        String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-        if (doiRequester == null) {
-            throw new IllegalStateException("No requester associated with DOI: " + doiSuffix);
-        }
-        ACIdentityManager acIdentMgr = new ACIdentityManager();
-        Integer numericID = Integer.parseInt(doiRequester);
-        Subject requestorSubject = acIdentMgr.toSubject(numericID);
+        ContainerNode doiContainer = getDoiContainer(doiPath);
+        Subject requestorSubject = getRequesterSubject(doiContainer);
+
         if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
             // if doi admin is the calling user, it has permission to delete any of the DOIs as well
             if (!checkSubjectsMatch(callingSubject, getAdminSubject())) {
@@ -138,19 +128,6 @@ public class DeleteAction extends DoiAction {
 
         log.debug("deleting node: " + doiPath);
         vospaceDoiClient.getVOSpaceClient().deleteNode(doiPath);
-    }
-
-    private boolean checkSubjectsMatch(Subject subA, Subject subB) {
-        Set<Principal> subAPrincipals = subA.getPrincipals();
-        Set<Principal> subBPrincipals = subB.getPrincipals();
-
-        for (Principal subAPrincipal : subAPrincipals) {
-            if (subBPrincipals.contains(subAPrincipal)) {
-                // Return if one of the principals matches
-                return true;
-            }
-        }
-        return false;
     }
 
 }

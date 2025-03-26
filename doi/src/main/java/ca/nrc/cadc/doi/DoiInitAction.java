@@ -85,6 +85,7 @@ import java.security.Principal;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
 import org.opencadc.vospace.VOSURI;
@@ -101,6 +102,8 @@ public class DoiInitAction extends InitAction {
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
     public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
+    public static final String REVIEWER_GROUP_URI_KEY = DOI_KEY + ".reviewerGroupURI";
+    public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
 
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
@@ -299,4 +302,10 @@ public class DoiInitAction extends InitAction {
         throw new IllegalStateException(String.format("no HttpPrincipal found for %s", subject));
     }
 
+    public static GroupURI getReviewerGroupURI(MultiValuedProperties props) {
+        String reviewerGroupURI = props.getFirstPropertyValue(REVIEWER_GROUP_URI_KEY);
+        log.debug("reviewerGroupURI: " + reviewerGroupURI);
+
+        return reviewerGroupURI == null ? null : new GroupURI(URI.create(reviewerGroupURI));
+    }
 }

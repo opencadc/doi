@@ -550,6 +550,11 @@ public class PostAction extends DoiAction {
         
         // All folders will be only readable by requester
         node.getReadWriteGroup().add(doiGroup);
+
+        if (reviewerGroupURI != null) {
+            node.getReadOnlyGroup().add(reviewerGroupURI);
+            node.getReadWriteGroup().add(reviewerGroupURI);
+        }
     }
     
     private void createDOI() throws Exception {

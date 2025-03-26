@@ -68,6 +68,7 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.ACIdentityManager;
+import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
@@ -83,6 +84,7 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.Node;
@@ -104,11 +106,15 @@ public class VospaceDoiClient {
     private VOSURI baseDataURI = null;
     private String xmlFilename = "";
     private boolean includePublicNodes = false;
+    private GroupURI reviewerGroupURI = null;
+    private URI gmsResourceID = null;
 
     public VospaceDoiClient(URI resourceID, String doiParentPath, Subject callingSubject,
-                            Boolean includePublicNodes) {
+                            Boolean includePublicNodes, GroupURI reviewerGroupURI, URI gmsResourceID) {
         this.baseDataURI = new VOSURI(resourceID, doiParentPath);
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+        this.reviewerGroupURI = reviewerGroupURI;
+        this.gmsResourceID = gmsResourceID;
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
@@ -178,19 +184,26 @@ public class VospaceDoiClient {
     public boolean isCallerAllowed(Node node, Subject adminSubject) {
         boolean isRequesterNode = false;
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
-            isRequesterNode = true;
-        } else {
-            X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
-            String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
-            log.debug("requester for node: " + requester);
-            if (callersNumericId != null && StringUtil.hasText(requester)) {
-                isRequesterNode = requester.equals(callersNumericId.toString());
-                Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
-                for (X500Principal p : xset) {
-                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminX500);
-                }
+            return true;
+        } else if (reviewerGroupURI != null) {
+            GMSClient gmsClient = new GMSClient(gmsResourceID);
+
+            if (gmsClient.isMember(reviewerGroupURI)) {
+                return true;
             }
         }
+
+        X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
+        String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
+        log.debug("requester for node: " + requester);
+        if (callersNumericId != null && StringUtil.hasText(requester)) {
+            isRequesterNode = requester.equals(callersNumericId.toString());
+            Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
+            for (X500Principal p : xset) {
+                isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminX500);
+            }
+        }
+
         return isRequesterNode;
     }
 

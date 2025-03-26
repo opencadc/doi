@@ -71,20 +71,28 @@ import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
+import java.security.Principal;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.NodeNotSupportedException;
 import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.io.NodeParsingException;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
@@ -111,6 +119,8 @@ public abstract class DoiAction extends RestAction {
     protected URI gmsResourceID;
     protected String accountPrefix;
     protected String parentPath;
+    protected GroupURI reviewerGroupURI;
+    protected Boolean selfPublish = false;
 
     public DoiAction() {
     }
@@ -134,6 +144,8 @@ public abstract class DoiAction extends RestAction {
         this.vaultResourceID = DoiInitAction.getVospaceResourceID(config);
         this.parentPath = DoiInitAction.getParentPath(config);
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
+        this.reviewerGroupURI = DoiInitAction.getReviewerGroupURI(config);
+        this.selfPublish = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY)); // TODO: verify nullability?
 
         LocalAuthority localAuthority = new LocalAuthority();
         Set<URI> gmsServices = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
@@ -156,7 +168,7 @@ public abstract class DoiAction extends RestAction {
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, parentPath,
-                callingSubject, includePublic);
+                callingSubject, includePublic, reviewerGroupURI, gmsResourceID);
     }
 
     protected String getDoiFilename(String suffix) {
@@ -181,6 +193,35 @@ public abstract class DoiAction extends RestAction {
         if (s == null || s.getPrincipals().isEmpty()) {
             throw new AccessControlException("Unauthorized");
         }
+
+        if (doiSuffix == null) {
+            return; // DOI Initialization does not require authorization
+        }
+
+        if (checkSubjectsMatch(callingSubject, getAdminSubject())) {
+            return; // Doi Admin has full access
+        }
+
+        if (this instanceof PostAction) {
+            if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
+                if (isCallingUserReviewer()) {
+                    return;
+                } else {
+                    throw new AccessControlException("Not permitted");
+                }
+            }
+            if (isCallingUserRequester()) {
+                return;
+            }
+        } else if (this instanceof DeleteAction) {
+            if (isCallingUserRequester()) {
+                return;
+            } else if (reviewerGroupURI != null && isCallingUserReviewer()) {
+                return;
+            }
+        }
+
+        throw new AccessControlException("Not permitted");
     }
 
     private void parsePath() {
@@ -208,4 +249,54 @@ public abstract class DoiAction extends RestAction {
         }
     }
 
+    protected boolean checkSubjectsMatch(Subject subA, Subject subB) {
+        Set<Principal> subAPrincipals = subA.getPrincipals();
+        Set<Principal> subBPrincipals = subB.getPrincipals();
+
+        for (Principal subAPrincipal : subAPrincipals) {
+            if (subBPrincipals.contains(subAPrincipal)) {
+                // Return if one of the principals matches
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected ContainerNode getDoiContainer(String doiPath) {
+        ContainerNode doiContainer;
+        try {
+            doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
+        } catch (IOException | InterruptedException | NodeParsingException | NodeNotSupportedException |
+                 ResourceAlreadyExistsException | ResourceNotFoundException e) {
+            throw new RuntimeException("Failed to get DOI Container from DOI Path: " + doiPath, e);
+        }
+        return doiContainer;
+    }
+
+    protected boolean isCallingUserReviewer() {
+        if (reviewerGroupURI != null) {
+            return getGMSClient().isMember(reviewerGroupURI);
+        }
+        return false;
+    }
+
+    protected boolean isCallingUserRequester() {
+        String doiPath = String.format("%s/%s", parentPath, doiSuffix);
+        ContainerNode doiContainer = getDoiContainer(doiPath);
+        Subject requestorSubject = getRequesterSubject(doiContainer);
+
+        return checkSubjectsMatch(callingSubject, requestorSubject);
+    }
+
+    protected Subject getRequesterSubject(ContainerNode doiContainer) {
+        String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
+
+        if (doiRequester == null) {
+            throw new IllegalStateException("No requester associated with DOI: " + doiSuffix);
+        }
+
+        ACIdentityManager acIdentityManager = new ACIdentityManager();
+        Integer numericID = Integer.parseInt(doiRequester);
+        return acIdentityManager.toSubject(numericID);
+    }
 }

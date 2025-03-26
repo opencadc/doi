@@ -236,8 +236,17 @@ public class GetAction extends DoiAction {
         List<Node> ownedNodes = new ArrayList<>();
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         if (doiRootNode != null) {
+            if (checkSubjectsMatch(callingSubject, getAdminSubject())) {
+                ownedNodes.addAll(doiRootNode.getNodes());
+                return ownedNodes;
+            }
+
+            if (isCallingUserReviewer()) {
+                ownedNodes.addAll(doiRootNode.getNodes());
+                return ownedNodes;
+            }
+
             for (Node childNode : doiRootNode.getNodes()) {
-                // TODO: configure doi admin viewing of all nodes
                 NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
                 if (requester != null && requester.getValue() != null) {
                     try {
