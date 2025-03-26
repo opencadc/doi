@@ -7,14 +7,14 @@ post:
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
-    303:
+    "303":
       $ref: "../components/responses/doi-responses.yaml#/minted"
-    400:
+    "400":
       $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 

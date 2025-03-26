@@ -7,13 +7,13 @@ get:
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
-    200:
+    "200":
       $ref: "../components/responses/doi-responses.yaml#/get-doi-status-success"
-    403:
+    "403":
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
-    404:
+    "404":
       $ref: "../components/responses/doi-std-responses.yaml#/not-found"
-    500:
+    "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    503:
+    "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
