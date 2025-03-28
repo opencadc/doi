@@ -1,0 +1,14 @@
+successful-operation:
+  description: operation successful
+not-authenticated:
+  description: authentication is required and current attempt failed
+permission-denied:
+  description: caller not authorized to perform operation
+not-found:
+  description: resource not found
+unexpected-server-error:
+  description: unexpected server error
+bad-request:
+  description: bad request
+temporarily-unavailable:
+  description: service temporarily unavailable

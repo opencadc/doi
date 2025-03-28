@@ -1,0 +1,25 @@
+openapi: 3.1.1
+info:
+  title: "CADC DOI Service"
+  version: "1.0.0"
+  description: "The Digital Object Identifier (DOI) Service supports initializing and minting DOIs using DataCite.org."
+servers:
+  - url: /doi
+tags:
+  - name: "instances"
+    description: "Main endpoint for the DOI service."
+paths:
+  /availability:
+    $ref: ./paths/vosi-availability.yaml
+  /capabilities:
+    $ref: ./paths/vosi-capabilities.yaml
+  /instances:
+    $ref: ./paths/doi-instance.yaml
+  /instances/{DOINum}:
+    $ref: ./paths/doi-instance-manage.yaml
+  /instances/{DOINum}/mint:
+    $ref: ./paths/doi-mint.yaml
+  /instances/{DOINum}/status:
+    $ref: ./paths/doi-status.yaml
+  /instances/{DOINum}/status/public:
+    $ref: ./paths/doi-status-public.yaml
