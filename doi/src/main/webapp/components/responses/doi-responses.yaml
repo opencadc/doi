@@ -30,12 +30,15 @@ get-doi-statuslist-success:
   content:
     application/json:
       schema:
-        type: "array"
-        items:
-          type: "object"
-          properties:
-            doiStatus:
-              $ref: "../schemas/doi-status-schema.yaml#/DOIStatus"
+        type: "object"
+        properties:
+          doiStatuses:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                doiStatus:
+                  $ref: "../schemas/doi-status-schema.yaml#/DOIStatus"
     application/xml:
       schema:
         type: "array"
