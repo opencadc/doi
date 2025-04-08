@@ -122,22 +122,7 @@ public class DeleteAction extends DoiAction {
         getGMSClient().deleteGroup(groupToDelete);
 
         log.debug("deleting node: " + doiPath);
-        deleteNode();
-    }
-
-    private void deleteNode() {
-        try {
-            VOSURI nodeUri = getVOSURI(doiSuffix);
-            log.debug("recursiveDeleteNode: " + nodeUri);
-
-            RecursiveDeleteNode recursiveDeleteNode = vospaceDoiClient.getVOSpaceClient().createRecursiveDelete(nodeUri);
-            recursiveDeleteNode.setMonitor(true);
-            recursiveDeleteNode.run();
-        } catch (AccessControlException e) {
-            log.error("unexpected AccessControlException: ", e);
-        } catch (Exception e) {
-            log.error("unexpected exception", e);
-        }
+        vospaceDoiClient.deleteNode(doiSuffix);
     }
 
 }

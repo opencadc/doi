@@ -93,6 +93,7 @@ import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientTransfer;
 import org.opencadc.vospace.client.VOSpaceClient;
+import org.opencadc.vospace.client.async.RecursiveDeleteNode;
 import org.opencadc.vospace.transfer.Direction;
 import org.opencadc.vospace.transfer.Protocol;
 import org.opencadc.vospace.transfer.Transfer;
@@ -254,6 +255,21 @@ public class VospaceDoiClient {
 
         public Resource getResource() {
             return resource;
+        }
+    }
+
+    public void deleteNode(String doiSuffix) {
+        try {
+            VOSURI nodeUri = new VOSURI(baseDataURI.toString() + "/" + doiSuffix);
+            log.debug("recursiveDeleteNode: " + nodeUri);
+
+            RecursiveDeleteNode recursiveDeleteNode = getVOSpaceClient().createRecursiveDelete(nodeUri);
+            recursiveDeleteNode.setMonitor(true);
+            recursiveDeleteNode.run();
+        } catch (AccessControlException e) {
+            log.error("unexpected AccessControlException: ", e);
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
         }
     }
 }
