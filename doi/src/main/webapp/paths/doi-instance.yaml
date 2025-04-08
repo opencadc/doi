@@ -35,6 +35,8 @@ get:
   summary: "Get a list of DOI statuses"
   description: "List the statuses of all DOIs created by the user."
   operationId: "getAllDOI"
+  parameters:
+    - $ref: "../components/parameters/view.yaml#/view"
   responses:
     "200":
       $ref: "../components/responses/doi-responses.yaml#/get-doi-statuslist-success"

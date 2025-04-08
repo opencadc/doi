@@ -82,6 +82,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.Objects;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -102,11 +103,14 @@ public class DoiInitAction extends InitAction {
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
     public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
-    public static final String REVIEWER_GROUP_URI_KEY = DOI_KEY + ".reviewerGroupURI";
-    public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
 
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
+
+    //Alternative DOI settings properties
+    public static final String REVIEWER_GROUP_URI_KEY = DOI_KEY + ".reviewerGroupURI";
+    public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
+    public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
 
     @Override
     public void doInit() {
@@ -307,5 +311,10 @@ public class DoiInitAction extends InitAction {
         log.debug("reviewerGroupURI: " + reviewerGroupURI);
 
         return reviewerGroupURI == null ? null : new GroupURI(URI.create(reviewerGroupURI));
+    }
+
+    public static String getDoiIdentifierPrefix(MultiValuedProperties props) {
+        String doiIdentifierPrefix = props.getFirstPropertyValue(DoiInitAction.DOI_IDENTIFIER_PREFIX_KEY);
+        return Objects.requireNonNullElse(doiIdentifierPrefix, "");
     }
 }

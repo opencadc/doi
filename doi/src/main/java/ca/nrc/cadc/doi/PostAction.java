@@ -567,7 +567,7 @@ public class PostAction extends DoiAction {
         boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
         String nextDoiSuffix;
         if (randomTestID) {
-            nextDoiSuffix = getRandomDOISuffix();
+            nextDoiSuffix = doiIdentifierPrefix + getRandomDOISuffix();
             log.warn("Random DOI suffix: " + nextDoiSuffix);
         } else {
             // Determine next DOI ID
@@ -575,7 +575,7 @@ public class PostAction extends DoiAction {
             //       Since we are using a number, it does not matter. However if we decide
             //       to use a String, we should only generate either a lowercase or an
             //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
-            nextDoiSuffix = getNextDOISuffix(vospaceDoiClient.getDoiBaseVOSURI());
+            nextDoiSuffix = doiIdentifierPrefix + getNextDOISuffix(vospaceDoiClient.getDoiBaseVOSURI());
             log.debug("Next DOI suffix: " + nextDoiSuffix);
         }
 

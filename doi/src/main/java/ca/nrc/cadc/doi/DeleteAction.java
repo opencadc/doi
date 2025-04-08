@@ -73,6 +73,8 @@ import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.async.RecursiveDeleteNode;
 
 
 public class DeleteAction extends DoiAction {
@@ -106,14 +108,6 @@ public class DeleteAction extends DoiAction {
         // Get container node for DOI
         String doiPath = String.format("%s/%s", parentPath, doiSuffix);
         ContainerNode doiContainer = getDoiContainer(doiPath);
-        Subject requestorSubject = getRequesterSubject(doiContainer);
-
-        if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
-            // if doi admin is the calling user, it has permission to delete any of the DOIs as well
-            if (!checkSubjectsMatch(callingSubject, getAdminSubject())) {
-                throw new AccessControlException("Not permitted to delete DOI");
-            }
-        }
 
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
@@ -122,12 +116,28 @@ public class DeleteAction extends DoiAction {
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        String groupToDelete = DOI_GROUP_PREFIX + doiSuffix;
+        boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
+        String groupToDelete = (randomTestID ? TEST_DOI_GROUP_PREFIX : DOI_GROUP_PREFIX) + doiSuffix;
         log.debug("deleting group: " + groupToDelete);
         getGMSClient().deleteGroup(groupToDelete);
 
         log.debug("deleting node: " + doiPath);
-        vospaceDoiClient.getVOSpaceClient().deleteNode(doiPath);
+        deleteNode();
+    }
+
+    private void deleteNode() {
+        try {
+            VOSURI nodeUri = getVOSURI(doiSuffix);
+            log.debug("recursiveDeleteNode: " + nodeUri);
+
+            RecursiveDeleteNode recursiveDeleteNode = vospaceDoiClient.getVOSpaceClient().createRecursiveDelete(nodeUri);
+            recursiveDeleteNode.setMonitor(true);
+            recursiveDeleteNode.run();
+        } catch (AccessControlException e) {
+            log.error("unexpected AccessControlException: ", e);
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
+        }
     }
 
 }

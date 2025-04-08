@@ -71,6 +71,7 @@ import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
@@ -85,6 +86,8 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.security.Principal;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -113,6 +116,7 @@ public abstract class DoiAction extends RestAction {
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
+    protected Boolean allPublic = false;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
     protected URI vaultResourceID;
@@ -120,7 +124,8 @@ public abstract class DoiAction extends RestAction {
     protected String accountPrefix;
     protected String parentPath;
     protected GroupURI reviewerGroupURI;
-    protected Boolean selfPublish = false;
+    protected Boolean selfPublish = true;
+    protected String doiIdentifierPrefix;
 
     public DoiAction() {
     }
@@ -145,7 +150,10 @@ public abstract class DoiAction extends RestAction {
         this.parentPath = DoiInitAction.getParentPath(config);
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.reviewerGroupURI = DoiInitAction.getReviewerGroupURI(config);
-        this.selfPublish = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY)); // TODO: verify nullability?
+        this.doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
+
+        String selfPublishKey = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
+        this.selfPublish = selfPublishKey == null || Boolean.parseBoolean(selfPublishKey);
 
         LocalAuthority localAuthority = new LocalAuthority();
         Set<URI> gmsServices = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
@@ -158,9 +166,6 @@ public abstract class DoiAction extends RestAction {
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
-        if (authorize) {
-            authorizeUser(callingSubject);
-        }
         logInfo.setSubject(callingSubject);
 
         parsePath();
@@ -169,6 +174,10 @@ public abstract class DoiAction extends RestAction {
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, parentPath,
                 callingSubject, includePublic, reviewerGroupURI, gmsResourceID);
+
+        if (authorize) {
+            authorizeUser(callingSubject);
+        }
     }
 
     protected String getDoiFilename(String suffix) {
@@ -189,6 +198,11 @@ public abstract class DoiAction extends RestAction {
     }
 
     private void authorizeUser(Subject s) {
+        try {
+            CredUtil.checkCredentials(s);
+        } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+            throw new RuntimeException("Failed to check credentials: ", e);
+        }
         // authorization, for now, is defined as having a set of principals
         if (s == null || s.getPrincipals().isEmpty()) {
             throw new AccessControlException("Unauthorized");
@@ -198,16 +212,16 @@ public abstract class DoiAction extends RestAction {
             return; // DOI Initialization does not require authorization
         }
 
-        if (checkSubjectsMatch(callingSubject, getAdminSubject())) {
+        if (checkSubjectsMatch(s, getAdminSubject())) {
             return; // Doi Admin has full access
         }
 
         if (this instanceof PostAction) {
             if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
-                if (isCallingUserReviewer()) {
+                if (isCallingUserReviewer() && !isCallingUserRequester()) {
                     return;
                 } else {
-                    throw new AccessControlException("Not permitted");
+                    throw new AccessControlException("Mint Action is not permitted for DOI : " + doiSuffix);
                 }
             }
             if (isCallingUserRequester()) {
@@ -221,12 +235,17 @@ public abstract class DoiAction extends RestAction {
             }
         }
 
-        throw new AccessControlException("Not permitted");
+        throw new AccessControlException("Not authorized to access this resource.");
     }
 
     private void parsePath() {
         String path = syncInput.getPath();
         logInfo.setPath(path);
+
+        if (syncInput.getParameter("view") != null) {
+            allPublic = true;
+            return;
+        }
 
         if (path != null) {
             String[] parts = path.split("/");

@@ -188,9 +188,9 @@ public class GetAction extends DoiAction {
         });
     }
     
-    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode) throws Exception {
+    private DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, boolean authorize) throws Exception {
         DoiStatus doiStatus;
-        if (vospaceDoiClient.isCallerAllowed(doiContainerNode, getAdminSubject())) {
+        if (!authorize || vospaceDoiClient.isCallerAllowed(doiContainerNode, getAdminSubject())) {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             if (StringUtil.hasText(status)
@@ -236,22 +236,24 @@ public class GetAction extends DoiAction {
         List<Node> ownedNodes = new ArrayList<>();
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         if (doiRootNode != null) {
-            if (checkSubjectsMatch(callingSubject, getAdminSubject())) {
-                ownedNodes.addAll(doiRootNode.getNodes());
-                return ownedNodes;
-            }
 
-            if (isCallingUserReviewer()) {
-                ownedNodes.addAll(doiRootNode.getNodes());
-                return ownedNodes;
-            }
-
+            boolean isCallingUserDOIAdmin = callingSubject != null && checkSubjectsMatch(callingSubject, getAdminSubject());
             for (Node childNode : doiRootNode.getNodes()) {
                 NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
+
                 if (requester != null && requester.getValue() != null) {
                     try {
-                        Long uid = Long.parseLong(requester.getValue());
-                        if (callersNumericId.equals(uid)) {
+                        if (callersNumericId == null || allPublic) {
+                            if (childNode.isPublic != null && childNode.isPublic) {
+                                ownedNodes.add(childNode);
+                            }
+                            continue;
+                        }
+
+                        Long requesterUserId = Long.parseLong(requester.getValue());
+                        if (isCallingUserDOIAdmin || callersNumericId.equals(requesterUserId)) {
+                            ownedNodes.add(childNode);
+                        } else if (isCallingUserReviewer() && childNode.isPublic != null && !childNode.isPublic) {
                             ownedNodes.add(childNode);
                         }
                     } catch (NumberFormatException e) {
@@ -273,7 +275,7 @@ public class GetAction extends DoiAction {
             if (node instanceof ContainerNode) {
                 try {
                     ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(node.getName());
-                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode);
+                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode, false);
                     doiStatusList.add(doiStatus);
                     log.debug("added doiStatus: " + doiStatus);
                 } catch (Exception ex) {
@@ -321,7 +323,7 @@ public class GetAction extends DoiAction {
     private void performDoiAction() throws Exception {
         if (doiAction.equals(DoiAction.STATUS_ACTION)) {
             ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(doiSuffix);
-            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode);
+            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode, true);
 
             String docFormat = this.syncInput.getHeader("Accept");
             log.debug("'Accept' value in header is " + docFormat);
