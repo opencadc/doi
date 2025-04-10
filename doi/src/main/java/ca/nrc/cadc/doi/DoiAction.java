@@ -152,8 +152,8 @@ public abstract class DoiAction extends RestAction {
         this.reviewerGroupURI = DoiInitAction.getReviewerGroupURI(config);
         this.doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
 
-        String selfPublishKey = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
-        this.selfPublish = selfPublishKey == null || Boolean.parseBoolean(selfPublishKey);
+        String selfPublishProperty = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
+        this.selfPublish = selfPublishProperty == null || Boolean.parseBoolean(selfPublishProperty);
 
         LocalAuthority localAuthority = new LocalAuthority();
         Set<URI> gmsServices = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
