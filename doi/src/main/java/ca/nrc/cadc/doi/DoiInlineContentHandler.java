@@ -77,7 +77,6 @@ import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import java.io.IOException;
 import java.io.InputStream;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 public class DoiInlineContentHandler implements InlineContentHandler {
@@ -112,7 +111,7 @@ public class DoiInlineContentHandler implements InlineContentHandler {
             try {
                 // read json file
                 DoiJsonReader reader = new DoiJsonReader();
-                userInput = reader.read(IOUtils.toString(inputStream, "UTF-8"));
+                userInput = reader.read(inputStream);
             } catch (DoiParsingException dpe) {
                 log.debug(dpe);
                 throw new InlineContentException(dpe.getMessage());

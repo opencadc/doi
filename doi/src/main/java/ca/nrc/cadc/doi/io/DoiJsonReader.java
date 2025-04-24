@@ -71,6 +71,12 @@ package ca.nrc.cadc.doi.io;
 
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.xml.JsonInputter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import org.json.JSONException;
 
 /**
  * Constructs a DoiMetadata from a JSON source. This class is not thread safe
@@ -88,7 +94,7 @@ public class DoiJsonReader extends DoiReader {
     }
 
     /**
-     * Construct a Resource instance from a JSON String source.
+     * Construct a DOM document from an JSON String source.
      *
      * @param json String of the JSON.
      * @return Resource object containing all doi metadata.
@@ -96,16 +102,61 @@ public class DoiJsonReader extends DoiReader {
      */
     public Resource read(String json) throws DoiParsingException {
         if (json == null) {
-            throw new IllegalArgumentException("JSON string must not be null");
+            throw new IllegalArgumentException("JSON must not be null");
         }
 
         try {
             JsonInputter inputter = new JsonInputter();
             return this.buildResource(inputter.input(json));
-        } catch (Exception ex) {
-            String error = "Error reading JSON string: " + ex.getMessage();
-            throw new DoiParsingException(error, ex);
+        } catch (JSONException e) {
+            String error = "JSON parsing error: " + e.getMessage();
+            throw new DoiParsingException(error, e);
         }
+    }
+
+    /**
+     * Construct a DOM document from a InputStream.
+     *
+     * @param in InputStream.
+     * @return Resource object containing all doi metadata.
+     * @throws DoiParsingException if there is an error parsing the XML.
+     */
+    public Resource read(InputStream in) throws DoiParsingException {
+        if (in == null) {
+            throw new IllegalArgumentException("InputStream is closed");
+        }
+
+        return read(new InputStreamReader(in, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Construct a DOM document from a Reader.
+     *
+     * @param reader Reader.
+     * @return Resource object containing all doi metadata.
+     * @throws DoiParsingException when the document is invalid
+     */
+    public Resource read(Reader reader) throws DoiParsingException {
+        if (reader == null) {
+            throw new IllegalArgumentException("reader must not be null");
+        }
+
+        try {
+            return read(convert(reader));
+        } catch (IOException e) {
+            String error = "Error reading JSON: " + e.getMessage();
+            throw new DoiParsingException(error, e);
+        }
+    }
+
+    private String convert(Reader reader) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        char[] buffer = new char[8192];
+        int charsRead;
+        while ((charsRead = reader.read(buffer)) != -1) {
+            sb.append(buffer, 0, charsRead);
+        }
+        return sb.toString();
     }
 
 }
