@@ -72,6 +72,14 @@ import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
+import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.doi.search.DoiStatusSearchFilter;
+import ca.nrc.cadc.doi.search.Role;
+import ca.nrc.cadc.doi.status.DoiStatus;
+import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
+import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
+import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
@@ -83,18 +91,24 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
+
+import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.uws.ExecutionPhase;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
-import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.NodeNotSupportedException;
-import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.*;
+import org.opencadc.vospace.client.async.RecursiveSetNode;
 import org.opencadc.vospace.io.NodeParsingException;
 
 public abstract class DoiAction extends RestAction {
@@ -104,9 +118,11 @@ public abstract class DoiAction extends RestAction {
     public static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
     public static final URI DOI_VOS_STATUS_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#status");
     public static final URI DOI_VOS_JOURNAL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#journalref");
+    public static final URI DOI_VOS_TITLE_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#title");
 
     public static final String STATUS_ACTION = "status";
     public static final String MINT_ACTION = "mint";
+    public static final String SEARCH_ACTION = "search";
     public static final String JOURNALREF_PARAM = "journalref";
     public static final String DOI_GROUP_PREFIX = "DOI-";
     public static final String TEST_DOI_GROUP_PREFIX = "TEST.DOI-";
@@ -117,6 +133,7 @@ public abstract class DoiAction extends RestAction {
     protected String doiAction;
     protected Boolean includePublic = false;
     protected Boolean allPublic = false;
+    protected DoiStatusSearchFilter doiStatusSearchFilter;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
     protected URI vaultResourceID;
@@ -217,6 +234,9 @@ public abstract class DoiAction extends RestAction {
         }
 
         if (this instanceof PostAction) {
+            if (doiAction != null && doiAction.equals(DoiAction.SEARCH_ACTION)) {
+                return;
+            }
             if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
                 if (isCallingUserReviewer() && !isCallingUserRequester()) {
                     return;
@@ -242,11 +262,6 @@ public abstract class DoiAction extends RestAction {
         String path = syncInput.getPath();
         logInfo.setPath(path);
 
-        if (syncInput.getParameter("view") != null) {
-            allPublic = true;
-            return;
-        }
-
         if (path != null) {
             String[] parts = path.split("/");
             // Parse the request path to see if a DOI suffix has been provided
@@ -255,6 +270,13 @@ public abstract class DoiAction extends RestAction {
                 throw new IllegalArgumentException("Bad request: " + path);
             }
             if (parts.length > 0) {
+                if(parts[0].equalsIgnoreCase("search")){
+                    doiAction = DoiAction.SEARCH_ACTION;
+                    if (!syncInput.getParameterNames().isEmpty()) {
+                        prepareDoiStatusSearchFilter();
+                    }
+                    return;
+                }
                 doiSuffix = parts[0];
                 if (parts.length > 1) {
                     doiAction = parts[1];
@@ -266,6 +288,29 @@ public abstract class DoiAction extends RestAction {
                 }
             }
         }
+    }
+
+    private void prepareDoiStatusSearchFilter() {
+        boolean isRoleFilterPresent = syncInput.getParameter("role") != null;
+        boolean isStatusFilterPresent = syncInput.getParameter("status") != null;
+
+        if (!isRoleFilterPresent && !isStatusFilterPresent) {
+            return;
+        }
+
+        this.doiStatusSearchFilter = new DoiStatusSearchFilter();
+
+        if (isRoleFilterPresent) {
+            Role role = Role.toValue(syncInput.getParameter("role"));
+            if (role.equals(Role.PUBLISHER) && reviewerGroupURI == null) {
+                role = Role.OWNER;
+            }
+            doiStatusSearchFilter.setRole(role);
+        }
+        if (isStatusFilterPresent) {
+            doiStatusSearchFilter.prepareStatusList(syncInput.getParameters("status"));
+        }
+
     }
 
     protected boolean checkSubjectsMatch(Subject subA, Subject subB) {
@@ -290,6 +335,21 @@ public abstract class DoiAction extends RestAction {
             throw new RuntimeException("Failed to get DOI Container from DOI Path: " + doiPath, e);
         }
         return doiContainer;
+    }
+
+    protected boolean isCallingUserDOIAdmin() {
+        return callingSubject != null && checkSubjectsMatch(callingSubject, getAdminSubject());
+    }
+
+    protected boolean isCallingUserRequester(Node node){
+        try {
+            Long requesterUserId = Long.parseLong(node.getProperty(DOI_VOS_REQUESTER_PROP).getValue());
+            return callersNumericId.equals(requesterUserId);
+        } catch (NumberFormatException ex) {
+            log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
+                    node.getProperty(DOI_VOS_REQUESTER_PROP).getValue(), node.getName()), ex);
+            return false;
+        }
     }
 
     protected boolean isCallingUserReviewer() {
@@ -317,5 +377,171 @@ public abstract class DoiAction extends RestAction {
         ACIdentityManager acIdentityManager = new ACIdentityManager();
         Integer numericID = Integer.parseInt(doiRequester);
         return acIdentityManager.toSubject(numericID);
+    }
+
+    protected List<Node> getOwnedDOIList() throws Exception {
+        List<Node> ownedNodes = new ArrayList<>();
+        ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
+        if (doiRootNode != null) {
+            for (Node childNode : doiRootNode.getNodes()) {
+                NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
+
+                if (requester != null && requester.getValue() != null) {
+                    try {
+                        if (childNode.isPublic != null && childNode.isPublic) {
+                            ownedNodes.add(childNode);
+                            continue;
+                        }
+
+                        if(callersNumericId == null) {
+                            continue;
+                        }
+
+                        Long requesterUserId = Long.parseLong(requester.getValue());
+                        if (callersNumericId.equals(requesterUserId) || isCallingUserDOIAdmin() || isCallingUserReviewer()) {
+                            ownedNodes.add(childNode);
+                        }
+                    } catch (NumberFormatException e) {
+                        log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
+                                requester.getValue(), childNode.getName()), e);
+                    }
+                }
+            }
+        }
+        return ownedNodes;
+    }
+
+    protected void getStatusList(List<Node> nodes) throws Exception {
+        List<DoiStatus> doiStatusList = new ArrayList<>();
+        for (Node node : nodes) {
+            log.debug("StatusList node: " + node.getName());
+            // Verify this is a container node before continuing
+            if (node instanceof ContainerNode) {
+                try {
+                    ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(node.getName());
+                    DoiStatus doiStatus = getDoiStatus(node.getName(), doiContainerNode, false);
+                    doiStatusList.add(doiStatus);
+                    log.debug("added doiStatus: " + doiStatus);
+                } catch (Exception ex) {
+                    // skip
+                    log.debug(String.format("skipping %s because %s", node.getName(), ex.getMessage()));
+                }
+            } else {
+                log.warn("Non-container node found in DOI base directory. Skipping... ");
+            }
+        }
+        log.debug("doiStatusList size: " + doiStatusList.size());
+
+        String docFormat = this.syncInput.getHeader("Accept");
+        log.debug("'Accept' value in header is " + docFormat);
+        if (docFormat != null && docFormat.contains("application/json")) {
+            // json document
+            syncOutput.setHeader("Content-Type", "application/json");
+            DoiStatusListJsonWriter writer = new DoiStatusListJsonWriter();
+            writer.write(doiStatusList, syncOutput.getOutputStream());
+        } else {
+            // xml document
+            syncOutput.setHeader("Content-Type", "text/xml");
+            DoiStatusListXmlWriter writer = new DoiStatusListXmlWriter();
+            writer.write(doiStatusList, syncOutput.getOutputStream());
+        }
+    }
+
+    protected DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, boolean authorize) throws Exception {
+        DoiStatus doiStatus;
+        if (!authorize || vospaceDoiClient.isCallerAllowed(doiContainerNode, getAdminSubject())) {
+            // get status
+            String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
+            if (StringUtil.hasText(status)
+                    && !status.equals(Status.ERROR_REGISTERING.getValue())
+                    && !status.equals(Status.ERROR_LOCKING_DATA.getValue())) {
+                // update status based on the result of the minting service
+                status = updateMintingStatus(doiContainerNode, status);
+            }
+
+            // get the data directory
+            // TODO why do this when the data directory path is known???
+            String dataDirectory = null;
+            List<Node> doiContainedNodes = doiContainerNode.getNodes();
+            for (Node node : doiContainedNodes) {
+                if (node.getName().equals("data")) {
+                    dataDirectory = String.format("%s/%s/data", parentPath, doiSuffixString);
+                    break;
+                }
+            }
+
+            // get title and construct DoiStatus instance
+            Title title = null;
+            try {
+                title = new Title(doiContainerNode.getPropertyValue(DOI_VOS_TITLE_PROP));
+                Identifier identifier = new Identifier(accountPrefix + "/" +doiSuffixString, "DOI");
+                doiStatus = new DoiStatus(identifier, title, dataDirectory, Status.toValue(status));
+            } catch (Exception ex) {
+                Identifier id = new Identifier(accountPrefix + "/" +doiSuffixString, "DOI");
+                title = new Title("title");
+                doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
+            }
+
+            // set journalRef
+            doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+        } else {
+            String msg = "Access Denied to " + doiSuffixString + ".";
+            throw new AccessControlException(msg);
+        }
+        return doiStatus;
+    }
+
+    protected String updateMintingStatus(final ContainerNode doiContainerNode, final String status) throws Exception {
+        return (String) Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
+            // update status based on the result of the minting service
+            String localStatus = status;
+            String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
+            if (jobURLString != null) {
+                URL jobURL = new URL(jobURLString);
+                VOSURI vosuri = new VOSURI(vaultResourceID, String.format("%s/%s", parentPath, doiContainerNode.getName()));
+                RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
+                recursiveSetNode.setSchemaValidation(false);
+                ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
+                switch (phase) {
+                    case COMPLETED:
+                    case ARCHIVED:
+                        // job finished, set corresponding status
+                        if (status.equals(Status.LOCKING_DATA.getValue())) {
+                            localStatus = Status.LOCKED_DATA.getValue();
+                        } else if (status.equals(Status.REGISTERING.getValue())) {
+                            localStatus = Status.MINTED.getValue();
+                        }
+                        // delete jobURL property
+                        doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
+                        doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+                        vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+                        break;
+                    case ERROR:
+                    case ABORTED:
+                    case UNKNOWN:
+                    case SUSPENDED:
+                    case HELD:
+                        // assume job resulted in error, set corresponding status
+                        if (status.equals(Status.LOCKING_DATA.getValue())) {
+                            localStatus = Status.ERROR_LOCKING_DATA.getValue();
+                        } else if (status.equals(Status.REGISTERING.getValue())) {
+                            localStatus = Status.ERROR_REGISTERING.getValue();
+                        }
+                        // delete jobURL property
+                        doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
+                        doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+                        vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+                        break;
+                    case PENDING:
+                    case QUEUED:
+                    case EXECUTING:
+                        // job is in progress, do nothing
+                        break;
+                    default:
+                        // do nothing
+                }
+            }
+            return localStatus;
+        });
     }
 }

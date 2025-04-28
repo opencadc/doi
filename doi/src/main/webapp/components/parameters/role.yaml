@@ -1,0 +1,10 @@
+role:
+  name: "role"
+  in: "query"
+  description: "Represents the Role of the user for a DOI which can be either 'Owner' or 'Publisher'"
+  required: false
+  schema:
+    type: "string"
+    enum:
+      - "Owner"
+      - "Publisher"

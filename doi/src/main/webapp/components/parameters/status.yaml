@@ -1,0 +1,11 @@
+status:
+  name: "status"
+  in: "query"
+  description: "Represents the status of the DOI"
+  required: false
+  style: form
+  explode: true
+  schema:
+    type: array
+    items:
+      type: string
