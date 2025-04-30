@@ -118,10 +118,6 @@ public class DoiInitAction extends InitAction {
         checkParentFolders();
     }
 
-    public static MultiValuedProperties getConfig() {
-        return getConfig(false);
-    }
-
     public static URI getVospaceResourceID(MultiValuedProperties props) {
         String vospaceParentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
         VOSURI vosURI;
@@ -142,6 +138,10 @@ public class DoiInitAction extends InitAction {
             throw new IllegalStateException("invalid VOSpace URI: " + vospaceParentUri);
         }
         return vosURI.getPath();
+    }
+
+    public static MultiValuedProperties getConfig() {
+        return getConfig(false);
     }
 
     private static MultiValuedProperties getConfig(boolean verify) {
@@ -281,7 +281,8 @@ public class DoiInitAction extends InitAction {
         // check node owner
         String ownerID = containerNode.ownerDisplay;
         if (!adminUsername.equals(ownerID)) {
-            throw new IllegalStateException(String.format("DOI parent node %s owner %s doesn't match configured admin user %s", parentPath, ownerID, adminUsername));
+            throw new IllegalStateException(String.format("DOI parent node %s owner %s doesn't match configured admin user %s",
+                    parentPath, ownerID, adminUsername));
         }
 
         // check node has public access

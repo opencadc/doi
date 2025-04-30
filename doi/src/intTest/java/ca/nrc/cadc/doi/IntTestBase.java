@@ -117,6 +117,7 @@ public abstract class IntTestBase extends TestBase {
     static Subject reviewerSubject;
     static URL doiServiceURL;
     static URL doiAltServiceURL;
+    static URL doiSearchServiceURL;
     static VOSpaceClient vosClient;
     static VOSpaceClient doiAltVosClient;
     static VOSURI doiParentPathURI;
@@ -141,6 +142,7 @@ public abstract class IntTestBase extends TestBase {
         doiAltServiceURL = regClient.getServiceURL(TestUtil.DOI_ALT_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
         doiAltParentPathURI = new VOSURI(TestUtil.DOI_ALT_RESOURCE_ID, TestUtil.DOI_ALT_PARENT_PATH);
         doiAltVosClient = new VOSpaceClient(TestUtil.DOI_ALT_VOSPACE_RESOURCE_ID);
+        doiSearchServiceURL = regClient.getServiceURL(TestUtil.DOI_ALT_RESOURCE_ID, Standards.DOI_SEARCH_10, AuthMethod.CERT);
     }
 
     protected VOSURI getVOSURI(String path, DOISettingsType doiSettingsType) {

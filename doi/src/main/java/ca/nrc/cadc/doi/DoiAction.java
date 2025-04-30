@@ -87,6 +87,9 @@ import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.MultiValuedProperties;
+import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.uws.ExecutionPhase;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -99,15 +102,18 @@ import java.security.PrivilegedExceptionAction;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 
-import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.uws.ExecutionPhase;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
-import org.opencadc.vospace.*;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.Node;
+import org.opencadc.vospace.NodeNotSupportedException;
+import org.opencadc.vospace.NodeProperty;
+import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.async.RecursiveSetNode;
 import org.opencadc.vospace.io.NodeParsingException;
 
@@ -132,7 +138,6 @@ public abstract class DoiAction extends RestAction {
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
-    protected Boolean allPublic = false;
     protected DoiStatusSearchFilter doiStatusSearchFilter;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
@@ -270,13 +275,6 @@ public abstract class DoiAction extends RestAction {
                 throw new IllegalArgumentException("Bad request: " + path);
             }
             if (parts.length > 0) {
-                if(parts[0].equalsIgnoreCase("search")){
-                    doiAction = DoiAction.SEARCH_ACTION;
-                    if (!syncInput.getParameterNames().isEmpty()) {
-                        prepareDoiStatusSearchFilter();
-                    }
-                    return;
-                }
                 doiSuffix = parts[0];
                 if (parts.length > 1) {
                     doiAction = parts[1];
@@ -285,6 +283,16 @@ public abstract class DoiAction extends RestAction {
                 // to see if the DOI is public in order to provide access.
                 if (parts.length > 2 && (parts[2].equals("public"))) {
                     includePublic = true;
+                }
+            }
+        } else {
+            String requestPath = syncInput.getRequestPath();
+            String[] parts = requestPath.split("/");
+
+            if (parts.length > 0 && parts[2].equals("search")) {
+                doiAction = DoiAction.SEARCH_ACTION;
+                if (!syncInput.getParameterNames().isEmpty()) {
+                    prepareDoiStatusSearchFilter();
                 }
             }
         }
@@ -330,8 +338,8 @@ public abstract class DoiAction extends RestAction {
         ContainerNode doiContainer;
         try {
             doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
-        } catch (IOException | InterruptedException | NodeParsingException | NodeNotSupportedException |
-                 ResourceAlreadyExistsException | ResourceNotFoundException e) {
+        } catch (IOException | InterruptedException | NodeParsingException | NodeNotSupportedException
+                 | ResourceAlreadyExistsException | ResourceNotFoundException e) {
             throw new RuntimeException("Failed to get DOI Container from DOI Path: " + doiPath, e);
         }
         return doiContainer;
@@ -339,17 +347,6 @@ public abstract class DoiAction extends RestAction {
 
     protected boolean isCallingUserDOIAdmin() {
         return callingSubject != null && checkSubjectsMatch(callingSubject, getAdminSubject());
-    }
-
-    protected boolean isCallingUserRequester(Node node){
-        try {
-            Long requesterUserId = Long.parseLong(node.getProperty(DOI_VOS_REQUESTER_PROP).getValue());
-            return callersNumericId.equals(requesterUserId);
-        } catch (NumberFormatException ex) {
-            log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
-                    node.getProperty(DOI_VOS_REQUESTER_PROP).getValue(), node.getName()), ex);
-            return false;
-        }
     }
 
     protected boolean isCallingUserReviewer() {
@@ -365,6 +362,17 @@ public abstract class DoiAction extends RestAction {
         Subject requestorSubject = getRequesterSubject(doiContainer);
 
         return checkSubjectsMatch(callingSubject, requestorSubject);
+    }
+
+    protected boolean isCallingUserRequester(Node node) {
+        try {
+            Long requesterUserId = Long.parseLong(node.getProperty(DOI_VOS_REQUESTER_PROP).getValue());
+            return callersNumericId.equals(requesterUserId);
+        } catch (NumberFormatException ex) {
+            log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
+                    node.getProperty(DOI_VOS_REQUESTER_PROP).getValue(), node.getName()), ex);
+            return false;
+        }
     }
 
     protected Subject getRequesterSubject(ContainerNode doiContainer) {
@@ -393,7 +401,7 @@ public abstract class DoiAction extends RestAction {
                             continue;
                         }
 
-                        if(callersNumericId == null) {
+                        if (callersNumericId == null) {
                             continue;
                         }
 
@@ -474,10 +482,10 @@ public abstract class DoiAction extends RestAction {
             Title title = null;
             try {
                 title = new Title(doiContainerNode.getPropertyValue(DOI_VOS_TITLE_PROP));
-                Identifier identifier = new Identifier(accountPrefix + "/" +doiSuffixString, "DOI");
+                Identifier identifier = new Identifier(accountPrefix + "/" + doiSuffixString, "DOI");
                 doiStatus = new DoiStatus(identifier, title, dataDirectory, Status.toValue(status));
             } catch (Exception ex) {
-                Identifier id = new Identifier(accountPrefix + "/" +doiSuffixString, "DOI");
+                Identifier id = new Identifier(accountPrefix + "/" + doiSuffixString, "DOI");
                 title = new Title("title");
                 doiStatus = new DoiStatus(id, title, dataDirectory, Status.toValue(status));
             }

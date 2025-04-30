@@ -399,7 +399,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
 
             List<DoiStatus> publisherDoiStatusList = searchDOIStatuses(searchFilter);
             Assert.assertTrue(publisherDoiStatusList.isEmpty());
-            return "";
+            return null;
         });
 
         Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
@@ -449,7 +449,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             // cleanup
             deleteDOI(draftDOIId);
             deleteDOI(reviewerOwnedDOIId);
-            return "";
+            return null;
         });
     }
 
@@ -507,7 +507,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
     }
 
     public List<DoiStatus> searchDOIStatuses(Map<String, Object> params) throws IOException, DoiParsingException {
-        URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, "search"));
+        URL doiURL = new URL(String.format("%s/%s", doiSearchServiceURL, "search"));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpPost post = new HttpPost(doiURL, params, bos);

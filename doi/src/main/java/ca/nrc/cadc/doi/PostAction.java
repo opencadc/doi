@@ -89,6 +89,7 @@ import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
+import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,7 +112,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.security.auth.Subject;
 
-import ca.nrc.cadc.util.StringUtil;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
@@ -138,7 +138,7 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
-        if(doiAction != null && doiAction.equals(SEARCH_ACTION)){
+        if (doiAction != null && doiAction.equals(SEARCH_ACTION)) {
             performDoiAction();
             return;
         }
@@ -507,7 +507,7 @@ public class PostAction extends DoiAction {
 
                 // Check role filter
                 if (doiStatusSearchFilter.getRole() != null) {
-                    if(callersNumericId == null){
+                    if (callersNumericId == null) {
                         continue; // Skip nodes if the caller's ID is not available
                     }
                     if (doiStatusSearchFilter.getRole().equals(Role.OWNER)) {
@@ -525,7 +525,7 @@ public class PostAction extends DoiAction {
                         }
 
                         NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
-                        if(statusProp.getValue().equals("minted") && !doiStatusSearchFilter.getStatusList().contains(Status.MINTED)){
+                        if (statusProp.getValue().equals("minted") && !doiStatusSearchFilter.getStatusList().contains(Status.MINTED)) {
                             continue; // Skip nodes where the status is minted and the caller is a reviewer
                         }
                     }
@@ -533,7 +533,8 @@ public class PostAction extends DoiAction {
                     NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
 
                     // Check if the user is DOI Admin, Reviewer, or matches the requester
-                    if (!statusProp.getValue().equals("minted") && (!isCallingUserDOIAdmin() && !isCallingUserReviewer() && !isCallingUserRequester(childNode))) {
+                    if (!statusProp.getValue().equals("minted") && !isCallingUserDOIAdmin() && !isCallingUserReviewer()
+                            && !isCallingUserRequester(childNode)) {
                         continue;
                     }
                 }
