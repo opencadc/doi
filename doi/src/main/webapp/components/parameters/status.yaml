@@ -9,3 +9,11 @@ status:
     type: array
     items:
       type: string
+      enum:
+          - "in progress"
+          - "locking data directory"
+          - "error locking data directory"
+          - "locked data directory"
+          - "registering to DataCite"
+          - "error registering to DataCite"
+          - "minted"

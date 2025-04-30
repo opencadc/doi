@@ -138,6 +138,11 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
+        if(doiAction != null && doiAction.equals(SEARCH_ACTION)){
+            performDoiAction();
+            return;
+        }
+
         // Do DOI creation work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             if (doiAction != null) {
@@ -510,10 +515,19 @@ public class PostAction extends DoiAction {
                             continue; // Skip nodes where the caller is not the owner OR DOI Admin
                         }
                     } else if (doiStatusSearchFilter.getRole().equals(Role.PUBLISHER)) {
-                        if (!isCallingUserReviewer() && !isCallingUserDOIAdmin()) {
+                        boolean callingUserReviewer = isCallingUserReviewer();
+                        if (!callingUserReviewer && !isCallingUserDOIAdmin()) {
                             continue; // Skip nodes where the caller is not a reviewer OR DOI Admin
                         }
-                        // No additional filtering needed for publisher filter
+
+                        if (callingUserReviewer && (isCallingUserRequester(childNode))) {
+                            continue; // Skip nodes where the caller is a reviewer as well as the owner
+                        }
+
+                        NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+                        if(statusProp.getValue().equals("minted") && !doiStatusSearchFilter.getStatusList().contains(Status.MINTED)){
+                            continue; // Skip nodes where the status is minted and the caller is a reviewer
+                        }
                     }
                 } else {
                     NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);

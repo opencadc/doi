@@ -313,6 +313,146 @@ public class AlternativePermissionsTest extends LifecycleTest {
         });
     }
 
+    @Test
+    public void testDOISearchEndpoint() throws PrivilegedActionException, DoiParsingException, IOException {
+        Resource expected = getTestResource(true, true, true);
+
+        String mintedDOIId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+
+            // create DOI
+            Resource actual = create(expected, DOISettingsType.ALT_DOI);
+            String doiID = getDOISuffix(actual.getIdentifier().getValue());
+            Assert.assertNotNull(doiID);
+            return doiID;
+        });
+
+        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+            URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, mintedDOIId));
+            Resource actual = getDOI(doiURL, mintedDOIId);
+
+            publish(actual, mintedDOIId, DOISettingsType.ALT_DOI);
+
+            return mintedDOIId;
+        });
+
+        String draftDOIId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+
+            // create DOI
+            Resource actual = create(expected, DOISettingsType.ALT_DOI);
+            String doiID = getDOISuffix(actual.getIdentifier().getValue());
+            Assert.assertNotNull(doiID);
+            return doiID;
+        });
+
+        String reviewerOwnedDOIId = Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+
+            // create DOI
+            Resource actual = create(expected, DOISettingsType.ALT_DOI);
+            String doiID = getDOISuffix(actual.getIdentifier().getValue());
+            Assert.assertNotNull(doiID);
+            return doiID;
+        });
+
+        Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+            // fetch all draft DOIs
+            Map<String, Object> searchFilter = new HashMap<>();
+            searchFilter.put("status", "in progress");
+
+            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(searchFilter);
+
+            long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
+            Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
+
+            Optional<DoiStatus> draftDOIStatus = draftDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).findFirst();
+            Assert.assertTrue(draftDOIStatus.isPresent());
+
+            Optional<DoiStatus> nonDraftDOIStatus = draftDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(mintedDOIId)).findFirst();
+            Assert.assertFalse(nonDraftDOIStatus.isPresent());
+
+            // fetch all minted DOIs
+            searchFilter = new HashMap<>();
+            searchFilter.put("status", "minted");
+
+            List<DoiStatus> publishedDoiStatusList = searchDOIStatuses(searchFilter);
+
+            long publishedDOIsCount = publishedDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.MINTED)).count();
+            Assert.assertEquals(publishedDoiStatusList.size(), publishedDOIsCount);
+
+            Optional<DoiStatus> mintedDOIStatus = publishedDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(mintedDOIId)).findFirst();
+            Assert.assertTrue(mintedDOIStatus.isPresent());
+
+            Optional<DoiStatus> nonMintedDOIStatus = publishedDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).findFirst();
+            Assert.assertFalse(nonMintedDOIStatus.isPresent());
+
+            // fetch all Own DOIs
+            searchFilter = new HashMap<>();
+            searchFilter.put("role", "owner");
+
+            List<DoiStatus> ownDoiStatusList = searchDOIStatuses(searchFilter);
+
+            long ownDOIsCount = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(mintedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            Assert.assertEquals(2, ownDOIsCount); // both should be present
+
+            // fetch all DOIs which user has access to publish
+            searchFilter = new HashMap<>();
+            searchFilter.put("role", "publisher");
+
+            List<DoiStatus> publisherDoiStatusList = searchDOIStatuses(searchFilter);
+            Assert.assertTrue(publisherDoiStatusList.isEmpty());
+            return "";
+        });
+
+        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+
+            // fetch all draft DOIs
+            Map<String, Object> searchFilter = new HashMap<>();
+            searchFilter.put("status", "in progress");
+
+            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(searchFilter);
+
+            long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
+            Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
+
+            draftDOIsCount = draftDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            Assert.assertEquals(2, draftDOIsCount);
+
+            // fetch all Own DOIs
+            searchFilter = new HashMap<>();
+            searchFilter.put("role", "owner");
+
+            List<DoiStatus> ownDoiStatusList = searchDOIStatuses(searchFilter);
+
+            long ownDOIsCount = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            Assert.assertEquals(1, ownDOIsCount);
+
+            Optional<DoiStatus> ownDOIStatus = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId)).findFirst();
+            Assert.assertTrue(ownDOIStatus.isPresent());
+
+            Optional<DoiStatus> notOwnedDOIStatus = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).findFirst();
+            Assert.assertFalse(notOwnedDOIStatus.isPresent());
+
+            // fetch all DOIs which user has access to publish
+            searchFilter = new HashMap<>();
+            searchFilter.put("role", "publisher");
+
+            List<DoiStatus> publisherDoiStatusList = searchDOIStatuses(searchFilter);
+
+            long publisherDOIsCount = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            Assert.assertEquals(1, publisherDOIsCount);
+
+            ownDOIStatus = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId)).findFirst();
+            Assert.assertFalse(ownDOIStatus.isPresent());
+
+            notOwnedDOIStatus = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).findFirst();
+            Assert.assertTrue(notOwnedDOIStatus.isPresent());
+
+            // cleanup
+            deleteDOI(draftDOIId);
+            deleteDOI(reviewerOwnedDOIId);
+            return "";
+        });
+    }
+
     private Resource getDOI(URL doiURL, String doiSuffix) throws DoiParsingException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
