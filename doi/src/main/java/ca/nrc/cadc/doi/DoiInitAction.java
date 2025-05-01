@@ -108,7 +108,7 @@ public class DoiInitAction extends InitAction {
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
 
     //Alternative DOI settings properties
-    public static final String REVIEWER_GROUP_URI_KEY = DOI_KEY + ".reviewerGroupURI";
+    public static final String PUBLISHER_GROUP_URI_KEY = DOI_KEY + ".publisherGroupURI";
     public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
     public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
 
@@ -307,11 +307,11 @@ public class DoiInitAction extends InitAction {
         throw new IllegalStateException(String.format("no HttpPrincipal found for %s", subject));
     }
 
-    public static GroupURI getReviewerGroupURI(MultiValuedProperties props) {
-        String reviewerGroupURI = props.getFirstPropertyValue(REVIEWER_GROUP_URI_KEY);
-        log.debug("reviewerGroupURI: " + reviewerGroupURI);
+    public static GroupURI getPublisherGroupURI(MultiValuedProperties props) {
+        String publisherGroupURI = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
+        log.debug("publisherGroupURI: " + publisherGroupURI);
 
-        return reviewerGroupURI == null ? null : new GroupURI(URI.create(reviewerGroupURI));
+        return publisherGroupURI == null ? null : new GroupURI(URI.create(publisherGroupURI));
     }
 
     public static String getDoiIdentifierPrefix(MultiValuedProperties props) {

@@ -72,18 +72,18 @@ _doiIdentifierPrefix_ is prefix to the DOI Identifier.
 
 **For Alternative DOI Settings ONLY**
 ```
-# Reviewer Group URI
-ca.nrc.cadc.doi.reviewerGroupURI = {Reviewer Group URI}
+# Publisher Group URI
+ca.nrc.cadc.doi.publisherGroupURI = {Publisher Group URI}
 
 # self Publish
 ca.nrc.cadc.doi.selfPublish = {true|false}
 ```
 
-_reviewerGroupURI_ is the URI to the reviewer group which gives permission to Approve or Reject DOIs to the user associated with this group.
+_publisherGroupURI_ is the URI to the group which gives permission to Approve/Publish or Reject DOIs to the user associated with this group.
 
-_selfPublish_ is to give permission to Mint DOIs. If set to true, only DOI Owner can Mint his DOI. If set to false, only a user from reviewer group can Mint all the DOIs.
+_selfPublish_ is to give permission to Mint DOIs. If set to true, only DOI Owner can Mint his DOI. If set to false, only a user from publisher group can Mint all the DOIs.
 
-#### Note: If `reviewerGroupURI` is configured, `selfPublish` has to be configured 'false'.
+#### Note: If `publisherGroupURI` is configured, `selfPublish` has to be configured 'false'.
 
 **For developer testing only:**
 ```
@@ -146,7 +146,7 @@ At this point the metadata and the data sub-directory are available to the user 
   - update metadata using the GUI
 
 ### Finalizing the DOI
-After all data files have been uploaded and the metadata have been updated, the user(The owner of the DOI OR a user from reviewer group specified in doi.config) can finalize the DOI using the GUI. The process to finalize a DOI is a bit involved. Please refer to the status table below for the possible status transitions. Finalizing a DOI results in the following work to be performed.
+After all data files have been uploaded and the metadata have been updated, the user(The owner of the DOI OR a user from publisher group specified in doi.config) can finalize the DOI using the GUI. The process to finalize a DOI is a bit involved. Please refer to the status table below for the possible status transitions. Finalizing a DOI results in the following work to be performed.
   - change the following to read only and make them publicly accessible:
     - data sub-directory
     - all directories and their sub-directories, and data files contained in the data sub-directory

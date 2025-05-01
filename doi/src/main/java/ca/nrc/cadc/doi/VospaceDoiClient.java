@@ -107,14 +107,14 @@ public class VospaceDoiClient {
     private VOSURI baseDataURI = null;
     private String xmlFilename = "";
     private boolean includePublicNodes = false;
-    private GroupURI reviewerGroupURI = null;
+    private GroupURI publisherGroupURI = null;
     private URI gmsResourceID = null;
 
     public VospaceDoiClient(URI resourceID, String doiParentPath, Subject callingSubject,
-                            Boolean includePublicNodes, GroupURI reviewerGroupURI, URI gmsResourceID) {
+                            Boolean includePublicNodes, GroupURI publisherGroupURI, URI gmsResourceID) {
         this.baseDataURI = new VOSURI(resourceID, doiParentPath);
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
-        this.reviewerGroupURI = reviewerGroupURI;
+        this.publisherGroupURI = publisherGroupURI;
         this.gmsResourceID = gmsResourceID;
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
@@ -186,10 +186,10 @@ public class VospaceDoiClient {
         boolean isRequesterNode = false;
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
             return true;
-        } else if (reviewerGroupURI != null) {
+        } else if (publisherGroupURI != null) {
             GMSClient gmsClient = new GMSClient(gmsResourceID);
 
-            if (gmsClient.isMember(reviewerGroupURI)) {
+            if (gmsClient.isMember(publisherGroupURI)) {
                 return true;
             }
         }

@@ -102,7 +102,6 @@ import java.security.PrivilegedExceptionAction;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
@@ -145,7 +144,7 @@ public abstract class DoiAction extends RestAction {
     protected URI gmsResourceID;
     protected String accountPrefix;
     protected String parentPath;
-    protected GroupURI reviewerGroupURI;
+    protected GroupURI publisherGroupURI;
     protected Boolean selfPublish = true;
     protected String doiIdentifierPrefix;
 
@@ -171,7 +170,7 @@ public abstract class DoiAction extends RestAction {
         this.vaultResourceID = DoiInitAction.getVospaceResourceID(config);
         this.parentPath = DoiInitAction.getParentPath(config);
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
-        this.reviewerGroupURI = DoiInitAction.getReviewerGroupURI(config);
+        this.publisherGroupURI = DoiInitAction.getPublisherGroupURI(config);
         this.doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
 
         String selfPublishProperty = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
@@ -195,7 +194,7 @@ public abstract class DoiAction extends RestAction {
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, parentPath,
-                callingSubject, includePublic, reviewerGroupURI, gmsResourceID);
+                callingSubject, includePublic, publisherGroupURI, gmsResourceID);
 
         if (authorize) {
             authorizeUser(callingSubject);
@@ -243,7 +242,7 @@ public abstract class DoiAction extends RestAction {
                 return;
             }
             if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
-                if (isCallingUserReviewer() && !isCallingUserRequester()) {
+                if (isCallingUserPublisher() && !isCallingUserRequester()) {
                     return;
                 } else {
                     throw new AccessControlException("Mint Action is not permitted for DOI : " + doiSuffix);
@@ -255,7 +254,7 @@ public abstract class DoiAction extends RestAction {
         } else if (this instanceof DeleteAction) {
             if (isCallingUserRequester()) {
                 return;
-            } else if (reviewerGroupURI != null && isCallingUserReviewer()) {
+            } else if (publisherGroupURI != null && isCallingUserPublisher()) {
                 return;
             }
         }
@@ -310,7 +309,7 @@ public abstract class DoiAction extends RestAction {
 
         if (isRoleFilterPresent) {
             Role role = Role.toValue(syncInput.getParameter("role"));
-            if (role.equals(Role.PUBLISHER) && reviewerGroupURI == null) {
+            if (role.equals(Role.PUBLISHER) && publisherGroupURI == null) {
                 role = Role.OWNER;
             }
             doiStatusSearchFilter.setRole(role);
@@ -349,9 +348,9 @@ public abstract class DoiAction extends RestAction {
         return callingSubject != null && checkSubjectsMatch(callingSubject, getAdminSubject());
     }
 
-    protected boolean isCallingUserReviewer() {
-        if (reviewerGroupURI != null) {
-            return getGMSClient().isMember(reviewerGroupURI);
+    protected boolean isCallingUserPublisher() {
+        if (publisherGroupURI != null) {
+            return getGMSClient().isMember(publisherGroupURI);
         }
         return false;
     }
@@ -406,7 +405,7 @@ public abstract class DoiAction extends RestAction {
                         }
 
                         Long requesterUserId = Long.parseLong(requester.getValue());
-                        if (callersNumericId.equals(requesterUserId) || isCallingUserDOIAdmin() || isCallingUserReviewer()) {
+                        if (callersNumericId.equals(requesterUserId) || isCallingUserDOIAdmin() || isCallingUserPublisher()) {
                             ownedNodes.add(childNode);
                         }
                     } catch (NumberFormatException e) {

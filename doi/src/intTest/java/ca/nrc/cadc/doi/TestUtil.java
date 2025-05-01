@@ -95,7 +95,7 @@ public class TestUtil {
     // AUTH_CERT has read/write access to the test DOI
     static String AUTH_CERT = "doi-auth.pem";
 
-    // AUTH_TWO_CERT is part of test reviewer group which can approve or reject a DOI if alternative permissions is configured
+    // AUTH_TWO_CERT is part of test publisher group which can approve or reject a DOI if alternative permissions is configured
     static String AUTH_TWO_CERT = "cadcauthtest2.pem";
 
     // NO_AUTH_CERT has read only access to the test DOI

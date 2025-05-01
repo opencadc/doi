@@ -114,7 +114,7 @@ public abstract class IntTestBase extends TestBase {
     static Subject adminSubject;
     static Subject readWriteSubject;
     static Subject readOnlySubject;
-    static Subject reviewerSubject;
+    static Subject publisherSubject;
     static URL doiServiceURL;
     static URL doiAltServiceURL;
     static URL doiSearchServiceURL;
@@ -132,7 +132,7 @@ public abstract class IntTestBase extends TestBase {
         adminSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.ADMIN_CERT, IntTestBase.class));
         readWriteSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.AUTH_CERT, IntTestBase.class));
         readOnlySubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.NO_AUTH_CERT, IntTestBase.class));
-        reviewerSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.AUTH_TWO_CERT, IntTestBase.class));
+        publisherSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.AUTH_TWO_CERT, IntTestBase.class));
 
         RegistryClient regClient = new RegistryClient();
         doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);

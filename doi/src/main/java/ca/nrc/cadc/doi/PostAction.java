@@ -515,25 +515,25 @@ public class PostAction extends DoiAction {
                             continue; // Skip nodes where the caller is not the owner OR DOI Admin
                         }
                     } else if (doiStatusSearchFilter.getRole().equals(Role.PUBLISHER)) {
-                        boolean callingUserReviewer = isCallingUserReviewer();
-                        if (!callingUserReviewer && !isCallingUserDOIAdmin()) {
-                            continue; // Skip nodes where the caller is not a reviewer OR DOI Admin
+                        boolean callingUserPublisher = isCallingUserPublisher();
+                        if (!callingUserPublisher && !isCallingUserDOIAdmin()) {
+                            continue; // Skip nodes where the caller is not a publisher OR DOI Admin
                         }
 
-                        if (callingUserReviewer && (isCallingUserRequester(childNode))) {
-                            continue; // Skip nodes where the caller is a reviewer as well as the owner
+                        if (callingUserPublisher && (isCallingUserRequester(childNode))) {
+                            continue; // Skip nodes where the caller is a publisher as well as the owner
                         }
 
                         NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
                         if (statusProp.getValue().equals("minted") && !doiStatusSearchFilter.getStatusList().contains(Status.MINTED)) {
-                            continue; // Skip nodes where the status is minted and the caller is a reviewer
+                            continue; // Skip nodes where the status is minted and the caller is a publisher
                         }
                     }
                 } else {
                     NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
 
-                    // Check if the user is DOI Admin, Reviewer, or matches the requester
-                    if (!statusProp.getValue().equals("minted") && !isCallingUserDOIAdmin() && !isCallingUserReviewer()
+                    // Check if the user is DOI Admin, publisher, or matches the requester
+                    if (!statusProp.getValue().equals("minted") && !isCallingUserDOIAdmin() && !isCallingUserPublisher()
                             && !isCallingUserRequester(childNode)) {
                         continue;
                     }
@@ -629,9 +629,9 @@ public class PostAction extends DoiAction {
         // All folders will be only readable by requester
         node.getReadWriteGroup().add(doiGroup);
 
-        if (reviewerGroupURI != null) {
-            node.getReadOnlyGroup().add(reviewerGroupURI);
-            node.getReadWriteGroup().add(reviewerGroupURI);
+        if (publisherGroupURI != null) {
+            node.getReadOnlyGroup().add(publisherGroupURI);
+            node.getReadWriteGroup().add(publisherGroupURI);
         }
     }
     

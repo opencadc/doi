@@ -1,7 +1,0 @@
-view:
-  name: "view"
-  in: "query"
-  description: "To get all the published DOIs"
-  required: false
-  schema:
-    type: "string"

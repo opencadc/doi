@@ -46,7 +46,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
      *       Mint it - fail with 403 status
      *       get all DOI Statuses - should find the recently created DOI
      *       search DOIStatus with 'status = draft' filter - success
-     *   Reviewer user:
+     *   Publisher user:
      *       get DOI - success
      *       get all DOI Statuses - should find the recently created DOI
      *       get status of it - success
@@ -109,18 +109,18 @@ public class AlternativePermissionsTest extends LifecycleTest {
             return doiID;
         });
 
-        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiSuffix));
 
             // Get DOI : Success expected
             Resource actual = getDOI(doiURL, doiSuffix);
-            log.debug("reviewerSubject - get DOI success for DOI ID : " + doiSuffix);
+            log.debug("publisherSubject - get DOI success for DOI ID : " + doiSuffix);
 
-            // get all DOIs - reviewer should find the created draft DOI
+            // get all DOIs - publisher should find the created draft DOI
             List<DoiStatus> doiStatusList = getDoiStatuses();
             Optional<DoiStatus> createdDOIStatus = doiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(doiSuffix)).findFirst();
             Assert.assertTrue(createdDOIStatus.isPresent());
-            log.debug("reviewerSubject - get All DOI Status success");
+            log.debug("publisherSubject - get All DOI Status success");
 
             // Get DOI status : Success expected
             URL getStatusURL = new URL(doiURL + "/" + DoiAction.STATUS_ACTION);
@@ -131,7 +131,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
 
             Assert.assertNull(get.getThrowable());
             Assert.assertEquals(200, get.getResponseCode());
-            log.debug("reviewerSubject - get DOI status success for DOI ID : " + doiSuffix);
+            log.debug("publisherSubject - get DOI status success for DOI ID : " + doiSuffix);
 
             //publish DOI : Success expected
             publish(actual, doiSuffix, DOISettingsType.ALT_DOI);
@@ -139,7 +139,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             doiStatusList = getDoiStatuses();
             Optional<DoiStatus> optionalDOIStatus = doiStatusList.stream().filter(e -> getDOISuffix(e.getIdentifier().getValue()).equals(doiSuffix)).findFirst();
             Assert.assertTrue(optionalDOIStatus.isPresent());
-            log.debug("reviewerSubject - DOI minting Successful for DOI ID: " + doiSuffix);
+            log.debug("publisherSubject - DOI minting Successful for DOI ID: " + doiSuffix);
 
             // verify minted DOI status in search
             Map<String, Object> mintedSearchFilter = new HashMap<>();
@@ -217,11 +217,11 @@ public class AlternativePermissionsTest extends LifecycleTest {
      *  Test Case 3:
      *   cadc user:
      *       create a DOI - success
-     *   reviewer user:
+     *   publisher user:
      *       delete it - success
      * */
-    @Test // reviewer can delete a DOI
-    public void testDeleteDOIByReviewer() throws Exception {
+    @Test // publisher can delete a DOI
+    public void testDeleteDOIByPublisher() throws Exception {
         // Create a new DOI
         Resource expected = getTestResource(true, true, true);
 
@@ -234,16 +234,16 @@ public class AlternativePermissionsTest extends LifecycleTest {
         });
 
         // Delete DOI - Success expected
-        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             deleteDOI(doiId);
-            log.debug("reviewerSubject - DOI deleted successfully: " + doiId);
+            log.debug("publisherSubject - DOI deleted successfully: " + doiId);
             return doiId;
         });
     }
 
     /*
      *  Test Case 4:
-     *   reviewer user:
+     *   publisher user:
      *      create a DOI - success
      *      Mint it - fail with 403 status
      *      get all DOI statuses - created DOI is still accessible
@@ -251,27 +251,27 @@ public class AlternativePermissionsTest extends LifecycleTest {
      *      search DOIStatus with 'role = publisher' filter - should not find the recently minted DOI
      *   cadc user:
      *      get all DOI statuses - should not find the recently created DOI
-     *      get DOI status - Access denied for DOI created by other user(if user is not reviewer/doi admin)
-     *   reviewer user:
+     *      get DOI status - Access denied for DOI created by other user(if user is not publisher/doi admin)
+     *   publisher user:
      *      delete it - success
      * */
-    @Test // If Reviewer is the owner of a DOI, he can not mint it.
-    public void testReviewerAsDOIOwnerForMintAction() throws PrivilegedActionException {
+    @Test // If publisher is the owner of a DOI, he can not mint it.
+    public void testPublisherAsDOIOwnerForMintAction() throws PrivilegedActionException {
         Resource expected = getTestResource(true, true, true);
-        String doiId = Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        String doiId = Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
-            log.debug("reviewerSubject - DOI created successfully: " + doiID);
+            log.debug("publisherSubject - DOI created successfully: " + doiID);
 
             mintDOI403Expected(doiID);
-            log.debug("reviewerSubject - DOI minting failed successfully: " + doiID);
+            log.debug("publisherSubject - DOI minting failed successfully: " + doiID);
 
             // verify that the created DOI is still accessible and status is DRAFT
             List<DoiStatus> doiStatusList = getDoiStatuses();
 
             Optional<DoiStatus> createdDOIStatus = doiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(doiID) && doiStatus.getStatus().equals(Status.DRAFT)).findFirst();
             Assert.assertTrue(createdDOIStatus.isPresent());
-            log.debug("reviewerSubject - DOI's DRAFT status verified: " + doiID);
+            log.debug("publisherSubject - DOI's DRAFT status verified: " + doiID);
 
             // verify DOI in search as an owner
             Map<String, Object> ownedDOIsSearchFilter = new HashMap<>();
@@ -306,9 +306,9 @@ public class AlternativePermissionsTest extends LifecycleTest {
             return doiId;
         });
 
-        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             deleteDOI(doiId);
-            log.debug("reviewerSubject - DOI deleted successfully: " + doiId);
+            log.debug("publisherSubject - DOI deleted successfully: " + doiId);
             return doiId;
         });
     }
@@ -326,7 +326,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             return doiID;
         });
 
-        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, mintedDOIId));
             Resource actual = getDOI(doiURL, mintedDOIId);
 
@@ -344,7 +344,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             return doiID;
         });
 
-        String reviewerOwnedDOIId = Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        String publisherOwnedDOIId = Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
 
             // create DOI
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
@@ -402,7 +402,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             return null;
         });
 
-        Subject.doAs(reviewerSubject, (PrivilegedExceptionAction<String>) () -> {
+        Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
 
             // fetch all draft DOIs
             Map<String, Object> searchFilter = new HashMap<>();
@@ -413,7 +413,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
             Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
 
-            draftDOIsCount = draftDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            draftDOIsCount = draftDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
             Assert.assertEquals(2, draftDOIsCount);
 
             // fetch all Own DOIs
@@ -422,10 +422,10 @@ public class AlternativePermissionsTest extends LifecycleTest {
 
             List<DoiStatus> ownDoiStatusList = searchDOIStatuses(searchFilter);
 
-            long ownDOIsCount = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            long ownDOIsCount = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
             Assert.assertEquals(1, ownDOIsCount);
 
-            Optional<DoiStatus> ownDOIStatus = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId)).findFirst();
+            Optional<DoiStatus> ownDOIStatus = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId)).findFirst();
             Assert.assertTrue(ownDOIStatus.isPresent());
 
             Optional<DoiStatus> notOwnedDOIStatus = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).findFirst();
@@ -437,10 +437,10 @@ public class AlternativePermissionsTest extends LifecycleTest {
 
             List<DoiStatus> publisherDoiStatusList = searchDOIStatuses(searchFilter);
 
-            long publisherDOIsCount = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
+            long publisherDOIsCount = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
             Assert.assertEquals(1, publisherDOIsCount);
 
-            ownDOIStatus = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(reviewerOwnedDOIId)).findFirst();
+            ownDOIStatus = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId)).findFirst();
             Assert.assertFalse(ownDOIStatus.isPresent());
 
             notOwnedDOIStatus = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).findFirst();
@@ -448,7 +448,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
 
             // cleanup
             deleteDOI(draftDOIId);
-            deleteDOI(reviewerOwnedDOIId);
+            deleteDOI(publisherOwnedDOIId);
             return null;
         });
     }
