@@ -1,6 +1,6 @@
 post:
   tags:
-    - "instances"
+    - "DOI Instance"
   summary: "Update a DOI instance"
   description: "Multipart update request. One part contains the DOI instance. Another part contains the optional journal reference"
   operationId: "updateDOI"
@@ -41,7 +41,7 @@ post:
 
 get:
   tags:
-    - "instances"
+    - "DOI Instance"
   summary: "Get a DOI instance"
   description: "Get specified DOI for authenticated user. Calling user must have access."
   operationId: "getDOI"
@@ -61,7 +61,7 @@ get:
 
 delete:
   tags:
-    - "instances"
+    - "DOI Instance"
   summary: "Delete a DOI instance"
   description: "Delete specified DOI for authenticated user, including associated VOSpace data directory. Calling user must have access."
   operationId: "deleteDOI"

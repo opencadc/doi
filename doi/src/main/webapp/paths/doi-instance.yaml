@@ -1,6 +1,6 @@
 post:
   tags:
-    - "instances"
+    - "DOI Instance"
   summary: "Initialize a new DOI"
   description: "Generates a VOSpace directory the calling user will have permission to upload DOI data to, and an XML file using DataCite metadata XSD format."
   operationId: "createDOI"
@@ -31,9 +31,9 @@ post:
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 get:
   tags:
-    - "instances"
+    - "DOI Status"
   summary: "Get a list of DOI statuses"
-  description: "List the statuses of all the DOIs which User has access."
+  description: "Return the DOIStatus for all DOI's the User has permission to view."
   operationId: "getAllDOI"
   responses:
     "200":

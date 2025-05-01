@@ -1,9 +1,0 @@
-DOIStatusSearch:
-  type: "object"
-  properties:
-    identifier:
-      type: "string"
-      example: "10.5072/example-full"
-    status:
-      type: "string"
-      example: "draft"

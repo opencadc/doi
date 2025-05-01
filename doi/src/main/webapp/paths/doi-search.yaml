@@ -1,9 +1,9 @@
 post:
   tags:
-    - "instances"
-  summary: "Get a list of DOI instances"
-  description: "Get DOI instances based on filter request."
-  operationId: "getDOIs"
+    - "DOI Status"
+  summary: "Get a list of DOIStatus"
+  description: "Get DOIStatus List based on filter request."
+  operationId: "getDOIStatuses"
   parameters:
     - $ref: "../components/parameters/status.yaml#/status"
     - $ref: "../components/parameters/role.yaml#/role"

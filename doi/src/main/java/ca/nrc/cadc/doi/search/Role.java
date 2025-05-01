@@ -3,8 +3,7 @@ package ca.nrc.cadc.doi.search;
 public enum Role {
 
     OWNER("owner"),
-    PUBLISHER("publisher"),
-    DOI_ADMIN("admin");
+    PUBLISHER("publisher");
 
     private final String value;
 
