@@ -182,8 +182,7 @@ public class VospaceDoiClient {
     }
 
     //  doi admin should have access as well
-    public boolean isCallerAllowed(Node node, Subject adminSubject) {
-        boolean isRequesterNode = false;
+    public boolean hasCallerReadDOIAccess(Node node, Subject adminSubject) {
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
             return true;
         } else if (publisherGroupURI != null) {
@@ -198,14 +197,18 @@ public class VospaceDoiClient {
         String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
         log.debug("requester for node: " + requester);
         if (callersNumericId != null && StringUtil.hasText(requester)) {
-            isRequesterNode = requester.equals(callersNumericId.toString());
+            if (requester.equals(callersNumericId.toString())) {
+                return true;
+            }
             Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
             for (X500Principal p : xset) {
-                isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminX500);
+                if (AuthenticationUtil.equals(p, adminX500)) {
+                    return true;
+                }
             }
         }
 
-        return isRequesterNode;
+        return false;
     }
 
     private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {

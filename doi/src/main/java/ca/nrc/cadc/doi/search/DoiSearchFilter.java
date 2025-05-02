@@ -5,17 +5,11 @@ import ca.nrc.cadc.doi.status.Status;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DoiStatusSearchFilter {
+public class DoiSearchFilter {
     private Role role;
     private List<Status> statusList = new ArrayList<>();
 
-    public DoiStatusSearchFilter() {
-        this.statusList = new ArrayList<>();
-    }
-
-    public DoiStatusSearchFilter(Role role, List<Status> statusList) {
-        this.role = role;
-        this.statusList = statusList;
+    public DoiSearchFilter() {
     }
 
     public Role getRole() {

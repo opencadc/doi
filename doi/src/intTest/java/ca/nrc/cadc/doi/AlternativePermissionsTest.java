@@ -507,7 +507,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
     }
 
     public List<DoiStatus> searchDOIStatuses(Map<String, Object> params) throws IOException, DoiParsingException {
-        URL doiURL = new URL(String.format("%s/%s", doiSearchServiceURL, "search"));
+        URL doiURL = new URL(String.format("%s", doiSearchServiceURL));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpPost post = new HttpPost(doiURL, params, bos);

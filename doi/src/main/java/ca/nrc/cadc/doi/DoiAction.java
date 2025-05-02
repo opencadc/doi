@@ -74,14 +74,11 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.doi.search.DoiStatusSearchFilter;
-import ca.nrc.cadc.doi.search.Role;
+import ca.nrc.cadc.doi.search.DoiSearchFilter;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
-import ca.nrc.cadc.net.ResourceAlreadyExistsException;
-import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -91,7 +88,6 @@ import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -110,11 +106,9 @@ import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
-import org.opencadc.vospace.NodeNotSupportedException;
 import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.async.RecursiveSetNode;
-import org.opencadc.vospace.io.NodeParsingException;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
@@ -137,7 +131,7 @@ public abstract class DoiAction extends RestAction {
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
-    protected DoiStatusSearchFilter doiStatusSearchFilter;
+    protected DoiSearchFilter doiSearchFilter;
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
     protected URI vaultResourceID;
@@ -228,38 +222,6 @@ public abstract class DoiAction extends RestAction {
         if (s == null || s.getPrincipals().isEmpty()) {
             throw new AccessControlException("Unauthorized");
         }
-
-        if (doiSuffix == null) {
-            return; // DOI Initialization does not require authorization
-        }
-
-        if (checkSubjectsMatch(s, getAdminSubject())) {
-            return; // Doi Admin has full access
-        }
-
-        if (this instanceof PostAction) {
-            if (doiAction != null && doiAction.equals(DoiAction.SEARCH_ACTION)) {
-                return;
-            }
-            if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
-                if (isCallingUserPublisher() && !isCallingUserRequester()) {
-                    return;
-                } else {
-                    throw new AccessControlException("Mint Action is not permitted for DOI : " + doiSuffix);
-                }
-            }
-            if (isCallingUserRequester()) {
-                return;
-            }
-        } else if (this instanceof DeleteAction) {
-            if (isCallingUserRequester()) {
-                return;
-            } else if (publisherGroupURI != null && isCallingUserPublisher()) {
-                return;
-            }
-        }
-
-        throw new AccessControlException("Not authorized to access this resource.");
     }
 
     private void parsePath() {
@@ -290,34 +252,8 @@ public abstract class DoiAction extends RestAction {
 
             if (parts.length > 0 && parts[2].equals("search")) {
                 doiAction = DoiAction.SEARCH_ACTION;
-                if (!syncInput.getParameterNames().isEmpty()) {
-                    prepareDoiStatusSearchFilter();
-                }
             }
         }
-    }
-
-    private void prepareDoiStatusSearchFilter() {
-        boolean isRoleFilterPresent = syncInput.getParameter("role") != null;
-        boolean isStatusFilterPresent = syncInput.getParameter("status") != null;
-
-        if (!isRoleFilterPresent && !isStatusFilterPresent) {
-            return;
-        }
-
-        this.doiStatusSearchFilter = new DoiStatusSearchFilter();
-
-        if (isRoleFilterPresent) {
-            Role role = Role.toValue(syncInput.getParameter("role"));
-            if (role.equals(Role.PUBLISHER) && publisherGroupURI == null) {
-                role = Role.OWNER;
-            }
-            doiStatusSearchFilter.setRole(role);
-        }
-        if (isStatusFilterPresent) {
-            doiStatusSearchFilter.prepareStatusList(syncInput.getParameters("status"));
-        }
-
     }
 
     protected boolean checkSubjectsMatch(Subject subA, Subject subB) {
@@ -333,17 +269,6 @@ public abstract class DoiAction extends RestAction {
         return false;
     }
 
-    protected ContainerNode getDoiContainer(String doiPath) {
-        ContainerNode doiContainer;
-        try {
-            doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
-        } catch (IOException | InterruptedException | NodeParsingException | NodeNotSupportedException
-                 | ResourceAlreadyExistsException | ResourceNotFoundException e) {
-            throw new RuntimeException("Failed to get DOI Container from DOI Path: " + doiPath, e);
-        }
-        return doiContainer;
-    }
-
     protected boolean isCallingUserDOIAdmin() {
         return callingSubject != null && checkSubjectsMatch(callingSubject, getAdminSubject());
     }
@@ -355,14 +280,6 @@ public abstract class DoiAction extends RestAction {
         return false;
     }
 
-    protected boolean isCallingUserRequester() {
-        String doiPath = String.format("%s/%s", parentPath, doiSuffix);
-        ContainerNode doiContainer = getDoiContainer(doiPath);
-        Subject requestorSubject = getRequesterSubject(doiContainer);
-
-        return checkSubjectsMatch(callingSubject, requestorSubject);
-    }
-
     protected boolean isCallingUserRequester(Node node) {
         try {
             Long requesterUserId = Long.parseLong(node.getProperty(DOI_VOS_REQUESTER_PROP).getValue());
@@ -372,18 +289,6 @@ public abstract class DoiAction extends RestAction {
                     node.getProperty(DOI_VOS_REQUESTER_PROP).getValue(), node.getName()), ex);
             return false;
         }
-    }
-
-    protected Subject getRequesterSubject(ContainerNode doiContainer) {
-        String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-
-        if (doiRequester == null) {
-            throw new IllegalStateException("No requester associated with DOI: " + doiSuffix);
-        }
-
-        ACIdentityManager acIdentityManager = new ACIdentityManager();
-        Integer numericID = Integer.parseInt(doiRequester);
-        return acIdentityManager.toSubject(numericID);
     }
 
     protected List<Node> getOwnedDOIList() throws Exception {
@@ -456,7 +361,7 @@ public abstract class DoiAction extends RestAction {
 
     protected DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, boolean authorize) throws Exception {
         DoiStatus doiStatus;
-        if (!authorize || vospaceDoiClient.isCallerAllowed(doiContainerNode, getAdminSubject())) {
+        if (!authorize || vospaceDoiClient.hasCallerReadDOIAccess(doiContainerNode, getAdminSubject())) {
             // get status
             String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
             if (StringUtil.hasText(status)
@@ -468,14 +373,7 @@ public abstract class DoiAction extends RestAction {
 
             // get the data directory
             // TODO why do this when the data directory path is known???
-            String dataDirectory = null;
-            List<Node> doiContainedNodes = doiContainerNode.getNodes();
-            for (Node node : doiContainedNodes) {
-                if (node.getName().equals("data")) {
-                    dataDirectory = String.format("%s/%s/data", parentPath, doiSuffixString);
-                    break;
-                }
-            }
+            String dataDirectory = String.format("%s/%s/data", parentPath, doiSuffixString);
 
             // get title and construct DoiStatus instance
             Title title = null;

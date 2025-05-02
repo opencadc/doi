@@ -73,8 +73,7 @@ import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.VOSURI;
-import org.opencadc.vospace.client.async.RecursiveDeleteNode;
+import org.opencadc.vospace.NodeNotFoundException;
 
 
 public class DeleteAction extends DoiAction {
@@ -89,6 +88,8 @@ public class DeleteAction extends DoiAction {
     public void doAction() throws Exception {
         super.init(true);
 
+        authorize();
+
         // Do all subsequent work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             doActionImpl();
@@ -96,6 +97,19 @@ public class DeleteAction extends DoiAction {
         });
     }
 
+    private void authorize() throws NodeNotFoundException {
+        if (isCallingUserDOIAdmin()) {
+            return; // Doi Admin has full access
+        }
+
+        if (isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix))) {
+            return;
+        } else if (publisherGroupURI != null && isCallingUserPublisher()) {
+            return;
+        }
+
+        throw new AccessControlException("Not authorized to Delete this resource.");
+    }
 
     private void doActionImpl() throws Exception {
         if (doiSuffix == null) {
@@ -106,8 +120,7 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-        String doiPath = String.format("%s/%s", parentPath, doiSuffix);
-        ContainerNode doiContainer = getDoiContainer(doiPath);
+        ContainerNode doiContainer = vospaceDoiClient.getContainerNode(doiSuffix);
 
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
@@ -121,7 +134,7 @@ public class DeleteAction extends DoiAction {
         log.debug("deleting group: " + groupToDelete);
         getGMSClient().deleteGroup(groupToDelete);
 
-        log.debug("deleting node: " + doiPath);
+        log.debug("deleting node: " + String.format("%s/%s", parentPath, doiSuffix));
         vospaceDoiClient.deleteNode(doiSuffix);
     }
 
