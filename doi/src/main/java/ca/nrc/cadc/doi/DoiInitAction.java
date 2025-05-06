@@ -103,7 +103,7 @@ public class DoiInitAction extends InitAction {
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
     public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
-
+    public static final String DOI_GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
 
