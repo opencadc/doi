@@ -96,7 +96,7 @@ public class TestUtil {
     static String AUTH_CERT = "doi-auth.pem";
 
     // AUTH_TWO_CERT is part of test publisher group which can approve or reject a DOI if alternative permissions is configured
-    static String AUTH_TWO_CERT = "cadcauthtest2.pem";
+    static String PUBLISHER_CERT = "cadcauthtest2.pem";
 
     // NO_AUTH_CERT has read only access to the test DOI
     static String NO_AUTH_CERT = "doi-noauth.pem";
@@ -114,8 +114,8 @@ public class TestUtil {
     // path for the DOI parent node in VOSpace
     static String DOI_PARENT_PATH;
 
-    // resourceID for the local test DOI service for Alternative DOI/RAFTS specific scenarios
-    static URI DOI_ALT_RESOURCE_ID = URI.create("ivo://opencadc.org/rafts");
+    // resourceID for the local test DOI service for Alternative DOI specific scenarios
+    static URI DOI_ALT_RESOURCE_ID = URI.create("ivo://opencadc.org/doiAlt");
 
     // VOSpace URI to the Alternative DOI parent node,
     static URI DOI_ALT_VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi/doiAlt");

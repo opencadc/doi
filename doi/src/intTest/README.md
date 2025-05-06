@@ -19,3 +19,4 @@ The following certificates are expected.
 - `doi-admin.pem` owns and has full permissions to the test DOI.
 - `doi-auth.pem` is a member of a group that has read-write permissions to the test DOI.
 - `doi-noauth.pem` is not a member of any group that has permissions to the test DOI, resulting in read-only permissions to the test DOI.
+- `doi-publisher.pem` is a member of a group that has publish permissions to the test DOI.

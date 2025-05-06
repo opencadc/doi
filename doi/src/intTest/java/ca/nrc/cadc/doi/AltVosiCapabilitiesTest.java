@@ -62,80 +62,37 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
 */
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.status.Status;
-import java.security.AccessControlException;
-import java.security.PrivilegedExceptionAction;
-import javax.security.auth.Subject;
+import ca.nrc.cadc.reg.Capabilities;
+import ca.nrc.cadc.reg.Capability;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.vosi.CapabilitiesTest;
 import org.apache.log4j.Logger;
-import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.NodeNotFoundException;
+import org.junit.Assert;
 
+public class AltVosiCapabilitiesTest extends CapabilitiesTest {
+    private static final Logger log = Logger.getLogger(AltVosiCapabilitiesTest.class);
 
-public class DeleteAction extends DoiAction {
-
-    private static final Logger log = Logger.getLogger(DeleteAction.class);
-
-    public DeleteAction() {
-        super();
+    public AltVosiCapabilitiesTest() {
+        super(TestUtil.DOI_ALT_RESOURCE_ID);
     }
 
     @Override
-    public void doAction() throws Exception {
-        super.init();
-        authorize();
-        authorizeResourceAccess();
+    protected void validateContent(Capabilities caps) throws Exception {
+        super.validateContent(caps);
 
-        // Do all subsequent work as doi admin
-        Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
-            doActionImpl();
-            return null;
-        });
-    }
+        // doi standard
+        Capability tap = caps.findCapability(Standards.DOI_INSTANCES_10);
 
-    private void authorizeResourceAccess() throws NodeNotFoundException {
-        if (isCallingUserDOIAdmin()) {
-            return; // Doi Admin has full access
-        }
-
-        if (isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix))) {
-            return;
-        } else if (publisherGroupURI != null && isCallingUserPublisher()) {
-            return;
-        }
-
-        throw new AccessControlException("Not authorized to Delete this resource.");
-    }
-
-    private void doActionImpl() throws Exception {
-        if (doiSuffix == null) {
-            throw new IllegalArgumentException("DOI number required.");
-        }
-        if (doiAction != null) {
-            throw new IllegalArgumentException("Cannot Delete: Bad request.");
-        }
-        
-        // Get container node for DOI
-        ContainerNode doiContainer = vospaceDoiClient.getContainerNode(doiSuffix);
-
-        // check the state of the doi
-        String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
-        if (doiStatus != null && doiStatus.equals(Status.MINTED.getValue())) {
-            throw new AccessControlException("Unable to delete " + doiSuffix + "DOI already minted.\n");
-        }
-        
-        // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
-        String groupToDelete = doiGroupPrefix + doiSuffix;
-        log.debug("deleting group: " + groupToDelete);
-        getGMSClient().deleteGroup(groupToDelete);
-
-        log.debug("deleting node: " + parentPath + "/" + doiSuffix);
-        vospaceDoiClient.deleteNode(doiSuffix);
+        // interfaces that should be present (anon not supported)
+        Assert.assertNotNull("cert", tap.findInterface(Standards.SECURITY_METHOD_CERT, Standards.INTERFACE_PARAM_HTTP));
+        Assert.assertNotNull("cookie", tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
     }
 
 }

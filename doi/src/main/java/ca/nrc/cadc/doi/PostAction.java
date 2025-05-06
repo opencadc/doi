@@ -137,7 +137,8 @@ public class PostAction extends DoiAction {
 
     @Override
     public void doAction() throws Exception {
-        super.init(true);
+        super.init();
+        authorize();
 
         if (doiAction != null && doiAction.equals(SEARCH_ACTION)) {
             if (!syncInput.getParameterNames().isEmpty()) {
@@ -149,7 +150,7 @@ public class PostAction extends DoiAction {
 
         // Validate user for minting or updating DOI
         if (doiSuffix != null) { // DOI Initialization does not require authorization
-            authorize();
+            authorizeResourceAccess();
         }
 
         // Do DOI creation work as doi admin
@@ -165,7 +166,7 @@ public class PostAction extends DoiAction {
         });
     }
 
-    private void authorize() throws NodeNotFoundException {
+    private void authorizeResourceAccess() throws NodeNotFoundException {
         if (isCallingUserDOIAdmin()) {
             return;
         }
@@ -529,16 +530,16 @@ public class PostAction extends DoiAction {
             syncOutput.setCode(303);
         } else if (doiAction.equals(SEARCH_ACTION)) {
             if (doiSearchFilter == null || callersNumericId == null) {
-                getStatusList(getOwnedDOIList());
+                getStatusList(getAccessibleDOIs());
             } else {
-                getStatusList(getFilteredDOIList(doiSearchFilter));
+                getStatusList(getFilteredDOIs(doiSearchFilter));
             }
         } else {
             throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
         }
     }
 
-    private List<Node> getFilteredDOIList(DoiSearchFilter doiSearchFilter) throws Exception {
+    private List<Node> getFilteredDOIs(DoiSearchFilter doiSearchFilter) throws Exception {
         List<Node> filteredNodes = new ArrayList<>();
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         boolean callingUserPublisher = isCallingUserPublisher();
@@ -721,11 +722,8 @@ public class PostAction extends DoiAction {
 
         // Create the group that is able to administer the DOI process
         String groupName;
-        if (randomTestID) {
-            groupName = TEST_DOI_GROUP_PREFIX + nextDoiSuffix;
-        } else {
-            groupName = DOI_GROUP_PREFIX + nextDoiSuffix;
-        }
+        System.out.println("=================== doiGroupPrefix: " + doiGroupPrefix);
+        groupName = doiGroupPrefix + nextDoiSuffix;
         GroupURI guri = createDoiGroup(groupName);
         log.debug("Created DOI group: " + guri);
 

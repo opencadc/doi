@@ -129,7 +129,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             URI credURI = null;
             try {
-                Set<URI> credURIs = localAuthority.getServiceURIs(Standards.CRED_PROXY_10);
+                Set<URI> credURIs = localAuthority.getResourceIDs(Standards.CRED_PROXY_10);
                 if (credURIs.size() > 1) {
                     throw new IllegalStateException(String.format("multiple serviceURI's found for %s", Standards.CRED_PROXY_10));
                 }
@@ -148,7 +148,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             URI usersURI = null;
             try {
-                Set<URI> usersURIs = localAuthority.getServiceURIs(Standards.UMS_USERS_10);
+                Set<URI> usersURIs = localAuthority.getResourceIDs(Standards.UMS_USERS_10);
                 if (usersURIs.size() > 1) {
                     throw new IllegalStateException(String.format("multiple serviceURI's found for %s", Standards.UMS_USERS_10));
                 }
@@ -167,7 +167,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
 
             URI groupsURI;
             try {
-                Set<URI> groupsURIs = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
+                Set<URI> groupsURIs = localAuthority.getResourceIDs(Standards.GMS_SEARCH_10);
                 if (groupsURIs.size() > 1) {
                     throw new IllegalStateException(String.format("multiple serviceURI's found for %s", Standards.GMS_SEARCH_10));
                 }

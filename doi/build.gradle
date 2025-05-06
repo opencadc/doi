@@ -36,7 +36,7 @@ dependencies {
     implementation 'org.opencadc:cadc-vos-client:[2.0.4,3.0)'
     implementation 'commons-io:commons-io:[2.18.0,)'
 
-    runtimeOnly 'org.opencadc:cadc-registry:[1.8.1,)'
+    runtimeOnly 'org.opencadc:cadc-registry:[1.8.0,)'
 
     testFixturesImplementation 'junit:junit:[4.0,5.0)'
     testFixturesImplementation 'org.jdom:jdom2:[2.0,3.0)'

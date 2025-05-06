@@ -68,31 +68,19 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiJsonWriter;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusJsonWriter;
-import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
-import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
 import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
-import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.uws.ExecutionPhase;
-import java.net.URL;
-import java.security.AccessControlException;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
+
 import java.util.List;
-import javax.security.auth.Subject;
+
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
-import org.opencadc.vospace.Node;
-import org.opencadc.vospace.NodeProperty;
-import org.opencadc.vospace.VOSURI;
-import org.opencadc.vospace.client.async.RecursiveSetNode;
 
 
 public class GetAction extends DoiAction {
@@ -105,7 +93,7 @@ public class GetAction extends DoiAction {
 
     @Override
     public void doAction() throws Exception {
-        super.init(false);
+        super.init();
 
         // need the following statement because the VOSClient is not initializing
         // the credentials properly
@@ -113,7 +101,7 @@ public class GetAction extends DoiAction {
 
         if (super.doiSuffix == null) {
             // get the DoiStatus of all DOI instances for the calling user
-            getStatusList(getOwnedDOIList());
+            getStatusList(getAccessibleDOIs());
         } else if (super.doiAction != null) {
             // perform the action on the DOI
             performDoiAction();

@@ -123,9 +123,8 @@ public abstract class DoiAction extends RestAction {
     public static final String MINT_ACTION = "mint";
     public static final String SEARCH_ACTION = "search";
     public static final String JOURNALREF_PARAM = "journalref";
-    public static final String DOI_GROUP_PREFIX = "DOI-";
-    public static final String TEST_DOI_GROUP_PREFIX = "TEST.DOI-";
 
+    protected String doiGroupPrefix;
     protected Subject callingSubject;
     protected Long callersNumericId;
     protected String doiSuffix;
@@ -157,7 +156,7 @@ public abstract class DoiAction extends RestAction {
         return new DoiInlineContentHandler();
     }
     
-    protected void init(boolean authorize)
+    protected void init()
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
@@ -166,12 +165,13 @@ public abstract class DoiAction extends RestAction {
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.publisherGroupURI = DoiInitAction.getPublisherGroupURI(config);
         this.doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
+        this.doiGroupPrefix = config.getFirstPropertyValue(DoiInitAction.DOI_GROUP_PREFIX_KEY);
 
         String selfPublishProperty = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
         this.selfPublish = selfPublishProperty == null || Boolean.parseBoolean(selfPublishProperty);
 
         LocalAuthority localAuthority = new LocalAuthority();
-        Set<URI> gmsServices = localAuthority.getServiceURIs(Standards.GMS_SEARCH_10);
+        Set<URI> gmsServices = localAuthority.getResourceIDs(Standards.GMS_SEARCH_10);
         if (gmsServices.isEmpty()) {
             throw new IllegalStateException("GMS service not found");
         } else if (gmsServices.size() > 1) {
@@ -189,10 +189,6 @@ public abstract class DoiAction extends RestAction {
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, parentPath,
                 callingSubject, includePublic, publisherGroupURI, gmsResourceID);
-
-        if (authorize) {
-            authorizeUser(callingSubject);
-        }
     }
 
     protected String getDoiFilename(String suffix) {
@@ -212,14 +208,14 @@ public abstract class DoiAction extends RestAction {
         return SSLUtil.createSubject(new File("/config/doiadmin.pem"));
     }
 
-    private void authorizeUser(Subject s) {
+    protected void authorize() {
         try {
-            CredUtil.checkCredentials(s);
+            CredUtil.checkCredentials(callingSubject);
         } catch (CertificateExpiredException | CertificateNotYetValidException e) {
             throw new RuntimeException("Failed to check credentials: ", e);
         }
         // authorization, for now, is defined as having a set of principals
-        if (s == null || s.getPrincipals().isEmpty()) {
+        if (callingSubject == null || callingSubject.getPrincipals().isEmpty()) {
             throw new AccessControlException("Unauthorized");
         }
     }
@@ -291,7 +287,7 @@ public abstract class DoiAction extends RestAction {
         }
     }
 
-    protected List<Node> getOwnedDOIList() throws Exception {
+    protected List<Node> getAccessibleDOIs() throws Exception {
         List<Node> ownedNodes = new ArrayList<>();
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         if (doiRootNode != null) {
