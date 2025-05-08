@@ -1,6 +1,6 @@
 get:
   tags:
-    - "instances"
+    - "DOI Status"
   summary: "Get the status of a DOI instance"
   description: "Get the status of the specified DOI. Include access to public DOIs."
   operationId: "getDOIStatusPublic"

@@ -53,6 +53,19 @@
         <load-on-startup>2</load-on-startup>
     </servlet>
 
+    <servlet>
+        <servlet-name>SearchServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
+        <init-param>
+            <param-name>init</param-name>
+            <param-value>ca.nrc.cadc.doi.DoiInitAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>post</param-name>
+            <param-value>ca.nrc.cadc.doi.PostAction</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
     <!-- Servlet that identifies the services provided by doi -->
     <servlet>
         <servlet-name>CapabilitiesServlet</servlet-name>
@@ -90,6 +103,11 @@
     <servlet-mapping>
         <servlet-name>DoiServlet</servlet-name>
         <url-pattern>/instances/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>SearchServlet</servlet-name>
+        <url-pattern>/search</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
