@@ -130,7 +130,7 @@ public abstract class DoiAction extends RestAction {
     protected String doiSuffix;
     protected String doiAction;
     protected Boolean includePublic = false;
-    protected DoiSearchFilter doiSearchFilter;
+
     protected VospaceDoiClient vospaceDoiClient;
     protected MultiValuedProperties config;
     protected URI vaultResourceID;
@@ -138,8 +138,6 @@ public abstract class DoiAction extends RestAction {
     protected String accountPrefix;
     protected String parentPath;
     protected GroupURI publisherGroupURI;
-    protected Boolean selfPublish = true;
-    protected String doiIdentifierPrefix;
 
     public DoiAction() {
     }
@@ -164,11 +162,7 @@ public abstract class DoiAction extends RestAction {
         this.parentPath = DoiInitAction.getParentPath(config);
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.publisherGroupURI = DoiInitAction.getPublisherGroupURI(config);
-        this.doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
         this.doiGroupPrefix = config.getFirstPropertyValue(DoiInitAction.DOI_GROUP_PREFIX_KEY);
-
-        String selfPublishProperty = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
-        this.selfPublish = selfPublishProperty == null || Boolean.parseBoolean(selfPublishProperty);
 
         LocalAuthority localAuthority = new LocalAuthority();
         Set<URI> gmsServices = localAuthority.getResourceIDs(Standards.GMS_SEARCH_10);
