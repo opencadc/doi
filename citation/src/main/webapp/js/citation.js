@@ -126,19 +126,23 @@
       window.open('/citation/request?doi=' + doiSuffix, '_blank');
     }
 
-    // GET
+    // POST
     function loadDoiList() {
       clearTable()
       page.setProgressBar('busy')
       setTableStatus('Loading...')
       page.setInfoModal('Please wait ', 'Fetching current DOI list... (may take up to 10 seconds)', false, true)
 
-      page.prepareCall().then(function(serviceURL) {
+      page.prepareSearchCall().then(function(serviceURL) {
+        var formData = new FormData();
+        formData.append('role', 'owner');
+
         $.ajax({
           xhrFields: { withCredentials: true },
           url: serviceURL,
-          method: 'GET',
+          method: 'POST',
           dataType: 'json',
+          data: formData,
           contentType: 'application/json'
         })
             .success(function(stringdata) {
