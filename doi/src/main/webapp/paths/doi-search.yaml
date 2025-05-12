@@ -1,6 +1,6 @@
 post:
   tags:
-    - "DOI Status"
+    - "search"
   summary: "Get a list of DOIStatus"
   description: "Get DOIStatus List based on filter request."
   operationId: "getDOIStatuses"

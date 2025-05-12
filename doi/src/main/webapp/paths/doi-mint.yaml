@@ -1,6 +1,6 @@
 post:
   tags:
-    - "DOI Instance"
+    - "instances"
   summary: "Publish a DOI instance"
   description: "A multi-step process that freezes the DOI data from further changes, registers the DOI to DataCite and makes the DOI findable from DataCite. The DOI status indicates the progress of the finalize process."
   operationId: "mintDOI"

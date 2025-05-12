@@ -1,6 +1,6 @@
 get:
   tags:
-    - "DOI Status"
+    - "instances"
   summary: "Get the status of a DOI instance"
   description: "Get the status of the specified DOI for authenticated user. Calling user must have access."
   operationId: "getDOIStatus"

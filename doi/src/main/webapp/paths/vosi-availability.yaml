@@ -1,14 +1,3 @@
-head:
-  operationId: availability-heartbeat
-  tag: VOSI
-  summary: VOSI Availability heartbeat check
-  description: |
-    Perform a minimal check that the service is reachable and running. This
-    check is intended to be very fast and lightweight.
-  responses:
-    "200":
-      description: service is reachable
-
 get:
   tags:
     - "Support Interfaces"
