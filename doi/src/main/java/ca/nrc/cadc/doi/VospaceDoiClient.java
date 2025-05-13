@@ -68,6 +68,7 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.ac.ACIdentityManager;
+import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
@@ -83,6 +84,7 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.Node;
@@ -91,6 +93,7 @@ import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientTransfer;
 import org.opencadc.vospace.client.VOSpaceClient;
+import org.opencadc.vospace.client.async.RecursiveDeleteNode;
 import org.opencadc.vospace.transfer.Direction;
 import org.opencadc.vospace.transfer.Protocol;
 import org.opencadc.vospace.transfer.Transfer;
@@ -104,11 +107,15 @@ public class VospaceDoiClient {
     private VOSURI baseDataURI = null;
     private String xmlFilename = "";
     private boolean includePublicNodes = false;
+    private GroupURI publisherGroupURI = null;
+    private URI gmsResourceID = null;
 
     public VospaceDoiClient(URI resourceID, String doiParentPath, Subject callingSubject,
-                            Boolean includePublicNodes) {
+                            Boolean includePublicNodes, GroupURI publisherGroupURI, URI gmsResourceID) {
         this.baseDataURI = new VOSURI(resourceID, doiParentPath);
         this.vosClient = new VOSpaceClient(baseDataURI.getServiceURI());
+        this.publisherGroupURI = publisherGroupURI;
+        this.gmsResourceID = gmsResourceID;
 
         ACIdentityManager acIdentMgr = new ACIdentityManager();
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
@@ -175,23 +182,33 @@ public class VospaceDoiClient {
     }
 
     //  doi admin should have access as well
-    public boolean isCallerAllowed(Node node, Subject adminSubject) {
-        boolean isRequesterNode = false;
+    public boolean hasCallerReadDOIAccess(Node node, Subject adminSubject) {
         if (this.includePublicNodes && node.isPublic != null && node.isPublic) {
-            isRequesterNode = true;
-        } else {
-            X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
-            String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
-            log.debug("requester for node: " + requester);
-            if (callersNumericId != null && StringUtil.hasText(requester)) {
-                isRequesterNode = requester.equals(callersNumericId.toString());
-                Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
-                for (X500Principal p : xset) {
-                    isRequesterNode = isRequesterNode || AuthenticationUtil.equals(p, adminX500);
+            return true;
+        } else if (publisherGroupURI != null) {
+            GMSClient gmsClient = new GMSClient(gmsResourceID);
+
+            if (gmsClient.isMember(publisherGroupURI)) {
+                return true;
+            }
+        }
+
+        X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
+        String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
+        log.debug("requester for node: " + requester);
+        if (callersNumericId != null && StringUtil.hasText(requester)) {
+            if (requester.equals(callersNumericId.toString())) {
+                return true;
+            }
+            Set<X500Principal> xset = AuthenticationUtil.getCurrentSubject().getPrincipals(X500Principal.class);
+            for (X500Principal p : xset) {
+                if (AuthenticationUtil.equals(p, adminX500)) {
+                    return true;
                 }
             }
         }
-        return isRequesterNode;
+
+        return false;
     }
 
     private Resource getDoiDocFromVOSpace(VOSURI dataNode) throws Exception {
@@ -241,6 +258,21 @@ public class VospaceDoiClient {
 
         public Resource getResource() {
             return resource;
+        }
+    }
+
+    public void deleteNode(String doiSuffix) {
+        try {
+            VOSURI nodeUri = new VOSURI(baseDataURI.toString() + "/" + doiSuffix);
+            log.debug("recursiveDeleteNode: " + nodeUri);
+
+            RecursiveDeleteNode recursiveDeleteNode = getVOSpaceClient().createRecursiveDelete(nodeUri);
+            recursiveDeleteNode.setMonitor(true);
+            recursiveDeleteNode.run();
+        } catch (AccessControlException e) {
+            log.error("unexpected AccessControlException: ", e);
+        } catch (Exception e) {
+            log.error("unexpected exception", e);
         }
     }
 }

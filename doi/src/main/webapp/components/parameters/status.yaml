@@ -1,0 +1,19 @@
+status:
+  name: "status"
+  in: "query"
+  description: "Represents the status of the DOI"
+  required: false
+  style: form
+  explode: true
+  schema:
+    type: array
+    items:
+      type: string
+      enum:
+          - "in progress"
+          - "locking data directory"
+          - "error locking data directory"
+          - "locked data directory"
+          - "registering to DataCite"
+          - "error registering to DataCite"
+          - "minted"

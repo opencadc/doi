@@ -77,7 +77,10 @@ import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
+import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
+import ca.nrc.cadc.doi.search.DoiSearchFilter;
+import ca.nrc.cadc.doi.search.Role;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
@@ -86,6 +89,7 @@ import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.OutputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
+import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,15 +106,18 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.security.auth.Subject;
+
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.Node;
+import org.opencadc.vospace.NodeNotFoundException;
 import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
@@ -124,13 +131,29 @@ import org.opencadc.vospace.transfer.Transfer;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
+    private DoiSearchFilter doiSearchFilter;
+
     public PostAction() {
         super();
     }
 
     @Override
     public void doAction() throws Exception {
-        super.init(true);
+        super.init();
+        authorize();
+
+        if (doiAction != null && doiAction.equals(SEARCH_ACTION)) {
+            if (!syncInput.getParameterNames().isEmpty()) {
+                prepareDoiSearchFilter();
+            }
+            performDoiAction();
+            return;
+        }
+
+        // Validate user for minting or updating DOI
+        if (doiSuffix != null) { // DOI Initialization does not require authorization
+            authorizeResourceAccess();
+        }
 
         // Do DOI creation work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
@@ -143,6 +166,53 @@ public class PostAction extends DoiAction {
             }
             return null;
         });
+    }
+
+    private void authorizeResourceAccess() throws NodeNotFoundException {
+        if (isCallingUserDOIAdmin()) {
+            return;
+        }
+
+        String selfPublishProperty = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
+        boolean selfPublish = selfPublishProperty == null || Boolean.parseBoolean(selfPublishProperty);
+
+        if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
+            if (isCallingUserPublisher() && !isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix))) {
+                return;
+            } else {
+                throw new AccessControlException("Not authorized to Mint this resource." + doiSuffix);
+            }
+        }
+
+        if (isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix))) {
+            return;
+        }
+
+        throw new AccessControlException("Not authorized to operate on this resource." + doiSuffix);
+    }
+
+    private void prepareDoiSearchFilter() {
+        boolean isRoleFilterPresent = syncInput.getParameter("role") != null;
+        boolean isStatusFilterPresent = syncInput.getParameter("status") != null;
+
+        if (!isRoleFilterPresent && !isStatusFilterPresent) {
+            return;
+        }
+
+        this.doiSearchFilter = new DoiSearchFilter();
+
+        if (isRoleFilterPresent) {
+            if (!isCallingUserDOIAdmin()) {
+                Role role = Role.toValue(syncInput.getParameter("role"));
+                if (role.equals(Role.PUBLISHER) && publisherGroupURI == null) {
+                    role = Role.OWNER;
+                }
+                doiSearchFilter.setRole(role);
+            }
+        }
+        if (isStatusFilterPresent) {
+            doiSearchFilter.prepareStatusList(syncInput.getParameters("status"));
+        }
     }
 
     // methods to assign to private field in Identity
@@ -463,11 +533,76 @@ public class PostAction extends DoiAction {
             log.debug("redirectUrl: " + redirectUrl);
             syncOutput.setHeader("Location", redirectUrl);
             syncOutput.setCode(303);
+        } else if (doiAction.equals(SEARCH_ACTION)) {
+            if (doiSearchFilter == null || callersNumericId == null) {
+                getStatusList(getAccessibleDOIs());
+            } else {
+                getStatusList(getFilteredDOIs(doiSearchFilter));
+            }
         } else {
             throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
         }
     }
-    
+
+    private List<Node> getFilteredDOIs(DoiSearchFilter doiSearchFilter) throws Exception {
+        List<Node> filteredNodes = new ArrayList<>();
+        ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
+        boolean callingUserPublisher = isCallingUserPublisher();
+        boolean callingUserDOIAdmin = isCallingUserDOIAdmin();
+
+        if (doiSearchFilter.getRole() != null && doiSearchFilter.getRole().equals(Role.PUBLISHER) && !callingUserPublisher) {
+            return filteredNodes;
+        }
+
+        if (doiRootNode != null) {
+            for (Node childNode : doiRootNode.getNodes()) {
+                NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
+                if (requester == null || requester.getValue() == null) {
+                    continue; // Skip nodes without a valid requester
+                }
+
+                // Check status filter
+                if (!doiSearchFilter.getStatusList().isEmpty()) {
+                    NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+                    if (statusProp == null || !doiSearchFilter.getStatusList()
+                            .contains(Status.toValue(statusProp.getValue()))) {
+                        continue; // Skip nodes that don't match the status filter
+                    }
+                }
+
+                // Check role filter
+                if (doiSearchFilter.getRole() != null) {
+                    if (doiSearchFilter.getRole().equals(Role.OWNER)) {
+                        if (!isCallingUserRequester(childNode)) {
+                            continue; // Skip nodes where the caller is not the owner OR DOI Admin
+                        }
+                    } else if (doiSearchFilter.getRole().equals(Role.PUBLISHER)) {
+                        if (isCallingUserRequester(childNode)) {
+                            continue; // Skip nodes where the caller is a publisher as well as the owner
+                        }
+
+                        NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+                        if (statusProp.getValue().equals("minted") && !doiSearchFilter.getStatusList().contains(Status.MINTED)) {
+                            continue; // Skip nodes where the status is minted and the caller is a publisher
+                        }
+                    }
+                } else {
+                    NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+
+                    // Check if the user is DOI Admin, publisher, or matches the requester
+                    if (!statusProp.getValue().equals("minted") && !callingUserDOIAdmin && !callingUserPublisher
+                            && !isCallingUserRequester(childNode)) {
+                        continue;
+                    }
+                }
+
+                // Add the node to the filtered list if all conditions are met
+                filteredNodes.add(childNode);
+            }
+        }
+        return filteredNodes;
+    }
+
     // update a DOI instance
     private void updateDOI() throws Exception {
         // Get the submitted form data, if it exists
@@ -550,6 +685,11 @@ public class PostAction extends DoiAction {
         
         // All folders will be only readable by requester
         node.getReadWriteGroup().add(doiGroup);
+
+        if (publisherGroupURI != null) {
+            node.getReadOnlyGroup().add(publisherGroupURI);
+            node.getReadWriteGroup().add(publisherGroupURI);
+        }
     }
     
     private void createDOI() throws Exception {
@@ -560,9 +700,11 @@ public class PostAction extends DoiAction {
         }
 
         boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
+        String doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
         String nextDoiSuffix;
+
         if (randomTestID) {
-            nextDoiSuffix = getRandomDOISuffix();
+            nextDoiSuffix = doiIdentifierPrefix + getRandomDOISuffix();
             log.warn("Random DOI suffix: " + nextDoiSuffix);
         } else {
             // Determine next DOI ID
@@ -570,7 +712,7 @@ public class PostAction extends DoiAction {
             //       Since we are using a number, it does not matter. However if we decide
             //       to use a String, we should only generate either a lowercase or an
             //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
-            nextDoiSuffix = getNextDOISuffix(vospaceDoiClient.getDoiBaseVOSURI());
+            nextDoiSuffix = doiIdentifierPrefix + getNextDOISuffix(vospaceDoiClient.getDoiBaseVOSURI());
             log.debug("Next DOI suffix: " + nextDoiSuffix);
         }
 
@@ -587,16 +729,12 @@ public class PostAction extends DoiAction {
 
         // Create the group that is able to administer the DOI process
         String groupName;
-        if (randomTestID) {
-            groupName = TEST_DOI_GROUP_PREFIX + nextDoiSuffix;
-        } else {
-            groupName = DOI_GROUP_PREFIX + nextDoiSuffix;
-        }
+        groupName = doiGroupPrefix + nextDoiSuffix;
         GroupURI guri = createDoiGroup(groupName);
         log.debug("Created DOI group: " + guri);
 
         // Create the VOSpace area for DOI work
-        ContainerNode doiFolder = createDOIDirectory(guri, nextDoiSuffix);
+        ContainerNode doiFolder = createDOIDirectory(guri, nextDoiSuffix, getTitle(resource).getValue());
         
         // create VOSpace data node to house XML doc using doi filename and upload the document
         String docName = super.getDoiFilename(nextDoiSuffix);
@@ -616,7 +754,19 @@ public class PostAction extends DoiAction {
         syncOutput.setHeader("Location", redirectUrl);
         syncOutput.setCode(303);
     }
-    
+
+    private Title getTitle(Resource resource) {
+        Title title = null;
+        List<Title> titles = resource.getTitles();
+        for (Title t : titles) {
+            if (StringUtil.hasText(t.getValue())) {
+                title = t;
+                break;
+            }
+        }
+        return title;
+    }
+
     private GroupURI createDoiGroup(String groupName) throws Exception {
         // Create group to use for applying permissions
         String group = String.format("%s?%s", gmsResourceID, groupName);
@@ -640,14 +790,17 @@ public class PostAction extends DoiAction {
         return guri;
     }
     
-    private ContainerNode createDOIDirectory(GroupURI guri, String folderName)
+    private ContainerNode createDOIDirectory(GroupURI guri, String folderName, String title)
         throws Exception {
         
         Set<NodeProperty> properties = new TreeSet<>();
 
-        // Get numeric id for setting doiRequestor property
-        NodeProperty doiRequestor = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callersNumericId.toString());
-        properties.add(doiRequestor);
+        // Get numeric id for setting doiRequester property
+        NodeProperty doiRequester = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callersNumericId.toString());
+        properties.add(doiRequester);
+
+        NodeProperty doiTitle = new NodeProperty(DOI_VOS_TITLE_PROP, title);
+        properties.add(doiTitle);
         
         NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, Status.DRAFT.getValue());
         properties.add(doiStatus);

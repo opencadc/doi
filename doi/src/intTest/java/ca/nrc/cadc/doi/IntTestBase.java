@@ -114,9 +114,14 @@ public abstract class IntTestBase extends TestBase {
     static Subject adminSubject;
     static Subject readWriteSubject;
     static Subject readOnlySubject;
+    static Subject publisherSubject;
     static URL doiServiceURL;
+    static URL doiAltServiceURL;
+    static URL doiSearchServiceURL;
     static VOSpaceClient vosClient;
+    static VOSpaceClient doiAltVosClient;
     static VOSURI doiParentPathURI;
+    static VOSURI doiAltParentPathURI;
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
@@ -127,15 +132,57 @@ public abstract class IntTestBase extends TestBase {
         adminSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.ADMIN_CERT, IntTestBase.class));
         readWriteSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.AUTH_CERT, IntTestBase.class));
         readOnlySubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.NO_AUTH_CERT, IntTestBase.class));
+        publisherSubject = SSLUtil.createSubject(FileUtil.getFileFromResource(TestUtil.PUBLISHER_CERT, IntTestBase.class));
 
         RegistryClient regClient = new RegistryClient();
         doiServiceURL = regClient.getServiceURL(TestUtil.DOI_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
-        doiParentPathURI = new VOSURI(TestUtil.VOSPACE_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
-        vosClient = new VOSpaceClient(TestUtil.VOSPACE_RESOURCE_ID);
+        doiParentPathURI = new VOSURI(TestUtil.DOI_VOSPACE_RESOURCE_ID, TestUtil.DOI_PARENT_PATH);
+        vosClient = new VOSpaceClient(TestUtil.DOI_VOSPACE_RESOURCE_ID);
+
+        doiAltServiceURL = regClient.getServiceURL(TestUtil.DOI_ALT_RESOURCE_ID, Standards.DOI_INSTANCES_10, AuthMethod.CERT);
+        doiAltParentPathURI = new VOSURI(TestUtil.DOI_ALT_RESOURCE_ID, TestUtil.DOI_ALT_PARENT_PATH);
+        doiAltVosClient = new VOSpaceClient(TestUtil.DOI_ALT_VOSPACE_RESOURCE_ID);
+        doiSearchServiceURL = regClient.getServiceURL(TestUtil.DOI_ALT_RESOURCE_ID, Standards.DOI_SEARCH_10, AuthMethod.CERT);
     }
 
-    protected VOSURI getVOSURI(String path) {
-        return new VOSURI(TestUtil.VOSPACE_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
+    protected VOSURI getVOSURI(String path, DOISettingsType doiSettingsType) {
+        switch (doiSettingsType){
+            case ALT_DOI:
+                return new VOSURI(TestUtil.DOI_ALT_VOSPACE_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_ALT_PARENT_PATH, path));
+            case DOI:
+            default:
+                return new VOSURI(TestUtil.DOI_VOSPACE_RESOURCE_ID, String.format("%s/%s", TestUtil.DOI_PARENT_PATH, path));
+        }
+    }
+
+    protected VOSpaceClient getVOSClient(DOISettingsType doiSettingsType){
+        switch (doiSettingsType){
+            case ALT_DOI:
+                return doiAltVosClient;
+            case DOI:
+            default:
+                return vosClient;
+        }
+    }
+
+    protected URL getDoiServiceURL(DOISettingsType doiSettingsType){
+        switch (doiSettingsType){
+            case ALT_DOI:
+                return doiAltServiceURL;
+            case DOI:
+            default:
+                return doiServiceURL;
+        }
+    }
+
+    protected VOSURI getDoiParentPathURI(DOISettingsType doiSettingsType){
+        switch (doiSettingsType){
+            case ALT_DOI:
+                return doiAltParentPathURI;
+            case DOI:
+            default:
+                return doiParentPathURI;
+        }
     }
 
     protected String getDOISuffix(String doiIdentifier) {
@@ -153,19 +200,19 @@ public abstract class IntTestBase extends TestBase {
         return sb.toString();
     }
 
-    protected ContainerNode createContainerNode(String path, String name) throws Exception {
+    protected ContainerNode createContainerNode(String path, String name, DOISettingsType doiSettingsType) throws Exception {
         ContainerNode node = new ContainerNode(name);
-        VOSURI nodeURI = getVOSURI(path);
-        return (ContainerNode) vosClient.createNode(nodeURI, node);
+        VOSURI nodeURI = getVOSURI(path, doiSettingsType);
+        return (ContainerNode) getVOSClient(doiSettingsType).createNode(nodeURI, node);
     }
 
-    protected DataNode createDataNode(String path, String name) throws Exception {
+    protected DataNode createDataNode(String path, String name, DOISettingsType doiSettingsType) throws Exception {
         DataNode node = new DataNode(name);
-        VOSURI nodeURI = getVOSURI(path);
-        return (DataNode) vosClient.createNode(nodeURI, node);
+        VOSURI nodeURI = getVOSURI(path, doiSettingsType);
+        return (DataNode) getVOSClient(doiSettingsType).createNode(nodeURI, node);
     }
 
-    protected ContainerNode getContainerNode(String path) throws Exception {
+    protected ContainerNode getContainerNode(String path, VOSURI doiParentPathURI,  VOSpaceClient vosClient) throws Exception {
         String nodePath = doiParentPathURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = String.format("%s/%s", nodePath, path);
@@ -192,15 +239,15 @@ public abstract class IntTestBase extends TestBase {
         return new String(post.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
-    protected void cleanup(String doiSuffix) {
+    protected void cleanup(String doiSuffix, DOISettingsType doiSettingsType) {
         // delete doi as admin
         try {
             Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
                 log.debug("cleanup as doi admin");
                 try {
-                    VOSURI nodeUri = getVOSURI(doiSuffix);
+                    VOSURI nodeUri = getVOSURI(doiSuffix, doiSettingsType);
                     log.debug("recursiveDeleteNode: " + nodeUri);
-                    RecursiveDeleteNode recursiveDeleteNode = vosClient.createRecursiveDelete(nodeUri);
+                    RecursiveDeleteNode recursiveDeleteNode = getVOSClient(doiSettingsType).createRecursiveDelete(nodeUri);
                     recursiveDeleteNode.setMonitor(true);
                     recursiveDeleteNode.run();
                     log.debug(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",

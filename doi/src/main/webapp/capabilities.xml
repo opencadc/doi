@@ -23,18 +23,22 @@
     </interface>
   </capability>
 
-  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0">
+  <capability standardID="http://www.opencadc.org/std/doi#instances-1.0">
     <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="base">https://replace.me.com/doi/instances</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
       <securityMethod standardID="ivo://ivoa.net/sso#token"/>
     </interface>
-    <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">https://replace.me.com/doi/auth-instances</accessURL>
-      <securityMethod standardID="ivo://ivoa.net/sso#BasicAA"/>
-    </interface>
   </capability>
 
+  <capability standardID="http://www.opencadc.org/std/doi#search-1.0">
+    <interface xsi:type="vs:ParamHTTP" role="std">
+      <accessURL use="base">https://replace.me.com/doi/search</accessURL>
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+    </interface>
+  </capability>
 </vosi:capabilities>
 

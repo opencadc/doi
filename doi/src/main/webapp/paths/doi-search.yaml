@@ -1,0 +1,20 @@
+post:
+  tags:
+    - "search"
+  summary: "Get a list of DOIStatus"
+  description: "Get DOIStatus List based on filter request."
+  operationId: "getDOIStatuses"
+  parameters:
+    - $ref: "../components/parameters/status.yaml#/status"
+    - $ref: "../components/parameters/role.yaml#/role"
+  responses:
+    "200":
+      $ref: "../components/responses/doi-responses.yaml#/get-doi-statuslist-success"
+    "400":
+      $ref: "../components/responses/doi-std-responses.yaml#/bad-request"
+    "403":
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    "500":
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    "503":
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"

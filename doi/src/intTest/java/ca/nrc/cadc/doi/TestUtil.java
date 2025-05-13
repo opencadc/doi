@@ -76,7 +76,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import org.apache.log4j.Level;
@@ -96,6 +95,9 @@ public class TestUtil {
     // AUTH_CERT has read/write access to the test DOI
     static String AUTH_CERT = "doi-auth.pem";
 
+    // AUTH_TWO_CERT is part of test publisher group which can approve or reject a DOI if alternative permissions is configured
+    static String PUBLISHER_CERT = "doi-publisher.pem";
+
     // NO_AUTH_CERT has read only access to the test DOI
     static String NO_AUTH_CERT = "doi-noauth.pem";
 
@@ -103,14 +105,26 @@ public class TestUtil {
     static URI DOI_RESOURCE_ID = URI.create("ivo://opencadc.org/doi");
 
     // VOSpace URI to the DOI parent node,
-    static URI VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi");
+    static URI DOI_VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi");
 
     // following derived from VOSPACE_PARENT_URI
     // resourceID for the local VOSpace service
-    static URI VOSPACE_RESOURCE_ID;
+    static URI DOI_VOSPACE_RESOURCE_ID;
 
     // path for the DOI parent node in VOSpace
     static String DOI_PARENT_PATH;
+
+    // resourceID for the local test DOI service for Alternative DOI specific scenarios
+    static URI DOI_ALT_RESOURCE_ID = URI.create("ivo://opencadc.org/doi-alt");
+
+    // VOSpace URI to the Alternative DOI parent node,
+    static URI DOI_ALT_VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi/doi-alt");
+
+    static String DOI_ALT_PARENT_PATH;
+
+    static URI DOI_ALT_VOSPACE_RESOURCE_ID;
+
+    static String DOI_ALT_IDENTIFIER_PREFIX;
 
     static {
 
@@ -123,8 +137,17 @@ public class TestUtil {
                 if (props.containsKey("doiResourceID")) {
                     DOI_RESOURCE_ID = URI.create(props.getProperty("doiResourceID").trim());
                 }
-                if (props.containsKey("vospaceParentUri")) {
-                    VOSPACE_PARENT_URI = URI.create(props.getProperty("vospaceParentUri").trim());
+                if (props.containsKey("doiVospaceParentUri")) {
+                    DOI_VOSPACE_PARENT_URI = URI.create(props.getProperty("doiVospaceParentUri").trim());
+                }
+                if (props.containsKey("doiAltResourceID")) {
+                    DOI_ALT_RESOURCE_ID = URI.create(props.getProperty("doiAltResourceID").trim());
+                }
+                if (props.containsKey("doiAltVospaceParentUri")) {
+                    DOI_ALT_VOSPACE_PARENT_URI = URI.create(props.getProperty("doiAltVospaceParentUri").trim());
+                }
+                if (props.containsKey("doiAltIdentifierPrefix")) {
+                    DOI_ALT_IDENTIFIER_PREFIX = props.getProperty("doiAltIdentifierPrefix").trim();
                 }
             }
         }
@@ -134,12 +157,19 @@ public class TestUtil {
             throw new RuntimeException(oops.getMessage(), oops);
         }
 
-        VOSURI vosURI = new VOSURI(VOSPACE_PARENT_URI);
-        VOSPACE_RESOURCE_ID = vosURI.getServiceURI();
+        VOSURI vosURI = new VOSURI(DOI_VOSPACE_PARENT_URI);
+        DOI_VOSPACE_RESOURCE_ID = vosURI.getServiceURI();
         DOI_PARENT_PATH = vosURI.getPath();
 
-        log.debug(String.format("intTest config: %s %s %s %s",
-                DOI_RESOURCE_ID, VOSPACE_PARENT_URI, VOSPACE_RESOURCE_ID, DOI_PARENT_PATH));
+        VOSURI doiAltVosResourceId = new VOSURI(DOI_ALT_VOSPACE_PARENT_URI);
+        DOI_ALT_VOSPACE_RESOURCE_ID = doiAltVosResourceId.getServiceURI();
+        DOI_ALT_PARENT_PATH = doiAltVosResourceId.getPath();
+
+        log.debug(String.format("DOI intTest config: %s %s %s %s",
+                DOI_RESOURCE_ID, DOI_VOSPACE_PARENT_URI, DOI_VOSPACE_RESOURCE_ID, DOI_PARENT_PATH));
+
+        log.debug(String.format("DOI Alt intTest config: %s %s %s %s",
+                DOI_ALT_RESOURCE_ID, DOI_ALT_VOSPACE_PARENT_URI, DOI_ALT_VOSPACE_RESOURCE_ID, DOI_ALT_PARENT_PATH));
     }
 
  }
