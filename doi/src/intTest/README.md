@@ -13,12 +13,12 @@ doiResourceID={resourceID of the doi service}
 vospaceParentUri={VOSURI to the DOI parent folder in the VOSpace service}
 doiAltResourceID={resourceID of the doi service with alternate configuration}
 doiAltVospaceParentUri={VOSURI to the Alt DOI parent folder in the VOSpace service}
-doiIdentifierPrefix={prefix for the DOI Identifier}
+doiAltIdentifierPrefix={prefix for the DOI Identifier}
 ```
 
 **_vospaceParentUri_** must match `ca.nrc.cadc.doi.vospaceParentUri` configured in the doi service `doi.properties`.
 **_doiAltVospaceParentUri_** must match `ca.nrc.cadc.doi.vospaceParentUri` configured in the Alternate doi service `doi.properties`.
-**_doiIdentifierPrefix_** must match `doiIdentifierPrefix` configured in the doi service `doi.properties`.
+**_doiAltIdentifierPrefix_** must match `doiIdentifierPrefix` configured in the Alternate doi service `doi.properties`.
 
 ### certificates
 Client test certificates in the `$A/test-certificates/` directory are used to authenticate to the doi service.

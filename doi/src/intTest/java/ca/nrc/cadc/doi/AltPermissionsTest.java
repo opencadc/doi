@@ -74,7 +74,7 @@ public class AltPermissionsTest extends LifecycleTest {
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
             Assert.assertNotNull(doiID);
-            Assert.assertTrue(doiID.startsWith(TestUtil.DOI_IDENTIFIER_PREFIX));
+            Assert.assertTrue(doiID.startsWith(TestUtil.DOI_ALT_IDENTIFIER_PREFIX));
 
             ContainerNode doiNode = getContainerNode(doiID, doiAltParentPathURI, doiAltVosClient);
             Assert.assertNotNull(doiNode);
