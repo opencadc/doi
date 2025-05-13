@@ -124,6 +124,8 @@ public class TestUtil {
 
     static URI DOI_ALT_VOSPACE_RESOURCE_ID;
 
+    static String DOI_IDENTIFIER_PREFIX;
+
     static {
 
         try {
@@ -143,6 +145,9 @@ public class TestUtil {
                 }
                 if (props.containsKey("doiAltVospaceParentUri")) {
                     DOI_ALT_VOSPACE_PARENT_URI = URI.create(props.getProperty("doiAltVospaceParentUri").trim());
+                }
+                if (props.containsKey("doiIdentifierPrefix")) {
+                    DOI_IDENTIFIER_PREFIX = props.getProperty("doiIdentifierPrefix").trim();
                 }
             }
         }
