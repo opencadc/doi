@@ -108,6 +108,7 @@ import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientTransfer;
+import org.opencadc.vospace.client.VOSpaceClient;
 import org.opencadc.vospace.transfer.Direction;
 import org.opencadc.vospace.transfer.Protocol;
 import org.opencadc.vospace.transfer.Transfer;
@@ -129,20 +130,23 @@ public class LifecycleTest extends IntTestBase {
         String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
             // create a new DOI
-            Resource actual = create(expected);
+            Resource actual = create(expected, DOISettingsType.DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
 
             // update the DOI
-            update(actual, doiID);
+            update(actual, doiID, doiServiceURL);
 
             // publish the DOI
-            publish(actual, doiID);
+            publish(actual, doiID, DOISettingsType.DOI);
 
             return doiID;
         });
     }
 
-    Resource create(Resource expected) throws Exception {
+    Resource create(Resource expected,  DOISettingsType doiSettingsType) throws Exception {
+
+        VOSpaceClient vosClient = getVOSClient(doiSettingsType);
+        URL doiServiceURL = getDoiServiceURL(doiSettingsType);
 
         // Create the folder for the test, and the initial XML file
         String doiXML = getResourceXML(expected);
@@ -206,7 +210,7 @@ public class LifecycleTest extends IntTestBase {
         DoiStatus doiStatus = statusReader.read(new StringReader(status));
 
         Assert.assertEquals("identifier mismatch", actualIdentifier, doiStatus.getIdentifier().getValue());
-        String expectedDataDirectory = String.format("%s/%s/data", TestUtil.DOI_PARENT_PATH, doiSuffix);
+        String expectedDataDirectory = String.format("%s/%s/data", doiSettingsType.equals(DOISettingsType.DOI) ? TestUtil.DOI_PARENT_PATH : TestUtil.DOI_ALT_PARENT_PATH, doiSuffix);
         Assert.assertEquals("dataDirectory mismatch", expectedDataDirectory, doiStatus.getDataDirectory());
         Title expectedTitle = expected.getTitles().get(0);
         Assert.assertEquals("title mismatch", expectedTitle.getValue(), doiStatus.getTitle().getValue());
@@ -219,7 +223,7 @@ public class LifecycleTest extends IntTestBase {
         String fileName = "doi-test-write-file.txt";
         String dataFileToWrite = dataNodeName + "/" + fileName;
 
-        VOSURI target = getVOSURI(dataFileToWrite);
+        VOSURI target = getVOSURI(dataFileToWrite, doiSettingsType);
         DataNode dataNode = new DataNode(fileName);
         log.debug("PUT target:" + target.getURI());
         vosClient.createNode(target, dataNode);
@@ -246,7 +250,7 @@ public class LifecycleTest extends IntTestBase {
         Subject.doAs(readOnlySubject, (PrivilegedExceptionAction<Object>) () -> {
             log.debug("write as read only subject");
             try {
-                VOSURI target1 = getVOSURI(writeFile);
+                VOSURI target1 = getVOSURI(writeFile, doiSettingsType);
                 DataNode dataNode1 = new DataNode(writeName);
                 vosClient.createNode(target1, dataNode1);
             } catch (
@@ -260,7 +264,7 @@ public class LifecycleTest extends IntTestBase {
         return actual;
     }
 
-    void update(Resource expected, String doiSuffix) throws Exception {
+    void update(Resource expected, String doiSuffix, URL doiServiceURL) throws Exception {
         // For DOI tests below
         URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
 
@@ -286,38 +290,40 @@ public class LifecycleTest extends IntTestBase {
         compareResource(expected, actual, true);
     }
 
-    void publish(Resource expected, String doiSuffix) throws Exception {
+    void publish(Resource expected, String doiSuffix, DOISettingsType doiSettingsType) throws Exception {
         // For DOI tests below
-        URL doiURL = new URL(String.format("%s/%s", doiServiceURL, doiSuffix));
+        URL doiURL = new URL(String.format("%s/%s", getDoiServiceURL(doiSettingsType), doiSuffix));
+        VOSpaceClient vosClient = getVOSClient(doiSettingsType);
+        VOSURI doiParentPathURI = getDoiParentPathURI(doiSettingsType);
 
         // verify the DOI containerNode properties
-        ContainerNode doiNode = getContainerNode(doiSuffix);
+        ContainerNode doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
         Assert.assertFalse("incorrect isPublic property",
                 doiNode.isPublic != null && doiNode.isPublic);
         Assert.assertFalse("should have group read property",
                 doiNode.getReadOnlyGroup().isEmpty());
-        ContainerNode dataNode = getContainerNode(doiSuffix + "/data");
+        ContainerNode dataNode = getContainerNode(doiSuffix + "/data", doiParentPathURI, vosClient);
         Assert.assertFalse("should have group write",
                 dataNode.getReadWriteGroup().isEmpty());
 
         // add a file and a subdirectory with a file to the data directory
         String testFile1 = "test-file-1.txt";
         String testFile1Path = String.format("%s/data/%s", doiSuffix, testFile1);
-        DataNode testFileNode = createDataNode(testFile1Path, testFile1);
+        DataNode testFileNode = createDataNode(testFile1Path, testFile1, doiSettingsType);
 
         String subDir = "subDir";
         String subDirPath = String.format("%s/data/%s", doiSuffix, subDir);
-        ContainerNode dataSubDirNode = createContainerNode(subDirPath, subDir);
+        ContainerNode dataSubDirNode = createContainerNode(subDirPath, subDir, doiSettingsType);
 
         String testFile2 = "test-file-2.txt";
         String testFile2Path = String.format("%s/data/%s/%s", doiSuffix, subDir, testFile2);
-        DataNode testFile2Node = createDataNode(testFile2Path, testFile2);
+        DataNode testFile2Node = createDataNode(testFile2Path, testFile2, doiSettingsType);
 
         // mint the document, DRAFT ==> LOCKING_DATA
         doMintTest(doiURL);
-        doiNode = getContainerNode(doiSuffix);
-        dataNode = getContainerNode(doiSuffix + "/data");
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir);
+        doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
+        dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
+        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
         Assert.assertEquals("incorrect status",
                 Status.LOCKING_DATA.getValue(), doiNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
         verifyNodeProperties(doiNode, dataNode, dataSubDirNode);
@@ -325,12 +331,12 @@ public class LifecycleTest extends IntTestBase {
 
         // mint the document, ERROR_LOCKING_DATA ==> LOCKING_DATA
         doiNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_LOCKING_DATA.getValue());
-        VOSURI vosuri = getVOSURI(doiNode.getName());
+        VOSURI vosuri = getVOSURI(doiNode.getName(), doiSettingsType);
         vosClient.setNode(vosuri, doiNode);
         doMintTest(doiURL);
-        doiNode = getContainerNode(doiSuffix);
-        dataNode = getContainerNode(doiSuffix + "/data");
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir);
+        doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
+        dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
+        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
         Assert.assertEquals("incorrect status",
                 Status.LOCKING_DATA.getValue(), doiNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
         verifyNodeProperties(doiNode, dataNode, dataSubDirNode);
@@ -346,9 +352,9 @@ public class LifecycleTest extends IntTestBase {
 
         // mint the document, LOCKED_DATA == REGISTERING
         doMintTest(doiURL);
-        doiNode = getContainerNode(doiSuffix);
-        dataNode = getContainerNode(doiSuffix + "/data");
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir);
+        doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
+        dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
+        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
         Assert.assertEquals("incorrect status",
                 Status.MINTED.getValue(), doiNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
         verifyMintedStatePropertyChanges(doiNode, dataNode, dataSubDirNode);
@@ -360,16 +366,16 @@ public class LifecycleTest extends IntTestBase {
         doiNode.getProperty(DoiAction.DOI_VOS_STATUS_PROP).setValue(Status.ERROR_REGISTERING.getValue());
         ContainerNode doiParentNode = doiNode;
         Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
-            VOSURI parentVOSURI = getVOSURI(doiParentNode.getName());
+            VOSURI parentVOSURI = getVOSURI(doiParentNode.getName(), doiSettingsType);
             vosClient.setNode(parentVOSURI, doiParentNode);
             return null;
         });
         log.debug("registering again");
 
         doMintTest(doiURL);
-        doiNode = getContainerNode(doiSuffix);
-        dataNode = getContainerNode(doiSuffix + "/data");
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir);
+        doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
+        dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
+        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
         Assert.assertEquals("incorrect status",
                 Status.MINTED.getValue(), doiNode.getPropertyValue(DoiAction.DOI_VOS_STATUS_PROP));
         verifyMintedStatePropertyChanges(doiNode, dataNode, dataSubDirNode);

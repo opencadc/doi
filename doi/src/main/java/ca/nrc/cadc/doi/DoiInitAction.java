@@ -82,9 +82,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.Objects;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
 import org.opencadc.vospace.VOSURI;
@@ -101,18 +103,19 @@ public class DoiInitAction extends InitAction {
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
     public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
-
+    public static final String DOI_GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
+
+    //Alternative DOI settings properties
+    public static final String PUBLISHER_GROUP_URI_KEY = DOI_KEY + ".publisherGroupURI";
+    public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
+    public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
 
     @Override
     public void doInit() {
         getConfig(true);
         checkParentFolders();
-    }
-
-    public static MultiValuedProperties getConfig() {
-        return getConfig(false);
     }
 
     public static URI getVospaceResourceID(MultiValuedProperties props) {
@@ -135,6 +138,10 @@ public class DoiInitAction extends InitAction {
             throw new IllegalStateException("invalid VOSpace URI: " + vospaceParentUri);
         }
         return vosURI.getPath();
+    }
+
+    public static MultiValuedProperties getConfig() {
+        return getConfig(false);
     }
 
     private static MultiValuedProperties getConfig(boolean verify) {
@@ -162,6 +169,15 @@ public class DoiInitAction extends InitAction {
         String metaDataPrefix = props.getFirstPropertyValue(METADATA_PREFIX_KEY);
         sb.append(String.format("\n\t%s: ", METADATA_PREFIX_KEY));
         if (metaDataPrefix == null) {
+            sb.append("MISSING");
+            ok = false;
+        } else {
+            sb.append("OK");
+        }
+
+        String groupPrefix = props.getFirstPropertyValue(DOI_GROUP_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", DOI_GROUP_PREFIX_KEY));
+        if (groupPrefix == null) {
             sb.append("MISSING");
             ok = false;
         } else {
@@ -274,7 +290,8 @@ public class DoiInitAction extends InitAction {
         // check node owner
         String ownerID = containerNode.ownerDisplay;
         if (!adminUsername.equals(ownerID)) {
-            throw new IllegalStateException(String.format("DOI parent node %s owner %s doesn't match configured admin user %s", parentPath, ownerID, adminUsername));
+            throw new IllegalStateException(String.format("DOI parent node %s owner %s doesn't match configured admin user %s",
+                    parentPath, ownerID, adminUsername));
         }
 
         // check node has public access
@@ -299,4 +316,15 @@ public class DoiInitAction extends InitAction {
         throw new IllegalStateException(String.format("no HttpPrincipal found for %s", subject));
     }
 
+    public static GroupURI getPublisherGroupURI(MultiValuedProperties props) {
+        String publisherGroupURI = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
+        log.debug("publisherGroupURI: " + publisherGroupURI);
+
+        return publisherGroupURI == null ? null : new GroupURI(URI.create(publisherGroupURI));
+    }
+
+    public static String getDoiIdentifierPrefix(MultiValuedProperties props) {
+        String doiIdentifierPrefix = props.getFirstPropertyValue(DoiInitAction.DOI_IDENTIFIER_PREFIX_KEY);
+        return Objects.requireNonNullElse(doiIdentifierPrefix, "");
+    }
 }

@@ -67,15 +67,13 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.ac.ACIdentityManager;
 import ca.nrc.cadc.doi.status.Status;
 import java.security.AccessControlException;
-import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
-import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.NodeNotFoundException;
 
 
 public class DeleteAction extends DoiAction {
@@ -88,7 +86,9 @@ public class DeleteAction extends DoiAction {
 
     @Override
     public void doAction() throws Exception {
-        super.init(true);
+        super.init();
+        authorize();
+        authorizeResourceAccess();
 
         // Do all subsequent work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
@@ -97,6 +97,19 @@ public class DeleteAction extends DoiAction {
         });
     }
 
+    private void authorizeResourceAccess() throws NodeNotFoundException {
+        if (isCallingUserDOIAdmin()) {
+            return; // Doi Admin has full access
+        }
+
+        if (isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix))) {
+            return;
+        } else if (publisherGroupURI != null && isCallingUserPublisher()) {
+            return;
+        }
+
+        throw new AccessControlException("Not authorized to Delete this resource.");
+    }
 
     private void doActionImpl() throws Exception {
         if (doiSuffix == null) {
@@ -107,23 +120,7 @@ public class DeleteAction extends DoiAction {
         }
         
         // Get container node for DOI
-        String doiPath = String.format("%s/%s", parentPath, doiSuffix);
-        ContainerNode doiContainer = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(doiPath);
-        
-        // check to see if this user has permission
-        String doiRequester = doiContainer.getPropertyValue(DOI_VOS_REQUESTER_PROP);
-        if (doiRequester == null) {
-            throw new IllegalStateException("No requester associated with DOI: " + doiSuffix);
-        }
-        ACIdentityManager acIdentMgr = new ACIdentityManager();
-        Integer numericID = Integer.parseInt(doiRequester);
-        Subject requestorSubject = acIdentMgr.toSubject(numericID);
-        if (!checkSubjectsMatch(callingSubject, requestorSubject)) {
-            // if doi admin is the calling user, it has permission to delete any of the DOIs as well
-            if (!checkSubjectsMatch(callingSubject, getAdminSubject())) {
-                throw new AccessControlException("Not permitted to delete DOI");
-            }
-        }
+        ContainerNode doiContainer = vospaceDoiClient.getContainerNode(doiSuffix);
 
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
@@ -132,25 +129,12 @@ public class DeleteAction extends DoiAction {
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        String groupToDelete = DOI_GROUP_PREFIX + doiSuffix;
+        String groupToDelete = doiGroupPrefix + doiSuffix;
         log.debug("deleting group: " + groupToDelete);
         getGMSClient().deleteGroup(groupToDelete);
 
-        log.debug("deleting node: " + doiPath);
-        vospaceDoiClient.getVOSpaceClient().deleteNode(doiPath);
-    }
-
-    private boolean checkSubjectsMatch(Subject subA, Subject subB) {
-        Set<Principal> subAPrincipals = subA.getPrincipals();
-        Set<Principal> subBPrincipals = subB.getPrincipals();
-
-        for (Principal subAPrincipal : subAPrincipals) {
-            if (subBPrincipals.contains(subAPrincipal)) {
-                // Return if one of the principals matches
-                return true;
-            }
-        }
-        return false;
+        log.debug("deleting node: " + parentPath + "/" + doiSuffix);
+        vospaceDoiClient.deleteNode(doiSuffix);
     }
 
 }

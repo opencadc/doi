@@ -47,6 +47,9 @@ ca.nrc.cadc.doi.datacite.password = {password}
 
 # DataCite account prefix
 ca.nrc.cadc.doi.datacite.accountPrefix = {account prefix}
+
+# (Optional) DOI Identifier Prefix
+ca.nrc.cadc.doi.doiIdentifierPrefix = {DOI Identifier Prefix}
 ```
 
 _parentUri_ is the URI to the DOI parent folder in the VOSpace service.
@@ -64,6 +67,23 @@ _username_ is the DataCite account username.
 _password_ is the DataCite account password.
 
 _accountPrefix_ is the registered prefix for a DataCite account.
+
+_doiIdentifierPrefix_ is prefix to the DOI Identifier.
+
+**For Alternative DOI Settings ONLY**
+```
+# Publisher Group URI
+ca.nrc.cadc.doi.publisherGroupURI = {Publisher Group URI}
+
+# self Publish
+ca.nrc.cadc.doi.selfPublish = {true|false}
+```
+
+_publisherGroupURI_ is the URI to the group which gives permission to Approve/Publish or Reject DOIs to the user associated with this group.
+
+_selfPublish_ is to give permission to Mint DOIs. If set to true, only DOI Owner can Mint his DOI. If set to false, only a user from publisher group can Mint all the DOIs.
+
+#### Note: If `publisherGroupURI` is configured, `selfPublish` has to be configured 'false'.
 
 **For developer testing only:**
 ```
@@ -126,7 +146,7 @@ At this point the metadata and the data sub-directory are available to the user 
   - update metadata using the GUI
 
 ### Finalizing the DOI
-After all data files have been uploaded and the metadata have been updated, the user can finalize the DOI using the GUI. The process to finalize a DOI is a bit involved. Please refer to the status table below for the possible status transitions. Finalizing a DOI results in the following work to be performed.
+After all data files have been uploaded and the metadata have been updated, the user(The owner of the DOI OR a user from publisher group specified in doi.config) can finalize the DOI using the GUI. The process to finalize a DOI is a bit involved. Please refer to the status table below for the possible status transitions. Finalizing a DOI results in the following work to be performed.
   - change the following to read only and make them publicly accessible:
     - data sub-directory
     - all directories and their sub-directories, and data files contained in the data sub-directory
@@ -169,15 +189,15 @@ Among the supported the DOI metadata, the following are user editable:
 ## DOI Status
 A status is assigned to each DOI to indicate where it is in the service lifecycle. The following (incomplete) table associates the statuses with the service lifecylce.
 
- From Status        |  Action/Event  |  To Status
---------------------|----------------|--------------------
-  (start)           | create DOI     | in progress
- in progress        | update DOI     | in progress
- in progress        | mint   DOI     | locking data
- locking data       | error          | error locking data
- error locking data | mint   DOI     | locking data
- locking data       | success        | locked data
- locked data        | mint   DOI     | registering
- registering        | error          | error registering
- error registering  | mint   DOI     | registering
- registering        | success        | minted
+| From Status        | Action/Event | To Status          |
+|--------------------|--------------|--------------------|
+| (start)            | create DOI   | in progress        |
+| in progress        | update DOI   | in progress        |
+| in progress        | mint   DOI   | locking data       |
+| locking data       | error        | error locking data |
+| error locking data | mint   DOI   | locking data       |
+| locking data       | success      | locked data        |
+| locked data        | mint   DOI   | registering        |
+| registering        | error        | error registering  |
+| error registering  | mint   DOI   | registering        |
+| registering        | success      | minted             |

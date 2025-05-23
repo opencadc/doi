@@ -62,88 +62,37 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
 */
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.io.DoiJsonWriter;
-import ca.nrc.cadc.doi.io.DoiXmlWriter;
-import ca.nrc.cadc.doi.status.DoiStatus;
-import ca.nrc.cadc.doi.status.DoiStatusJsonWriter;
-import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
-
+import ca.nrc.cadc.reg.Capabilities;
+import ca.nrc.cadc.reg.Capability;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.vosi.CapabilitiesTest;
 import org.apache.log4j.Logger;
-import org.opencadc.vospace.ContainerNode;
+import org.junit.Assert;
 
+public class AltVosiCapabilitiesTest extends CapabilitiesTest {
+    private static final Logger log = Logger.getLogger(AltVosiCapabilitiesTest.class);
 
-public class GetAction extends DoiAction {
-
-    private static final Logger log = Logger.getLogger(GetAction.class);
-
-    public GetAction() {
-        super();
+    public AltVosiCapabilitiesTest() {
+        super(TestUtil.DOI_ALT_RESOURCE_ID);
     }
 
     @Override
-    public void doAction() throws Exception {
-        super.init();
+    protected void validateContent(Capabilities caps) throws Exception {
+        super.validateContent(caps);
 
-        // need the following statement because the VOSClient is not initializing
-        // the credentials properly
-        CredUtil.checkCredentials();
+        // doi standard
+        Capability tap = caps.findCapability(Standards.DOI_INSTANCES_10);
 
-        if (super.doiSuffix == null) {
-            // get the DoiStatus of all DOI instances for the calling user
-            getStatusList(getAccessibleDOIs());
-        } else if (super.doiAction != null) {
-            // perform the action on the DOI
-            performDoiAction();
-        } else {
-            getDoi();
-        }
-    }
-    
-    private void getDoi() throws Exception {
-        Resource resource = vospaceDoiClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
-        String docFormat = this.syncInput.getHeader("Accept");
-        log.debug("'Accept' value in header is " + docFormat);
-        if (docFormat != null && docFormat.contains("application/json")) {
-            // json document
-            syncOutput.setHeader("Content-Type", "application/json");
-            DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(resource, syncOutput.getOutputStream());
-        } else {
-            // xml document
-            syncOutput.setHeader("Content-Type", "text/xml");
-            DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(resource, syncOutput.getOutputStream());
-        }
-    }
-    
-    private void performDoiAction() throws Exception {
-        if (doiAction.equals(DoiAction.STATUS_ACTION)) {
-            ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(doiSuffix);
-            DoiStatus doiStatus = getDoiStatus(doiSuffix, doiContainerNode, true);
-
-            String docFormat = this.syncInput.getHeader("Accept");
-            log.debug("'Accept' value in header is " + docFormat);
-            if (docFormat != null && docFormat.contains("application/json")) {
-                // json document
-                syncOutput.setHeader("Content-Type", "application/json");
-                DoiStatusJsonWriter writer = new DoiStatusJsonWriter();
-                writer.write(doiStatus, syncOutput.getOutputStream());
-            } else {
-                // xml document
-                syncOutput.setHeader("Content-Type", "text/xml");
-                DoiStatusXmlWriter writer = new DoiStatusXmlWriter();
-                writer.write(doiStatus, syncOutput.getOutputStream());
-            }
-        } else {
-            throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
-        }
+        // interfaces that should be present (anon not supported)
+        Assert.assertNotNull("cert", tap.findInterface(Standards.SECURITY_METHOD_CERT, Standards.INTERFACE_PARAM_HTTP));
+        Assert.assertNotNull("cookie", tap.findInterface(Standards.SECURITY_METHOD_COOKIE, Standards.INTERFACE_PARAM_HTTP));
     }
 
 }

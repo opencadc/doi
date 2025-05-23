@@ -1,3 +1,19 @@
+get:
+  tags:
+    - "instances"
+  summary: "Get a list of DOI statuses"
+  description: "Return the DOIStatus for all DOI's the User has permission to view."
+  operationId: "getAllDOI"
+  responses:
+    "200":
+      $ref: "../components/responses/doi-responses.yaml#/get-doi-statuslist-success"
+    "403":
+      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
+    "500":
+      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
+    "503":
+      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
+
 post:
   tags:
     - "instances"
@@ -25,21 +41,6 @@ post:
       $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
     "409":
       description: "DOI already exists"
-    "500":
-      $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
-    "503":
-      $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
-get:
-  tags:
-    - "instances"
-  summary: "Get a list of DOI statuses"
-  description: "List the statuses of all DOIs created by the user."
-  operationId: "getAllDOI"
-  responses:
-    "200":
-      $ref: "../components/responses/doi-responses.yaml#/get-doi-statuslist-success"
-    "403":
-      $ref: "../components/responses/doi-std-responses.yaml#/permission-denied"
     "500":
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
     "503":
