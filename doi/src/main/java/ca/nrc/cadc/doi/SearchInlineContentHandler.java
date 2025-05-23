@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2024.                            (c) 2024.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,65 +62,77 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 5 $
+ *  : 5 $
  *
  ************************************************************************
  */
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.io.DoiJsonReader;
-import ca.nrc.cadc.doi.io.DoiParsingException;
-import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
-public class DoiInlineContentHandler implements InlineContentHandler {
+/**
+ * The SearchInlineContentHandler class is responsible for handling inline content
+ * with a specific focus on processing JSON data. This class implements the
+ * InlineContentHandler interface and provides functionality to parse JSON input streams
+ * into a structured {@code Content} object.
+ *
+ * <p>The handler enforces the requirement that the content type of the input must
+ * be "application/json". It will reject any unsupported content types or closed
+ * input streams by throwing appropriate exceptions.</p>
+ *
+ * <p>Key features:
+ * - Validates that the input content type is JSON.
+ * - Parses the JSON input stream and converts it to a map representation.
+ * - Constructs a {@code Content} object with the parsed JSON data.</p>
+ *
+ * <p>Exceptions:
+ * - Throws InlineContentException if the content type is not JSON.
+ * - Throws IOException if the input stream is closed or not accessible.</p>
+ *
+ * <p>The processed content is assigned the name specified by {@code CONTENT_KEY},
+ * which is "SearchJSON" in this implementation.</p>
+ */
+public class SearchInlineContentHandler implements InlineContentHandler {
     private static Logger log = Logger.getLogger(DoiInlineContentHandler.class);
 
-    public static final String CONTENT_KEY = "DOImetadata";
-
-    public DoiInlineContentHandler() {
-    }
+    public static final String CONTENT_KEY = "SearchJSON";
 
     /**
-     * Receive data.
+     * Default constructor
      */
+    public SearchInlineContentHandler() {
+    }
+
     public Content accept(String name, String contentType, InputStream inputStream)
             throws InlineContentException, IOException {
         if (inputStream == null) {
             throw new IOException("The InputStream is closed");
         }
-
-        Resource userInput = null;
-        InlineContentHandler.Content content = new InlineContentHandler.Content();
-
-        if (contentType.toLowerCase().contains("text/xml")) {
-            try {
-                // read xml file
-                DoiXmlReader reader = new DoiXmlReader(false);
-                userInput = reader.read(inputStream);
-            } catch (DoiParsingException dpe) {
-                log.debug(dpe);
-                throw new InlineContentException(dpe.getMessage());
-            }
-        } else if (contentType.toLowerCase().contains("application/json")) {
-            try {
-                // read json file
-                DoiJsonReader reader = new DoiJsonReader();
-                userInput = reader.read(inputStream);
-            } catch (DoiParsingException dpe) {
-                log.debug(dpe);
-                throw new InlineContentException(dpe.getMessage());
-            }
+        if (!contentType.toLowerCase().contains("application/json")) {
+            throw new InlineContentException("Content-Type must be application/json");
         }
 
+        JSONTokener jsonTokener = new JSONTokener(inputStream);
+        JSONObject jsonObject;
+        try {
+            jsonObject = new JSONObject(jsonTokener);
+        } catch (JSONException e) {
+            throw new InlineContentException("Error parsing JSON input: " + e.getMessage());
+        }
+        inputStream.close();
+
+        InlineContentHandler.Content content = new InlineContentHandler.Content();
         content.name = CONTENT_KEY;
-        content.value = userInput;
+        content.value = jsonObject;
         return content;
     }
+
 }

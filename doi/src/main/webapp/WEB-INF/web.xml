@@ -62,7 +62,11 @@
         </init-param>
         <init-param>
             <param-name>post</param-name>
-            <param-value>ca.nrc.cadc.doi.PostAction</param-value>
+            <param-value>ca.nrc.cadc.doi.SearchAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ca.nrc.cadc.uws.web.InlineContentHandler</param-name>
+            <param-value>ca.nrc.cadc.doi.SearchInlineContentHandler</param-value>
         </init-param>
         <load-on-startup>2</load-on-startup>
     </servlet>
