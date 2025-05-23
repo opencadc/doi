@@ -89,6 +89,8 @@ public class TestUtil {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
+    static String JSON_CONTENT_TYPE = "application/json";
+
     // ADMIN_CERT is the owner of the test DOI
     static String ADMIN_CERT = "doi-admin.pem";
 

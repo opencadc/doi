@@ -6,12 +6,18 @@ import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlReader;
 import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpDelete;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.opencadc.vospace.ContainerNode;
@@ -101,9 +107,7 @@ public class AltPermissionsTest extends LifecycleTest {
             log.debug("readWriteSubject - found recently created DOI's Status Object = " + doiID);
 
             // verify draft DOI status in search
-            Map<String, Object> draftSearchFilter = new HashMap<>();
-            draftSearchFilter.put("status", "in progress");
-            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(draftSearchFilter);
+            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(null, List.of("in progress"));
             long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
             Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
             return doiID;
@@ -142,16 +146,12 @@ public class AltPermissionsTest extends LifecycleTest {
             log.debug("publisherSubject - DOI minting Successful for DOI ID: " + doiSuffix);
 
             // verify minted DOI status in search
-            Map<String, Object> mintedSearchFilter = new HashMap<>();
-            mintedSearchFilter.put("status", "minted");
-            List<DoiStatus> mintedDoiStatusList = searchDOIStatuses(mintedSearchFilter);
+            List<DoiStatus> mintedDoiStatusList = searchDOIStatuses(null, List.of("minted"));
             long draftDOIsCount = mintedDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.MINTED)).count();
             Assert.assertEquals(mintedDoiStatusList.size(), draftDOIsCount);
 
             // verify owned DOI in search
-            Map<String, Object> ownedDOIsSearchFilter = new HashMap<>();
-            ownedDOIsSearchFilter.put("role", "owner");
-            List<DoiStatus> ownedDOIsStatusList = searchDOIStatuses(ownedDOIsSearchFilter);
+            List<DoiStatus> ownedDOIsStatusList = searchDOIStatuses("owner", null);
             Optional<DoiStatus> mintedDoiStatus = ownedDOIsStatusList.stream().filter(e -> getDOISuffix(e.getIdentifier().getValue()).equals(doiSuffix)).findFirst();
             Assert.assertTrue(mintedDoiStatus.isEmpty());
             return doiSuffix;
@@ -168,9 +168,7 @@ public class AltPermissionsTest extends LifecycleTest {
             log.debug("readWriteSubject - get All DOI Status success with the recently minted DOI : " + doiSuffix);
 
             // verify minted DOI status in search
-            Map<String, Object> mintedSearchFilter = new HashMap<>();
-            mintedSearchFilter.put("status", "minted");
-            List<DoiStatus> mintedDoiStatusList = searchDOIStatuses(mintedSearchFilter);
+            List<DoiStatus> mintedDoiStatusList = searchDOIStatuses(null, List.of("minted"));
             long mintedDOIsCount = mintedDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.MINTED)).count();
             Assert.assertEquals(mintedDoiStatusList.size(), mintedDOIsCount);
             return doiSuffix;
@@ -274,16 +272,12 @@ public class AltPermissionsTest extends LifecycleTest {
             log.debug("publisherSubject - DOI's DRAFT status verified: " + doiID);
 
             // verify DOI in search as an owner
-            Map<String, Object> ownedDOIsSearchFilter = new HashMap<>();
-            ownedDOIsSearchFilter.put("role", "owner");
-            List<DoiStatus> ownedDOIsStatusList = searchDOIStatuses(ownedDOIsSearchFilter);
+            List<DoiStatus> ownedDOIsStatusList = searchDOIStatuses("owner", null);
             Optional<DoiStatus> mintedDoiStatus = ownedDOIsStatusList.stream().filter(e -> getDOISuffix(e.getIdentifier().getValue()).equals(doiID)).findFirst();
             Assert.assertTrue(mintedDoiStatus.isPresent());
 
             // verify DOI in search as publisher
-            Map<String, Object> publisherDOIsSearchFilter = new HashMap<>();
-            publisherDOIsSearchFilter.put("role", "publisher");
-            List<DoiStatus> filteredDOIStatusList = searchDOIStatuses(publisherDOIsSearchFilter);
+            List<DoiStatus> filteredDOIStatusList = searchDOIStatuses("publisher", null);
             Optional<DoiStatus> optionalDoiStatus = filteredDOIStatusList.stream().filter(e -> getDOISuffix(e.getIdentifier().getValue()).equals(doiID)).findFirst();
             Assert.assertTrue(optionalDoiStatus.isEmpty());
             return doiID;
@@ -355,10 +349,7 @@ public class AltPermissionsTest extends LifecycleTest {
 
         Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
             // fetch all draft DOIs
-            Map<String, Object> searchFilter = new HashMap<>();
-            searchFilter.put("status", "in progress");
-
-            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(null, List.of("in progress"));
 
             long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
             Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
@@ -370,10 +361,7 @@ public class AltPermissionsTest extends LifecycleTest {
             Assert.assertFalse(nonDraftDOIStatus.isPresent());
 
             // fetch all minted DOIs
-            searchFilter = new HashMap<>();
-            searchFilter.put("status", "minted");
-
-            List<DoiStatus> publishedDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> publishedDoiStatusList = searchDOIStatuses(null, List.of("minted"));
 
             long publishedDOIsCount = publishedDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.MINTED)).count();
             Assert.assertEquals(publishedDoiStatusList.size(), publishedDOIsCount);
@@ -385,19 +373,13 @@ public class AltPermissionsTest extends LifecycleTest {
             Assert.assertFalse(nonMintedDOIStatus.isPresent());
 
             // fetch all Own DOIs
-            searchFilter = new HashMap<>();
-            searchFilter.put("role", "owner");
-
-            List<DoiStatus> ownDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> ownDoiStatusList = searchDOIStatuses("owner", null);
 
             long ownDOIsCount = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(mintedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
             Assert.assertEquals(2, ownDOIsCount); // both should be present
 
             // fetch all DOIs which user has access to publish
-            searchFilter = new HashMap<>();
-            searchFilter.put("role", "publisher");
-
-            List<DoiStatus> publisherDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> publisherDoiStatusList = searchDOIStatuses("publisher", null);
             Assert.assertTrue(publisherDoiStatusList.isEmpty());
             return null;
         });
@@ -405,10 +387,7 @@ public class AltPermissionsTest extends LifecycleTest {
         Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
 
             // fetch all draft DOIs
-            Map<String, Object> searchFilter = new HashMap<>();
-            searchFilter.put("status", "in progress");
-
-            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> draftDoiStatusList = searchDOIStatuses(null, List.of("in progress"));
 
             long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
             Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
@@ -417,10 +396,7 @@ public class AltPermissionsTest extends LifecycleTest {
             Assert.assertEquals(2, draftDOIsCount);
 
             // fetch all Own DOIs
-            searchFilter = new HashMap<>();
-            searchFilter.put("role", "owner");
-
-            List<DoiStatus> ownDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> ownDoiStatusList = searchDOIStatuses("owner", null);
 
             long ownDOIsCount = ownDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
             Assert.assertEquals(1, ownDOIsCount);
@@ -432,10 +408,7 @@ public class AltPermissionsTest extends LifecycleTest {
             Assert.assertFalse(notOwnedDOIStatus.isPresent());
 
             // fetch all DOIs which user has access to publish
-            searchFilter = new HashMap<>();
-            searchFilter.put("role", "publisher");
-
-            List<DoiStatus> publisherDoiStatusList = searchDOIStatuses(searchFilter);
+            List<DoiStatus> publisherDoiStatusList = searchDOIStatuses("publisher", null);
 
             long publisherDOIsCount = publisherDoiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(publisherOwnedDOIId) || getDOISuffix(doiStatus.getIdentifier().getValue()).equals(draftDOIId)).count();
             Assert.assertEquals(1, publisherDOIsCount);
@@ -506,18 +479,32 @@ public class AltPermissionsTest extends LifecycleTest {
         return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
     }
 
-    public List<DoiStatus> searchDOIStatuses(Map<String, Object> params) throws IOException, DoiParsingException {
-        URL doiURL = new URL(String.format("%s", doiSearchServiceURL));
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    public List<DoiStatus> searchDOIStatuses(String role, List<String> status)
+            throws IOException, DoiParsingException {
+        JSONObject json = new JSONObject();
+        if (role != null) {
+            json.put("role", role);
+        }
+        if (status != null && !status.isEmpty()) {
+            JSONArray statusArray = new JSONArray();
+            for (String s : status) {
+                statusArray.put(s);
+            }
+            json.put("status", statusArray);
+        }
+        String jsonString = json.toString();
+        log.debug("Searching DOI statuses with filter: " + jsonString);
 
-        HttpPost post = new HttpPost(doiURL, params, bos);
+        FileContent content = new FileContent(json.toString().getBytes(StandardCharsets.UTF_8),
+                TestUtil.JSON_CONTENT_TYPE);
+        HttpPost post = new HttpPost(doiSearchServiceURL, content, false);
         post.run();
 
         Assert.assertNull(post.getThrowable());
         Assert.assertEquals(200, post.getResponseCode());
-
+        InputStream in = post.getInputStream();
         DoiStatusListXmlReader reader = new DoiStatusListXmlReader();
-        return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
+        return reader.read(new InputStreamReader(in, StandardCharsets.UTF_8));
     }
 
 }

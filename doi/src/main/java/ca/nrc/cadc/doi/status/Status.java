@@ -101,7 +101,7 @@ public enum Status {
                 return status;
             }
         }
-        throw new IllegalArgumentException("invalid value: " + s);
+        throw new IllegalArgumentException("invalid Status: " + s);
     }
 
     public String getValue() {

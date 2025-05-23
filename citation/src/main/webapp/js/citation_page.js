@@ -160,7 +160,7 @@
       return _registryClient
           .getServiceURL(
               'ivo://cadc.nrc.ca/doi',
-              'vos://cadc.nrc.ca~vospace/CADC/std/DOI#instances-1.0',
+              'http://www.opencadc.org/std/doi#instances-1.0',
               'vs:ParamHTTP',
               'cookie'
           )
@@ -168,6 +168,19 @@
             setAjaxFail('Error obtaining Service URL > ' + err)
           })
     }
+
+    function prepareSearchCall() {
+          return _registryClient
+              .getServiceURL(
+                  'ivo://cadc.nrc.ca/doi',
+                  'http://www.opencadc.org/std/doi#search-1.0',
+                  'vs:ParamHTTP',
+                  'cookie'
+              )
+              .catch(function (err) {
+                setAjaxFail('Error obtaining Service URL > ' + err)
+              })
+        }
 
     function setAjaxCount(count) {
       _ajaxCallCount = count
@@ -374,6 +387,7 @@
       parseUrl: parseUrl,
       serviceState: serviceState,
       prepareCall: prepareCall,
+      prepareSearchCall: prepareSearchCall,
       setAjaxCount: setAjaxCount,
       setAjaxSuccess: setAjaxSuccess,
       setAjaxFail: setAjaxFail,
