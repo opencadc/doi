@@ -129,8 +129,6 @@ import org.opencadc.vospace.transfer.Transfer;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    private DoiSearchFilter doiSearchFilter;
-
     public PostAction() {
         super();
     }
