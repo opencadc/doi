@@ -129,7 +129,6 @@ public class DeleteAction extends DoiAction {
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>
-        boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
         String groupToDelete = doiGroupPrefix + doiSuffix;
         log.debug("deleting group: " + groupToDelete);
         getGMSClient().deleteGroup(groupToDelete);

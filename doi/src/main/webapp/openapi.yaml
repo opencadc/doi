@@ -8,6 +8,9 @@ servers:
 tags:
   - name: "instances"
     description: "Main endpoint for the DOI service."
+  - name: "search"
+    description: "Search DOIs with filters."
+  - name: "Support Interfaces"
 paths:
   /availability:
     $ref: ./paths/vosi-availability.yaml

@@ -129,6 +129,8 @@ import org.opencadc.vospace.transfer.Transfer;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
+    private DoiSearchFilter doiSearchFilter;
+
     public PostAction() {
         super();
     }
@@ -160,6 +162,9 @@ public class PostAction extends DoiAction {
         if (isCallingUserDOIAdmin()) {
             return;
         }
+
+        String selfPublishProperty = config.getFirstPropertyValue(DoiInitAction.SELF_PUBLISH_KEY);
+        boolean selfPublish = selfPublishProperty == null || Boolean.parseBoolean(selfPublishProperty);
 
         if (doiAction != null && doiAction.equals(DoiAction.MINT_ACTION) && !selfPublish) {
             if (isCallingUserPublisher() && !isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix))) {
@@ -596,7 +601,9 @@ public class PostAction extends DoiAction {
         }
 
         boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
+        String doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
         String nextDoiSuffix;
+
         if (randomTestID) {
             nextDoiSuffix = doiIdentifierPrefix + getRandomDOISuffix();
             log.warn("Random DOI suffix: " + nextDoiSuffix);
@@ -623,7 +630,6 @@ public class PostAction extends DoiAction {
 
         // Create the group that is able to administer the DOI process
         String groupName;
-        System.out.println("=================== doiGroupPrefix: " + doiGroupPrefix);
         groupName = doiGroupPrefix + nextDoiSuffix;
         GroupURI guri = createDoiGroup(groupName);
         log.debug("Created DOI group: " + guri);

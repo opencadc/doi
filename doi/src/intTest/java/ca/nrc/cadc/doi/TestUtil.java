@@ -98,7 +98,7 @@ public class TestUtil {
     static String AUTH_CERT = "doi-auth.pem";
 
     // AUTH_TWO_CERT is part of test publisher group which can approve or reject a DOI if alternative permissions is configured
-    static String PUBLISHER_CERT = "cadcauthtest2.pem";
+    static String PUBLISHER_CERT = "doi-publisher.pem";
 
     // NO_AUTH_CERT has read only access to the test DOI
     static String NO_AUTH_CERT = "doi-noauth.pem";
@@ -117,14 +117,16 @@ public class TestUtil {
     static String DOI_PARENT_PATH;
 
     // resourceID for the local test DOI service for Alternative DOI specific scenarios
-    static URI DOI_ALT_RESOURCE_ID = URI.create("ivo://opencadc.org/doiAlt");
+    static URI DOI_ALT_RESOURCE_ID = URI.create("ivo://opencadc.org/doi-alt");
 
     // VOSpace URI to the Alternative DOI parent node,
-    static URI DOI_ALT_VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi/doiAlt");
+    static URI DOI_ALT_VOSPACE_PARENT_URI = URI.create("vos://opencadc.org~vault/doi/doi-alt");
 
     static String DOI_ALT_PARENT_PATH;
 
     static URI DOI_ALT_VOSPACE_RESOURCE_ID;
+
+    static String DOI_ALT_IDENTIFIER_PREFIX;
 
     static {
 
@@ -145,6 +147,9 @@ public class TestUtil {
                 }
                 if (props.containsKey("doiAltVospaceParentUri")) {
                     DOI_ALT_VOSPACE_PARENT_URI = URI.create(props.getProperty("doiAltVospaceParentUri").trim());
+                }
+                if (props.containsKey("doiAltIdentifierPrefix")) {
+                    DOI_ALT_IDENTIFIER_PREFIX = props.getProperty("doiAltIdentifierPrefix").trim();
                 }
             }
         }

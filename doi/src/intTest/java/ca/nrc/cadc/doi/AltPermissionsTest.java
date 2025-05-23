@@ -36,9 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class AlternativePermissionsTest extends LifecycleTest {
+public class AltPermissionsTest extends LifecycleTest {
 
-    private static final Logger log = Logger.getLogger(AlternativePermissionsTest.class);
+    private static final Logger log = Logger.getLogger(AltPermissionsTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
@@ -69,7 +69,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
      * */
     @Test
     public void testDOILifecycleWithAlternateSettings() throws Exception {
-        log.debug("test DOI lifecycle with Alternate Settings");
+        log.debug("Test DOI lifecycle with Alternate Settings");
 
         // Create a new DOI
         Resource expected = getTestResource(true, true, true);
@@ -80,7 +80,7 @@ public class AlternativePermissionsTest extends LifecycleTest {
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
             Assert.assertNotNull(doiID);
-            Assert.assertTrue(doiID.startsWith("RAFTS-"));
+            Assert.assertTrue(doiID.startsWith(TestUtil.DOI_ALT_IDENTIFIER_PREFIX));
 
             ContainerNode doiNode = getContainerNode(doiID, doiAltParentPathURI, doiAltVosClient);
             Assert.assertNotNull(doiNode);

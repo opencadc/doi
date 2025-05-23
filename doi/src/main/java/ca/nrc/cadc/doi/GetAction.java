@@ -69,15 +69,11 @@ package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiJsonWriter;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusXmlWriter;
-import ca.nrc.cadc.util.StringUtil;
-
-import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.opencadc.vospace.ContainerNode;
@@ -110,18 +106,6 @@ public class GetAction extends DoiAction {
         }
     }
     
-    private Title getTitle(Resource resource) {
-        Title title = null;
-        List<Title> titles = resource.getTitles();
-        for (Title t : titles) {
-            if (StringUtil.hasText(t.getValue())) {
-                title = t;
-                break;
-            }
-        }
-        return title;
-    }
-
     private void getDoi() throws Exception {
         Resource resource = vospaceDoiClient.getResource(doiSuffix, getDoiFilename(doiSuffix));
         String docFormat = this.syncInput.getHeader("Accept");

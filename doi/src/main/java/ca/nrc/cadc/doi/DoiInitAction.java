@@ -175,6 +175,15 @@ public class DoiInitAction extends InitAction {
             sb.append("OK");
         }
 
+        String groupPrefix = props.getFirstPropertyValue(DOI_GROUP_PREFIX_KEY);
+        sb.append(String.format("\n\t%s: ", DOI_GROUP_PREFIX_KEY));
+        if (groupPrefix == null) {
+            sb.append("MISSING");
+            ok = false;
+        } else {
+            sb.append("OK");
+        }
+
         String landingUrl = props.getFirstPropertyValue(LANDING_URL_KEY);
         sb.append(String.format("\n\t%s: ", LANDING_URL_KEY));
         if (landingUrl == null) {
