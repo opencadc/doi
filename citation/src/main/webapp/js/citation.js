@@ -134,15 +134,12 @@
       page.setInfoModal('Please wait ', 'Fetching current DOI list... (may take up to 10 seconds)', false, true)
 
       page.prepareSearchCall().then(function(serviceURL) {
-        var formData = new FormData();
-        formData.append('role', 'owner');
-
         $.ajax({
           xhrFields: { withCredentials: true },
           url: serviceURL,
           method: 'POST',
           dataType: 'json',
-          data: formData,
+          data: JSON.stringify({role:'owner'}),
           contentType: 'application/json'
         })
             .success(function(stringdata) {
