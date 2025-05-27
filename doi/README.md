@@ -109,8 +109,8 @@ docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:r
 
 #### Note: If running with alternative settings,
 1. The `doi.properties` file must contain the `doiIdentifierPrefix`, `publisherGroupURI` and `selfPublish` properties.
-2. The config folder should have `war-rename.conf` file with the following content: `mv doi.war doi-alt.war`
-3. The vault should be configured with a directory separate from the doi specific directory and `vospaceParentUri` property in the `doi.properties` should point to the new vault directory.
+2. The config folder should have `war-rename.conf` file with the following content: `mv doi.war doi-alt.war`.
+3. The `vospaceParentUri` property in `doi.properties` should be configured to use a different VOSpace folder than a doi service.
 ```
 
 ## Service lifecycle
