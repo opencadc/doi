@@ -79,8 +79,6 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
 import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
-import ca.nrc.cadc.doi.search.DoiSearchFilter;
-import ca.nrc.cadc.doi.search.Role;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
@@ -131,8 +129,6 @@ import org.opencadc.vospace.transfer.Transfer;
 public class PostAction extends DoiAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    private DoiSearchFilter doiSearchFilter;
-
     public PostAction() {
         super();
     }
@@ -141,14 +137,6 @@ public class PostAction extends DoiAction {
     public void doAction() throws Exception {
         super.init();
         authorize();
-
-        if (doiAction != null && doiAction.equals(SEARCH_ACTION)) {
-            if (!syncInput.getParameterNames().isEmpty()) {
-                prepareDoiSearchFilter();
-            }
-            performDoiAction();
-            return;
-        }
 
         // Validate user for minting or updating DOI
         if (doiSuffix != null) { // DOI Initialization does not require authorization
@@ -189,30 +177,6 @@ public class PostAction extends DoiAction {
         }
 
         throw new AccessControlException("Not authorized to operate on this resource." + doiSuffix);
-    }
-
-    private void prepareDoiSearchFilter() {
-        boolean isRoleFilterPresent = syncInput.getParameter("role") != null;
-        boolean isStatusFilterPresent = syncInput.getParameter("status") != null;
-
-        if (!isRoleFilterPresent && !isStatusFilterPresent) {
-            return;
-        }
-
-        this.doiSearchFilter = new DoiSearchFilter();
-
-        if (isRoleFilterPresent) {
-            if (!isCallingUserDOIAdmin()) {
-                Role role = Role.toValue(syncInput.getParameter("role"));
-                if (role.equals(Role.PUBLISHER) && publisherGroupURI == null) {
-                    role = Role.OWNER;
-                }
-                doiSearchFilter.setRole(role);
-            }
-        }
-        if (isStatusFilterPresent) {
-            doiSearchFilter.prepareStatusList(syncInput.getParameters("status"));
-        }
     }
 
     // methods to assign to private field in Identity
@@ -533,74 +497,9 @@ public class PostAction extends DoiAction {
             log.debug("redirectUrl: " + redirectUrl);
             syncOutput.setHeader("Location", redirectUrl);
             syncOutput.setCode(303);
-        } else if (doiAction.equals(SEARCH_ACTION)) {
-            if (doiSearchFilter == null || callersNumericId == null) {
-                getStatusList(getAccessibleDOIs());
-            } else {
-                getStatusList(getFilteredDOIs(doiSearchFilter));
-            }
         } else {
             throw new UnsupportedOperationException("DOI action not implemented: " + doiAction);
         }
-    }
-
-    private List<Node> getFilteredDOIs(DoiSearchFilter doiSearchFilter) throws Exception {
-        List<Node> filteredNodes = new ArrayList<>();
-        ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
-        boolean callingUserPublisher = isCallingUserPublisher();
-        boolean callingUserDOIAdmin = isCallingUserDOIAdmin();
-
-        if (doiSearchFilter.getRole() != null && doiSearchFilter.getRole().equals(Role.PUBLISHER) && !callingUserPublisher) {
-            return filteredNodes;
-        }
-
-        if (doiRootNode != null) {
-            for (Node childNode : doiRootNode.getNodes()) {
-                NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
-                if (requester == null || requester.getValue() == null) {
-                    continue; // Skip nodes without a valid requester
-                }
-
-                // Check status filter
-                if (!doiSearchFilter.getStatusList().isEmpty()) {
-                    NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
-                    if (statusProp == null || !doiSearchFilter.getStatusList()
-                            .contains(Status.toValue(statusProp.getValue()))) {
-                        continue; // Skip nodes that don't match the status filter
-                    }
-                }
-
-                // Check role filter
-                if (doiSearchFilter.getRole() != null) {
-                    if (doiSearchFilter.getRole().equals(Role.OWNER)) {
-                        if (!isCallingUserRequester(childNode)) {
-                            continue; // Skip nodes where the caller is not the owner OR DOI Admin
-                        }
-                    } else if (doiSearchFilter.getRole().equals(Role.PUBLISHER)) {
-                        if (isCallingUserRequester(childNode)) {
-                            continue; // Skip nodes where the caller is a publisher as well as the owner
-                        }
-
-                        NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
-                        if (statusProp.getValue().equals("minted") && !doiSearchFilter.getStatusList().contains(Status.MINTED)) {
-                            continue; // Skip nodes where the status is minted and the caller is a publisher
-                        }
-                    }
-                } else {
-                    NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
-
-                    // Check if the user is DOI Admin, publisher, or matches the requester
-                    if (!statusProp.getValue().equals("minted") && !callingUserDOIAdmin && !callingUserPublisher
-                            && !isCallingUserRequester(childNode)) {
-                        continue;
-                    }
-                }
-
-                // Add the node to the filtered list if all conditions are met
-                filteredNodes.add(childNode);
-            }
-        }
-        return filteredNodes;
     }
 
     // update a DOI instance

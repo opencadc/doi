@@ -74,7 +74,6 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Title;
-import ca.nrc.cadc.doi.search.DoiSearchFilter;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
@@ -300,7 +299,9 @@ public abstract class DoiAction extends RestAction {
                         }
 
                         Long requesterUserId = Long.parseLong(requester.getValue());
-                        if (callersNumericId.equals(requesterUserId) || isCallingUserDOIAdmin() || isCallingUserPublisher()) {
+                        if (callersNumericId.equals(requesterUserId)
+                                || isCallingUserDOIAdmin()
+                                || isCallingUserPublisher()) {
                             ownedNodes.add(childNode);
                         }
                     } catch (NumberFormatException e) {
@@ -349,7 +350,8 @@ public abstract class DoiAction extends RestAction {
         }
     }
 
-    protected DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, boolean authorize) throws Exception {
+    protected DoiStatus getDoiStatus(String doiSuffixString, ContainerNode doiContainerNode, boolean authorize)
+            throws Exception {
         DoiStatus doiStatus;
         if (!authorize || vospaceDoiClient.hasCallerReadDOIAccess(doiContainerNode, getAdminSubject())) {
             // get status
@@ -386,7 +388,8 @@ public abstract class DoiAction extends RestAction {
         return doiStatus;
     }
 
-    protected String updateMintingStatus(final ContainerNode doiContainerNode, final String status) throws Exception {
+    protected String updateMintingStatus(final ContainerNode doiContainerNode, final String status)
+            throws Exception {
         return (String) Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             // update status based on the result of the minting service
             String localStatus = status;
