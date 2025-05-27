@@ -102,6 +102,17 @@ docker run --rm -it doi:latest /bin/bash
 docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name doi doi:latest
 ```
 
+## running it with alternative settings
+```
+docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name doi-alt doi:latest
+```
+
+#### Note: If running with alternative settings,
+1. The `doi.properties` file must contain the `doiIdentifierPrefix`, `publisherGroupURI` and `selfPublish` properties.
+2. The config folder should have `war-rename.conf` file with the following content: `mv doi.war doi-alt.war`
+3. The vault should be configured with a directory separate from the doi specific directory and `vospaceParentUri` property in the `doi.properties` should point to the new vault directory.
+```
+
 ## Service lifecycle
 Usage of this service can be divided into three distinct phases described below. The service does not impose a time limit on each phase.
 
