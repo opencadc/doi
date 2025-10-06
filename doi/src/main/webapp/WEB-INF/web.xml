@@ -43,6 +43,10 @@
             <param-value>ca.nrc.cadc.doi.PostAction</param-value>
         </init-param>
         <init-param>
+            <param-name>put</param-name>
+            <param-value>ca.nrc.cadc.doi.PutAction</param-value>
+        </init-param>
+        <init-param>
             <param-name>delete</param-name>
             <param-value>ca.nrc.cadc.doi.DeleteAction</param-value>
         </init-param>

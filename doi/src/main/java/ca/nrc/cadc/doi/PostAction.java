@@ -67,45 +67,24 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.ac.Group;
-import ca.nrc.cadc.ac.GroupAlreadyExistsException;
-import ca.nrc.cadc.ac.User;
-import ca.nrc.cadc.ac.UserNotFoundException;
-import ca.nrc.cadc.ac.client.GMSClient;
-import ca.nrc.cadc.doi.datacite.Date;
-import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Identifier;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.ResourceType;
-import ca.nrc.cadc.doi.datacite.Title;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.HttpUpload;
-import ca.nrc.cadc.net.OutputStreamWrapper;
-import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
-import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.security.auth.Subject;
@@ -114,19 +93,13 @@ import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
-import org.opencadc.vospace.Node;
 import org.opencadc.vospace.NodeNotFoundException;
 import org.opencadc.vospace.NodeProperty;
-import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientAbortThread;
-import org.opencadc.vospace.client.ClientTransfer;
 import org.opencadc.vospace.client.async.RecursiveSetNode;
-import org.opencadc.vospace.transfer.Direction;
-import org.opencadc.vospace.transfer.Protocol;
-import org.opencadc.vospace.transfer.Transfer;
 
-public class PostAction extends DoiAction {
+public class PostAction extends DoiWriteAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
     public PostAction() {
@@ -148,7 +121,8 @@ public class PostAction extends DoiAction {
             if (doiAction != null) {
                 performDoiAction();
             } else if (doiSuffix == null) {
-                createDOI();
+                Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
+                createDOI(resource);
             } else {
                 updateDOI();
             }
@@ -177,19 +151,6 @@ public class PostAction extends DoiAction {
         }
 
         throw new AccessControlException("Not authorized to operate on this resource." + doiSuffix);
-    }
-
-    // methods to assign to private field in Identity
-    public static void assignIdentifier(Object ce, String identifier) {
-        try {
-            Field f = Identifier.class.getDeclaredField("value");
-            f.setAccessible(true);
-            f.set(ce, identifier);
-        } catch (NoSuchFieldException fex) {
-            throw new RuntimeException("Identifier class is missing the value field", fex);
-        } catch (IllegalAccessException bug) {
-            throw new RuntimeException("No access to Identifier value field", bug);
-        }
     }
 
     private Resource merge(Resource sourceResource, Resource targetResource) {
@@ -329,7 +290,6 @@ public class PostAction extends DoiAction {
         writer.write(resource, builder);
         return builder.toString();
     }
-
 
     private void register(ContainerNode doiContainerNode) throws Exception {
         Set<GroupURI> groupRead = new TreeSet<>();
@@ -571,249 +531,6 @@ public class PostAction extends DoiAction {
             throw new IllegalArgumentException(msg);
         } else {
             verifyString(rt1.value, rt2.value, "resourceType description");
-        }
-    }
-    
-    private void setPermissions(Node node, GroupURI doiGroup) {
-        // Before completion, directory is visible in AstroDataCitationDOI directory, but not readable
-        // except by doi admin and calling user's group
-        node.isPublic = false;
-
-        // All folders will be only readable by requester
-        node.getReadOnlyGroup().add(doiGroup);
-        
-        // All folders will be only readable by requester
-        node.getReadWriteGroup().add(doiGroup);
-
-        if (publisherGroupURI != null) {
-            node.getReadOnlyGroup().add(publisherGroupURI);
-            node.getReadWriteGroup().add(publisherGroupURI);
-        }
-    }
-    
-    private void createDOI() throws Exception {
-        // Get the submitted form data, if it exists
-        Resource resource = (Resource) syncInput.getContent(DoiInlineContentHandler.CONTENT_KEY);
-        if (resource == null) {
-            throw new IllegalArgumentException("No content");
-        }
-
-        boolean randomTestID = Boolean.parseBoolean(config.getFirstPropertyValue(DoiInitAction.RANDOM_TEST_ID_KEY));
-        String doiIdentifierPrefix = DoiInitAction.getDoiIdentifierPrefix(config);
-        String nextDoiSuffix;
-
-        if (randomTestID) {
-            nextDoiSuffix = doiIdentifierPrefix + getRandomDOISuffix();
-            log.warn("Random DOI suffix: " + nextDoiSuffix);
-        } else {
-            // Determine next DOI ID
-            // Note: The generated DOI ID is the suffix which should be case insensitive.
-            //       Since we are using a number, it does not matter. However if we decide
-            //       to use a String, we should only generate either a lowercase or an
-            //       uppercase String. (refer to https://support.datacite.org/docs/doi-basics)
-            nextDoiSuffix = doiIdentifierPrefix + getNextDOISuffix(vospaceDoiClient.getDoiBaseVOSURI());
-            log.debug("Next DOI suffix: " + nextDoiSuffix);
-        }
-
-        // Update the resource with the DOI ID
-        assignIdentifier(resource.getIdentifier(), accountPrefix + "/" + nextDoiSuffix);
-
-        // Add a Created date to the Resource object
-        LocalDate localDate = LocalDate.now();
-        String createdDate = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        Date doiDate = new Date(createdDate, DateType.CREATED);
-        doiDate.dateInformation = "The date the DOI was created";
-        resource.dates = new ArrayList<>();
-        resource.dates.add(doiDate);
-
-        // Create the group that is able to administer the DOI process
-        String groupName;
-        groupName = doiGroupPrefix + nextDoiSuffix;
-        GroupURI guri = createDoiGroup(groupName);
-        log.debug("Created DOI group: " + guri);
-
-        // Create the VOSpace area for DOI work
-        ContainerNode doiFolder = createDOIDirectory(guri, nextDoiSuffix, getTitle(resource).getValue());
-        
-        // create VOSpace data node to house XML doc using doi filename and upload the document
-        String docName = super.getDoiFilename(nextDoiSuffix);
-        DataNode doiDocNode = new DataNode(docName);
-        VOSURI doiDocVOSURI = getVOSURI(nextDoiSuffix + "/" + docName);
-        vospaceDoiClient.getVOSpaceClient().createNode(doiDocVOSURI, doiDocNode);
-        this.uploadDOIDocument(resource, doiDocVOSURI);
-        
-        // Create the DOI data folder
-        VOSURI dataVOSURI = getVOSURI(nextDoiSuffix + "/data");
-        ContainerNode newDataFolder = new ContainerNode("data");
-        setPermissions(newDataFolder, guri);
-        vospaceDoiClient.getVOSpaceClient().createNode(dataVOSURI, newDataFolder);
-
-        // Done, send redirect to GET for the XML file just made
-        String redirectUrl = syncInput.getRequestURI() + "/" + nextDoiSuffix;
-        syncOutput.setHeader("Location", redirectUrl);
-        syncOutput.setCode(303);
-    }
-
-    private Title getTitle(Resource resource) {
-        Title title = null;
-        List<Title> titles = resource.getTitles();
-        for (Title t : titles) {
-            if (StringUtil.hasText(t.getValue())) {
-                title = t;
-                break;
-            }
-        }
-        return title;
-    }
-
-    private GroupURI createDoiGroup(String groupName) throws Exception {
-        // Create group to use for applying permissions
-        String group = String.format("%s?%s", gmsResourceID, groupName);
-        GroupURI guri = new GroupURI(URI.create(group));
-        log.debug("creating group: " + guri);
-
-        Group doiRWGroup = new Group(guri);
-        User member = new User();
-        member.getIdentities().addAll(callingSubject.getPrincipals());
-        doiRWGroup.getUserMembers().add(member);
-        doiRWGroup.getUserAdmins().add(member);
-
-        try {
-            GMSClient gmsClient = getGMSClient();
-            gmsClient.createGroup(doiRWGroup);
-        } catch (GroupAlreadyExistsException | UserNotFoundException gaeex) {
-            // expose it as a server error
-            throw new RuntimeException(gaeex);
-        }
-        log.debug("doi group created: " + guri);
-        return guri;
-    }
-    
-    private ContainerNode createDOIDirectory(GroupURI guri, String folderName, String title)
-        throws Exception {
-        
-        Set<NodeProperty> properties = new TreeSet<>();
-
-        // Get numeric id for setting doiRequester property
-        NodeProperty doiRequester = new NodeProperty(DOI_VOS_REQUESTER_PROP, this.callersNumericId.toString());
-        properties.add(doiRequester);
-
-        NodeProperty doiTitle = new NodeProperty(DOI_VOS_TITLE_PROP, title);
-        properties.add(doiTitle);
-        
-        NodeProperty doiStatus = new NodeProperty(DOI_VOS_STATUS_PROP, Status.DRAFT.getValue());
-        properties.add(doiStatus);
-        
-        // Should have come in as a parameter with the POST
-        NodeProperty journalRef = new NodeProperty(DOI_VOS_JOURNAL_PROP, syncInput.getParameter(JOURNALREF_PARAM));
-        properties.add(journalRef);
-
-        VOSURI newVOSURI = getVOSURI(folderName);
-        ContainerNode newFolder = new ContainerNode(folderName);
-
-        // Before completion, directory is visible in AstroDataCitationDOI directory,
-        // but not readable except by doi admin and calling user's group
-        setPermissions(newFolder, guri);
-
-        newFolder.getProperties().addAll(properties);
-        vospaceDoiClient.getVOSpaceClient().createNode(newVOSURI, newFolder);
-        return newFolder;
-    }
-    
-    private void uploadDOIDocument(Resource resource, VOSURI docVOSUIRI)
-        throws ResourceNotFoundException {
-
-        Transfer transfer = new Transfer(docVOSUIRI.getURI(), Direction.pushToVoSpace);
-        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);  // anon for preauth url
-        transfer.getProtocols().add(put);
-
-        ClientTransfer clientTransfer = vospaceDoiClient.getVOSpaceClient().createTransfer(transfer);
-        DoiOutputStream outStream = new DoiOutputStream(resource);
-        clientTransfer.setOutputStreamWrapper(outStream);
-        clientTransfer.run();
-
-        if (clientTransfer.getThrowable() != null) {
-            log.debug(clientTransfer.getThrowable().getMessage());
-
-            if (clientTransfer.getThrowable() != null) {
-                log.debug(clientTransfer.getThrowable().getMessage());
-                String message = clientTransfer.getThrowable().getMessage();
-                
-                // Note: proper exception handling in ClientTransfer would eliminate
-                // the need for message parsing.
-                if (message.contains("NodeNotFound")) {
-                    throw new ResourceNotFoundException(message);
-                }
-                if (message.contains("PermissionDenied")) {
-                    throw new AccessControlException(message);
-                }
-                throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
-            }
-
-        }
-    }
-
-    // child nodes of baseNode should have name structure YY.XXXX
-    // go through list of child nodes
-    // extract XXXX
-    // track largest
-    // add 1
-    // reconstruct YY.XXXX structure and return
-    private String getNextDOISuffix(VOSURI baseDoiURI)
-        throws Exception {
-        ContainerNode baseNode = (ContainerNode) vospaceDoiClient.getVOSpaceClient().getNode(baseDoiURI.getPath());
-
-        // Look into the node list for folders from current year only
-        DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
-        String currentYear = df.format(Calendar.getInstance().getTime());
-
-        int maxDoi = 0;
-        if (!baseNode.getNodes().isEmpty()) {
-            for (Node childNode : baseNode.getNodes()) {
-                String[] nameParts = childNode.getName().split("\\.");
-                if (nameParts[0].equals(currentYear)) {
-                    int curDoiNum = Integer.parseInt(nameParts[1]);
-                    if (curDoiNum > maxDoi) {
-                        maxDoi = curDoiNum;
-                    }
-                }
-            }
-        }
-
-        maxDoi++;
-        String formattedDOI = String.format("%04d", maxDoi);
-        return currentYear + "." + formattedDOI;
-    }
-
-    // Create a random DOI suffix using the DataCite suggested format xxxxx-xxxxx
-    // where x is either a char or digit.
-    // Skip i l o to avoid confusion with lowercase L and 0.
-    private String getRandomDOISuffix() {
-        String allowed = "abcdefghjkmnpqrstuvwxyz1234567890";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        while (sb.length() < 11) {
-            if (sb.length() == 5) {
-                sb.append("-");
-            } else {
-                int index = (int) (random.nextFloat() * allowed.length());
-                sb.append(allowed.charAt(index));
-            }
-        }
-        sb.append(".test");
-        return sb.toString();
-    }
-
-    private static class DoiOutputStream implements OutputStreamWrapper {
-        private final Resource streamResource;
-
-        public DoiOutputStream(Resource streamRes) {
-            this.streamResource = streamRes;
-        }
-
-        public void write(OutputStream out) throws IOException {
-            DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(streamResource, out);
         }
     }
 
