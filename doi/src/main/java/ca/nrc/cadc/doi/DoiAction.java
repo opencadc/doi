@@ -157,8 +157,9 @@ public abstract class DoiAction extends RestAction {
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
-        this.vaultResourceID = DoiInitAction.getVospaceResourceID(config);
-        this.parentPath = DoiInitAction.getParentPath(config);
+        VOSURI parentVOSURI = DoiInitAction.getParentVOSURI(config);
+        this.vaultResourceID = parentVOSURI.getServiceURI();
+        this.parentPath = parentVOSURI.getPath();
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.publisherGroupURI = DoiInitAction.getPublisherGroupURI(config);
         this.doiGroupPrefix = config.getFirstPropertyValue(DoiInitAction.DOI_GROUP_PREFIX_KEY);
