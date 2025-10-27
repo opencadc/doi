@@ -76,5 +76,3 @@ post:
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
     "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
-
-
