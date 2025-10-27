@@ -18,13 +18,9 @@ paths:
     $ref: ./paths/vosi-capabilities.yaml
   /instances:
     $ref: ./paths/doi-instance.yaml
-  /search:
-    $ref: ./paths/doi-search.yaml
   /instances/{DOINum}:
     $ref: ./paths/doi-instance-manage.yaml
-  /instances/{DOINum}/mint:
-    $ref: ./paths/doi-mint.yaml
   /instances/{DOINum}/status:
     $ref: ./paths/doi-status.yaml
-  /instances/{DOINum}/status/public:
-    $ref: ./paths/doi-status-public.yaml
+  /search:
+    $ref: ./paths/doi-search.yaml
