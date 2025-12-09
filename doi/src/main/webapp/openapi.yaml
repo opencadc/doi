@@ -20,6 +20,8 @@ paths:
     $ref: ./paths/doi-instance.yaml
   /instances/{DOINum}:
     $ref: ./paths/doi-instance-manage.yaml
+  /instances/{DOINum}/mint:
+    $ref: ./paths/doi-mint.yaml
   /instances/{DOINum}/status:
     $ref: ./paths/doi-status.yaml
   /search:
