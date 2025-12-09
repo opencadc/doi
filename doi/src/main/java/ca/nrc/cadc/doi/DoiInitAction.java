@@ -98,20 +98,19 @@ public class DoiInitAction extends InitAction {
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
     public static final String VOSPACE_PARENT_URI_KEY = DOI_KEY + ".vospaceParentUri";
     public static final String METADATA_PREFIX_KEY = DOI_KEY + ".metaDataPrefix";
+    public static final String DOI_GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
     public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
-    public static final String DOI_GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
+    public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
+
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
 
     //Alternative DOI settings properties
     public static final String PUBLISHER_GROUP_URI_KEY = DOI_KEY + ".publisherGroupURI";
-    public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
-    public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
-    public static final String REVIEWER_WORKFLOW_KEY = DOI_KEY + ".reviewerWorkflow";
 
     @Override
     public void doInit() {
@@ -134,16 +133,14 @@ public class DoiInitAction extends InitAction {
         return vosURI;
     }
 
-    public static GroupURI getPublisherGroupURI(MultiValuedProperties props) {
-        String publisherGroupURI = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
-        log.debug("publisherGroupURI: " + publisherGroupURI);
-
-        return publisherGroupURI == null ? null : new GroupURI(URI.create(publisherGroupURI));
-    }
-
     public static String getDoiIdentifierPrefix(MultiValuedProperties props) {
         String doiIdentifierPrefix = props.getFirstPropertyValue(DoiInitAction.DOI_IDENTIFIER_PREFIX_KEY);
         return Objects.requireNonNullElse(doiIdentifierPrefix, "");
+    }
+
+    public static GroupURI getPublisherGroupURI(MultiValuedProperties props) {
+        String publisherGroupURI = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
+        return publisherGroupURI == null ? null : new GroupURI(URI.create(publisherGroupURI));
     }
 
     private static MultiValuedProperties getConfig(boolean verify) {
@@ -155,6 +152,7 @@ public class DoiInitAction extends InitAction {
         // required properties
         checkStringKey(props, sb, ok, true, METADATA_PREFIX_KEY);
         checkStringKey(props, sb, ok, true, DOI_GROUP_PREFIX_KEY);
+        checkStringKey(props, sb, ok, true, DOI_IDENTIFIER_PREFIX_KEY);
         checkStringKey(props, sb, ok, true, DATACITE_MDS_USERNAME_KEY);
         checkStringKey(props, sb, ok, true, DATACITE_MDS_PASSWORD_KEY);
         checkStringKey(props, sb, ok, true, DATACITE_ACCOUNT_PREFIX_KEY);
@@ -167,12 +165,6 @@ public class DoiInitAction extends InitAction {
 
         // alternative properties
         checkStringKey(props, sb, ok, false, PUBLISHER_GROUP_URI_KEY);
-        checkStringKey(props, sb, ok, false, SELF_PUBLISH_KEY);
-        checkStringKey(props, sb, ok, false, DOI_IDENTIFIER_PREFIX_KEY);
-        checkStringKey(props, sb, ok, false, REVIEWER_WORKFLOW_KEY);
-
-        // if alternative use, all alternative properties must be configured
-        checkAlternativeProperties(props, sb, ok);
 
         if (!ok) {
             throw new IllegalStateException("incomplete config: " + sb);
@@ -220,7 +212,7 @@ public class DoiInitAction extends InitAction {
             ok = false;
         } else if (verify) {
             try {
-                new VOSURI(key);
+                new VOSURI(value);
                 sb.append("OK");
             } catch (URISyntaxException e) {
                 sb.append("INVALID VOSPACE URI: ").append(e.getMessage());
@@ -229,24 +221,6 @@ public class DoiInitAction extends InitAction {
         } else {
             sb.append("OK");
         }
-    }
-
-    private static void checkAlternativeProperties(MultiValuedProperties props, StringBuilder sb, Boolean ok) {
-        String publisherGroup = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
-        String selfPublish = props.getFirstPropertyValue(SELF_PUBLISH_KEY);
-        String doiIDPrefix = props.getFirstPropertyValue(DOI_IDENTIFIER_PREFIX_KEY);
-        String reviewerWorkflow = props.getFirstPropertyValue(REVIEWER_WORKFLOW_KEY);
-
-        if (publisherGroup == null && selfPublish == null && doiIDPrefix == null && reviewerWorkflow == null) {
-            return;
-        }
-
-        if (publisherGroup != null && selfPublish != null && doiIDPrefix != null && reviewerWorkflow != null) {
-            return;
-        }
-
-        sb.append("INCOMPLETE ALTERNATIVE PROPERTIES");
-        ok = false;
     }
 
     // check that the DOI parent node uri, configured with the VOSPACE_PARENT_URI_KEY property,

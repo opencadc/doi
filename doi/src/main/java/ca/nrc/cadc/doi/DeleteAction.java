@@ -123,7 +123,7 @@ public class DeleteAction extends DoiAction {
         ContainerNode doiContainer = vospaceDoiClient.getContainerNode(doiSuffix);
 
         // check the state of the doi
-        String doiStatus = doiContainer.getPropertyValue(DOI_VOS_STATUS_PROP);
+        String doiStatus = doiContainer.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY);
         if (doiStatus != null && doiStatus.equals(Status.MINTED.getValue())) {
             throw new AccessControlException("Unable to delete " + doiSuffix + "DOI already minted.\n");
         }
