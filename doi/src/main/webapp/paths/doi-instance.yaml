@@ -14,7 +14,7 @@ get:
     "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
 
-put:
+post:
   tags:
     - "instances"
   summary: "Initialize a new DOI"
