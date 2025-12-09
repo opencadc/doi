@@ -72,9 +72,7 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.reg.Capabilities;
 import ca.nrc.cadc.reg.Capability;
 import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.vosi.CapabilitiesTest;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 

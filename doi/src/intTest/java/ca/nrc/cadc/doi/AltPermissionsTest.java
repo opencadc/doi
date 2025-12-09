@@ -49,9 +49,15 @@ public class AltPermissionsTest extends LifecycleTest {
      *   cadc user:
      *       create a DOI - success
      *       Update it - success
-     *       Mint it - fail with 403 status
+     *       Mint it - fail with 403
+     *       - set status 'in review' - success
+     *       - search DOIStatus with 'status = in review' filter - success
+     *       - Mint it - fail with 403
+     *       - delete it - fail with 403
+     *       - set status 'in progress'
      *       get all DOI Statuses - should find the recently created DOI
      *       search DOIStatus with 'status = draft' filter - success
+     *       - delete it - success
      *   Publisher user:
      *       get DOI - success
      *       get all DOI Statuses - should find the recently created DOI
@@ -190,6 +196,9 @@ public class AltPermissionsTest extends LifecycleTest {
     *  Test Case 2:
     *   cadc user:
     *       create a DOI - success
+    *       set status = 'in review'
+    *       delete it - 403
+    *       set status = 'in progress'
     *       delete it - success
     * */
     @Test // creator of DOI can delete it
@@ -216,9 +225,13 @@ public class AltPermissionsTest extends LifecycleTest {
      *   cadc user:
      *       create a DOI - success
      *   publisher user:
-     *       delete it - success
+     *       delete it - 403
+     *   cadc user:
+     *       set status = 'in review'
+     *   publisher user:
+     *       delete it - 403
      * */
-    @Test // publisher can delete a DOI
+    @Test // publisher can delete their own DOI
     public void testDeleteDOIByPublisher() throws Exception {
         // Create a new DOI
         Resource expected = getTestResource(true, true, true);

@@ -91,6 +91,7 @@ import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.opencadc.vospace.ContainerNode;
@@ -200,6 +201,14 @@ public abstract class IntTestBase extends TestBase {
         return sb.toString();
     }
 
+    protected String getMapAsJSON(Map<String, String> map) {
+        JSONObject json = new JSONObject();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            json.put(entry.getKey(), entry.getValue());
+        }
+        return json.toString();
+    }
+
     protected ContainerNode createContainerNode(String path, String name, DOISettingsType doiSettingsType) throws Exception {
         ContainerNode node = new ContainerNode(name);
         VOSURI nodeURI = getVOSURI(path, doiSettingsType);
@@ -220,15 +229,19 @@ public abstract class IntTestBase extends TestBase {
         return (ContainerNode) vosClient.getNode(nodePath);
     }
 
-    protected String postDOI(URL postUrl, String doiXML, String journalRef)
+    protected String postDOI(URL postUrl, String doiXML, Map<String, String> nodeMetadata)
             throws Exception {
         Map<String, Object> params = new HashMap<>();
         if (StringUtil.hasText(doiXML)) {
             FileContent fileContent = new FileContent(doiXML, XML, StandardCharsets.UTF_8);
-            params.put("doiMetadata", fileContent);
+            params.put(DoiInlineContentHandler.META_DATA_KEY, fileContent);
         }
-        if (journalRef != null) {
-            params.put("journalref", journalRef);
+        if (nodeMetadata != null && !nodeMetadata.isEmpty()) {
+            JSONObject nodeMetaData = new JSONObject();
+            for (Map.Entry<String, String> entry : nodeMetadata.entrySet()) {
+                nodeMetaData.put(entry.getKey(), entry.getValue());
+            }
+            params.put(DoiInlineContentHandler.NODE_DATA_KEY, nodeMetaData.toString());
         }
 
         HttpPost post = new HttpPost(postUrl, params, true);
