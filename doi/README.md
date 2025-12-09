@@ -27,6 +27,9 @@ The doi.properties configures the DataCite service used to register new DOIs.
 # VOSpace uri to the parent DOI folder.
 ca.nrc.cadc.doi.vospaceParentUri = {parent folder URI}
 
+# DOI Identifier Prefix
+ca.nrc.cadc.doi.doiIdentifierPrefix = {DOI Identifier Prefix}
+
 # Prefix to the DOI metadata file
 ca.nrc.cadc.doi.metaDataPrefix = {metadata file prefix}
 
@@ -47,12 +50,10 @@ ca.nrc.cadc.doi.datacite.password = {password}
 
 # DataCite account prefix
 ca.nrc.cadc.doi.datacite.accountPrefix = {account prefix}
-
-# (Optional) DOI Identifier Prefix
-ca.nrc.cadc.doi.doiIdentifierPrefix = {DOI Identifier Prefix}
 ```
-
 _parentUri_ is the URI to the DOI parent folder in the VOSpace service.
+
+_doiIdentifierPrefix_ is prefix to the DOI Identifier.
 
 _metaDataPrefix_ is the prefix prepended to the DOI name used to create the file for the DOI specific metadata stored in VOSpace.
 
@@ -68,22 +69,13 @@ _password_ is the DataCite account password.
 
 _accountPrefix_ is the registered prefix for a DataCite account.
 
-_doiIdentifierPrefix_ is prefix to the DOI Identifier.
-
 **For Alternative DOI Settings ONLY**
 ```
 # Publisher Group URI
 ca.nrc.cadc.doi.publisherGroupURI = {Publisher Group URI}
-
-# self Publish
-ca.nrc.cadc.doi.selfPublish = {true|false}
 ```
 
 _publisherGroupURI_ is the URI to the group which gives permission to Approve/Publish or Reject DOIs to the user associated with this group.
-
-_selfPublish_ is to give permission to Mint DOIs. If set to true, only DOI Owner can Mint his DOI. If set to false, only a user from publisher group can Mint all the DOIs.
-
-#### Note: If `publisherGroupURI` is configured, `selfPublish` has to be configured 'false'.
 
 **For developer testing only:**
 ```
