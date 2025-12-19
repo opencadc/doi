@@ -137,7 +137,7 @@ public class PostAction extends DoiAction {
             authorizeResourceAccess();
         }
 
-        // Do DOI creation work as doi admin
+        // Do DOI work as doi admin
         Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             if (doiAction != null) {
                 performDOIAction();
@@ -158,22 +158,23 @@ public class PostAction extends DoiAction {
 
         // if this is a mint action for an alt configuration
         boolean isRequester = isCallingUserRequester(vospaceDoiClient.getContainerNode(doiSuffix));
+        boolean isPublisher = isCallingUserPublisher();
         if (DoiAction.MINT_ACTION.equals(doiAction) && isAlternativeConfiguration()) {
             // in alt configuration the request to mint a DOI can only made by a member of the publisher group
             // that does not own the doi
-            if (isCallingUserPublisher() && !isRequester) {
+            if (isPublisher && !isRequester) {
                 return;
             } else {
                 throw new AccessControlException("Not authorized to Mint this resource: " + doiSuffix);
             }
         }
 
-        // must be the requester (doi creator) for all other actions
-        if (isRequester) {
+        // must be the requester (doi creator), or reviewer in alternative configuration, for all other actions
+        if (isRequester || isAlternativeConfiguration() && isPublisher) {
             return;
         }
 
-        throw new AccessControlException("Not authorized to operate on this resource." + doiSuffix);
+        throw new AccessControlException("Not authorized to update this resource: " + doiSuffix);
     }
 
     private String getDataciteCredentials() {
@@ -409,12 +410,15 @@ public class PostAction extends DoiAction {
             return;
         }
 
-        // merge resources and push
-        String nodeName = getDoiFilename(doiSuffix);
-        Resource resourceFromVos = vospaceDoiClient.getResource(doiSuffix, nodeName);
-        Resource mergedResource = merge(resourceFromUser, resourceFromVos);
-        VOSURI docVOSURI = getVOSURI(String.format("%s/%s", doiSuffix, getDoiFilename(doiSuffix)));
-        uploadDOIDocument(mergedResource, docVOSURI);
+        // merge resources and push as doiadmin
+        Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
+            String nodeName = getDoiFilename(doiSuffix);
+            Resource resourceFromVos = vospaceDoiClient.getResource(doiSuffix, nodeName);
+            Resource mergedResource = merge(resourceFromUser, resourceFromVos);
+            VOSURI docVOSURI = getVOSURI(String.format("%s/%s", doiSuffix, getDoiFilename(doiSuffix)));
+            uploadDOIDocument(mergedResource, docVOSURI);
+            return null;
+        });
     }
 
     private Resource merge(Resource sourceResource, Resource targetResource) {
@@ -501,17 +505,19 @@ public class PostAction extends DoiAction {
 
         // Update the node properties
         String requestedStatus = null;
+        String currentStatus = null;
         for (Map.Entry<URI, String> entry : propertyMap.entrySet()) {
             NodeProperty nodeProperty = doiNode.getProperty(entry.getKey());
 
             // save the status for possible permission updates
             if (entry.getKey().equals(DOI.VOSPACE_DOI_STATUS_PROPERTY)) {
                 requestedStatus = entry.getValue();
+                currentStatus = nodeProperty.getValue();
             }
 
             if (entry.getKey().equals(DOI.VOSPACE_DOI_REVIEWER_PROPERTY)) {
                 if (!isCallingUserPublisher()) {
-                    throw new IllegalArgumentException("Not authorized to set reviewer");
+                    throw new IllegalArgumentException("Not authorized to set reviewer node property");
                 }
             }
 
@@ -535,20 +541,27 @@ public class PostAction extends DoiAction {
             }
         }
 
-        // If the status changed, possibly update the node permissions
+        // If the status changed, update the node permissions
         if (requestedStatus != null) {
-            String currentStatus = doiNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY);
+            log.debug("requested status: " + requestedStatus);
+            log.debug("current status: " + currentStatus);
             if (!requestedStatus.equals(currentStatus)) {
                 GroupURI doiGroupUri = createGroupURI(doiGroupPrefix + doiSuffix);
+                log.debug("updating status...");
 
                 // can only update to 'in review' from 'in progress'
                 if (requestedStatus.equals(Status.IN_REVIEW.getValue()) && currentStatus.equals(Status.DRAFT.getValue())) {
+                    log.debug("'in progress' -> 'in review'");
                     // alt config only, requester only
                     if (isAlternativeConfiguration() && isCallingUserRequester(doiNode) || isCallingUserDOIAdmin()) {
+                        log.debug("setting node permissions");
                         // 'in review' node permissions: doi-group:r reviewer-group:r public:false
+                        doiNode.clearReadWriteGroups = true;
                         doiNode.getReadWriteGroup().clear();
+                        doiNode.clearReadOnlyGroups = true;
                         doiNode.getReadOnlyGroup().clear();
                         doiNode.getReadOnlyGroup().add(doiGroupUri);
+                        doiNode.getReadOnlyGroup().add(publisherGroupURI);
                         doiNode.isPublic = false;
                     } else {
                         String message = String.format("Invalid status change requested: %s to %s", requestedStatus, currentStatus);
@@ -556,12 +569,17 @@ public class PostAction extends DoiAction {
                     }
                 // can only update to 'in progress' from 'in review'
                 } else if (requestedStatus.equals(Status.DRAFT.getValue()) && currentStatus.equals(Status.IN_REVIEW.getValue())) {
+                    log.debug("'in review' -> 'in progress'");
                     // alt config only, requester and reviewer only
                     if (isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserPublisher() || isCallingUserDOIAdmin())) {
-                        // 'in progress' node permissions: doi-group:rw reviewer-group:- public:false
+                        log.debug("setting node permissions");
+                        // 'in progress' node permissions: doi-group:r+rw reviewer-group:- public:false
+                        doiNode.clearReadWriteGroups = true;
                         doiNode.getReadWriteGroup().clear();
                         doiNode.getReadWriteGroup().add(doiGroupUri);
+                        doiNode.clearReadOnlyGroups = true;
                         doiNode.getReadOnlyGroup().clear();
+                        doiNode.getReadOnlyGroup().add(doiGroupUri);
                         doiNode.isPublic = false;
                     } else {
                         String message = String.format("Invalid status change requested: %s to %s", requestedStatus, currentStatus);
@@ -573,6 +591,7 @@ public class PostAction extends DoiAction {
                     String message = String.format("Invalid status change requested: %s to %s", requestedStatus, currentStatus);
                     throw new IllegalArgumentException(message);
                 }
+                log.debug("status updated");
             }
         }
         vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiNode);
