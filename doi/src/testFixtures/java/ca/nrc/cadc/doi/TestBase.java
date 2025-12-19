@@ -147,7 +147,7 @@ public class TestBase {
      *   </dates>
      * </resource>
      */
-    Resource getTestResource(boolean optionalProperties, boolean optionalAttributes, boolean intTestProperties) {
+    Resource getTestResource(boolean optionalProperties, boolean optionalAttributes) {
 
         Namespace namespace = getNamespace();
         Identifier identifier = getIdentifier();
@@ -167,9 +167,6 @@ public class TestBase {
             resource.relatedIdentifiers = getRelatedIdentifiers(optionalAttributes);
             resource.rightsList = getRightsList(optionalAttributes);
             resource.descriptions = getDescriptions(optionalAttributes);
-            if (!intTestProperties) {
-
-            }
         }
         return resource;
     }

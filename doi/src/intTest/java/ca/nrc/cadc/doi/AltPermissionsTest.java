@@ -1,5 +1,7 @@
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Date;
+import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
@@ -13,12 +15,17 @@ import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.vospace.ContainerNode;
 
@@ -42,6 +49,13 @@ public class AltPermissionsTest extends LifecycleTest {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
+    }
+
+    @Override
+    @Ignore
+    @Test
+    public void testLifecycle() throws Exception {
+        // skip re-running the lifecycle test
     }
 
     /*
@@ -78,7 +92,7 @@ public class AltPermissionsTest extends LifecycleTest {
         log.debug("Test DOI lifecycle with Alternate Settings");
 
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
@@ -204,7 +218,7 @@ public class AltPermissionsTest extends LifecycleTest {
     @Test // creator of DOI can delete it
     public void testDeleteDOIByDOIOwner() throws Exception {
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
@@ -234,7 +248,7 @@ public class AltPermissionsTest extends LifecycleTest {
     @Test // publisher can delete their own DOI
     public void testDeleteDOIByPublisher() throws Exception {
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
             // create a new DOI
@@ -268,7 +282,7 @@ public class AltPermissionsTest extends LifecycleTest {
      * */
     @Test // If publisher is the owner of a DOI, he can not mint it.
     public void testPublisherAsDOIOwnerForMintAction() throws PrivilegedActionException {
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
         String doiId = Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
@@ -322,7 +336,7 @@ public class AltPermissionsTest extends LifecycleTest {
 
     @Test
     public void testDOISearchEndpoint() throws PrivilegedActionException, DoiParsingException, IOException {
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String mintedDOIId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 

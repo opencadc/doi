@@ -125,7 +125,7 @@ public class LifecycleTest extends IntTestBase {
         log.debug("testLifecycle()");
 
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
@@ -413,14 +413,14 @@ public class LifecycleTest extends IntTestBase {
 
     protected Resource doUpdateTest(Resource resource, URL doiURL) throws Exception {
         String testXML = getResourceXML(resource);
-        String persistedXml = postDOI(doiURL, testXML, null);
+        String persistedXml = postDOI(doiURL, testXML, null, true);
         DoiXmlReader reader = new DoiXmlReader();
         return reader.read(persistedXml);
     }
 
     protected void doMintTest(URL doiURL) throws Exception {
         URL mintURL = new URL(doiURL + "/" + DoiAction.MINT_ACTION);
-        postDOI(mintURL, null, null);
+        postDOI(mintURL, null, null, true);
     }
 
     private DoiStatus getStatus(URL doiURL)
