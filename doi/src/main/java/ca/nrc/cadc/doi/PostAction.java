@@ -516,8 +516,8 @@ public class PostAction extends DoiAction {
             }
 
             if (entry.getKey().equals(DOI.VOSPACE_DOI_REVIEWER_PROPERTY)) {
-                if (!isCallingUserPublisher()) {
-                    throw new IllegalArgumentException("Not authorized to set reviewer node property");
+                if (!isCallingUserPublisher() && !isCallingUserDOIAdmin()) {
+                    throw new IllegalArgumentException("Not authorized to set reviewer");
                 }
             }
 
@@ -549,12 +549,22 @@ public class PostAction extends DoiAction {
                 GroupURI doiGroupUri = createGroupURI(doiGroupPrefix + doiSuffix);
                 log.debug("updating status...");
 
-                // can only update to 'in review' from 'in progress'
-                if (requestedStatus.equals(Status.IN_REVIEW.getValue()) && currentStatus.equals(Status.DRAFT.getValue())) {
-                    log.debug("'in progress' -> 'in review'");
-                    // alt config only, requester only
-                    if (isAlternativeConfiguration() && isCallingUserRequester(doiNode) || isCallingUserDOIAdmin()) {
-                        log.debug("setting node permissions");
+                // can only update to 'review ready' from 'in progress' (author submits for review)
+                if (requestedStatus.equals(Status.REVIEW_READY.getValue()) && currentStatus.equals(Status.DRAFT.getValue())) {
+                    if (isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserDOIAdmin())) {
+                        // 'review ready' node permissions: doi-group:r publisher-group:r public:false
+                        doiNode.getReadWriteGroup().clear();
+                        doiNode.getReadOnlyGroup().clear();
+                        doiNode.getReadOnlyGroup().add(doiGroupUri);
+                        doiNode.isPublic = false;
+                    } else {
+                        String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
+                        throw new IllegalArgumentException(message);
+                    }
+
+                // can only update to 'in review' from 'review ready' (publisher/reviewer accepts)
+                } else if (requestedStatus.equals(Status.IN_REVIEW.getValue()) && currentStatus.equals(Status.REVIEW_READY.getValue())) {
+                    if (isAlternativeConfiguration() && (isCallingUserPublisher() || isCallingUserDOIAdmin())) {
                         // 'in review' node permissions: doi-group:r reviewer-group:r public:false
                         doiNode.clearReadWriteGroups = true;
                         doiNode.getReadWriteGroup().clear();
@@ -564,17 +574,33 @@ public class PostAction extends DoiAction {
                         doiNode.getReadOnlyGroup().add(publisherGroupURI);
                         doiNode.isPublic = false;
                     } else {
-                        String message = String.format("Invalid status change requested: %s to %s", requestedStatus, currentStatus);
+                        String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
                         throw new IllegalArgumentException(message);
                     }
-                // can only update to 'in progress' from 'in review'
-                } else if (requestedStatus.equals(Status.DRAFT.getValue()) && currentStatus.equals(Status.IN_REVIEW.getValue())) {
-                    log.debug("'in review' -> 'in progress'");
-                    // alt config only, requester and reviewer only
-                    if (isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserPublisher() || isCallingUserDOIAdmin())) {
-                        log.debug("setting node permissions");
-                        // 'in progress' node permissions: doi-group:r+rw reviewer-group:- public:false
-                        doiNode.clearReadWriteGroups = true;
+
+                // can only update to 'in progress' from 'review ready', 'in review', 'rejected', or 'approved'
+                } else if (requestedStatus.equals(Status.DRAFT.getValue())
+                        && (currentStatus.equals(Status.REVIEW_READY.getValue())
+                            || currentStatus.equals(Status.IN_REVIEW.getValue())
+                            || currentStatus.equals(Status.REJECTED.getValue())
+                            || currentStatus.equals(Status.APPROVED.getValue()))) {
+                    // alt config only:
+                    // - from 'review ready': requester or admin (author withdraws)
+                    // - from 'in review': requester, publisher, or admin
+                    // - from 'rejected': requester or admin
+                    // - from 'approved': requester or admin (author wants to edit after approval)
+                    boolean canTransition = false;
+                    if (currentStatus.equals(Status.REVIEW_READY.getValue())) {
+                        canTransition = isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserDOIAdmin());
+                    } else if (currentStatus.equals(Status.IN_REVIEW.getValue())) {
+                        canTransition = isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserPublisher() || isCallingUserDOIAdmin());
+                    } else if (currentStatus.equals(Status.REJECTED.getValue())) {
+                        canTransition = isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserDOIAdmin());
+                    } else if (currentStatus.equals(Status.APPROVED.getValue())) {
+                        canTransition = isAlternativeConfiguration() && (isCallingUserRequester(doiNode) || isCallingUserDOIAdmin());
+                    }
+                    if (canTransition) {
+                        // 'in progress' node permissions: doi-group:rw reviewer-group:- public:false
                         doiNode.getReadWriteGroup().clear();
                         doiNode.getReadWriteGroup().add(doiGroupUri);
                         doiNode.clearReadOnlyGroups = true;
@@ -582,13 +608,39 @@ public class PostAction extends DoiAction {
                         doiNode.getReadOnlyGroup().add(doiGroupUri);
                         doiNode.isPublic = false;
                     } else {
-                        String message = String.format("Invalid status change requested: %s to %s", requestedStatus, currentStatus);
+                        String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
+                        throw new IllegalArgumentException(message);
+                    }
+
+                // can only update to 'approved' from 'in review' (publisher only)
+                } else if (requestedStatus.equals(Status.APPROVED.getValue()) && currentStatus.equals(Status.IN_REVIEW.getValue())) {
+                    if (isAlternativeConfiguration() && (isCallingUserPublisher() || isCallingUserDOIAdmin())) {
+                        // 'approved' node permissions: doi-group:r reviewer-group:r public:false
+                        doiNode.getReadWriteGroup().clear();
+                        doiNode.getReadOnlyGroup().clear();
+                        doiNode.getReadOnlyGroup().add(doiGroupUri);
+                        doiNode.isPublic = false;
+                    } else {
+                        String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
+                        throw new IllegalArgumentException(message);
+                    }
+
+                // can only update to 'rejected' from 'in review' (publisher only)
+                } else if (requestedStatus.equals(Status.REJECTED.getValue()) && currentStatus.equals(Status.IN_REVIEW.getValue())) {
+                    if (isAlternativeConfiguration() && (isCallingUserPublisher() || isCallingUserDOIAdmin())) {
+                        // 'rejected' node permissions: doi-group:rw reviewer-group:r public:false
+                        doiNode.getReadWriteGroup().clear();
+                        doiNode.getReadWriteGroup().add(doiGroupUri);
+                        doiNode.getReadOnlyGroup().clear();
+                        doiNode.isPublic = false;
+                    } else {
+                        String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
                         throw new IllegalArgumentException(message);
                     }
 
                 } else {
                     // all other updates are not allowed
-                    String message = String.format("Invalid status change requested: %s to %s", requestedStatus, currentStatus);
+                    String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
                     throw new IllegalArgumentException(message);
                 }
                 log.debug("status updated");

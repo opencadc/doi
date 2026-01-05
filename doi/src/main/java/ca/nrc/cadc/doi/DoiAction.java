@@ -379,6 +379,9 @@ public abstract class DoiAction extends RestAction {
 
             // set journalRef
             doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_JOURNAL_PROPERTY);
+
+            // set reviewer
+            doiStatus.reviewer = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_REVIEWER_PROPERTY);
         } else {
             String msg = "Access Denied to " + doiSuffixString + ".";
             throw new AccessControlException(msg);

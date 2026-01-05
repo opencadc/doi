@@ -81,7 +81,10 @@ package ca.nrc.cadc.doi.status;
  */
 public enum Status {
     DRAFT("in progress"),
+    REVIEW_READY("review ready"),
     IN_REVIEW("in review"),
+    APPROVED("approved"),
+    REJECTED("rejected"),
     LOCKING_DATA("locking data directory"), 
     ERROR_LOCKING_DATA("error locking data directory"), 
     LOCKED_DATA("locked data directory"), 
