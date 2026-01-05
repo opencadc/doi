@@ -99,6 +99,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.security.Principal;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -159,8 +160,6 @@ public abstract class DoiAction extends RestAction {
     
     protected void init()
             throws URISyntaxException, UnknownHostException {
-        long start = System.currentTimeMillis();
-        System.out.println("start init...");
         // load doi properties
         this.config = DoiInitAction.getConfig();
         VOSURI parentVOSURI = DoiInitAction.getParentVOSURI(config);
@@ -178,12 +177,10 @@ public abstract class DoiAction extends RestAction {
             throw new IllegalStateException("multiple GMS services found");
         }
         this.gmsResourceID = gmsServices.iterator().next();
-        System.out.println("A, " + (System.currentTimeMillis() - start) + " ms");
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
         logInfo.setSubject(callingSubject);
-        System.out.println("B, " + (System.currentTimeMillis() - start) + " ms");
 
         parsePath();
 
@@ -191,7 +188,6 @@ public abstract class DoiAction extends RestAction {
         this.callersNumericId = (Long) acIdentMgr.toOwner(callingSubject);
         this.vospaceDoiClient = new VospaceDoiClient(vaultResourceID, parentPath,
                 callingSubject, includePublic, publisherGroupURI, gmsResourceID);
-        System.out.println("end init, " + (System.currentTimeMillis() - start) + " ms");
     }
 
     protected String getDoiFilename(String suffix) {
@@ -240,13 +236,6 @@ public abstract class DoiAction extends RestAction {
                     doiAction = parts[1];
                 }
             }
-//        } else {
-//            String requestPath = syncInput.getRequestPath();
-//            String[] parts = requestPath.split("/");
-//
-//            if (parts.length > 0 && parts[2].equals("search")) {
-//                doiAction = DoiAction.SEARCH_ACTION;
-//            }
         }
     }
 
@@ -269,7 +258,11 @@ public abstract class DoiAction extends RestAction {
 
     protected boolean isCallingUserPublisher() {
         if (publisherGroupURI != null) {
-            return getGMSClient().isMember(publisherGroupURI);
+            try {
+                return Subject.doAs(callingSubject, (PrivilegedExceptionAction<Boolean>) () -> getGMSClient().isMember(publisherGroupURI));
+            } catch (PrivilegedActionException e) {
+                log.error(e.getMessage());
+            }
         }
         return false;
     }

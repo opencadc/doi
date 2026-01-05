@@ -85,6 +85,7 @@ public class Resource {
 
     public static final String NAME = "resource";
 
+    // required properties
     private final Namespace namespace;
     private final Identifier identifier;
     private final List<Creator> creators;
@@ -93,6 +94,7 @@ public class Resource {
     private final PublicationYear publicationYear;
     private final ResourceType resourceType;
 
+    // optional properties
     public List<Contributor> contributors;
     public List<Date> dates;
     public List<Size> sizes;
@@ -176,8 +178,38 @@ public class Resource {
 
     @Override
     public String toString() {
-        return String.format("Resource[%s, %s, %s, %s, %s, %s, %s]",
-                namespace, identifier, creators, titles, publisher, publicationYear, resourceType);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Resource[");
+        sb.append(namespace).append(",");
+        sb.append(identifier).append(",");
+        sb.append(creators).append(",");
+        sb.append(titles).append(",");
+        sb.append(publisher).append(",");
+        sb.append(publicationYear).append(",");
+        sb.append(resourceType);
+        if (contributors != null && !contributors.isEmpty()) {
+            sb.append(",").append(contributors);
+        }
+        if (dates != null && !dates.isEmpty()) {
+            sb.append(",").append(dates);
+        }
+        if (sizes != null && !sizes.isEmpty()) {
+            sb.append(",").append(sizes);
+        }
+        if (language != null) {
+            sb.append(",").append(language);
+        }
+        if (relatedIdentifiers != null && !relatedIdentifiers.isEmpty()) {
+            sb.append(",").append(relatedIdentifiers);
+        }
+        if (rightsList != null && !rightsList.isEmpty()) {
+            sb.append(",").append(rightsList);
+        }
+        if (descriptions != null && !descriptions.isEmpty()) {
+            sb.append(",").append(descriptions);
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
 }

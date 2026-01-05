@@ -109,7 +109,7 @@ public class Doi45RoundTripTest extends TestBase {
 
     void doXMLTest(boolean optionalProperties, boolean optionalAttributes) {
         try {
-            Resource expected = getTestResource(optionalProperties, optionalAttributes, false);
+            Resource expected = getTestResource(optionalProperties, optionalAttributes);
             StringBuilder sb = new StringBuilder();
 
             DoiXmlWriter writer = new DoiXmlWriter();
@@ -128,7 +128,7 @@ public class Doi45RoundTripTest extends TestBase {
 
     void doJSONTest(boolean optionalProperties, boolean optionalAttributes) {
         try {
-            Resource expected = getTestResource(optionalProperties, optionalAttributes, false);
+            Resource expected = getTestResource(optionalProperties, optionalAttributes);
             StringBuilder sb = new StringBuilder();
 
             DoiJsonWriter writer = new DoiJsonWriter();
