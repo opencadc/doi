@@ -9,6 +9,7 @@ import UserIcon from '@mui/icons-material/VerifiedUser'
 import { useState } from 'react'
 import Link from 'next/link'
 import { AuthState, LoginFormValues } from '@/actions/auth'
+import Turnstile from './Turnstile'
 
 interface LoginFormProps {
   authAction: (
@@ -31,6 +32,9 @@ const LoginForm = ({ authAction, returnUrl }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [state, setState] = useState<AuthState | null>(initialState)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
   const {
     register,
@@ -44,11 +48,23 @@ const LoginForm = ({ authAction, returnUrl }: LoginFormProps) => {
   })
 
   const handleFormSubmit = async (values: LoginFormValues) => {
+    // Require Turnstile verification if enabled
+    if (turnstileSiteKey && !turnstileToken) {
+      setState({
+        success: false,
+        error: 'Please complete the security verification',
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      // Call the server action with the form data
-      const result = await authAction(null, values)
+      // Call the server action with the form data and turnstile token
+      const result = await authAction(null, {
+        ...values,
+        turnstileToken: turnstileToken || undefined,
+      })
       setState(result)
 
       // Handle successful login with a single redirect
@@ -128,6 +144,18 @@ const LoginForm = ({ authAction, returnUrl }: LoginFormProps) => {
       >
         {t('forgot_password')}
       </Link>
+
+      {turnstileSiteKey && (
+        <div className="flex justify-center my-4">
+          <Turnstile
+            siteKey={turnstileSiteKey}
+            onVerify={(token) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken(null)}
+            onError={() => setTurnstileToken(null)}
+          />
+        </div>
+      )}
+
       <Button
         type="submit"
         variant="contained"
