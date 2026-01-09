@@ -42,7 +42,12 @@ check_prerequisites() {
         exit 1
     fi
 
-    if ! docker compose version &> /dev/null; then
+    # Check for docker compose (v2) or docker-compose (v1)
+    if docker compose version &> /dev/null; then
+        DOCKER_COMPOSE="docker compose"
+    elif docker-compose version &> /dev/null; then
+        DOCKER_COMPOSE="docker-compose"
+    else
         log_error "Docker Compose is not available. Please install Docker Compose."
         exit 1
     fi
@@ -67,7 +72,7 @@ start_dev() {
     log_info "Starting RAFTS development environment..."
     check_prerequisites
 
-    docker compose --profile dev up --build "$@"
+    $DOCKER_COMPOSE --profile dev up --build "$@"
 }
 
 # Start production environment
@@ -82,7 +87,7 @@ start_prod() {
         exit 1
     fi
 
-    docker compose --profile prod up -d --build "$@"
+    $DOCKER_COMPOSE --profile prod up -d --build "$@"
 
     log_info "Waiting for services to be healthy..."
     sleep 10
@@ -93,13 +98,13 @@ start_prod() {
 # Stop all services
 stop_services() {
     log_info "Stopping RAFTS services..."
-    docker compose --profile dev --profile prod down
+    $DOCKER_COMPOSE --profile dev --profile prod down
     log_success "Services stopped"
 }
 
 # View logs
 view_logs() {
-    docker compose --profile dev --profile prod logs -f "$@"
+    $DOCKER_COMPOSE --profile dev --profile prod logs -f "$@"
 }
 
 # Health check
@@ -143,8 +148,8 @@ clean_all() {
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         log_info "Cleaning up..."
-        docker compose --profile dev --profile prod --profile ssl down -v --rmi local 2>/dev/null || true
-        docker compose -f docker-compose.traefik.yml down -v --rmi local 2>/dev/null || true
+        $DOCKER_COMPOSE --profile dev --profile prod --profile ssl down -v --rmi local 2>/dev/null || true
+        $DOCKER_COMPOSE -f docker-compose.traefik.yml down -v --rmi local 2>/dev/null || true
         log_success "Cleanup complete"
     else
         log_info "Cleanup cancelled"
@@ -340,7 +345,7 @@ start_traefik() {
     [ -n "${RAFTS_BASE_PATH}" ] && log_info "Base path: ${RAFTS_BASE_PATH}"
 
     # Build and deploy
-    docker compose -f docker-compose.traefik.yml up -d --build "$@"
+    $DOCKER_COMPOSE -f docker-compose.traefik.yml up -d --build "$@"
 
     log_info "Waiting for services to be healthy..."
     sleep 15
@@ -366,7 +371,7 @@ start_traefik() {
 # Stop Traefik deployment
 stop_traefik() {
     log_info "Stopping Traefik deployment..."
-    docker compose -f docker-compose.traefik.yml down
+    $DOCKER_COMPOSE -f docker-compose.traefik.yml down
     log_success "Traefik deployment stopped"
 }
 
@@ -426,11 +431,13 @@ case "${1:-}" in
         start_traefik "$@"
         ;;
     stop)
+        check_prerequisites  # Sets DOCKER_COMPOSE variable
         stop_services
         # Also stop Traefik deployment if running
-        docker compose -f docker-compose.traefik.yml down 2>/dev/null || true
+        $DOCKER_COMPOSE -f docker-compose.traefik.yml down 2>/dev/null || true
         ;;
     logs)
+        check_prerequisites  # Sets DOCKER_COMPOSE variable
         shift
         view_logs "$@"
         ;;
@@ -438,6 +445,7 @@ case "${1:-}" in
         health_check
         ;;
     clean)
+        check_prerequisites  # Sets DOCKER_COMPOSE variable
         clean_all
         ;;
     *)
