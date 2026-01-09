@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Joyride, { CallBackProps, Step, Styles } from 'react-joyride'
 import { useTheme } from '@mui/material/styles'
 import { useTranslations } from 'next-intl'
@@ -14,6 +14,12 @@ interface FormTutorialProps {
 const FormTutorial: React.FC<FormTutorialProps> = ({ run, stepIndex, onCallback }) => {
   const theme = useTheme()
   const t = useTranslations('tutorial')
+
+  // Only render Joyride on client to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Define steps for the tutorial
   const steps: Step[] = [
@@ -124,6 +130,11 @@ const FormTutorial: React.FC<FormTutorialProps> = ({ run, stepIndex, onCallback 
       right: theme.spacing(1),
       top: theme.spacing(1),
     },
+  }
+
+  // Don't render on server to avoid hydration mismatch
+  if (!mounted) {
+    return null
   }
 
   return (

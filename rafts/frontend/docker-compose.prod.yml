@@ -35,7 +35,13 @@ services:
     networks:
       - cadc-ui_default
     healthcheck:
-      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8000/health-check')"]
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health-check')",
+        ]
       interval: 15s
       timeout: 5s
       retries: 3

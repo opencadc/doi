@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Joyride, { CallBackProps, Step, Styles } from 'react-joyride'
 import { useTheme } from '@mui/material/styles'
 import { useTranslations } from 'next-intl'
@@ -16,6 +16,12 @@ interface SectionTutorialProps {
 const SectionTutorial: React.FC<SectionTutorialProps> = ({ run, stepIndex, onCallback, steps }) => {
   const theme = useTheme()
   const t = useTranslations('tutorial')
+
+  // Only render Joyride on client to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Custom styles to match Material UI theme
   const joyrideStyles: Partial<Styles> = {
@@ -71,6 +77,11 @@ const SectionTutorial: React.FC<SectionTutorialProps> = ({ run, stepIndex, onCal
       right: theme.spacing(1),
       top: theme.spacing(1),
     },
+  }
+
+  // Don't render on server to avoid hydration mismatch
+  if (!mounted) {
+    return null
   }
 
   return (

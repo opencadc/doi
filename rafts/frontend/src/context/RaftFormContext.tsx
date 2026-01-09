@@ -35,7 +35,7 @@ interface RaftFormContextType {
   updateRaftSection: (section: string, data: TSection) => void
   resetForm: () => void
   setFormFromFile: (data: TRaftContext) => void
-  submitForm: (isDraft: boolean) => Promise<IResponseData<string>>
+  submitForm: (isDraft: boolean, formData?: TRaftContext) => Promise<IResponseData<string>>
   isSubmitting: boolean
   isSectionCompleted: (section: keyof typeof VALIDATION_SCHEMAS) => boolean
   allSectionsCompleted: boolean
@@ -134,19 +134,23 @@ export function RaftFormProvider({
   }, [])
 
   // Submit the form
+  // formData parameter allows passing synced data directly to avoid async state race condition
   const submitForm = useCallback(
-    async (isDraft: boolean) => {
+    async (isDraft: boolean, formData?: TRaftContext) => {
       try {
         setIsSubmitting(true)
+
+        // Use passed formData if provided, otherwise fall back to raftData from context
+        const dataToSubmit = formData || raftData
 
         // Determine the status to set
         const newStatus = (isDraft ? OPTION_DRAFT : OPTION_REVIEW) as TRaftStatus
 
         // Create final submission object with status in generalInfo
         const finalSubmission: TRaftContext = {
-          ...raftData,
+          ...dataToSubmit,
           [PROP_GENERAL_INFO]: {
-            ...(raftData?.[PROP_GENERAL_INFO] || {}),
+            ...(dataToSubmit?.[PROP_GENERAL_INFO] || {}),
             [PROP_STATUS]: newStatus,
           } as TRaftContext[typeof PROP_GENERAL_INFO],
         }

@@ -19,6 +19,7 @@ import {
 } from '@/shared/constants'
 import { useTranslations } from 'next-intl'
 import { Button, Alert, Snackbar, Grid } from '@mui/material'
+import RaftBreadcrumbs from '@/components/RaftDetail/components/RaftBreadcrumbs'
 import { useRouter } from '@/i18n/routing'
 import { TAuthor, TMiscInfo, TObservation, TRaftSubmission, TTechInfo } from '@/shared/model'
 import JsonImportComponent from '@/components/Form/FileUpload/JsonImportComponent'
@@ -298,35 +299,58 @@ const FormLayoutWithContext = () => {
 
   // Sync current form values to context before submit
   // This ensures "Save as Draft" captures unsaved form data
+  // Returns the synced data directly to avoid async state race condition
   const syncCurrentFormToContext = useCallback(() => {
+    // Start with current raftData
+    let syncedData = { ...raftData }
+
     // Get current values from the active form section and sync to context
     switch (currentStep) {
       case 0: // Author form
         if (authorFormRef.current && formIsDirty[PROP_AUTHOR_INFO]) {
           const values = authorFormRef.current.getCurrentValues()
-          updateRaftSection(PROP_AUTHOR_INFO, values)
+          syncedData = { ...syncedData, [PROP_AUTHOR_INFO]: values }
+          updateRaftSection(PROP_AUTHOR_INFO, values) // Still update context for UI
         }
         break
       case 1: // Announcement/Observation form
         if (announcementFormRef.current && formIsDirty[PROP_OBSERVATION_INFO]) {
           const values = announcementFormRef.current.getCurrentValues()
+          syncedData = { ...syncedData, [PROP_OBSERVATION_INFO]: values }
           updateRaftSection(PROP_OBSERVATION_INFO, values)
         }
         break
       case 2: // Technical/Observation info form
         if (observationFormRef.current && formIsDirty[PROP_TECHNICAL_INFO]) {
           const values = observationFormRef.current.getCurrentValues()
+          syncedData = { ...syncedData, [PROP_TECHNICAL_INFO]: values }
           updateRaftSection(PROP_TECHNICAL_INFO, values)
         }
         break
       case 3: // Miscellaneous form
         if (miscFormRef.current && formIsDirty[PROP_MISC_INFO]) {
           const values = miscFormRef.current.getCurrentValues()
+          syncedData = { ...syncedData, [PROP_MISC_INFO]: values }
           updateRaftSection(PROP_MISC_INFO, values)
         }
         break
     }
-  }, [currentStep, formIsDirty, updateRaftSection])
+
+    // Also sync title if it's dirty
+    if (formIsDirty[PROP_GENERAL_INFO]) {
+      syncedData = {
+        ...syncedData,
+        [PROP_GENERAL_INFO]: {
+          ...syncedData[PROP_GENERAL_INFO],
+          [PROP_TITLE]: titleValue,
+          [PROP_POST_OPT_OUT]: postOptOut,
+          [PROP_STATUS]: syncedData[PROP_GENERAL_INFO]?.[PROP_STATUS] ?? OPTION_DRAFT,
+        },
+      }
+    }
+
+    return syncedData
+  }, [currentStep, formIsDirty, updateRaftSection, raftData, titleValue, postOptOut])
 
   // Handle form submission
   const handleSubmit = useCallback(
@@ -335,10 +359,14 @@ const FormLayoutWithContext = () => {
         // Track which action is being performed
         setSubmittingAction(isDraft ? 'draft' : 'submit')
 
-        // Sync current form values to context before submitting
-        syncCurrentFormToContext()
+        // Check if this is a new RAFT (no existing id) before submit
+        const isNewRaft = !raftData?.id
 
-        const res = await submitForm(isDraft)
+        // Sync current form values and get the synced data directly
+        // This avoids the async state race condition
+        const syncedData = syncCurrentFormToContext()
+
+        const res = await submitForm(isDraft, syncedData)
 
         // Show success message
         if (res.success) {
@@ -348,13 +376,25 @@ const FormLayoutWithContext = () => {
 
           // Mark all sections as clean after successful submission
           setFormIsDirty(DIRTY_FORM)
+
+          // If this was a new RAFT saved as draft, redirect to edit route
+          // This preserves form state by loading from the backend source
+          if (isDraft && isNewRaft && res.data) {
+            // Extract the identifier from the DOI URL (e.g., https://...doi/instances/25.0047 -> 25.0047)
+            const newId = typeof res.data === 'string' ? res.data.split('/').pop() : null
+            if (newId) {
+              setTimeout(() => {
+                router.replace(`/form/edit/${newId}`)
+              }, 1000) // Short delay to show success message
+            }
+          }
         } else if (!res.success) {
           setAlertSeverity('error')
           setAlertMessage(`${t('submission_error')} [${res.message}]`)
         }
         setAlertOpen(true)
 
-        // Redirect after a delay
+        // Redirect after a delay for final submission
         if (!isDraft) {
           setTimeout(() => {
             router.push('/view/doi')
@@ -369,7 +409,7 @@ const FormLayoutWithContext = () => {
         setSubmittingAction(null)
       }
     },
-    [syncCurrentFormToContext, submitForm, t, router],
+    [syncCurrentFormToContext, submitForm, t, router, raftData?.id],
   )
 
   // Handle form reset
@@ -407,6 +447,18 @@ const FormLayoutWithContext = () => {
 
   // Memoize subData to prevent recreation on every render
   const subData = useMemo(() => ({ ...raftData }) as unknown, [raftData])
+
+  // Determine breadcrumb title based on create vs edit mode
+  const breadcrumbTitle = useMemo(() => {
+    if (raftData?.id) {
+      // Edit mode - show "Edit: {title}" or just "Edit RAFT" if no title yet
+      const title = raftData?.[PROP_GENERAL_INFO]?.[PROP_TITLE]
+      return title ? `${t('edit')}: ${title}` : t('edit_raft')
+    }
+    // Create mode
+    return t('create_new_raft')
+  }, [raftData, t])
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {isLoading ? (
@@ -415,6 +467,7 @@ const FormLayoutWithContext = () => {
         </div>
       ) : (
         <>
+          <RaftBreadcrumbs title={breadcrumbTitle} basePath="/view/doi" />
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-center flex-1">{t('raft_form_title')}</h3>
             <Button

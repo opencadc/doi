@@ -101,6 +101,9 @@
     "add_misc_item": "Ajouter une information additionnelle",
 
     "raft_form_title": "Annonces de Recherche pour le Système Solaire (RAFTs)",
+    "create_new_raft": "Créer un nouveau RAFT",
+    "edit_raft": "Modifier le RAFT",
+    "edit": "Modifier",
     "submitting": "Soumission en cours...",
     "saving": "Enregistrement...",
     "save_raft": "Enregistrer le RAFT",

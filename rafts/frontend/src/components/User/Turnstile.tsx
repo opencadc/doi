@@ -56,7 +56,8 @@ const Turnstile = ({ siteKey, onVerify, onError, onExpire }: TurnstileProps) => 
 
     // Load the Turnstile script
     const script = document.createElement('script')
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback'
+    script.src =
+      'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback'
     script.async = true
     script.defer = true
 
