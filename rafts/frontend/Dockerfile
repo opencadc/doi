@@ -7,6 +7,9 @@ WORKDIR /app
 # Set NEXT_PUBLIC_BASE_PATH to deploy on a subpath (e.g., /rafts)
 ARG NEXT_PUBLIC_BASE_PATH=""
 
+# Cloudflare Turnstile site key (for bot protection)
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=""
+
 # Copy package files
 COPY package*.json ./
 
@@ -23,6 +26,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NEXTAUTH_DEBUG=true
 ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
 
 RUN npm run build
 

@@ -20,6 +20,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
+        - NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     container_name: rafts-frontend-nextjs
     ports:
       - '3080:8080'
