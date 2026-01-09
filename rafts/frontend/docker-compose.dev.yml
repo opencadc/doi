@@ -1,0 +1,55 @@
+services:
+  rafts-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: rafts-frontend-nextjs
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: 'development'
+      NEXTAUTH_URL: 'http://localhost:3000'
+      # Override validator URLs to use Docker service names
+      NEXT_PUBLIC_VALIDATOR_URL_XML: 'http://ades-validator-api:8000/validate-xml'
+      NEXT_PUBLIC_VALIDATOR_URL_PSV: 'http://ades-validator-api:8000/validate-psv'
+      NEXT_PUBLIC_VALIDATOR_URL_MPC: 'http://ades-validator-api:8000/validate-mpc'
+      # DOI service running on host machine (use host.docker.internal to reach host from container)
+      NEXT_DOI_BASE_URL: 'http://host.docker.internal:8080/rafts/instances'
+    volumes:
+      # Mount source for hot reload in development
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    depends_on:
+      ades-validator-api:
+        condition: service_healthy
+
+  ades-validator-api:
+    build:
+      context: ../api/validator
+      dockerfile: Dockerfile
+    container_name: ades-validator-api
+    ports:
+      - '8000:8000'
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8000/health-check')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  internal:
+    driver: bridge

@@ -1,0 +1,269 @@
+stages:
+  - validate
+  - test
+  - deploy
+  - notify
+
+# Validation stage - typecheck, lint, format check
+validate:
+  stage: validate
+  image: node:22-alpine
+  only:
+    - merge_requests
+    - main
+    - test-ci
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - npm run typecheck
+    - npm run lint
+    - npm run format:check
+  allow_failure: false
+
+# Test stage - run unit tests with coverage
+test:
+  stage: test
+  image: node:22-alpine
+  only:
+    - merge_requests
+    - main
+    - test-ci
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - npm run test:run -- --coverage
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  allow_failure: false
+
+deploy-to-test-ci:
+  stage: deploy
+  tags:
+    - deployment
+  only:
+    - test-ci
+  needs:
+    - job: validate
+      optional: true
+    - job: test
+      optional: true
+  before_script:
+    # Install dependencies based on available package manager
+    - |
+      if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y openssh-client git
+      elif command -v apk &> /dev/null; then
+        apk add --no-cache openssh git
+      elif command -v yum &> /dev/null; then
+        sudo yum install -y openssh-clients git
+      fi
+    - mkdir -p ~/.ssh
+    - cp "$DEPLOY_KEY" ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan cadc.testapp.ca >> ~/.ssh/known_hosts
+
+  script:
+    # Update cadc-ui infrastructure (if needed)
+    - ssh deploy@cadc.testapp.ca "cd /home/deploy/cadc-ui && git pull origin test-ci"
+
+    # Pre-deployment cleanup (check if script exists first)
+    - ssh deploy@cadc.testapp.ca "cd /home/deploy/rafts-open && [ -f ./scripts/pre-deploy.sh ] && ./scripts/pre-deploy.sh || echo 'Pre-deploy script not found, skipping...'"
+
+    # Deploy RAFTS application
+    - ssh deploy@cadc.testapp.ca "cd /home/deploy/cadc-ui && GITLAB_USERNAME='$GITLAB_USERNAME' GITLAB_PAT='$GITLAB_PAT' ./scripts/deploy-app.sh rafts-open"
+
+    # Post-deployment configuration (nginx setup)
+    - ssh deploy@cadc.testapp.ca "cd /home/deploy/rafts-open && ./scripts/post-deploy.sh"
+
+    # Verify deployment completed
+    - echo "RAFTS deployment completed successfully!"
+
+    # Store deployment status for notification
+    - echo "SUCCESS" > deployment_status.txt
+
+  artifacts:
+    paths:
+      - deployment_status.txt
+    expire_in: 1 hour
+
+notify-slack-success:
+  stage: notify
+  tags:
+    - deployment
+  only:
+    - test-ci
+  dependencies:
+    - deploy-to-test-ci
+  before_script:
+    - |
+      if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y curl
+      elif command -v apk &> /dev/null; then
+        apk add --no-cache curl
+      elif command -v yum &> /dev/null; then
+        sudo yum install -y curl
+      fi
+  script:
+    - |
+      # Construct Slack message with rich formatting
+      SLACK_MESSAGE=$(cat <<EOF
+      {
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "🚀 RAFTS Deployment Successful",
+              "emoji": true
+            }
+          },
+          {
+            "type": "section",
+            "fields": [
+              {
+                "type": "mrkdwn",
+                "text": "*Environment:*\n🔧 test-ci"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Branch:*\n📌 ${CI_COMMIT_REF_NAME}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Deployed by:*\n👤 ${CI_COMMIT_AUTHOR}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Pipeline:*\n🔗 <${CI_PIPELINE_URL}|#${CI_PIPELINE_ID}>"
+              }
+            ]
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Merge Request:* ${CI_MERGE_REQUEST_TITLE:-${CI_COMMIT_TITLE}}\n*Commit:* <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}>"
+            }
+          },
+          {
+            "type": "context",
+            "elements": [
+              {
+                "type": "mrkdwn",
+                "text": "🌐 *Application URL:* <https://rafts.testapp.ca|RAFTS on test-ci>"
+              }
+            ]
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "✅ All deployment steps completed successfully!"
+            }
+          }
+        ]
+      }
+      EOF
+      )
+    - |
+      curl -X POST \
+        -H 'Content-type: application/json' \
+        --data "${SLACK_MESSAGE}" \
+        ${SLACK_WEBHOOK_URL}
+  when: on_success
+
+notify-slack-failure:
+  stage: notify
+  tags:
+    - deployment
+  only:
+    - test-ci
+  dependencies:
+    - deploy-to-test-ci
+  before_script:
+    - |
+      if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y curl
+      elif command -v apk &> /dev/null; then
+        apk add --no-cache curl
+      elif command -v yum &> /dev/null; then
+        sudo yum install -y curl
+      fi
+  script:
+    - |
+      # Construct Slack message for failure
+      SLACK_MESSAGE=$(cat <<EOF
+      {
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "❌ RAFTS Deployment Failed",
+              "emoji": true
+            }
+          },
+          {
+            "type": "section",
+            "fields": [
+              {
+                "type": "mrkdwn",
+                "text": "*Environment:*\n🔧 test-ci"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Branch:*\n📌 ${CI_COMMIT_REF_NAME}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Failed by:*\n👤 ${CI_COMMIT_AUTHOR}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Pipeline:*\n🔗 <${CI_PIPELINE_URL}|#${CI_PIPELINE_ID}>"
+              }
+            ]
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Merge Request:* ${CI_MERGE_REQUEST_TITLE:-${CI_COMMIT_TITLE}}\n*Commit:* <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}>"
+            }
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "⚠️ *Action Required:* Please check the pipeline logs for details."
+            }
+          }
+        ]
+      }
+      EOF
+      )
+    - |
+      curl -X POST \
+        -H 'Content-type: application/json' \
+        --data "${SLACK_MESSAGE}" \
+        ${SLACK_WEBHOOK_URL}
+  when: on_failure

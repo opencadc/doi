@@ -1,0 +1,46 @@
+services:
+  rafts-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rafts-frontend-nextjs
+    env_file:
+      - .env.production
+    environment:
+      # Runtime overrides - these use Docker service names
+      NODE_ENV: 'production'
+      PORT: '8080'
+      NEXTAUTH_URL_INTERNAL: 'http://rafts-frontend:8080'
+      NEXT_PUBLIC_VALIDATOR_URL_XML: 'http://ades-validator-api:8000/validate-xml'
+      NEXT_PUBLIC_VALIDATOR_URL_PSV: 'http://ades-validator-api:8000/validate-psv'
+      NEXT_PUBLIC_VALIDATOR_URL_MPC: 'http://ades-validator-api:8000/validate-mpc'
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:8080/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: always
+    networks:
+      - cadc-ui_default
+    depends_on:
+      ades-validator-api:
+        condition: service_healthy
+
+  ades-validator-api:
+    build:
+      context: ../api/validator
+      dockerfile: Dockerfile
+    container_name: ades-validator-api
+    networks:
+      - cadc-ui_default
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8000/health-check')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  cadc-ui_default:
+    external: true

@@ -1,0 +1,23 @@
+# Test your FastAPI endpoints
+
+GET http://127.0.0.1:8000/
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/health-check
+Accept: application/json
+
+###
+
+POST http://127.0.0.1:8000/validate-xml
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW
+
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="sample.xml"
+Content-Type: application/xml
+
+<!-- Insert ADES XML content here -->
+--WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###

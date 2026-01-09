@@ -1,0 +1,119 @@
+<vosi:capabilities xmlns:vosi="http://www.ivoa.net/xml/VOSICapabilities/v1.0" xmlns:vr="http://www.ivoa.net/xml/VOResource/v1.0" xmlns:vs="http://www.ivoa.net/xml/VODataService/v1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <capability standardID="ivo://ivoa.net/std/VOSI#capabilities">
+        <interface xsi:type="vs:ParamHTTP" role="std">
+            <accessURL use="full">https://ws-cadc.canfar.net/ac/capabilities</accessURL>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/VOSI#availability">
+        <interface xsi:type="vs:ParamHTTP" role="std">
+            <accessURL use="full">https://ws-cadc.canfar.net/ac/availability</accessURL>
+        </interface>
+    </capability>
+    <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/Logging#control-1.0">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
+            <accessURL use="full">https://ws-cadc.canfar.net/ac/logControl</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/UMS#users-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/users</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/UMS#reqs-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/userRequests</accessURL>
+            <securityMethod/>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/UMS#resetpass-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/resetPassword</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/UMS#whoami-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/whoami</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/GMS#groups-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/groups</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/GMS#search-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/search</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/GMS#search-1.0">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/search</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/sso#OAuth">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/authorize</accessURL>
+            <securityMethod/>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/sso#OpenID">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac</accessURL>
+            <securityMethod/>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/sso#tls-with-password">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/login</accessURL>
+        </interface>
+    </capability>
+    <capability standardID="ivo://ivoa.net/std/UMS#login-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/login</accessURL>
+        </interface>
+    </capability>
+    <capability standardID="http://www.opencadc.org/std/posix#group-mapping-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/gidmap</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+    <capability standardID="http://www.opencadc.org/std/posix#user-mapping-0.1">
+        <interface xsi:type="vs:ParamHTTP" role="std" version="0.1">
+            <accessURL use="base">https://ws-cadc.canfar.net/ac/uidmap</accessURL>
+            <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+            <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+        </interface>
+    </capability>
+</vosi:capabilities>

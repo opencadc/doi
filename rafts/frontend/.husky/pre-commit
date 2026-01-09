@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Ensure we have the right PATH for node and npm
+export PATH="/Users/szautkin/.nvm/versions/node/v22.16.0/bin:$PATH"
+
+# Clear any problematic git config parameters
+unset GIT_CONFIG_PARAMETERS
+
+npx lint-staged
+
+# Update version info
+npx tsx scripts/update-version.ts
+git add src/version.json
