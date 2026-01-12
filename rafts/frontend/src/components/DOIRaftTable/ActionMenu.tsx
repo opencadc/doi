@@ -20,7 +20,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
 
   const handleView = () => {
     const raftId = rowData.identifier?.split?.('/')?.[1] as string
-    router.push(`/view/doi/${raftId}`)
+    router.push(`/view/rafts/${raftId}`)
   }
 
   const handleEdit = async () => {

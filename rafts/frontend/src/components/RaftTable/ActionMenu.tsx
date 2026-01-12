@@ -10,6 +10,14 @@ import {
   Divider,
   Tooltip,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Snackbar,
+  Alert,
 } from '@mui/material'
 import {
   MoreVertical,
@@ -24,6 +32,7 @@ import {
 import type { RaftData } from '@/types/doi'
 import { useRouter } from 'next/navigation'
 import { submitForReview } from '@/actions/submitForReview'
+import { deleteRaft } from '@/actions/deleteRaft'
 
 interface ActionMenuProps {
   rowData: RaftData
@@ -33,6 +42,13 @@ interface ActionMenuProps {
 export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean
+    message: string
+    severity: 'success' | 'error'
+  }>({ open: false, message: '', severity: 'success' })
   const open = Boolean(anchorEl)
   const router = useRouter()
 
@@ -60,9 +76,57 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
   }
 
   const handleDelete = () => {
-    // Open a confirmation dialog before deleting
-    // This would typically call a server action
     handleClose()
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!rowData.id) {
+      setSnackbar({
+        open: true,
+        message: 'No RAFT ID available',
+        severity: 'error',
+      })
+      setDeleteDialogOpen(false)
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const result = await deleteRaft(rowData.id)
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: 'RAFT deleted successfully',
+          severity: 'success',
+        })
+        setDeleteDialogOpen(false)
+        // Refresh the table data
+        onStatusChange?.()
+        router.refresh()
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || 'Failed to delete RAFT',
+          severity: 'error',
+        })
+        setDeleteDialogOpen(false)
+      }
+    } catch (error) {
+      console.error('[ActionMenu] Error deleting RAFT:', error)
+      setSnackbar({
+        open: true,
+        message: 'An error occurred while deleting RAFT',
+        severity: 'error',
+      })
+      setDeleteDialogOpen(false)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }))
   }
 
   const handleCopyId = () => {
@@ -200,6 +264,47 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
           </ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={isDeleting ? undefined : () => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">Delete RAFT</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this RAFT? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+            startIcon={isDeleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   )
 }

@@ -397,7 +397,7 @@ const FormLayoutWithContext = () => {
         // Redirect after a delay for final submission
         if (!isDraft) {
           setTimeout(() => {
-            router.push('/view/doi')
+            router.push('/view/rafts')
           }, 3000)
         }
       } catch {
@@ -435,14 +435,14 @@ const FormLayoutWithContext = () => {
     if (hasUnsavedChanges) {
       setCancelWarningOpen(true)
     } else {
-      router.push('/view/doi')
+      router.push('/view/rafts')
     }
   }, [hasUnsavedChanges, router])
 
   // Confirm cancel and navigate away
   const handleConfirmCancel = useCallback(() => {
     setCancelWarningOpen(false)
-    router.push('/view/doi')
+    router.push('/view/rafts')
   }, [router])
 
   // Memoize subData to prevent recreation on every render
@@ -467,7 +467,7 @@ const FormLayoutWithContext = () => {
         </div>
       ) : (
         <>
-          <RaftBreadcrumbs title={breadcrumbTitle} basePath="/view/doi" />
+          <RaftBreadcrumbs title={breadcrumbTitle} basePath="/view/rafts" />
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-center flex-1">{t('raft_form_title')}</h3>
             <Button

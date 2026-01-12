@@ -331,5 +331,11 @@
     "go_home": "Aller à la Page d'Accueil",
     "browse_public_rafts": "Parcourir les RAFTs Publiés",
     "requested_page": "Page demandée"
+  },
+  "not_found": {
+    "title": "Page Non Trouvée",
+    "description": "La page que vous recherchez a peut-être été supprimée, a changé de nom ou est temporairement indisponible.",
+    "go_home": "Aller à l'Accueil",
+    "go_back": "Retour"
   }
 }

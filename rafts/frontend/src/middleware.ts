@@ -27,7 +27,7 @@ const canAccessRoute = (path: string, role?: string): boolean => {
   return true
 }
 
-// Strip locale prefix from pathname (e.g., /en/view/doi -> /view/doi)
+// Strip locale prefix from pathname (e.g., /en/view/rafts -> /view/rafts)
 const stripLocale = (pathname: string): string => {
   const localePattern = /^\/(en|fr)(\/|$)/
   return pathname.replace(localePattern, '/')

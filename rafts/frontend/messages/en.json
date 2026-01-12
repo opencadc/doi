@@ -358,5 +358,11 @@
     "go_home": "Go to Home Page",
     "browse_public_rafts": "Browse Published RAFTs",
     "requested_page": "Requested page"
+  },
+  "not_found": {
+    "title": "Page Not Found",
+    "description": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "go_home": "Go to Home",
+    "go_back": "Go Back"
   }
 }

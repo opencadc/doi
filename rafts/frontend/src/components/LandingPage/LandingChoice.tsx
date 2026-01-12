@@ -69,7 +69,7 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
           description: 'Browse published announcements',
           icon: <ViewIcon sx={{ fontSize: 60, color: theme.palette.secondary.main, mb: 2 }} />,
           color: theme.palette.secondary.main,
-          path: '/view/doi',
+          path: '/view/rafts',
           roles: ['contributor', 'reviewer'],
         } /*,
         {

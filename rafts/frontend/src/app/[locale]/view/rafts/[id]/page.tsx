@@ -1,14 +1,13 @@
 import { Metadata } from 'next'
 import RaftDetail from '@/components/RaftDetail/RaftDetail'
-import { getRaftById } from '@/actions/getRaftById'
 import { notFound } from 'next/navigation'
+import { getDOIRaft } from '@/actions/getDOIRAFT'
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  // Fetch RAFT data for metadata
   const params = await props.params
-  const { success, data } = await getRaftById(params.id)
+  const { success, data } = await getDOIRaft(params.id)
 
   if (!success || !data) {
     return {
@@ -25,11 +24,9 @@ export async function generateMetadata(props: {
 }
 
 export default async function RaftPage(props: { params: Promise<{ id: string }> }) {
-  // Fetch the RAFT data
   const params = await props.params
-  const { success, data } = await getRaftById(params.id)
+  const { success, data } = await getDOIRaft(params.id)
 
-  // Handle not found
   if (!success || !data) {
     notFound()
   }

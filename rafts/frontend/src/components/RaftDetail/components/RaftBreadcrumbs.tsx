@@ -20,7 +20,7 @@ export default function RaftBreadcrumbs({ title, basePath }: RaftBreadcrumbsProp
           </Box>
         </Box>
       </Link>
-      <Link href={basePath || '/view/doi'} passHref>
+      <Link href={basePath || '/view/rafts'} passHref>
         <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: 'text.primary' }}>
           <FileText size={16} />
           <Box component="span" sx={{ ml: 0.5 }}>

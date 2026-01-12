@@ -21,6 +21,7 @@ import AdditionalInfoTab from './tabs/AdditionalInfoTab'
 // Import server actions
 import { submitForReview } from '@/actions/submitForReview'
 import { updateDOIStatus } from '@/actions/updateDOIStatus'
+import { deleteRaft } from '@/actions/deleteRaft'
 import { BACKEND_STATUS } from '@/shared/backendStatus'
 
 interface RaftDetailProps {
@@ -32,6 +33,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
   const [tabValue, setTabValue] = useState(0)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isSubmittingForReview, setIsSubmittingForReview] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [snackbar, setSnackbar] = useState<{
     open: boolean
     message: string
@@ -108,10 +110,49 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
 
   // Confirm delete action
   const confirmDelete = async () => {
-    // Implement deletion logic with server action
-    setDeleteDialogOpen(false)
-    // After successful deletion, redirect to the list page
-    router.push('/view/rafts')
+    if (!raftData.id) {
+      setSnackbar({
+        open: true,
+        message: 'No RAFT ID available',
+        severity: 'error',
+      })
+      setDeleteDialogOpen(false)
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const result = await deleteRaft(raftData.id)
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: 'RAFT deleted successfully',
+          severity: 'success',
+        })
+        setDeleteDialogOpen(false)
+        // Redirect after a short delay to show the success message
+        setTimeout(() => {
+          router.push('/view/rafts')
+        }, 1500)
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.message || 'Failed to delete RAFT',
+          severity: 'error',
+        })
+        setDeleteDialogOpen(false)
+      }
+    } catch (error) {
+      console.error('[RaftDetail] Error deleting RAFT:', error)
+      setSnackbar({
+        open: true,
+        message: 'An error occurred while deleting RAFT',
+        severity: 'error',
+      })
+      setDeleteDialogOpen(false)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // Handle submit for review
@@ -220,6 +261,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
+        isDeleting={isDeleting}
       />
 
       {/* Snackbar for feedback */}

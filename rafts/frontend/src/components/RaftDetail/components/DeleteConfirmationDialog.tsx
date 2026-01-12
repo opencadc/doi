@@ -7,23 +7,26 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  CircularProgress,
 } from '@mui/material'
 
 interface DeleteConfirmationDialogProps {
   open: boolean
   onClose: () => void
   onConfirm: () => void
+  isDeleting?: boolean
 }
 
 export default function DeleteConfirmationDialog({
   open,
   onClose,
   onConfirm,
+  isDeleting = false,
 }: DeleteConfirmationDialogProps) {
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={isDeleting ? undefined : onClose}
       aria-labelledby="delete-dialog-title"
       aria-describedby="delete-dialog-description"
     >
@@ -34,9 +37,17 @@ export default function DeleteConfirmationDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onConfirm} color="error" variant="contained">
-          Delete
+        <Button onClick={onClose} disabled={isDeleting}>
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          color="error"
+          variant="contained"
+          disabled={isDeleting}
+          startIcon={isDeleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete'}
         </Button>
       </DialogActions>
     </Dialog>
