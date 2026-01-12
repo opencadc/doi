@@ -174,11 +174,16 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
 
       <Grid container spacing={4} justifyContent="center" sx={{ mt: 2 }}>
         {actionCards.map((card, index) => (
-          <Grid size={{ xs: 12, md: 3 }} key={index}>
+          <Grid
+            size={{ xs: 12, sm: 6, md: 3 }}
+            key={index}
+            sx={{ display: 'flex', justifyContent: 'center' }}
+          >
             <Card
               onClick={() => (card?.path ? router.push(card.path) : null)}
               sx={{
-                width: 240,
+                width: { xs: '100%', sm: 240 },
+                maxWidth: 280,
                 height: 220,
                 transition: 'transform 0.2s, box-shadow 0.2s',
                 cursor: 'pointer',

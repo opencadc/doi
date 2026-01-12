@@ -63,17 +63,25 @@ export default function RaftHeader({
   return (
     <Box
       sx={{
-        p: 3,
+        p: { xs: 2, sm: 3 },
         bgcolor: 'primary.50',
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
     >
+      {/* Desktop: side-by-side layout, Mobile: stacked */}
       <Box
-        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'stretch', md: 'flex-start' },
+          gap: 2,
+        }}
       >
-        <Box sx={{ maxWidth: '75%' }}>
-          <Typography variant="h4" gutterBottom>
+        {/* Main content section */}
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
             {title || 'Untitled RAFT'}
           </Typography>
 
@@ -103,7 +111,15 @@ export default function RaftHeader({
             ))}
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: { xs: 1, sm: 3 },
+              mt: 2,
+              flexWrap: 'wrap',
+              flexDirection: { xs: 'column', sm: 'row' },
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Calendar size={16} />
               <Typography variant="body2">{dayjs(createdAt).format('MMM D, YYYY')}</Typography>
@@ -128,7 +144,18 @@ export default function RaftHeader({
           {doi && <DOILinks doi={doi} />}
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        {/* Action buttons - below on mobile, right side on desktop */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            flexWrap: 'wrap',
+            flexShrink: 0,
+            pt: { xs: 2, md: 0 },
+            borderTop: { xs: '1px solid', md: 'none' },
+            borderColor: 'divider',
+          }}
+        >
           <Tooltip title="Download RAFT">
             <Button
               variant="outlined"
@@ -136,6 +163,7 @@ export default function RaftHeader({
               startIcon={<Download size={18} />}
               onClick={onDownload}
               disabled
+              sx={{ flexGrow: { xs: 1, md: 0 }, minWidth: { xs: 'calc(50% - 4px)', md: 'auto' } }}
             >
               Download
             </Button>
@@ -148,6 +176,7 @@ export default function RaftHeader({
               startIcon={<Share2 size={18} />}
               onClick={onShare}
               disabled
+              sx={{ flexGrow: { xs: 1, md: 0 }, minWidth: { xs: 'calc(50% - 4px)', md: 'auto' } }}
             >
               Share
             </Button>
@@ -160,6 +189,10 @@ export default function RaftHeader({
                 size="small"
                 startIcon={<Pencil size={18} />}
                 onClick={onEdit}
+                sx={{
+                  flexGrow: { xs: 1, md: 0 },
+                  minWidth: { xs: 'calc(50% - 4px)', md: 'auto' },
+                }}
               >
                 Edit
               </Button>
@@ -181,6 +214,10 @@ export default function RaftHeader({
                 }
                 onClick={onSubmitForReview}
                 disabled={isSubmittingForReview}
+                sx={{
+                  flexGrow: { xs: 1, md: 0 },
+                  minWidth: { xs: 'calc(50% - 4px)', md: 'auto' },
+                }}
               >
                 {isSubmittingForReview ? 'Submitting...' : 'Review Ready'}
               </Button>
@@ -195,6 +232,10 @@ export default function RaftHeader({
                 color="error"
                 startIcon={<Trash2 size={18} />}
                 onClick={onDelete}
+                sx={{
+                  flexGrow: { xs: 1, md: 0 },
+                  minWidth: { xs: 'calc(50% - 4px)', md: 'auto' },
+                }}
               >
                 Delete
               </Button>
