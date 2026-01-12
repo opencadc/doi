@@ -27,6 +27,8 @@ import {
   InputAdornment,
   Snackbar,
   Alert,
+  Skeleton,
+  useTheme,
 } from '@mui/material'
 import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -35,6 +37,8 @@ interface RaftTableProps {
   data: DOIData[]
   /** Callback to refresh data after status changes */
   onRefresh?: () => void
+  /** Show loading skeleton */
+  isLoading?: boolean
 }
 
 // Extend TanStack Table's TableMeta to include our custom properties
@@ -45,8 +49,9 @@ declare module '@tanstack/react-table' {
   }
 }
 
-export default function RaftTable({ data, onRefresh }: RaftTableProps) {
+export default function RaftTable({ data, onRefresh, isLoading = false }: RaftTableProps) {
   const router = useRouter()
+  const theme = useTheme()
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [snackbar, setSnackbar] = useState<{
@@ -95,6 +100,52 @@ export default function RaftTable({ data, onRefresh }: RaftTableProps) {
       onStatusChange: handleStatusChange,
     },
   })
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <Paper elevation={2} sx={{ overflow: 'hidden' }}>
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rectangular" height={40} />
+        </Box>
+        <TableContainer sx={{ minHeight: 400 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {columns.map((_, index) => (
+                  <TableCell
+                    key={index}
+                    sx={{
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? theme.palette.grey[800]
+                          : theme.palette.grey[100],
+                    }}
+                  >
+                    <Skeleton variant="text" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index}>
+                  {columns.map((_, cellIndex) => (
+                    <TableCell key={cellIndex}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rectangular" height={52} />
+        </Box>
+      </Paper>
+    )
+  }
 
   return (
     <Paper elevation={2} sx={{ overflow: 'hidden' }}>

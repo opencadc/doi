@@ -309,10 +309,26 @@ export function validateAttachment(
     (allowed) => file.type === allowed || file.type.startsWith(allowed.replace('/*', '/')),
   )
 
+  // If MIME type check fails, try extension-based validation for text files
+  // Browsers often report empty or generic MIME types for .psv, .mpc, etc.
   if (!isAllowedType) {
+    const ext = getFileExtension(file.name).toLowerCase()
+    const textExtensions = ['.txt', '.psv', '.mpc', '.xml']
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif']
+
+    // For text-based configs, allow known text file extensions
+    if (!config.isBinary && textExtensions.includes(ext)) {
+      return { valid: true }
+    }
+
+    // For binary (image) configs, allow known image extensions
+    if (config.isBinary && imageExtensions.includes(ext)) {
+      return { valid: true }
+    }
+
     return {
       valid: false,
-      error: `File type ${file.type} is not allowed. Allowed types: ${config.allowedMimeTypes.join(', ')}`,
+      error: `File type ${file.type || 'unknown'} is not allowed. Allowed types: ${config.allowedMimeTypes.join(', ')}`,
     }
   }
 

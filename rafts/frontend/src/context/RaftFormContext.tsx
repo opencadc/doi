@@ -127,9 +127,15 @@ export function RaftFormProvider({
   }, [initialRaftData, useLocalStorage])
 
   // Set form from file
+  // Important: Strip the 'id' field to ensure importing creates a NEW RAFT
+  // This prevents accidentally updating an old RAFT when importing exported data
   const setFormFromFile = useCallback((formData: TRaftContext) => {
     if (formData) {
-      setRaftData(formData)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _removedId, ...dataWithoutId } = formData
+      setRaftData(dataWithoutId)
+      // Also clear the doiIdentifier since this is a new RAFT
+      setDoiIdentifier(null)
     }
   }, [])
 

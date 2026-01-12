@@ -14,7 +14,7 @@ import {
   downloadAttachmentAsBase64 as downloadBase64FromVOSpace,
   deleteAttachment as deleteFromVOSpace,
 } from '@/services/attachmentService'
-import { FileReference } from '@/types/attachments'
+import { FileReference, getMimeTypeFromExtension } from '@/types/attachments'
 
 // ============================================================================
 // Upload Action
@@ -49,6 +49,10 @@ export async function uploadAttachment(
   }
 
   try {
+    // Fallback to extension-based MIME type if not provided or empty
+    // Browsers often report empty MIME types for .psv, .mpc files
+    const effectiveMimeType = mimeType || getMimeTypeFromExtension(filename)
+
     let content: Blob | string
 
     // Check if it's a base64 data URL (binary content)
@@ -56,13 +60,19 @@ export async function uploadAttachment(
       // Extract the base64 data from the data URL
       const base64Data = base64Content.split(',')[1]
       const binaryString = Buffer.from(base64Data, 'base64')
-      content = new Blob([binaryString], { type: mimeType })
+      content = new Blob([binaryString], { type: effectiveMimeType })
     } else {
       // It's raw text content
       content = base64Content
     }
 
-    const result = await uploadToVOSpace(doiIdentifier, filename, content, mimeType, accessToken)
+    const result = await uploadToVOSpace(
+      doiIdentifier,
+      filename,
+      content,
+      effectiveMimeType,
+      accessToken,
+    )
 
     return result
   } catch (error) {

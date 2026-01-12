@@ -60,13 +60,9 @@ export default function ReviewRafts() {
         />
       </header>
       <main className="row-start-2 w-full max-w-7xl mx-auto">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <span>Loading RAFTs...</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">{error}</div>
-        ) : raftData.length === 0 ? (
+        ) : !isLoading && raftData.length === 0 ? (
           <Paper elevation={1} sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="h6" color="text.secondary">
               No submissions found with this status
@@ -75,6 +71,7 @@ export default function ReviewRafts() {
         ) : (
           <RaftTable
             data={raftData}
+            isLoading={isLoading}
             isReviewMode={true}
             currentStatus={currentStatus}
             onStatusUpdate={() => fetchData(currentStatus)}

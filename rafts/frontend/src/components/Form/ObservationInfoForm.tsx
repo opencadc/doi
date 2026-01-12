@@ -349,7 +349,6 @@ const ObservationInfoForm = forwardRef<
               onClear={handleADESFileClear}
               initialText={parseStoredAttachment(astrometryValue)}
               doiIdentifier={doiIdentifier || undefined}
-              customFilename="astrometry.xml"
             />
           </div>
 

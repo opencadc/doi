@@ -51,14 +51,10 @@ export default function View() {
         </div>
       </header>
       <main className="row-start-2 w-full max-w-7xl mx-auto">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <span>Loading RAFT data...</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">{error}</div>
         ) : (
-          <RaftTable data={doiData} onRefresh={handleRefresh} />
+          <RaftTable data={doiData} onRefresh={handleRefresh} isLoading={isLoading} />
         )}
       </main>
       <footer className="row-start-3 w-full text-center text-sm text-gray-500 mt-8">

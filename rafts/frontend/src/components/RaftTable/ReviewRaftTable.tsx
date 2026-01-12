@@ -26,9 +26,9 @@ import {
   Box,
   FormControl,
   InputAdornment,
-  LinearProgress,
   Typography,
   useTheme,
+  Skeleton,
 } from '@mui/material'
 import { Search } from 'lucide-react'
 
@@ -74,6 +74,44 @@ export default function RaftTable({
     },
   })
 
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <Paper elevation={2} sx={{ overflow: 'hidden' }}>
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rectangular" height={40} />
+        </Box>
+        <TableContainer sx={{ minHeight: 400 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <TableCell key={index}>
+                    <Skeleton variant="text" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index}>
+                  {Array.from({ length: 6 }).map((_, cellIndex) => (
+                    <TableCell key={cellIndex}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rectangular" height={52} />
+        </Box>
+      </Paper>
+    )
+  }
+
   return (
     <Paper elevation={2} sx={{ overflow: 'hidden' }}>
       <Box sx={{ p: 2 }}>
@@ -93,8 +131,6 @@ export default function RaftTable({
           />
         </FormControl>
       </Box>
-
-      {isLoading && <LinearProgress />}
 
       <TableContainer>
         <Table sx={{ minWidth: 650 }} aria-label="RAFT submissions table">
@@ -143,11 +179,7 @@ export default function RaftTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 3 }}>
-                  {isLoading ? (
-                    <Typography color="text.secondary">Loading data...</Typography>
-                  ) : (
-                    <Typography color="text.secondary">No results found</Typography>
-                  )}
+                  <Typography color="text.secondary">No results found</Typography>
                 </TableCell>
               </TableRow>
             )}

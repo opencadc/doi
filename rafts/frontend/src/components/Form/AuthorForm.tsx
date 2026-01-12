@@ -353,8 +353,12 @@ const AuthorForm = forwardRef<
                           )
                         : undefined
                     }
+                    required={true}
                     {...register(
                       `${PROP_CONTRIBUTING_AUTHORS}.${index}.${PROP_AUTHOR_AFFILIATION}`,
+                      {
+                        required: t('is_required'),
+                      },
                     )}
                   />
                 </div>
