@@ -12,7 +12,11 @@ import {
   Box,
   Divider,
   Typography,
+  Button,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material'
+import { Home, ListAlt, RateReview } from '@mui/icons-material'
 import { Login, Logout, Person } from '@mui/icons-material'
 import { useState } from 'react'
 import { useRouter, Link } from '@/i18n/routing'
@@ -29,6 +33,8 @@ const AppBar = ({ session }: AppBarProps) => {
   const t = useTranslations('app_bar')
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const userRole = session?.user?.role
+
   const handleOpenMenu = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
   }
@@ -51,29 +57,75 @@ const AppBar = ({ session }: AppBarProps) => {
   }
 
   const redirectProfile = () => {
+    handleCloseMenu()
     router.push('/profile')
   }
+
+  const handleNavigation = (path: string) => {
+    handleCloseMenu()
+    router.push(path)
+  }
+
+  const isReviewerOrAdmin = userRole === 'reviewer' || userRole === 'admin'
+
   return (
     <MuiAppBar position="static" color="default" elevation={1}>
       <Toolbar className="justify-between">
-        {/* Left side - could add logo or title here */}
-
+        {/* Left side - Logo and title */}
         <Box className="flex flex-row align-middle justify-start gap-2">
           <div className="flex flex-col justify-center">
             <Link href={'/'} className="p-0 m-0 leading-none">
               <SolarSystem />
             </Link>
           </div>
-          <div className="flex flex-col justify-center">
+          <Box
+            className="flex flex-col justify-center"
+            sx={{ display: { xs: 'none', md: 'flex' } }}
+          >
             <Typography variant="h6" color="inherit" component="h6">
               Research Announcements For The Solar System (RAFTs)
             </Typography>
-          </div>
+          </Box>
         </Box>
 
-        {/* Right side - language selector and auth buttons */}
+        {/* Right side - Navigation + User menu */}
         <Box className="flex items-center gap-2">
-          <Divider orientation="vertical" flexItem className="mx-2" />
+          {/* Desktop Navigation - visible on md and up */}
+          {session && (
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
+              <Button
+                component={Link}
+                href="/"
+                startIcon={<Home />}
+                color="inherit"
+                sx={{ textTransform: 'none' }}
+              >
+                {t('nav_home')}
+              </Button>
+              <Button
+                component={Link}
+                href="/view/rafts"
+                startIcon={<ListAlt />}
+                color="inherit"
+                sx={{ textTransform: 'none' }}
+              >
+                {t('nav_rafts')}
+              </Button>
+              {isReviewerOrAdmin && (
+                <Button
+                  component={Link}
+                  href="/review/rafts"
+                  startIcon={<RateReview />}
+                  color="inherit"
+                  sx={{ textTransform: 'none' }}
+                >
+                  {t('nav_review')}
+                </Button>
+              )}
+            </Box>
+          )}
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
           {session ? (
             <>
@@ -95,13 +147,41 @@ const AppBar = ({ session }: AppBarProps) => {
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
               >
+                {/* Mobile Navigation - visible only on mobile */}
+                <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                  <MenuItem onClick={() => handleNavigation('/')}>
+                    <ListItemIcon>
+                      <Home fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{t('nav_home')}</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={() => handleNavigation('/view/rafts')}>
+                    <ListItemIcon>
+                      <ListAlt fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{t('nav_rafts')}</ListItemText>
+                  </MenuItem>
+                  {isReviewerOrAdmin && (
+                    <MenuItem onClick={() => handleNavigation('/review/rafts')}>
+                      <ListItemIcon>
+                        <RateReview fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>{t('nav_review')}</ListItemText>
+                    </MenuItem>
+                  )}
+                  <Divider />
+                </Box>
                 <MenuItem onClick={redirectProfile}>
-                  <Person className="mr-2" fontSize="small" />
-                  {t('profile')}
+                  <ListItemIcon>
+                    <Person fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>{t('profile')}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={onSignOut}>
-                  <Logout className="mr-2" fontSize="small" />
-                  {t('sign_out')}
+                  <ListItemIcon>
+                    <Logout fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>{t('sign_out')}</ListItemText>
                 </MenuItem>
               </Menu>
             </>
@@ -112,11 +192,6 @@ const AppBar = ({ session }: AppBarProps) => {
                   <Login />
                 </IconButton>
               </Tooltip>
-              {/*<Tooltip title={t('register')}>
-                <IconButton onClick={() => router.push('/registration')} color="secondary">
-                  <PersonAdd />
-                </IconButton>
-              </Tooltip>*/}
             </Box>
           )}
         </Box>
