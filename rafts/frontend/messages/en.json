@@ -12,7 +12,23 @@
   "landing_page": {
     "create": "Create",
     "view": "View",
-    "rapidPublications": "Rapid Publication"
+    "rapidPublications": "Rapid Publication",
+    "hero_title": "Research Announcements For The Solar System",
+    "hero_subtitle": "A publication system for short solar system science announcements in the era of large surveys like Rubin Observatory's LSST",
+    "hero_description": "RAFTs provide a means for publishing preliminary but meaningful analyses of solar system science discoveries, facilitating community follow-up observations and collaboration.",
+    "rapid_publication_desc": "Quickly issue short announcements with a transparent review process, nominally published within 1 day",
+    "solar_system_science": "Solar System Science",
+    "solar_system_science_desc": "Focused on solar system discoveries including comets, asteroids, unusual objects, and time-sensitive observations",
+    "community_access": "Community Access",
+    "community_access_desc": "Freely accessible to all users with citable DOIs and community discussion threads",
+    "what_to_do": "What would you like to do?",
+    "create_raft": "Create a RAFT",
+    "create_raft_desc": "Submit a new research announcement",
+    "view_rafts": "View Your RAFTs",
+    "view_rafts_desc": "Browse published announcements",
+    "review_rafts": "Review RAFTs",
+    "review_rafts_desc": "Review submitted rafts",
+    "footer_text": "RAFTs is a collaborative project supported by CADC and the solar system science community"
   },
   "submission_form": {
     "title": "Title",

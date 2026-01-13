@@ -36,20 +36,17 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
     {
       icon: <AnnouncementIcon fontSize="large" sx={{ color: theme.palette.primary.main }} />,
       title: t('rapidPublications'),
-      description:
-        'Quickly issue short announcements with a transparent review process, nominally published within 1 day',
+      description: t('rapid_publication_desc'),
     },
     {
       icon: <ScienceIcon fontSize="large" sx={{ color: theme.palette.primary.main }} />,
-      title: 'Solar System Science',
-      description:
-        'Focused on solar system discoveries including comets, asteroids, unusual objects, and time-sensitive observations',
+      title: t('solar_system_science'),
+      description: t('solar_system_science_desc'),
     },
     {
       icon: <VisibilityIcon fontSize="large" sx={{ color: theme.palette.primary.main }} />,
-      title: 'Community Access',
-      description:
-        'Freely accessible to all users with citable DOIs and community discussion threads',
+      title: t('community_access'),
+      description: t('community_access_desc'),
     },
   ]
 
@@ -57,16 +54,16 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
     () =>
       [
         {
-          title: 'Create a RAFT',
-          description: 'Submit a new research announcement',
+          title: t('create_raft'),
+          description: t('create_raft_desc'),
           icon: <CreateIcon sx={{ fontSize: 60, color: theme.palette.primary.main, mb: 2 }} />,
           color: theme.palette.primary.main,
           path: '/form/create',
           roles: ['contributor', 'reviewer', 'admin'],
         },
         {
-          title: 'View Your RAFTs',
-          description: 'Browse published announcements',
+          title: t('view_rafts'),
+          description: t('view_rafts_desc'),
           icon: <ViewIcon sx={{ fontSize: 60, color: theme.palette.secondary.main, mb: 2 }} />,
           color: theme.palette.secondary.main,
           path: '/view/rafts',
@@ -83,8 +80,8 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
           roles: [],
         }*/,
         {
-          title: 'Review RAFTs',
-          description: 'Review submitted rafts',
+          title: t('review_rafts'),
+          description: t('review_rafts_desc'),
           icon: <ListIcon sx={{ fontSize: 60, color: theme.palette.secondary.main, mb: 2 }} />,
           color: theme.palette.secondary.main,
           path: '/review/rafts',
@@ -104,7 +101,7 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
           (!userRole && c?.roles.length === 0)
         )
       }),
-    [userRole, theme.palette.primary.main, theme.palette.secondary.main],
+    [userRole, theme.palette.primary.main, theme.palette.secondary.main, t],
   )
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
@@ -120,16 +117,13 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
         <Grid container spacing={4} alignItems="center">
           <Grid size={{ xs: 12, md: 7 }}>
             <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
-              Research Announcements For The Solar System
+              {t('hero_title')}
             </Typography>
             <Typography variant="h6" color="text.secondary" component={'p'}>
-              A publication system for short solar system science announcements in the era of large
-              surveys like Rubin Observatory&apos;s LSST
+              {t('hero_subtitle')}
             </Typography>
             <Typography component={'p'} variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-              RAFTs provide a means for publishing preliminary but meaningful analyses of solar
-              system science discoveries, facilitating community follow-up observations and
-              collaboration.
+              {t('hero_description')}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
@@ -169,7 +163,7 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
       <Divider sx={{ mb: 6 }} />
 
       <Typography variant="h4" component="h2" align="center" gutterBottom>
-        What would you like to do?
+        {t('what_to_do')}
       </Typography>
 
       <Grid container spacing={4} justifyContent="center" sx={{ mt: 2 }}>
@@ -214,7 +208,7 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
 
       <Box sx={{ mt: 8, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
-          RAFTs is a collaborative project supported by CADC and the solar system science community
+          {t('footer_text')}
         </Typography>
       </Box>
     </Container>
