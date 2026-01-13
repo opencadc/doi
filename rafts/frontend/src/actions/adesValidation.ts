@@ -3,10 +3,21 @@
 import type { ADESFileKind, ADESValidationResult } from './adesValidation.types'
 
 // Use environment variables with fallbacks for different validator endpoints
+// Server actions use runtime env vars (no NEXT_PUBLIC_ prefix needed)
+// Check both prefixed and non-prefixed for compatibility
 const VALIDATOR_URLS: Record<ADESFileKind, string> = {
-  xml: process.env.VALIDATOR_URL_XML || 'http://localhost:8000/validate-xml',
-  psv: process.env.VALIDATOR_URL_PSV || 'http://localhost:8000/validate-psv',
-  mpc: process.env.VALIDATOR_URL_MPC || 'http://localhost:8000/validate-mpc',
+  xml:
+    process.env.VALIDATOR_URL_XML ||
+    process.env.NEXT_PUBLIC_VALIDATOR_URL_XML ||
+    'http://localhost:8000/validate-xml',
+  psv:
+    process.env.VALIDATOR_URL_PSV ||
+    process.env.NEXT_PUBLIC_VALIDATOR_URL_PSV ||
+    'http://localhost:8000/validate-psv',
+  mpc:
+    process.env.VALIDATOR_URL_MPC ||
+    process.env.NEXT_PUBLIC_VALIDATOR_URL_MPC ||
+    'http://localhost:8000/validate-mpc',
 }
 
 /**

@@ -30,9 +30,10 @@ services:
       NODE_ENV: production
       PORT: '8080'
       # Internal service URLs (Docker networking)
-      NEXT_PUBLIC_VALIDATOR_URL_XML: http://ades-validator-api:8000/validate-xml
-      NEXT_PUBLIC_VALIDATOR_URL_PSV: http://ades-validator-api:8000/validate-psv
-      NEXT_PUBLIC_VALIDATOR_URL_MPC: http://ades-validator-api:8000/validate-mpc
+      # Using non-prefixed vars for server actions (runtime)
+      VALIDATOR_URL_XML: http://ades-validator-api:8000/validate-xml
+      VALIDATOR_URL_PSV: http://ades-validator-api:8000/validate-psv
+      VALIDATOR_URL_MPC: http://ades-validator-api:8000/validate-mpc
       NEXTAUTH_URL_INTERNAL: http://rafts-frontend:8080
     healthcheck:
       test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/api/health']

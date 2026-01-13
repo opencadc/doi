@@ -11,10 +11,10 @@ services:
     environment:
       NODE_ENV: 'development'
       NEXTAUTH_URL: 'http://localhost:3000'
-      # Override validator URLs to use Docker service names
-      NEXT_PUBLIC_VALIDATOR_URL_XML: 'http://ades-validator-api:8000/validate-xml'
-      NEXT_PUBLIC_VALIDATOR_URL_PSV: 'http://ades-validator-api:8000/validate-psv'
-      NEXT_PUBLIC_VALIDATOR_URL_MPC: 'http://ades-validator-api:8000/validate-mpc'
+      # Validator URLs - non-prefixed for server actions (runtime)
+      VALIDATOR_URL_XML: 'http://ades-validator-api:8000/validate-xml'
+      VALIDATOR_URL_PSV: 'http://ades-validator-api:8000/validate-psv'
+      VALIDATOR_URL_MPC: 'http://ades-validator-api:8000/validate-mpc'
       # DOI service running on host machine (use host.docker.internal to reach host from container)
       NEXT_DOI_BASE_URL: 'http://host.docker.internal:8080/rafts/instances'
     volumes:
