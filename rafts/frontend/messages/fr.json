@@ -234,7 +234,10 @@
     "user": "Utilisateur",
     "sign_in": "Connexion",
     "register": "Inscription",
-    "sign_out": "Déconnexion"
+    "sign_out": "Déconnexion",
+    "nav_home": "Accueil",
+    "nav_rafts": "Mes RAFTs",
+    "nav_review": "Révision"
   },
   "language_selector": {
     "change_language": "Changer la langue"

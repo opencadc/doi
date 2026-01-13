@@ -81,8 +81,8 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(loginRequiredUrl)
   }
 
-  // Check role-based access
-  const hasAccess = canAccessRoute(request.nextUrl.pathname, userRole)
+  // Check role-based access (use pathname without locale prefix)
+  const hasAccess = canAccessRoute(pathnameWithoutLocale, userRole)
 
   if (!hasAccess) {
     return NextResponse.redirect(new URL('/unauthorized', request.url))

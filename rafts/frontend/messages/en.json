@@ -255,7 +255,10 @@
     "user": "User",
     "sign_in": "Sign In",
     "register": "Register",
-    "sign_out": "Sign Out"
+    "sign_out": "Sign Out",
+    "nav_home": "Home",
+    "nav_rafts": "My RAFTs",
+    "nav_review": "Review"
   },
   "language_selector": {
     "change_language": "Change Language"
