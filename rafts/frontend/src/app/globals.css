@@ -44,12 +44,7 @@
 .dark {
   /* --- Base Dark Theme --- */
   /* Off-black background preferred over pure #000 for reduced eye strain */
-  --background: rgba(
-    66,
-    65,
-    65,
-    0.93
-  ); /* Slightly darker off-black for potentially better contrast */
+  --background: #1a1a1a;
   /* High contrast off-white text */
   --foreground: #f0f0f0; /* Slightly off-white, very high contrast */
 
@@ -96,45 +91,11 @@
   --orbit-color: #fff;
 }
 
-/* Apply dark theme based on system preference if .light class is not explicitly set */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    /* --- Base Dark Theme --- */
-    --background: #1a1a1a;
-    --foreground: #f0f0f0;
-
-    /* --- Input Fields - Dark Theme --- */
-    --input-background: #2c2c2c;
-    --input-border: #555555;
-    --input-text: #f0f0f0;
-    --input-focus-border: #60a5fa;
-    --input-focus-ring: rgba(96, 165, 250, 0.4);
-
-    /* --- Form Section Headers - Dark Theme --- */
-    --header-text: #93c5fd;
-
-    /* --- Labels - Dark Theme --- */
-    --label-text: #e5e7eb;
-
-    /* --- Helper Text - Dark Theme --- */
-    --helper-text: #a0a0a0; /* Ensure consistency */
-
-    /* --- Form Fieldset - Dark Theme --- */
-    --fieldset-background: #2c2c2c;
-    --fieldset-border: #555555;
-    --legend-text: #93c5fd;
-
-    /* --- Buttons - Dark Theme --- */
-    --button-background: #3b82f6;
-    --button-hover: #2563eb;
-    --button-text: #ffffff;
-  }
-}
-
 /* --- Base Body Styles --- */
+/* Using !important to ensure CSS variables take precedence over MUI CssBaseline */
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--foreground) !important;
+  background: var(--background) !important;
   /* Consider a slightly larger base font size if applicable */
   /* font-size: 16px; or font-size: 1rem; */
   /* Using a sans-serif font is generally good for readability */

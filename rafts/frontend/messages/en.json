@@ -279,6 +279,12 @@
   "language_selector": {
     "change_language": "Change Language"
   },
+  "theme_toggle": {
+    "tooltip": "Change theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "raft_table": {
     "draft": "Draft",
     "in progress": "Draft",

@@ -24,6 +24,7 @@ import { Session } from 'next-auth'
 import { signOut } from 'next-auth/react'
 
 import SolarSystem from '@/components/Layout/SolarLogo'
+import ThemeToggle from '@/components/Layout/ThemeToggle'
 
 interface AppBarProps {
   session: Session | null
@@ -124,6 +125,8 @@ const AppBar = ({ session }: AppBarProps) => {
               )}
             </Box>
           )}
+
+          <ThemeToggle />
 
           <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 

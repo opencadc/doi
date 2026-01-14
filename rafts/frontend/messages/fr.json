@@ -287,6 +287,12 @@
   "language_selector": {
     "change_language": "Changer la langue"
   },
+  "theme_toggle": {
+    "tooltip": "Changer le thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
   "raft_table": {
     "draft": "Brouillon",
     "in progress": "Brouillon",

@@ -34,7 +34,12 @@ const RootLayout = ({ children }: RootLayoutProps): ReactElement => {
       <body>
         <AuthProvider>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-            <NextThemesProvider defaultTheme="system" enableSystem={true} attribute="class">
+            <NextThemesProvider
+              defaultTheme="system"
+              enableSystem={true}
+              attribute="class"
+              disableTransitionOnChange
+            >
               <ThemeProvider>
                 <ErrorBoundary>{children}</ErrorBoundary>
               </ThemeProvider>

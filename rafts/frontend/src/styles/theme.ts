@@ -412,13 +412,23 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
 // Static theme for server-side rendering (usually defaults to light)
 export const staticTheme = createTheme(getDesignTokens('light'))
 
+// Helper to detect initial theme from DOM (next-themes sets class before hydration)
+function getInitialTheme(): 'light' | 'dark' {
+  if (typeof window !== 'undefined') {
+    // next-themes sets the class on <html> before React hydration
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  }
+  return 'light' // Server-side fallback
+}
+
 // Theme hook for client-side rendering
 export function useAppTheme() {
   // Use 'system' if you want next-themes to handle OS preference initially
   const { resolvedTheme } = useTheme()
   // Create theme based on the current resolved theme ('light' or 'dark')
   return useMemo(() => {
-    const currentMode = (resolvedTheme as 'light' | 'dark') || 'light' // Fallback to light
+    // Use resolvedTheme if available, otherwise detect from DOM class
+    const currentMode = (resolvedTheme as 'light' | 'dark') || getInitialTheme()
     return createTheme(getDesignTokens(currentMode))
   }, [resolvedTheme])
 }
