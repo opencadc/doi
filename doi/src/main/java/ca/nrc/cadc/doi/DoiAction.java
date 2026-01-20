@@ -177,10 +177,12 @@ public abstract class DoiAction extends RestAction {
             throw new IllegalStateException("multiple GMS services found");
         }
         this.gmsResourceID = gmsServices.iterator().next();
+        System.out.println("A, " + (System.currentTimeMillis() - start) + " ms");
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
         logInfo.setSubject(callingSubject);
+        System.out.println("B, " + (System.currentTimeMillis() - start) + " ms");
 
         parsePath();
 
