@@ -148,16 +148,18 @@ public abstract class DoiAction extends RestAction {
 
     /**
      * Parse input documents
-     * For DOI minting, the service will use the DataCite test system to register the DOI
-     * and to make the DOI findable. 
-     * For DOI deletion, the service could delete the DOI irrespective of its status. 
+     * For DOI minting, the service will use the DataCite test system to register
+     * the DOI
+     * and to make the DOI findable.
+     * For DOI deletion, the service could delete the DOI irrespective of its
+     * status.
      * However this has not been implemented.
      */
     @Override
     protected InlineContentHandler getInlineContentHandler() {
         return new DoiInlineContentHandler();
     }
-    
+
     protected void init()
             throws URISyntaxException, UnknownHostException {
         // load doi properties
@@ -177,12 +179,10 @@ public abstract class DoiAction extends RestAction {
             throw new IllegalStateException("multiple GMS services found");
         }
         this.gmsResourceID = gmsServices.iterator().next();
-        System.out.println("A, " + (System.currentTimeMillis() - start) + " ms");
 
         // get calling subject
         callingSubject = AuthenticationUtil.getCurrentSubject();
         logInfo.setSubject(callingSubject);
-        System.out.println("B, " + (System.currentTimeMillis() - start) + " ms");
 
         parsePath();
 
@@ -261,7 +261,8 @@ public abstract class DoiAction extends RestAction {
     protected boolean isCallingUserPublisher() {
         if (publisherGroupURI != null) {
             try {
-                return Subject.doAs(callingSubject, (PrivilegedExceptionAction<Boolean>) () -> getGMSClient().isMember(publisherGroupURI));
+                return Subject.doAs(callingSubject,
+                        (PrivilegedExceptionAction<Boolean>) () -> getGMSClient().isMember(publisherGroupURI));
             } catch (PrivilegedActionException e) {
                 log.error(e.getMessage());
             }
@@ -399,7 +400,8 @@ public abstract class DoiAction extends RestAction {
             String jobURLString = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_JOB_URL_PROPERTY);
             if (jobURLString != null) {
                 URL jobURL = new URL(jobURLString);
-                VOSURI vosuri = new VOSURI(vaultResourceID, String.format("%s/%s", parentPath, doiContainerNode.getName()));
+                VOSURI vosuri = new VOSURI(vaultResourceID,
+                        String.format("%s/%s", parentPath, doiContainerNode.getName()));
                 RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
                 recursiveSetNode.setSchemaValidation(false);
                 ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
@@ -482,7 +484,11 @@ public abstract class DoiAction extends RestAction {
 
     protected static class DoiOutputStream implements OutputStreamWrapper {
         private final Resource streamResource;
-        public DoiOutputStream(Resource streamRes) { this.streamResource = streamRes; }
+
+        public DoiOutputStream(Resource streamRes) {
+            this.streamResource = streamRes;
+        }
+
         public void write(OutputStream out) throws IOException {
             DoiXmlWriter writer = new DoiXmlWriter();
             writer.write(streamResource, out);
