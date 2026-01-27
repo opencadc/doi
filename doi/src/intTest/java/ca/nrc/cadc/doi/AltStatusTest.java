@@ -95,8 +95,6 @@ public class AltStatusTest extends LifecycleTest {
     }
 
     @Override
-    @Ignore
-    @Test
     public void testLifecycle() throws Exception {
         // skip re-running the lifecycle test
     }
@@ -104,141 +102,251 @@ public class AltStatusTest extends LifecycleTest {
     @Test
     public void testUpdateStatus() {
         try {
-            Resource expected = getTestResource(true, true);
+            final VOSpaceClient vosClient = getVOSClient(DOISettingsType.ALT_DOI);
+            final VOSURI doiParentPathURI = getDoiParentPathURI(DOISettingsType.ALT_DOI);
+            final Resource expected = getTestResource(true, true);
             log.debug("test resource: " + expected);
 
-            String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+            final String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
                 // create a new DOI
                 Resource actual = create(expected, DOISettingsType.ALT_DOI);
                 String doiID = getDOISuffix(actual.getIdentifier().getValue());
-                Assert.assertNotNull(doiID);
                 Assert.assertTrue(doiID.startsWith(TestUtil.DOI_ALT_IDENTIFIER_PREFIX));
-                log.debug("created doiID: " + doiID);
+                log.debug("submitter - created doiID: " + doiID);
 
-                // update status = 'in review'
-                log.debug("update status to 'in review'");
-                URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiID));
-                Map<String, String> params = new HashMap<>();
-                params.put(DOI.STATUS_NODE_PARAMETER, Status.IN_REVIEW.getValue());
-                postDOI(doiURL , null, params, true);
-                log.debug("status updated");
-
-                // get the doi parent node
-                VOSpaceClient vosClient = getVOSClient(DOISettingsType.ALT_DOI);
-                VOSURI doiParentPathURI = getDoiParentPathURI(DOISettingsType.ALT_DOI);
+                // submitter updates status to 'review ready'
+                log.debug("submitter - update status to 'review ready'");
+                updateStatus(doiID, Status.REVIEW_READY, true);
                 Node doiNode = getContainerNode(doiID, doiParentPathURI, vosClient);
-                Assert.assertNotNull(doiNode);
+                checkStatus(doiNode, Status.REVIEW_READY);
+                log.debug("submitter - checked status");
 
-                // check status
-                NodeProperty status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
-                Assert.assertNotNull(status);
-                Assert.assertEquals(Status.IN_REVIEW.getValue(), status.getValue());
+                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("submitter - checked permissions");
 
-                // check permissions
-                // 'in review' node permissions, doi-group:r reviewer-group:r public:false
-                if (doiNode.isLocked != null) {
-                    Assert.assertFalse(doiNode.isLocked);
-                }
-                if (doiNode.isPublic != null) {
-                    Assert.assertFalse(doiNode.isPublic);
-                }
-                Assert.assertEquals(2, doiNode.getReadOnlyGroup().size());
-                Assert.assertEquals(0, doiNode.getReadWriteGroup().size());
-
-                // update status = 'in progress'
-                doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiID));
-                params.clear();
-                params.put(DOI.STATUS_NODE_PARAMETER, Status.DRAFT.getValue());
-                postDOI(doiURL , null, params, true);
-
-                // check status
+                // submitter can update status to 'in progress' from 'review ready'
+                log.debug("submitter - update status to 'in progress'");
+                updateStatus(doiID, Status.DRAFT, true);
                 doiNode = getContainerNode(doiID, doiParentPathURI, vosClient);
-                status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
-                Assert.assertNotNull(status);
-                Assert.assertEquals(Status.DRAFT.getValue(), status.getValue());
+                checkStatus(doiNode, Status.DRAFT);
+                log.debug("submitter - checked status");
 
-                // check permissions
                 // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
-                if (doiNode.isLocked != null) {
-                    Assert.assertFalse(doiNode.isLocked);
-                }
-                if (doiNode.isPublic != null) {
-                    Assert.assertFalse(doiNode.isPublic);
-                }
-                Assert.assertEquals(1, doiNode.getReadOnlyGroup().size());
-                Assert.assertEquals(1, doiNode.getReadWriteGroup().size());
+                checkPermissions(doiNode, false, false, 1,1);
+                log.debug("submitter - checked permissions");
 
-                // update status = 'in review' so reviewer can change status
-                params.clear();
-                params.put(DOI.STATUS_NODE_PARAMETER, Status.IN_REVIEW.getValue());
-                postDOI(doiURL , null, params, true);
-
-                // check status
+                // submitter updates status to 'review ready' so a reviewer can review
+                log.debug("submitter - update status to 'review ready'");
+                updateStatus(doiID, Status.REVIEW_READY, true);
                 doiNode = getContainerNode(doiID, doiParentPathURI, vosClient);
-                status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
-                Assert.assertNotNull(status);
-                Assert.assertEquals(Status.IN_REVIEW.getValue(), status.getValue());
+                checkStatus(doiNode, Status.REVIEW_READY);
+                log.debug("submitter - checked status");
 
-                // check permissions
-                // 'in review' node permissions, doi-group:r reviewer-group:r public:false
-                if (doiNode.isLocked != null) {
-                    Assert.assertFalse(doiNode.isLocked);
-                }
-                if (doiNode.isPublic != null) {
-                    Assert.assertFalse(doiNode.isPublic);
-                }
-                Assert.assertEquals(2, doiNode.getReadOnlyGroup().size());
-                Assert.assertEquals(0, doiNode.getReadWriteGroup().size());
+                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("submitter - checked permissions");
 
                 return doiID;
             });
 
             Subject.doAs(publisherSubject, (PrivilegedExceptionAction<Object>) () -> {
 
-                // update status = 'in progress' as reviewer
-                URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiSuffix));
-                Map<String, String> params = new HashMap<>();
-                params.put(DOI.STATUS_NODE_PARAMETER, Status.DRAFT.getValue());
-                String redirectUrl = postDOI(doiURL, null, params, false);
-                log.debug("redirectUrl: " + redirectUrl);
+                // reviewer updates status to 'in review'
+                log.debug("publisher - update status to 'in review'");
+                updateStatus(doiSuffix, Status.IN_REVIEW, true);
+                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.IN_REVIEW);
+                log.debug("publisher - checked status");
+
+                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("publisher - checked permissions");
+
+                // reviewer updates status back to 'in progress'
+                log.debug("publisher - update status to 'in progress'");
+                updateStatus(doiSuffix, Status.DRAFT, false);
+                // reviewer can't view when 'in progress'
 
                 return null;
             });
 
-            // After the above POST has updated the status to 'in progress'
-            // the reviewer no longer has permission to the DOI, GET the DOI as the creator
             Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
-                // get the doi parent node
-                VOSpaceClient vosClient = getVOSClient(DOISettingsType.ALT_DOI);
-                VOSURI doiParentPathURI = getDoiParentPathURI(DOISettingsType.ALT_DOI);
+                // submitter checks status is 'in progress'
                 Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.DRAFT);
+                log.debug("submitter - checked status");
 
-                // check status
-                NodeProperty status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
-                Assert.assertNotNull(status);
-                Assert.assertEquals(Status.DRAFT.getValue(), status.getValue());
-
-                // check permissions
                 // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
-                if (doiNode.isLocked != null) {
-                    Assert.assertFalse(doiNode.isLocked);
-                }
-                if (doiNode.isPublic != null) {
-                    Assert.assertFalse(doiNode.isPublic);
-                }
-                Assert.assertEquals(1, doiNode.getReadOnlyGroup().size());
-                Assert.assertEquals(1, doiNode.getReadWriteGroup().size());
+                checkPermissions(doiNode, false, false, 1,1);
+                log.debug("submitter - checked permissions");
+
+                // submitter updates status to 'review ready'
+                log.debug("submitter - update status to 'review ready'");
+                updateStatus(doiSuffix, Status.REVIEW_READY, true);
+                doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.REVIEW_READY);
+                log.debug("submitter - checked status");
+
+                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("submitter - checked permissions");
+
+                return null;
+            });
+
+            Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
+
+                // update status = 'in review'
+                log.debug("publisher - update status to 'in review'");
+                updateStatus(doiSuffix, Status.IN_REVIEW, true);
+                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.IN_REVIEW);
+                log.debug("publisher - checked status");
+
+                // 'in review' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("publisher - checked permissions");
+
+                // update status = 'rejected'
+                log.debug("publisher - update status to 'rejected");
+                updateStatus(doiSuffix, Status.REJECTED, true);
+                doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.REJECTED);
+                log.debug("publisher - checked status");
+
+                // 'rejected' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,1);
+                log.debug("publisher - checked permissions");
+
+                return null;
+            });
+
+            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+
+                // update status = 'in progress'
+                log.debug("submitter - update status to 'in progress");
+                updateStatus(doiSuffix, Status.DRAFT, true);
+                // reviewer can't view when 'in progress'
+
+                // submitter checks status is 'in progress'
+                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.DRAFT);
+                log.debug("submitter - checked status");
+
+                // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
+                checkPermissions(doiNode, false, false, 1,1);
+                log.debug("submitter - checked permissions");
+
+                // update status = 'review ready'
+                log.debug("submitter - update status to 'review ready");
+                updateStatus(doiSuffix, Status.REVIEW_READY, true);
+                doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.REVIEW_READY);
+                log.debug("submitter - checked status");
+
+                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("submitter - checked permissions");
+
+                return null;
+            });
+
+            Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
+
+                // update status = 'in review'
+                log.debug("publisher - update status to 'in review");
+                updateStatus(doiSuffix, Status.IN_REVIEW, true);
+                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.IN_REVIEW);
+                log.debug("publisher - checked status");
+
+                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("publisher - checked permissions");
+
+                // update status = 'approved'
+                log.debug("publisher - update status to 'approved");
+                updateStatus(doiSuffix, Status.APPROVED, true);
+                doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.APPROVED);
+                log.debug("publisher - checked status");
+
+                // 'approved' node permissions, doi-group:r reviewer-group:r public:false
+                checkPermissions(doiNode, false, false, 2,0);
+                log.debug("publisher - checked permissions");
+
+                return null;
+            });
+
+            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
+
+                // update status = 'in progress'
+                log.debug("submitter - update status to 'in progress");
+                updateStatus(doiSuffix, Status.DRAFT, false);
+
+                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
+                checkStatus(doiNode, Status.DRAFT);
+                log.debug("submitter - checked status");
+
+                // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
+                checkPermissions(doiNode, false, false, 1,1);
+                log.debug("submitter - checked permissions");
 
                 return null;
             });
 
         } catch (Exception unexpected) {
-            unexpected.printStackTrace();
             log.debug("unexpected error: " + unexpected);
             Assert.fail("unexpected error: " + unexpected.getMessage());
         }
+    }
+
+    void updateStatus(String doiID, Status requestedStatus, boolean followRedirect)
+            throws Exception {
+        log.debug(String.format("update status to '%s'", requestedStatus.getValue()));
+        URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiID));
+        Map<String, String> params = new HashMap<>();
+        params.put(DOI.STATUS_NODE_PARAMETER, requestedStatus.getValue());
+        postDOI(doiURL , null, params, followRedirect);
+        log.debug(String.format("status updated to '%s'", requestedStatus.getValue()));
+    }
+
+    void checkStatus(Node doiNode, Status expectedStatus) {
+
+        Assert.assertNotNull(doiNode);
+
+        // check the status mode property
+        NodeProperty status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
+        Assert.assertNotNull(status);
+        Assert.assertEquals(expectedStatus.getValue(), status.getValue());
+    }
+
+    void checkPermissions(Node doiNode, boolean isLocked, boolean isPublic,
+                          int readOnlyGroups, int readWriteGroups) {
+
+        if (isLocked) {
+            Assert.assertNotNull(doiNode.isLocked);
+            Assert.assertTrue(doiNode.isLocked);
+        } else {
+            if (doiNode.isLocked != null) {
+                Assert.assertFalse(doiNode.isLocked);
+            }
+        }
+
+        if (isPublic) {
+            Assert.assertNotNull(doiNode.isPublic);
+            Assert.assertTrue(doiNode.isPublic);
+        } else {
+            if (doiNode.isPublic != null) {
+                Assert.assertFalse(doiNode.isPublic);
+            }
+        }
+
+        Assert.assertEquals(readOnlyGroups, doiNode.getReadOnlyGroup().size());
+        Assert.assertEquals(readWriteGroups, doiNode.getReadWriteGroup().size());
     }
 
 }
