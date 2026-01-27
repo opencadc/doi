@@ -52,8 +52,6 @@ public class AltPermissionsTest extends LifecycleTest {
     }
 
     @Override
-    @Ignore
-    @Test
     public void testLifecycle() throws Exception {
         // skip re-running the lifecycle test
     }

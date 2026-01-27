@@ -613,7 +613,7 @@ public class PostAction extends DoiAction {
                         doiNode.getReadOnlyGroup().add(doiGroupUri);
                         doiNode.isPublic = false;
                     } else {
-                        String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
+                        String message = String.format("Status change denied: from '%s' to '%s'", currentStatus, requestedStatus);
                         throw new IllegalArgumentException(message);
                     }
 
@@ -626,6 +626,7 @@ public class PostAction extends DoiAction {
                         doiNode.clearReadOnlyGroups = true;
                         doiNode.getReadOnlyGroup().clear();
                         doiNode.getReadOnlyGroup().add(doiGroupUri);
+                        doiNode.getReadOnlyGroup().add(publisherGroupURI);
                         doiNode.isPublic = false;
                     } else {
                         String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
@@ -641,6 +642,8 @@ public class PostAction extends DoiAction {
                         doiNode.clearReadOnlyGroups = true;
                         doiNode.getReadWriteGroup().add(doiGroupUri);
                         doiNode.getReadOnlyGroup().clear();
+                        doiNode.getReadOnlyGroup().add(doiGroupUri);
+                        doiNode.getReadOnlyGroup().add(publisherGroupURI);
                         doiNode.isPublic = false;
                     } else {
                         String message = String.format("Invalid status change requested: from '%s' to '%s'", currentStatus, requestedStatus);
