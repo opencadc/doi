@@ -276,6 +276,9 @@
         case serviceState.COMPLETED:
           statusHtml = '<div class="doi-minted">Complete</div>'
           break
+        default:
+          statusHtml = svcState
+          break
       }
       return statusHtml
     }
