@@ -194,7 +194,7 @@ public class VospaceDoiClient {
         }
 
         X500Principal adminX500 = AuthenticationUtil.getX500Principal(adminSubject);
-        String requester = node.getPropertyValue(DoiAction.DOI_VOS_REQUESTER_PROP);
+        String requester = node.getPropertyValue(DOI.VOSPACE_DOI_REQUESTER_PROPERTY);
         log.debug("requester for node: " + requester);
         if (callersNumericId != null && StringUtil.hasText(requester)) {
             if (requester.equals(callersNumericId.toString())) {

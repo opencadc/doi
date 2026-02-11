@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2024.                            (c) 2024.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,80 +69,19 @@
 
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.Resource;
-import ca.nrc.cadc.doi.io.DoiJsonReader;
-import ca.nrc.cadc.doi.io.DoiJsonWriter;
-import ca.nrc.cadc.doi.io.DoiXmlReader;
-import ca.nrc.cadc.doi.io.DoiXmlWriter;
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
+import java.net.URI;
 
-public class Doi45RoundTripTest extends TestBase {
-    private static final Logger log = Logger.getLogger(Doi45RoundTripTest.class);
+public class DOI {
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
-    }
+    public static final URI VOSPACE_DOI_JOB_URL_PROPERTY = URI.create("ivo://cadc.nrc.ca/vospace/doi#joburl");
+    public static final URI VOSPACE_DOI_REQUESTER_PROPERTY = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
+    public static final URI VOSPACE_DOI_STATUS_PROPERTY = URI.create("ivo://cadc.nrc.ca/vospace/doi#status");
+    public static final URI VOSPACE_DOI_JOURNAL_PROPERTY = URI.create("ivo://cadc.nrc.ca/vospace/doi#journalref");
+    public static final URI VOSPACE_DOI_TITLE_PROPERTY = URI.create("ivo://cadc.nrc.ca/vospace/doi#title");
+    public static final URI VOSPACE_DOI_REVIEWER_PROPERTY = URI.create("ivo://cadc.nrc.ca/vospace/doi#reviewer");
 
-    @Test
-    public void xmlMinSchemaTest() {
-        doXMLTest(false, false);
-    }
-
-    @Test
-    public void xmlFullSchemaTest() {
-        doXMLTest(true, true);
-    }
-
-    @Test
-    public void jsonMinSchemaTest() {
-        doJSONTest(false, false);
-    }
-
-    @Test
-    public void jsonFullSchemaTest() {
-        doJSONTest(true, true);
-    }
-
-    void doXMLTest(boolean optionalProperties, boolean optionalAttributes) {
-        try {
-            Resource expected = getTestResource(optionalProperties, optionalAttributes);
-            StringBuilder sb = new StringBuilder();
-
-            DoiXmlWriter writer = new DoiXmlWriter();
-            writer.write(expected, sb);
-            log.debug(sb.toString());
-
-            DoiXmlReader reader = new DoiXmlReader();
-            Resource actual = reader.read(sb.toString());
-
-            compareResource(expected, actual);
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    void doJSONTest(boolean optionalProperties, boolean optionalAttributes) {
-        try {
-            Resource expected = getTestResource(optionalProperties, optionalAttributes);
-            StringBuilder sb = new StringBuilder();
-
-            DoiJsonWriter writer = new DoiJsonWriter();
-            writer.write(expected, sb);
-            log.debug(sb.toString());
-
-            DoiJsonReader reader = new DoiJsonReader();
-            Resource actual = reader.read(sb.toString());
-
-            compareResource(expected, actual);
-        } catch (Exception e) {
-            log.error("Unexpected exception", e);
-            Assert.fail(e.getMessage());
-        }
-    }
+    public static final String JOURNALREF_NODE_PARAMETER = "journalref";
+    public static final String STATUS_NODE_PARAMETER = "status";
+    public static final String REVIEWER_NODE_PARAMETER = "reviewer";
 
 }

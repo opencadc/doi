@@ -91,6 +91,7 @@ import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.opencadc.vospace.ContainerNode;
@@ -200,6 +201,14 @@ public abstract class IntTestBase extends TestBase {
         return sb.toString();
     }
 
+    protected String getMapAsJSON(Map<String, String> map) {
+        JSONObject json = new JSONObject();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            json.put(entry.getKey(), entry.getValue());
+        }
+        return json.toString();
+    }
+
     protected ContainerNode createContainerNode(String path, String name, DOISettingsType doiSettingsType) throws Exception {
         ContainerNode node = new ContainerNode(name);
         VOSURI nodeURI = getVOSURI(path, doiSettingsType);
@@ -220,23 +229,34 @@ public abstract class IntTestBase extends TestBase {
         return (ContainerNode) vosClient.getNode(nodePath);
     }
 
-    protected String postDOI(URL postUrl, String doiXML, String journalRef)
+    protected String postDOI(URL postUrl, String doiXML, Map<String, String> nodeMetadata, boolean followRedirect)
             throws Exception {
         Map<String, Object> params = new HashMap<>();
         if (StringUtil.hasText(doiXML)) {
-            FileContent fileContent = new FileContent(doiXML, XML, StandardCharsets.UTF_8);
-            params.put("doiMetadata", fileContent);
+            FileContent metaContent = new FileContent(doiXML, XML, StandardCharsets.UTF_8);
+            params.put(DoiInlineContentHandler.META_DATA_KEY, metaContent);
         }
-        if (journalRef != null) {
-            params.put("journalref", journalRef);
+        if (nodeMetadata != null && !nodeMetadata.isEmpty()) {
+            JSONObject nodeMetaData = new JSONObject();
+            for (Map.Entry<String, String> entry : nodeMetadata.entrySet()) {
+                nodeMetaData.put(entry.getKey(), entry.getValue());
+            }
+            FileContent nodeContent = new FileContent(nodeMetaData.toString(), JSON, StandardCharsets.UTF_8);
+            params.put(DoiInlineContentHandler.NODE_DATA_KEY, nodeContent);
         }
 
-        HttpPost post = new HttpPost(postUrl, params, true);
+        HttpPost post = new HttpPost(postUrl, params, followRedirect);
         post.prepare();
 
         Assert.assertNull("POST exception", post.getThrowable());
-        Assert.assertEquals("non 200 response code", 200, post.getResponseCode());
-        return new String(post.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        if (followRedirect) {
+            Assert.assertEquals("non 200 response code", 200, post.getResponseCode());
+            return new String(post.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        } else {
+            Assert.assertEquals("expected 303 redirect", 303, post.getResponseCode());
+            Assert.assertNotNull("redirect URL", post.getRedirectURL());
+            return post.getRedirectURL().toExternalForm();
+        }
     }
 
     protected void cleanup(String doiSuffix, DOISettingsType doiSettingsType) {

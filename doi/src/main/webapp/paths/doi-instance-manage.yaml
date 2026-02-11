@@ -40,7 +40,7 @@ post:
   tags:
     - "instances"
   summary: "Update a DOI instance"
-  description: "Multipart update request. One part contains the DOI instance. Another part contains the optional journal reference"
+  description: "Multipart update request. One part contains the DOI instance. Another part contains node properties"
   operationId: "updateDOI"
   requestBody:
     required: true
@@ -49,9 +49,9 @@ post:
         schema:
           type: "object"
           properties:
-            doiMetadata:
+            doiMetaData:
               content:
-                application/xml:
+                text/xml:
                   schema:
                     type: "object"
                     xml:
@@ -60,9 +60,10 @@ post:
                 application/json:
                   schema:
                     type: "object"
-            journalRef:
-              type: "string"
-              example: "10.5072/example-full"
+            doiNodeMeta:
+              content:
+                application/json:
+                  type: "object"
   parameters:
     - $ref: "../components/parameters/doi-doinum.yaml#/doiNum"
   responses:
@@ -76,5 +77,3 @@ post:
       $ref: "../components/responses/doi-std-responses.yaml#/unexpected-server-error"
     "503":
       $ref: "../components/responses/doi-std-responses.yaml#/temporarily-unavailable"
-
-

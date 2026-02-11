@@ -90,6 +90,7 @@ public class DoiStatus {
     private final Title title;
     private final String dataDirectory;
     public String journalRef;
+    public String reviewer;
 
     public DoiStatus(Identifier identifier, Title title, String dataDirectory, Status status) {
         if (identifier == null || status == null) {

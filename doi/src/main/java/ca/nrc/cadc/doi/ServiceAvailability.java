@@ -112,7 +112,7 @@ public class ServiceAvailability implements AvailabilityPlugin {
         String note = "service is accepting requests";
         try {
             MultiValuedProperties config = DoiInitAction.getConfig();
-            URI vaultResourceID = DoiInitAction.getVospaceResourceID(config);
+            URI vaultResourceID = DoiInitAction.getParentVOSURI(config).getServiceURI();
             log.debug("vault resourceID: " + vaultResourceID);
 
             // check other services we depend on (vault, gms, datacite)

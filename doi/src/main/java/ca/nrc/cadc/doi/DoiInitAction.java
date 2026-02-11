@@ -98,19 +98,19 @@ public class DoiInitAction extends InitAction {
     public static final String DOI_KEY = "ca.nrc.cadc.doi";
     public static final String VOSPACE_PARENT_URI_KEY = DOI_KEY + ".vospaceParentUri";
     public static final String METADATA_PREFIX_KEY = DOI_KEY + ".metaDataPrefix";
+    public static final String DOI_GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
     public static final String LANDING_URL_KEY = DOI_KEY + ".landingUrl";
     public static final String DATACITE_MDS_URL_KEY = DOI_KEY + ".datacite.mdsUrl";
     public static final String DATACITE_MDS_USERNAME_KEY = DOI_KEY + ".datacite.username";
     public static final String DATACITE_MDS_PASSWORD_KEY = DOI_KEY + ".datacite.password";
     public static final String DATACITE_ACCOUNT_PREFIX_KEY = DOI_KEY + ".datacite.accountPrefix";
-    public static final String DOI_GROUP_PREFIX_KEY = DOI_KEY + ".groupPrefix";
+    public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
+
     // optional properties
     public static final String RANDOM_TEST_ID_KEY = DOI_KEY + ".randomTestID";
 
     //Alternative DOI settings properties
     public static final String PUBLISHER_GROUP_URI_KEY = DOI_KEY + ".publisherGroupURI";
-    public static final String SELF_PUBLISH_KEY = DOI_KEY + ".selfPublish";
-    public static final String DOI_IDENTIFIER_PREFIX_KEY = DOI_KEY + ".doiIdentifierPrefix";
 
     @Override
     public void doInit() {
@@ -118,145 +118,109 @@ public class DoiInitAction extends InitAction {
         checkParentFolders();
     }
 
-    public static URI getVospaceResourceID(MultiValuedProperties props) {
-        String vospaceParentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
-        VOSURI vosURI;
-        try {
-            vosURI = new VOSURI(vospaceParentUri);
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("invalid VOSpace URI: " + vospaceParentUri);
-        }
-        return vosURI.getServiceURI();
-    }
-
-    public static String getParentPath(MultiValuedProperties props) {
-        String vospaceParentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
-        VOSURI vosURI;
-        try {
-            vosURI = new VOSURI(vospaceParentUri);
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("invalid VOSpace URI: " + vospaceParentUri);
-        }
-        return vosURI.getPath();
-    }
-
     public static MultiValuedProperties getConfig() {
         return getConfig(false);
+    }
+
+    public static VOSURI getParentVOSURI(MultiValuedProperties props) {
+        String parentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
+        VOSURI vosURI;
+        try {
+            vosURI = new VOSURI(parentUri);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("invalid DOI parent VOSpace URI: " + parentUri);
+        }
+        return vosURI;
+    }
+
+    public static String getDoiIdentifierPrefix(MultiValuedProperties props) {
+        String doiIdentifierPrefix = props.getFirstPropertyValue(DoiInitAction.DOI_IDENTIFIER_PREFIX_KEY);
+        return Objects.requireNonNullElse(doiIdentifierPrefix, "");
+    }
+
+    public static GroupURI getPublisherGroupURI(MultiValuedProperties props) {
+        String publisherGroupURI = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
+        return publisherGroupURI == null ? null : new GroupURI(URI.create(publisherGroupURI));
     }
 
     private static MultiValuedProperties getConfig(boolean verify) {
         PropertiesReader reader = new PropertiesReader("doi.properties");
         MultiValuedProperties props = reader.getAllProperties();
-
         StringBuilder sb = new StringBuilder();
-        boolean ok = true;
+        Boolean ok = true;
 
-        String parentUri = props.getFirstPropertyValue(VOSPACE_PARENT_URI_KEY);
-        sb.append(String.format("\n\t%s: ", VOSPACE_PARENT_URI_KEY));
-        if (parentUri == null) {
+        // required properties
+        checkStringKey(props, sb, ok, true, METADATA_PREFIX_KEY);
+        checkStringKey(props, sb, ok, true, DOI_GROUP_PREFIX_KEY);
+        checkStringKey(props, sb, ok, true, DOI_IDENTIFIER_PREFIX_KEY);
+        checkStringKey(props, sb, ok, true, DATACITE_MDS_USERNAME_KEY);
+        checkStringKey(props, sb, ok, true, DATACITE_MDS_PASSWORD_KEY);
+        checkStringKey(props, sb, ok, true, DATACITE_ACCOUNT_PREFIX_KEY);
+        checkVOSURIKey(props, sb, ok, verify, VOSPACE_PARENT_URI_KEY);
+        checkURLKey(props, sb, ok, verify, LANDING_URL_KEY);
+        checkURLKey(props, sb, ok, verify, DATACITE_MDS_URL_KEY);
+
+        // optional properties
+        checkStringKey(props, sb, ok, false, RANDOM_TEST_ID_KEY);
+
+        // alternative properties
+        checkStringKey(props, sb, ok, false, PUBLISHER_GROUP_URI_KEY);
+
+        if (!ok) {
+            throw new IllegalStateException("incomplete config: " + sb);
+        }
+        return props;
+    }
+
+    private static void checkStringKey(MultiValuedProperties props, StringBuilder sb, Boolean ok, boolean required, String key) {
+        String value = props.getFirstPropertyValue(key);
+        sb.append(String.format("\n\t%s: ", key));
+        if (value == null) {
+            sb.append("MISSING");
+            if (required) {
+                ok = false;
+            }
+        } else {
+            sb.append("OK");
+        }
+    }
+
+    private static void checkURLKey(MultiValuedProperties props, StringBuilder sb, Boolean ok, boolean verify, String key) {
+        String value = props.getFirstPropertyValue(key);
+        sb.append(String.format("\n\t%s: ", key));
+        if (value == null) {
             sb.append("MISSING");
             ok = false;
-        } else {
+        } else if (verify) {
             try {
-                new VOSURI(parentUri);
+                new URL(value);
+                sb.append("OK");
+            } catch (MalformedURLException e) {
+                sb.append("INVALID URL");
+                ok = false;
+            }
+        } else {
+            sb.append("OK");
+        }
+    }
+
+    private static void checkVOSURIKey(MultiValuedProperties props, StringBuilder sb, Boolean ok, boolean verify, String key) {
+        String value = props.getFirstPropertyValue(key);
+        sb.append(String.format("\n\t%s: ", key));
+        if (value == null) {
+            sb.append("MISSING");
+            ok = false;
+        } else if (verify) {
+            try {
+                new VOSURI(value);
                 sb.append("OK");
             } catch (URISyntaxException e) {
                 sb.append("INVALID VOSPACE URI: ").append(e.getMessage());
                 ok = false;
             }
-        }
-
-        String metaDataPrefix = props.getFirstPropertyValue(METADATA_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", METADATA_PREFIX_KEY));
-        if (metaDataPrefix == null) {
-            sb.append("MISSING");
-            ok = false;
         } else {
             sb.append("OK");
         }
-
-        String groupPrefix = props.getFirstPropertyValue(DOI_GROUP_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", DOI_GROUP_PREFIX_KEY));
-        if (groupPrefix == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else {
-            sb.append("OK");
-        }
-
-        String landingUrl = props.getFirstPropertyValue(LANDING_URL_KEY);
-        sb.append(String.format("\n\t%s: ", LANDING_URL_KEY));
-        if (landingUrl == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else if (verify) {
-            try {
-                new URL(landingUrl);
-                sb.append("OK");
-            } catch (MalformedURLException e) {
-                sb.append("INVALID URL");
-                ok = false;
-            }
-        } else {
-            sb.append("OK");
-        }
-
-        String mdsEndpoint = props.getFirstPropertyValue(DATACITE_MDS_URL_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_MDS_URL_KEY));
-        if (mdsEndpoint == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else if (verify) {
-            try {
-                new URL(mdsEndpoint);
-                sb.append("OK");
-            } catch (MalformedURLException e) {
-                sb.append("INVALID URL");
-                ok = false;
-            }
-        } else {
-            sb.append("OK");
-        }
-
-        String dataciteUsername = props.getFirstPropertyValue(DATACITE_MDS_USERNAME_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_MDS_USERNAME_KEY));
-        if (dataciteUsername == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else {
-            sb.append("OK");
-        }
-
-        String datacitePassword = props.getFirstPropertyValue(DATACITE_MDS_PASSWORD_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_MDS_PASSWORD_KEY));
-        if (datacitePassword == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else {
-            sb.append("OK");
-        }
-
-        String accountPrefix = props.getFirstPropertyValue(DATACITE_ACCOUNT_PREFIX_KEY);
-        sb.append(String.format("\n\t%s: ", DATACITE_ACCOUNT_PREFIX_KEY));
-        if (accountPrefix == null) {
-            sb.append("MISSING");
-            ok = false;
-        } else {
-            sb.append("OK");
-        }
-
-        // optional properties
-        String randomTestID = props.getFirstPropertyValue(RANDOM_TEST_ID_KEY);
-        sb.append(String.format("\n\t%s: ", RANDOM_TEST_ID_KEY));
-        if (randomTestID == null) {
-            sb.append("MISSING");
-        } else {
-            sb.append("OK");
-        }
-        if (!ok) {
-            throw new IllegalStateException("incomplete config: " + sb);
-        }
-        return props;
     }
 
     // check that the DOI parent node uri, configured with the VOSPACE_PARENT_URI_KEY property,
@@ -268,8 +232,9 @@ public class DoiInitAction extends InitAction {
         String adminUsername = getUsername(adminSubject);
 
         MultiValuedProperties config = getConfig();
-        URI vospaceResourceID = DoiInitAction.getVospaceResourceID(config);
-        String parentPath = DoiInitAction.getParentPath(config);
+        VOSURI parentVOSURI = getParentVOSURI(config);
+        URI vospaceResourceID = parentVOSURI.getServiceURI();
+        String parentPath = parentVOSURI.getPath();
         VOSpaceClient vosClient = new VOSpaceClient(vospaceResourceID);
 
         Node node;
@@ -316,15 +281,4 @@ public class DoiInitAction extends InitAction {
         throw new IllegalStateException(String.format("no HttpPrincipal found for %s", subject));
     }
 
-    public static GroupURI getPublisherGroupURI(MultiValuedProperties props) {
-        String publisherGroupURI = props.getFirstPropertyValue(PUBLISHER_GROUP_URI_KEY);
-        log.debug("publisherGroupURI: " + publisherGroupURI);
-
-        return publisherGroupURI == null ? null : new GroupURI(URI.create(publisherGroupURI));
-    }
-
-    public static String getDoiIdentifierPrefix(MultiValuedProperties props) {
-        String doiIdentifierPrefix = props.getFirstPropertyValue(DoiInitAction.DOI_IDENTIFIER_PREFIX_KEY);
-        return Objects.requireNonNullElse(doiIdentifierPrefix, "");
-    }
 }

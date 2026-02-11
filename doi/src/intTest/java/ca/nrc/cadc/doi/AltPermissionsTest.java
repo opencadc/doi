@@ -1,5 +1,7 @@
 package ca.nrc.cadc.doi;
 
+import ca.nrc.cadc.doi.datacite.Date;
+import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
@@ -13,12 +15,17 @@ import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.vospace.ContainerNode;
 
@@ -44,14 +51,25 @@ public class AltPermissionsTest extends LifecycleTest {
         Log4jInit.setLevel("ca.nrc.cadc.doi", Level.INFO);
     }
 
+    @Override
+    public void testLifecycle() throws Exception {
+        // skip re-running the lifecycle test
+    }
+
     /*
      * Test Case 1:
      *   cadc user:
      *       create a DOI - success
      *       Update it - success
-     *       Mint it - fail with 403 status
+     *       Mint it - fail with 403
+     *       - set status 'in review' - success
+     *       - search DOIStatus with 'status = in review' filter - success
+     *       - Mint it - fail with 403
+     *       - delete it - fail with 403
+     *       - set status 'in progress'
      *       get all DOI Statuses - should find the recently created DOI
      *       search DOIStatus with 'status = draft' filter - success
+     *       - delete it - success
      *   Publisher user:
      *       get DOI - success
      *       get all DOI Statuses - should find the recently created DOI
@@ -72,7 +90,7 @@ public class AltPermissionsTest extends LifecycleTest {
         log.debug("Test DOI lifecycle with Alternate Settings");
 
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiSuffix = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
@@ -190,12 +208,15 @@ public class AltPermissionsTest extends LifecycleTest {
     *  Test Case 2:
     *   cadc user:
     *       create a DOI - success
+    *       set status = 'in review'
+    *       delete it - 403
+    *       set status = 'in progress'
     *       delete it - success
     * */
     @Test // creator of DOI can delete it
     public void testDeleteDOIByDOIOwner() throws Exception {
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 
@@ -216,12 +237,16 @@ public class AltPermissionsTest extends LifecycleTest {
      *   cadc user:
      *       create a DOI - success
      *   publisher user:
-     *       delete it - success
+     *       delete it - 403
+     *   cadc user:
+     *       set status = 'in review'
+     *   publisher user:
+     *       delete it - 403
      * */
-    @Test // publisher can delete a DOI
+    @Test // publisher can delete their own DOI
     public void testDeleteDOIByPublisher() throws Exception {
         // Create a new DOI
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String doiId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
             // create a new DOI
@@ -255,7 +280,7 @@ public class AltPermissionsTest extends LifecycleTest {
      * */
     @Test // If publisher is the owner of a DOI, he can not mint it.
     public void testPublisherAsDOIOwnerForMintAction() throws PrivilegedActionException {
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
         String doiId = Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
@@ -309,7 +334,7 @@ public class AltPermissionsTest extends LifecycleTest {
 
     @Test
     public void testDOISearchEndpoint() throws PrivilegedActionException, DoiParsingException, IOException {
-        Resource expected = getTestResource(true, true, true);
+        Resource expected = getTestResource(true, true);
 
         String mintedDOIId = Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
 

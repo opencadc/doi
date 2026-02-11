@@ -100,6 +100,9 @@ public class DoiStatusWriter {
         if (doiStatus.journalRef != null) {
             element.addContent(getJournalRefElement(doiStatus.journalRef));
         }
+        if (doiStatus.reviewer != null) {
+            element.addContent(getReviewerElement(doiStatus.reviewer));
+        }
         return element;
     }
 
@@ -144,6 +147,12 @@ public class DoiStatusWriter {
     protected Element getJournalRefElement(String journalRef) {
         Element element = new Element("journalRef");
         element.setText(journalRef);
+        return element;
+    }
+
+    protected Element getReviewerElement(String reviewer) {
+        Element element = new Element("reviewer");
+        element.setText(reviewer);
         return element;
     }
 

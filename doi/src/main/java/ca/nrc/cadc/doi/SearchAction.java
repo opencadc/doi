@@ -187,14 +187,14 @@ public class SearchAction extends DoiAction {
 
         if (doiRootNode != null) {
             for (Node childNode : doiRootNode.getNodes()) {
-                NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
+                NodeProperty requester = childNode.getProperty(DOI.VOSPACE_DOI_REQUESTER_PROPERTY);
                 if (requester == null || requester.getValue() == null) {
                     continue; // Skip nodes without a valid requester
                 }
 
                 // Check status filter
                 if (!doiSearchFilter.getStatusList().isEmpty()) {
-                    NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+                    NodeProperty statusProp = childNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
                     if (statusProp == null || !doiSearchFilter.getStatusList()
                             .contains(Status.toValue(statusProp.getValue()))) {
                         continue; // Skip nodes that don't match the status filter
@@ -212,13 +212,13 @@ public class SearchAction extends DoiAction {
                             continue; // Skip nodes where the caller is a publisher as well as the owner
                         }
 
-                        NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+                        NodeProperty statusProp = childNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
                         if (statusProp.getValue().equals("minted") && !doiSearchFilter.getStatusList().contains(Status.MINTED)) {
                             continue; // Skip nodes where the status is minted and the caller is a publisher
                         }
                     }
                 } else {
-                    NodeProperty statusProp = childNode.getProperty(DOI_VOS_STATUS_PROP);
+                    NodeProperty statusProp = childNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
 
                     // Check if the user is DOI Admin, publisher, or matches the requester
                     if (!statusProp.getValue().equals("minted") && !callingUserDOIAdmin && !callingUserPublisher

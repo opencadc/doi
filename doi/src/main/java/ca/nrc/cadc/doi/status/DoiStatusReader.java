@@ -120,6 +120,11 @@ public class DoiStatusReader {
             ds.journalRef = journalReference;
         }
 
+        // optional element
+        if (root.getChild("reviewer") != null) {
+            ds.reviewer = root.getChild("reviewer").getText();
+        }
+
         return ds;
     }
 

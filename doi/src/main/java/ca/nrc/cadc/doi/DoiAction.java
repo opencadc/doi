@@ -73,11 +73,15 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.doi.datacite.Identifier;
+import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.datacite.Title;
+import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.DoiStatus;
 import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
+import ca.nrc.cadc.net.OutputStreamWrapper;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -87,12 +91,15 @@ import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ExecutionPhase;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.security.Principal;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -106,22 +113,20 @@ import org.opencadc.gms.GroupURI;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.Node;
 import org.opencadc.vospace.NodeProperty;
+import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
+import org.opencadc.vospace.client.ClientTransfer;
 import org.opencadc.vospace.client.async.RecursiveSetNode;
+import org.opencadc.vospace.transfer.Direction;
+import org.opencadc.vospace.transfer.Protocol;
+import org.opencadc.vospace.transfer.Transfer;
 
 public abstract class DoiAction extends RestAction {
     private static final Logger log = Logger.getLogger(DoiAction.class);
 
-    public static final URI DOI_VOS_JOB_URL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#joburl");
-    public static final URI DOI_VOS_REQUESTER_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#requester");
-    public static final URI DOI_VOS_STATUS_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#status");
-    public static final URI DOI_VOS_JOURNAL_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#journalref");
-    public static final URI DOI_VOS_TITLE_PROP = URI.create("ivo://cadc.nrc.ca/vospace/doi#title");
-
     public static final String STATUS_ACTION = "status";
     public static final String MINT_ACTION = "mint";
     public static final String SEARCH_ACTION = "search";
-    public static final String JOURNALREF_PARAM = "journalref";
 
     protected String doiGroupPrefix;
     protected Subject callingSubject;
@@ -157,8 +162,9 @@ public abstract class DoiAction extends RestAction {
             throws URISyntaxException, UnknownHostException {
         // load doi properties
         this.config = DoiInitAction.getConfig();
-        this.vaultResourceID = DoiInitAction.getVospaceResourceID(config);
-        this.parentPath = DoiInitAction.getParentPath(config);
+        VOSURI parentVOSURI = DoiInitAction.getParentVOSURI(config);
+        this.vaultResourceID = parentVOSURI.getServiceURI();
+        this.parentPath = parentVOSURI.getPath();
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.publisherGroupURI = DoiInitAction.getPublisherGroupURI(config);
         this.doiGroupPrefix = config.getFirstPropertyValue(DoiInitAction.DOI_GROUP_PREFIX_KEY);
@@ -229,18 +235,6 @@ public abstract class DoiAction extends RestAction {
                 if (parts.length > 1) {
                     doiAction = parts[1];
                 }
-                // For status requests for individual DOIs, there is need to check
-                // to see if the DOI is public in order to provide access.
-                if (parts.length > 2 && (parts[2].equals("public"))) {
-                    includePublic = true;
-                }
-            }
-        } else {
-            String requestPath = syncInput.getRequestPath();
-            String[] parts = requestPath.split("/");
-
-            if (parts.length > 0 && parts[2].equals("search")) {
-                doiAction = DoiAction.SEARCH_ACTION;
             }
         }
     }
@@ -264,18 +258,22 @@ public abstract class DoiAction extends RestAction {
 
     protected boolean isCallingUserPublisher() {
         if (publisherGroupURI != null) {
-            return getGMSClient().isMember(publisherGroupURI);
+            try {
+                return Subject.doAs(callingSubject, (PrivilegedExceptionAction<Boolean>) () -> getGMSClient().isMember(publisherGroupURI));
+            } catch (PrivilegedActionException e) {
+                log.error(e.getMessage());
+            }
         }
         return false;
     }
 
     protected boolean isCallingUserRequester(Node node) {
         try {
-            Long requesterUserId = Long.parseLong(node.getProperty(DOI_VOS_REQUESTER_PROP).getValue());
+            Long requesterUserId = Long.parseLong(node.getProperty(DOI.VOSPACE_DOI_REQUESTER_PROPERTY).getValue());
             return callersNumericId.equals(requesterUserId);
         } catch (NumberFormatException ex) {
             log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
-                    node.getProperty(DOI_VOS_REQUESTER_PROP).getValue(), node.getName()), ex);
+                    node.getProperty(DOI.VOSPACE_DOI_REQUESTER_PROPERTY).getValue(), node.getName()), ex);
             return false;
         }
     }
@@ -285,7 +283,7 @@ public abstract class DoiAction extends RestAction {
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         if (doiRootNode != null) {
             for (Node childNode : doiRootNode.getNodes()) {
-                NodeProperty requester = childNode.getProperty(DOI_VOS_REQUESTER_PROP);
+                NodeProperty requester = childNode.getProperty(DOI.VOSPACE_DOI_REQUESTER_PROPERTY);
 
                 if (requester != null && requester.getValue() != null) {
                     try {
@@ -355,7 +353,7 @@ public abstract class DoiAction extends RestAction {
         DoiStatus doiStatus;
         if (!authorize || vospaceDoiClient.hasCallerReadDOIAccess(doiContainerNode, getAdminSubject())) {
             // get status
-            String status = doiContainerNode.getPropertyValue(DOI_VOS_STATUS_PROP);
+            String status = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY);
             if (StringUtil.hasText(status)
                     && !status.equals(Status.ERROR_REGISTERING.getValue())
                     && !status.equals(Status.ERROR_LOCKING_DATA.getValue())) {
@@ -370,7 +368,7 @@ public abstract class DoiAction extends RestAction {
             // get title and construct DoiStatus instance
             Title title = null;
             try {
-                title = new Title(doiContainerNode.getPropertyValue(DOI_VOS_TITLE_PROP));
+                title = new Title(doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_TITLE_PROPERTY));
                 Identifier identifier = new Identifier(accountPrefix + "/" + doiSuffixString, "DOI");
                 doiStatus = new DoiStatus(identifier, title, dataDirectory, Status.toValue(status));
             } catch (Exception ex) {
@@ -380,7 +378,10 @@ public abstract class DoiAction extends RestAction {
             }
 
             // set journalRef
-            doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI_VOS_JOURNAL_PROP);
+            doiStatus.journalRef = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_JOURNAL_PROPERTY);
+
+            // set reviewer
+            doiStatus.reviewer = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_REVIEWER_PROPERTY);
         } else {
             String msg = "Access Denied to " + doiSuffixString + ".";
             throw new AccessControlException(msg);
@@ -393,7 +394,7 @@ public abstract class DoiAction extends RestAction {
         return (String) Subject.doAs(getAdminSubject(), (PrivilegedExceptionAction<Object>) () -> {
             // update status based on the result of the minting service
             String localStatus = status;
-            String jobURLString = doiContainerNode.getPropertyValue(DOI_VOS_JOB_URL_PROP);
+            String jobURLString = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_JOB_URL_PROPERTY);
             if (jobURLString != null) {
                 URL jobURL = new URL(jobURLString);
                 VOSURI vosuri = new VOSURI(vaultResourceID, String.format("%s/%s", parentPath, doiContainerNode.getName()));
@@ -410,8 +411,8 @@ public abstract class DoiAction extends RestAction {
                             localStatus = Status.MINTED.getValue();
                         }
                         // delete jobURL property
-                        doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
-                        doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+                        doiContainerNode.getProperties().remove(new NodeProperty(DOI.VOSPACE_DOI_JOB_URL_PROPERTY));
+                        doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(localStatus);
                         vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
                         break;
                     case ERROR:
@@ -426,8 +427,8 @@ public abstract class DoiAction extends RestAction {
                             localStatus = Status.ERROR_REGISTERING.getValue();
                         }
                         // delete jobURL property
-                        doiContainerNode.getProperties().remove(new NodeProperty(DOI_VOS_JOB_URL_PROP));
-                        doiContainerNode.getProperty(DOI_VOS_STATUS_PROP).setValue(localStatus);
+                        doiContainerNode.getProperties().remove(new NodeProperty(DOI.VOSPACE_DOI_JOB_URL_PROPERTY));
+                        doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(localStatus);
                         vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
                         break;
                     case PENDING:
@@ -442,4 +443,48 @@ public abstract class DoiAction extends RestAction {
             return localStatus;
         });
     }
+
+    protected GroupURI createGroupURI(String groupName) {
+        String group = String.format("%s?%s", gmsResourceID, groupName);
+        return new GroupURI(URI.create(group));
+    }
+
+    protected boolean isAlternativeConfiguration() {
+        return publisherGroupURI != null;
+    }
+
+    protected void uploadDOIDocument(Resource resource, VOSURI docVOSUIRI) throws ResourceNotFoundException {
+        Transfer transfer = new Transfer(docVOSUIRI.getURI(), Direction.pushToVoSpace);
+        Protocol put = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+        transfer.getProtocols().add(put);
+
+        ClientTransfer clientTransfer = vospaceDoiClient.getVOSpaceClient().createTransfer(transfer);
+        DoiAction.DoiOutputStream outStream = new DoiAction.DoiOutputStream(resource);
+        clientTransfer.setOutputStreamWrapper(outStream);
+        clientTransfer.run();
+
+        if (clientTransfer.getThrowable() != null) {
+            log.debug(clientTransfer.getThrowable().getMessage());
+            String message = clientTransfer.getThrowable().getMessage();
+            if (message != null) {
+                if (message.contains("NodeNotFound")) {
+                    throw new ResourceNotFoundException(message);
+                }
+                if (message.contains("PermissionDenied")) {
+                    throw new java.security.AccessControlException(message);
+                }
+            }
+            throw new RuntimeException((clientTransfer.getThrowable().getMessage()));
+        }
+    }
+
+    protected static class DoiOutputStream implements OutputStreamWrapper {
+        private final Resource streamResource;
+        public DoiOutputStream(Resource streamRes) { this.streamResource = streamRes; }
+        public void write(OutputStream out) throws IOException {
+            DoiXmlWriter writer = new DoiXmlWriter();
+            writer.write(streamResource, out);
+        }
+    }
+
 }
