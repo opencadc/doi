@@ -1,0 +1,615 @@
+{
+  "rafts": [
+    {
+      "_id": "mock-raft-review-1",
+      "id": "mock-raft-review-1",
+      "createdBy": "john.doe@example.com",
+      "createdAt": "2025-07-20T10:00:00Z",
+      "updatedAt": "2025-07-20T10:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "Discovery of Asteroid 2025 XY1 - Ready for Review",
+        "postOptOut": false,
+        "status": "review_ready"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "John",
+          "lastName": "Doe",
+          "affiliation": "Space Research Institute",
+          "authorORCID": "0000-0001-2345-6789",
+          "email": "john.doe@space-research.org"
+        },
+        "contributingAuthors": [
+          {
+            "firstName": "Jane",
+            "lastName": "Smith",
+            "affiliation": "National Observatory",
+            "authorORCID": "0000-0002-3456-7890",
+            "email": "jane.smith@natobs.org"
+          }
+        ],
+        "collaborations": ["Asteroid Watch Group"]
+      },
+      "observationInfo": {
+        "topic": ["asteroid"],
+        "objectName": "2025 XY1",
+        "abstract": "We report the discovery of a new main-belt asteroid designated 2025 XY1. The object was detected during a routine sky survey on July 19, 2025. Initial orbital analysis suggests a semi-major axis of 2.8 AU with an eccentricity of 0.15. Photometric observations indicate an absolute magnitude of 18.2, suggesting a diameter of approximately 1.5 km.",
+        "figure": null,
+        "previousRafts": [],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "ephemeris": "JPL Small-Body Database",
+        "orbitalElements": "a = 2.8 AU, e = 0.15, i = 5.2°",
+        "telescope": "2.5m Automated Sky Survey Telescope",
+        "mjd": "60502.345",
+        "mpcId": "2025 XY1"
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "V-band (550nm)",
+          "brightness": "18.2 ± 0.1 mag",
+          "errors": "0.1 mag"
+        },
+        "astrometry": {
+          "position": "RA: 12h 34m 56.78s, Dec: +23° 45' 67.89\"",
+          "timeObserved": "2025-07-19T23:45:00Z"
+        },
+        "spectroscopy": null
+      },
+      "miscInfo": {
+        "misc": [
+          {
+            "miscKey": "Discovery Method",
+            "miscValue": "Automated detection algorithm"
+          },
+          {
+            "miscKey": "Follow-up Observations",
+            "miscValue": "Scheduled for next week"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "mock-raft-review-2",
+      "id": "mock-raft-review-2",
+      "createdBy": "alice.johnson@example.com",
+      "createdAt": "2025-07-18T14:30:00Z",
+      "updatedAt": "2025-07-21T09:15:00Z",
+      "relatedRafts": ["mock-raft-review-1"],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "Spectroscopic Analysis of Comet C/2025 Q2 - Under Review",
+        "postOptOut": false,
+        "status": "under_review"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Alice",
+          "lastName": "Johnson",
+          "affiliation": "Planetary Science Lab",
+          "authorORCID": "0000-0003-4567-8901",
+          "email": "alice.johnson@planetsci.edu"
+        },
+        "contributingAuthors": [
+          {
+            "firstName": "Bob",
+            "lastName": "Williams",
+            "affiliation": "University Observatory",
+            "authorORCID": "",
+            "email": "bob.williams@uniobs.edu"
+          },
+          {
+            "firstName": "Carol",
+            "lastName": "Davis",
+            "affiliation": "Institute of Astronomy",
+            "authorORCID": "0000-0004-5678-9012",
+            "email": "carol.davis@astro.org"
+          }
+        ],
+        "collaborations": ["Comet Research Network", "SPECTRA Collaboration"]
+      },
+      "observationInfo": {
+        "topic": ["comet"],
+        "objectName": "C/2025 Q2",
+        "abstract": "We present high-resolution spectroscopic observations of the recently discovered long-period comet C/2025 Q2. Spectra obtained on July 17-18, 2025 reveal strong emission lines of CN, C2, and C3, indicating active outgassing. The relative abundances suggest a typical composition for an Oort cloud comet. Notable is the detection of several organic molecules in the coma.",
+        "figure": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+        "previousRafts": [],
+        "alertId": "ZTF25aaa"
+      },
+      "technicalInfo": {
+        "ephemeris": "MPC Ephemeris Service",
+        "orbitalElements": "q = 1.2 AU, e = 0.98, i = 89.5°",
+        "telescope": "8.2m Gemini North + GMOS",
+        "mjd": "60500.678",
+        "mpcId": "C/2025 Q2"
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "R-band (650nm)",
+          "brightness": "12.5 ± 0.05 mag",
+          "errors": "0.05 mag"
+        },
+        "spectroscopy": {
+          "wavelength": "3800-7000 Angstroms",
+          "flux": "Calibrated flux spectra available",
+          "errors": "~5% flux calibration uncertainty"
+        },
+        "astrometry": null
+      },
+      "miscInfo": {
+        "misc": [
+          {
+            "miscKey": "Heliocentric Distance",
+            "miscValue": "1.5 AU"
+          },
+          {
+            "miscKey": "Gas Production Rate",
+            "miscValue": "Q(H2O) = 1.2e28 mol/s"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "mock-raft-approved-1",
+      "id": "mock-raft-approved-1",
+      "createdBy": "michael.brown@example.com",
+      "createdAt": "2025-07-10T08:00:00Z",
+      "updatedAt": "2025-07-22T16:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "doi": "10.12345/cadc.raft.2025.001",
+      "generalInfo": {
+        "title": "Optical Variability in the Active Galaxy NGC 4151 - Approved",
+        "postOptOut": false,
+        "status": "approved"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Michael",
+          "lastName": "Brown",
+          "affiliation": "Galactic Research Center",
+          "authorORCID": "0000-0005-6789-0123",
+          "email": "michael.brown@grc.org"
+        },
+        "contributingAuthors": [
+          {
+            "firstName": "Sarah",
+            "lastName": "Lee",
+            "affiliation": "High Energy Astrophysics Lab",
+            "authorORCID": "0000-0006-7890-1234",
+            "email": "sarah.lee@heal.edu"
+          }
+        ],
+        "collaborations": ["AGN Watch"]
+      },
+      "observationInfo": {
+        "topic": ["agn", "variability"],
+        "objectName": "NGC 4151",
+        "abstract": "We report significant optical variability in the Seyfert 1 galaxy NGC 4151 observed over a period of 30 days. The V-band magnitude varied by 0.8 magnitudes, with the most rapid change occurring over a 48-hour period. This variability is correlated with changes in the broad emission line profiles, suggesting changes in the inner accretion disk structure.",
+        "figure": null,
+        "previousRafts": ["2025-001", "2025-002"],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "ephemeris": null,
+        "orbitalElements": null,
+        "telescope": "4.0m SOAR Telescope + Goodman Spectrograph",
+        "mjd": "60495.123 - 60525.456",
+        "mpcId": null
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "UBVRI bands",
+          "brightness": "V = 11.2-12.0 mag",
+          "errors": "0.02 mag"
+        },
+        "spectroscopy": {
+          "wavelength": "4000-8000 Angstroms",
+          "flux": "Flux-calibrated spectra",
+          "errors": "3% relative flux accuracy"
+        },
+        "astrometry": null
+      },
+      "miscInfo": {
+        "misc": [
+          {
+            "miscKey": "Monitoring Cadence",
+            "miscValue": "Daily observations"
+          },
+          {
+            "miscKey": "Redshift",
+            "miscValue": "z = 0.00332"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "mock-raft-rejected-1",
+      "id": "mock-raft-rejected-1",
+      "createdBy": "david.wilson@example.com",
+      "createdAt": "2025-07-15T11:00:00Z",
+      "updatedAt": "2025-07-23T10:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": false,
+      "generalInfo": {
+        "title": "Possible Detection of Exoplanet Transit - Rejected (Insufficient Data)",
+        "postOptOut": false,
+        "status": "rejected"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "David",
+          "lastName": "Wilson",
+          "affiliation": "Amateur Astronomy Association",
+          "authorORCID": "",
+          "email": "david.wilson@amateur-astro.org"
+        },
+        "contributingAuthors": [],
+        "collaborations": []
+      },
+      "observationInfo": {
+        "topic": ["exoplanet"],
+        "objectName": "TYC 1234-567-1",
+        "abstract": "We report a possible transit detection in the star TYC 1234-567-1. A single dimming event of approximately 1% was observed on July 14, 2025. The duration was consistent with a planetary transit, but no follow-up observations were possible due to weather.",
+        "figure": null,
+        "previousRafts": [],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "ephemeris": null,
+        "orbitalElements": null,
+        "telescope": "0.4m Amateur Telescope + CCD",
+        "mjd": "60499.789",
+        "mpcId": null
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "Clear filter",
+          "brightness": "10.5 mag (nominal)",
+          "errors": "0.1 mag"
+        },
+        "spectroscopy": null,
+        "astrometry": null
+      },
+      "miscInfo": {
+        "misc": [
+          {
+            "miscKey": "Rejection Reason",
+            "miscValue": "Single observation insufficient for confirmation"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "mock-raft-review-3",
+      "id": "mock-raft-review-3",
+      "createdBy": "emma.thompson@example.com",
+      "createdAt": "2025-07-23T07:00:00Z",
+      "updatedAt": "2025-07-23T07:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "Discovery of a Potential Supernova in M81 - Ready for Review",
+        "postOptOut": false,
+        "status": "review_ready"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Emma",
+          "lastName": "Thompson",
+          "affiliation": "Supernova Search Team",
+          "authorORCID": "0000-0007-8901-2345",
+          "email": "emma.thompson@snsearch.org"
+        },
+        "contributingAuthors": [
+          {
+            "firstName": "Frank",
+            "lastName": "Garcia",
+            "affiliation": "Transient Astronomy Group",
+            "authorORCID": "0000-0008-9012-3456",
+            "email": "frank.garcia@tag.edu"
+          },
+          {
+            "firstName": "Grace",
+            "lastName": "Martinez",
+            "affiliation": "Observatorio Nacional",
+            "authorORCID": "",
+            "email": "grace.martinez@obsnac.mx"
+          }
+        ],
+        "collaborations": ["Global Supernova Network"]
+      },
+      "observationInfo": {
+        "topic": ["supernova", "transient"],
+        "objectName": "SN 2025abc in M81",
+        "abstract": "We report the discovery of a bright transient in the galaxy M81, designated SN 2025abc. The object was discovered at magnitude 15.2 on July 22, 2025, and has brightened to magnitude 14.8 within 12 hours. The location is consistent with a spiral arm of M81. Spectroscopic follow-up is urgently needed to confirm the supernova nature and determine its type.",
+        "figure": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+        "previousRafts": [],
+        "alertId": "ATLAS25xyz"
+      },
+      "technicalInfo": {
+        "ephemeris": null,
+        "orbitalElements": null,
+        "telescope": "1.5m Robotic Telescope Network",
+        "mjd": "60504.291",
+        "mpcId": null
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "gri bands",
+          "brightness": "g=15.0, r=14.8, i=14.9 mag",
+          "errors": "0.03 mag"
+        },
+        "spectroscopy": null,
+        "astrometry": {
+          "position": "RA: 09h 55m 33.17s, Dec: +69° 03' 55.1\"",
+          "timeObserved": "2025-07-22T19:00:00Z"
+        }
+      },
+      "miscInfo": {
+        "misc": [
+          {
+            "miscKey": "Host Galaxy Distance",
+            "miscValue": "3.63 Mpc"
+          },
+          {
+            "miscKey": "Offset from Galaxy Center",
+            "miscValue": "45.2 arcsec West, 23.1 arcsec North"
+          },
+          {
+            "miscKey": "Rising Rate",
+            "miscValue": "0.4 mag/day"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "mock-raft-under-review-2",
+      "id": "mock-raft-under-review-2",
+      "createdBy": "robert.chen@example.com",
+      "createdAt": "2025-07-19T11:30:00Z",
+      "updatedAt": "2025-07-24T08:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "Unusual Activity in Binary Star System HD 123456",
+        "postOptOut": false,
+        "status": "under_review"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Robert",
+          "lastName": "Chen",
+          "affiliation": "Stellar Observatory",
+          "authorORCID": "0000-0009-0123-4567",
+          "email": "robert.chen@stellar.edu"
+        },
+        "contributingAuthors": [],
+        "collaborations": ["Binary Star Research Group"]
+      },
+      "observationInfo": {
+        "topic": ["binary_star", "variability"],
+        "objectName": "HD 123456",
+        "abstract": "We report unusual periodic variations in the binary star system HD 123456. The system shows unexpected eclipse timing variations suggesting a possible third body.",
+        "figure": null,
+        "previousRafts": [],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "telescope": "3.5m Apache Point Observatory",
+        "mjd": "60503.456",
+        "mpcId": null
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "V-band",
+          "brightness": "8.5 ± 0.02 mag",
+          "errors": "0.02 mag"
+        }
+      },
+      "miscInfo": {
+        "misc": []
+      }
+    },
+    {
+      "_id": "mock-raft-approved-2",
+      "id": "mock-raft-approved-2",
+      "createdBy": "lisa.martinez@example.com",
+      "createdAt": "2025-07-05T15:45:00Z",
+      "updatedAt": "2025-07-20T14:30:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "New Trans-Neptunian Object 2025 TN1 Discovery",
+        "postOptOut": false,
+        "status": "approved"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Lisa",
+          "lastName": "Martinez",
+          "affiliation": "Outer Solar System Survey",
+          "authorORCID": "0000-0010-1234-5678",
+          "email": "lisa.martinez@osss.org"
+        },
+        "contributingAuthors": [],
+        "collaborations": ["OSSS Team"]
+      },
+      "observationInfo": {
+        "topic": ["trans_neptunian_object"],
+        "objectName": "2025 TN1",
+        "abstract": "Discovery of a new trans-Neptunian object with semi-major axis of 45 AU. Initial orbit determination suggests a stable, circular orbit.",
+        "figure": null,
+        "previousRafts": [],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "telescope": "Subaru Telescope",
+        "mjd": "60490.789",
+        "mpcId": "2025 TN1"
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "r-band",
+          "brightness": "22.3 ± 0.1 mag",
+          "errors": "0.1 mag"
+        }
+      },
+      "miscInfo": {
+        "misc": []
+      }
+    },
+    {
+      "_id": "mock-raft-review-4",
+      "id": "mock-raft-review-4",
+      "createdBy": "paul.anderson@example.com",
+      "createdAt": "2025-07-24T10:00:00Z",
+      "updatedAt": "2025-07-24T10:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "Outburst Detection in Dwarf Nova SS Cygni",
+        "postOptOut": false,
+        "status": "review_ready"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Paul",
+          "lastName": "Anderson",
+          "affiliation": "Variable Star Network",
+          "authorORCID": "",
+          "email": "paul.anderson@vsnet.org"
+        },
+        "contributingAuthors": [],
+        "collaborations": []
+      },
+      "observationInfo": {
+        "topic": ["outburst"],
+        "objectName": "SS Cygni",
+        "abstract": "SS Cygni entered a new outburst phase on July 23, 2025. The star brightened from magnitude 12.0 to 8.5 within 24 hours.",
+        "figure": null,
+        "previousRafts": [],
+        "alertId": "ASASSN-25xyz"
+      },
+      "technicalInfo": {
+        "telescope": "0.5m Remote Observatory",
+        "mjd": "60505.123",
+        "mpcId": null
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "Clear filter",
+          "brightness": "8.5 mag",
+          "errors": "0.05 mag"
+        }
+      },
+      "miscInfo": {
+        "misc": []
+      }
+    },
+    {
+      "_id": "mock-raft-rejected-2",
+      "id": "mock-raft-rejected-2",
+      "createdBy": "mark.jones@example.com",
+      "createdAt": "2025-07-12T09:15:00Z",
+      "updatedAt": "2025-07-18T11:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": false,
+      "generalInfo": {
+        "title": "Possible New Comet Detection - Insufficient Evidence",
+        "postOptOut": false,
+        "status": "rejected"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Mark",
+          "lastName": "Jones",
+          "affiliation": "Independent Observer",
+          "authorORCID": "",
+          "email": "mark.jones@email.com"
+        },
+        "contributingAuthors": [],
+        "collaborations": []
+      },
+      "observationInfo": {
+        "topic": ["comet"],
+        "objectName": "JONES 2025a",
+        "abstract": "Fuzzy object detected near constellation Perseus. Possible new comet based on appearance.",
+        "figure": null,
+        "previousRafts": [],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "telescope": "0.25m Amateur Telescope",
+        "mjd": "60496.456",
+        "mpcId": null
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "Unfiltered",
+          "brightness": "15 mag (estimated)",
+          "errors": "unknown"
+        }
+      },
+      "miscInfo": {
+        "misc": [
+          {
+            "miscKey": "Rejection Reason",
+            "miscValue": "No proper astrometry provided, single observation insufficient"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "mock-raft-under-review-3",
+      "id": "mock-raft-under-review-3",
+      "createdBy": "nina.patel@example.com",
+      "createdAt": "2025-07-22T14:20:00Z",
+      "updatedAt": "2025-07-24T09:00:00Z",
+      "relatedRafts": [],
+      "generateForumPost": true,
+      "generalInfo": {
+        "title": "Potentially Hazardous Asteroid 2025 PH3 Recovery",
+        "postOptOut": false,
+        "status": "under_review"
+      },
+      "authorInfo": {
+        "correspondingAuthor": {
+          "firstName": "Nina",
+          "lastName": "Patel",
+          "affiliation": "Near Earth Object Center",
+          "authorORCID": "0000-0011-2345-6789",
+          "email": "nina.patel@neoc.org"
+        },
+        "contributingAuthors": [],
+        "collaborations": ["NEO Survey Team"]
+      },
+      "observationInfo": {
+        "topic": ["potentially_hazardous_asteroid"],
+        "objectName": "2025 PH3",
+        "abstract": "Recovery observations of potentially hazardous asteroid 2025 PH3. Updated orbit shows closest approach of 0.05 AU in 2027.",
+        "figure": null,
+        "previousRafts": ["2025-100"],
+        "alertId": null
+      },
+      "technicalInfo": {
+        "telescope": "2.0m Faulkes Telescope North",
+        "mjd": "60504.678",
+        "mpcId": "2025 PH3"
+      },
+      "measurementInfo": {
+        "photometry": {
+          "wavelength": "R-band",
+          "brightness": "18.7 ± 0.05 mag",
+          "errors": "0.05 mag"
+        }
+      },
+      "miscInfo": {
+        "misc": []
+      }
+    }
+  ]
+}

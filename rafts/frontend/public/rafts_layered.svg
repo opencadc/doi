@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg baseProfile="full" height="1024" version="1.1" width="1024" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1024 1024">
+
+    <!-- Background - white in this case -->
+
+    <!-- Outer orbit -->
+    <circle cx="512" cy="512" r="330" fill="none" stroke="black" stroke-width="15" stroke-linecap="round" stroke-dasharray="1070 150" />
+
+    <!-- Inner orbit -->
+    <circle cx="512" cy="512" r="220" fill="none" stroke="black" stroke-width="10" stroke-linecap="round" stroke-dasharray="1260 120" />
+
+    <!-- Sun in center -->
+    <circle cx="512" cy="512" r="80" fill="#FDB813" />
+
+    <!-- Sun rays -->
+    <line x1="512" y1="350" x2="512" y2="392" stroke="black" stroke-width="15" stroke-linecap="round" />
+    <line x1="512" y1="632" x2="512" y2="674" stroke="black" stroke-width="15" stroke-linecap="round" />
+    <line x1="350" y1="512" x2="392" y2="512" stroke="black" stroke-width="15" stroke-linecap="round" />
+    <line x1="632" y1="512" x2="674" y2="512" stroke="black" stroke-width="15" stroke-linecap="round" />
+
+    <line x1="392" y1="392" x2="422" y2="422" stroke="black" stroke-width="15" stroke-linecap="round" />
+    <line x1="602" y1="602" x2="632" y2="632" stroke="black" stroke-width="15" stroke-linecap="round" />
+    <line x1="392" y1="632" x2="422" y2="602" stroke="black" stroke-width="15" stroke-linecap="round" />
+    <line x1="602" y1="422" x2="632" y2="392" stroke="black" stroke-width="15" stroke-linecap="round" />
+
+    <!-- Earth with continents -->
+    <circle cx="200" cy="405" r="50" fill="#0077BE" />
+
+    <!-- Venus/Mercury -->
+    <circle cx="720" cy="450" r="40" fill="#F3E5AB" />
+</svg>

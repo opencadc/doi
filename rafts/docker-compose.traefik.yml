@@ -1,0 +1,108 @@
+# RAFTS Deployment for Traefik Reverse Proxy
+# ============================================
+#
+# This configuration deploys RAFTS behind an existing Traefik instance.
+#
+# Usage:
+#   # For subdomain (rafts.example.com):
+#   RAFTS_DOMAIN=rafts.example.com docker compose -f docker-compose.traefik.yml up -d --build
+#
+#   # For subpath (example.com/rafts):
+#   RAFTS_DOMAIN=example.com RAFTS_BASE_PATH=/rafts docker compose -f docker-compose.traefik.yml up -d --build
+#
+# Prerequisites:
+#   - Traefik running with network "traefik_proxy" (or adjust TRAEFIK_NETWORK)
+#   - Copy .env.example to .env and configure
+#   - For subpath: Set NEXT_PUBLIC_BASE_PATH in .env to match RAFTS_BASE_PATH
+#
+# IMPORTANT: For subpath deployment, you MUST rebuild the image when changing the path
+# because NEXT_PUBLIC_BASE_PATH is baked into the Next.js build.
+
+services:
+  # =============================================================================
+  # FRONTEND - Next.js Application
+  # =============================================================================
+  rafts-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # CRITICAL: This is baked into the build - rebuild when changing!
+        NEXT_PUBLIC_BASE_PATH: ${RAFTS_BASE_PATH:-}
+    container_name: rafts-frontend-nextjs
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: '8080'
+      NEXT_PUBLIC_BASE_PATH: ${RAFTS_BASE_PATH:-}
+      # Validator URLs (internal Docker networking)
+      # Using non-prefixed vars for server actions (runtime)
+      VALIDATOR_URL_XML: http://ades-validator-api:8080/validate-xml
+      VALIDATOR_URL_PSV: http://ades-validator-api:8080/validate-psv
+      VALIDATOR_URL_MPC: http://ades-validator-api:8080/validate-mpc
+      NEXTAUTH_URL_INTERNAL: http://rafts-frontend:8080
+    labels:
+      - "traefik.enable=true"
+      # Subdomain routing (rafts.example.com)
+      - "traefik.http.routers.rafts-frontend.rule=Host(`${RAFTS_DOMAIN:-rafts.localhost}`)"
+      # Subpath routing (example.com/rafts) - uncomment and adjust if using subpath
+      # - "traefik.http.routers.rafts-frontend.rule=Host(`${RAFTS_DOMAIN}`) && PathPrefix(`${RAFTS_BASE_PATH:-/rafts}`)"
+      - "traefik.http.routers.rafts-frontend.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.rafts-frontend.tls=true"
+      - "traefik.http.routers.rafts-frontend.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.rafts-frontend.loadbalancer.server.port=8080"
+      # Priority (higher = matches first, important if main app has catch-all)
+      - "traefik.http.routers.rafts-frontend.priority=100"
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - traefik_proxy
+      - rafts-internal
+    depends_on:
+      ades-validator-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # =============================================================================
+  # VALIDATOR API - ADES Validation Service
+  # =============================================================================
+  ades-validator-api:
+    build:
+      context: ./api/validator
+      dockerfile: Dockerfile
+    container_name: ades-validator-api
+    labels:
+      - "traefik.enable=false"  # Internal service only
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8080/health-check')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - rafts-internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  # External Traefik network - must exist
+  traefik_proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_proxy}
+  # Internal network for frontend <-> validator communication
+  rafts-internal:
+    driver: bridge
