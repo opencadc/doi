@@ -1,0 +1,130 @@
+version: '3.8'
+
+# RAFTS Docker Swarm Stack
+# Deploy: docker stack deploy -c rafts-stack.yml rafts
+# Remove: docker stack rm rafts
+#
+# IMPORTANT: The frontend image must be built with --build-arg NEXT_PUBLIC_BASE_PATH=/rafts
+# for subpath deployment. NEXTAUTH_URL must also include the subpath (e.g., https://host/rafts)
+
+services:
+  # =============================================================================
+  # rafts-frontend - Next.js Application
+  # =============================================================================
+  rafts-frontend:
+    image: ${RAFTS_FRONTEND_IMAGE:-bucket.canfar.net/rafts-frontend:latest}
+    environment:
+      # Internal (fixed)
+      NODE_ENV: 'production'
+      PORT: '8080'
+      NEXTAUTH_URL_INTERNAL: 'http://rafts-frontend:8080'
+      VALIDATOR_URL_XML: 'http://rafts-ades-validator:8080/validate-xml'
+      VALIDATOR_URL_PSV: 'http://rafts-ades-validator:8080/validate-psv'
+      VALIDATOR_URL_MPC: 'http://rafts-ades-validator:8080/validate-mpc'
+      # Authentication (REQUIRED - set before deploy)
+      NEXTAUTH_URL: '${NEXTAUTH_URL}'
+      NEXTAUTH_SECRET: '${NEXTAUTH_SECRET}'
+      NEXTAUTH_DEBUG: '${NEXTAUTH_DEBUG:-false}'
+      # DOI Service
+      NEXT_DOI_BASE_URL: '${NEXT_DOI_BASE_URL:-https://rc-ws-cadc.canfar.net/rdoi/instances}'
+      # CADC Access Control
+      NEXT_CANFAR_AC_LOGIN_URL: '${NEXT_CANFAR_AC_LOGIN_URL:-https://ws-cadc.canfar.net/ac/login}'
+      NEXT_CANFAR_AC_SEARCH_URL: '${NEXT_CANFAR_AC_SEARCH_URL:-https://ws-cadc.canfar.net/ac/search}'
+      NEXT_CANFAR_AC_WHOAMI_URL: '${NEXT_CANFAR_AC_WHOAMI_URL:-https://ws-cadc.canfar.net/ac/whoami}'
+      NEXT_CANFAR_AC_GROUPS_URL: '${NEXT_CANFAR_AC_GROUPS_URL:-https://ws-cadc.canfar.net/ac/groups}'
+      NEXT_CANFAR_RAFT_GROUP_NAME: '${NEXT_CANFAR_RAFT_GROUP_NAME:-RAFTS-reviewers}'
+      # Storage (Vault)
+      NEXT_CANFAR_STORAGE_BASE_URL: '${NEXT_CANFAR_STORAGE_BASE_URL:-https://ws-cadc.canfar.net/vault/files}'
+      NEXT_VAULT_BASE_ENDPOINT: '${NEXT_VAULT_BASE_ENDPOINT:-https://ws-cadc.canfar.net/vault/files}'
+      NEXT_CITE_URL: '${NEXT_CITE_URL:-DOItest/rafts}'
+      # SSO Cookies
+      NEXT_COOKIE_SSO_KEY: '${NEXT_COOKIE_SSO_KEY:-CADC_SSO}'
+      NEXT_CANFAR_COOKIE_DOMAIN: '${NEXT_CANFAR_COOKIE_DOMAIN:-canfar.net}'
+      NEXT_CANFAR_COOKIE_URL: '${NEXT_CANFAR_COOKIE_URL:-https://www.canfar.net/access/sso?cookieValue=}'
+      NEXT_CADC_COOKIE_DOMAIN: '${NEXT_CADC_COOKIE_DOMAIN:-cadc-ccda.hia-iha.nrc-cnrc.gc.ca}'
+      NEXT_CADC_COOKIE_URL: '${NEXT_CADC_COOKIE_URL:-https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/access/sso?cookieValue=}'
+      # Features
+      UI_REVIEW_ENABLED: '${UI_REVIEW_ENABLED:-true}'
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:8080/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - rafts-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # =============================================================================
+  # rafts-ades-validator - ADES Validation Service
+  # =============================================================================
+  rafts-ades-validator:
+    image: ${ADES_VALIDATOR_IMAGE:-bucket.canfar.net/ades-validator-api:latest}
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:8080/health-check')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - rafts-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+networks:
+  rafts-network:
+    driver: overlay
