@@ -14,9 +14,9 @@ docker run --rm -p 3080:8080 \
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `NEXTAUTH_URL` | Public URL where the app is accessible | `https://rafts.canfar.net` |
+| `NEXTAUTH_URL` | Public URL where the app is accessible (must include subpath if built with one) | `https://rc-www.canfar.net/rafts` |
 | `NEXTAUTH_SECRET` | Session encryption key. Generate: `openssl rand -base64 32` | `VPDZsUHEBl...` |
-| `NEXT_DOI_BASE_URL` | DOI backend API endpoint | `https://ws-cadc.canfar.net/doi/instances` |
+| `NEXT_DOI_BASE_URL` | DOI backend API endpoint | `https://rc-ws-cadc.canfar.net/rdoi/instances` |
 | `NEXT_CANFAR_AC_LOGIN_URL` | CADC login endpoint | `https://ws-cadc.canfar.net/ac/login` |
 | `NEXT_CANFAR_AC_SEARCH_URL` | CADC user search endpoint | `https://ws-cadc.canfar.net/ac/search` |
 | `NEXT_CANFAR_AC_WHOAMI_URL` | CADC identity endpoint | `https://ws-cadc.canfar.net/ac/whoami` |
@@ -56,9 +56,9 @@ docker run --rm -p 3080:8080 \
 ```bash
 docker run --rm -p 8080:8080 \
   --network rafts-network \
-  -e NEXTAUTH_URL=https://rafts.canfar.net \
+  -e NEXTAUTH_URL=https://rc-www.canfar.net/rafts \
   -e NEXTAUTH_SECRET=$(openssl rand -base64 32) \
-  -e NEXT_DOI_BASE_URL=https://ws-cadc.canfar.net/doi/instances \
+  -e NEXT_DOI_BASE_URL=https://rc-ws-cadc.canfar.net/rdoi/instances \
   -e NEXT_CANFAR_AC_LOGIN_URL=https://ws-cadc.canfar.net/ac/login \
   -e NEXT_CANFAR_AC_SEARCH_URL=https://ws-cadc.canfar.net/ac/search \
   -e NEXT_CANFAR_AC_WHOAMI_URL=https://ws-cadc.canfar.net/ac/whoami \

@@ -1,16 +1,16 @@
 # Build RAFTS Frontend Docker Image
 
-## Build Command
+## Build Command (with subpath /rafts)
 
 ```bash
-docker build -t bucket.canfar.net/rafts-frontend:latest ./frontend
+docker build --build-arg NEXT_PUBLIC_BASE_PATH=/rafts -t bucket.canfar.net/rafts-frontend:latest ./frontend
 ```
 
 ## Build Arguments
 
 | Argument | Required | Description | Default |
 |----------|----------|-------------|---------|
-| `NEXT_PUBLIC_BASE_PATH` | no | Subpath prefix for deployment behind a reverse proxy. Leave empty for root domain deployment. | `` (empty) |
+| `NEXT_PUBLIC_BASE_PATH` | yes | Subpath prefix for deployment behind a reverse proxy. Set to `/rafts` for RC/production. | `/rafts` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | no | Cloudflare Turnstile site key for bot protection. | `` (empty) |
 
 ## Build with Subpath

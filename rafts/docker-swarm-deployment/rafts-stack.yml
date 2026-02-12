@@ -3,6 +3,9 @@ version: '3.8'
 # RAFTS Docker Swarm Stack
 # Deploy: docker stack deploy -c rafts-stack.yml rafts
 # Remove: docker stack rm rafts
+#
+# IMPORTANT: The frontend image must be built with --build-arg NEXT_PUBLIC_BASE_PATH=/rafts
+# for subpath deployment. NEXTAUTH_URL must also include the subpath (e.g., https://host/rafts)
 
 services:
   # =============================================================================

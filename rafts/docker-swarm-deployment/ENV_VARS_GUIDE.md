@@ -15,7 +15,7 @@ These MUST be set during `docker build` — they get inlined into the client-sid
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
-| `NEXT_PUBLIC_BASE_PATH` | Subpath prefix (empty for root domain) | `` | `/rafts` |
+| `NEXT_PUBLIC_BASE_PATH` | Subpath prefix for reverse proxy deployment | `/rafts` | `/rafts` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile bot protection key | `` | `0x4AAAA...` |
 
 ### How to set
@@ -28,7 +28,7 @@ docker build \
   ./frontend
 ```
 
-**IMPORTANT**: Changing `NEXT_PUBLIC_BASE_PATH` requires a full image rebuild.
+**IMPORTANT**: `NEXT_PUBLIC_BASE_PATH` is baked into the Next.js bundle. Changing it requires a full image rebuild. `NEXTAUTH_URL` must also include the subpath (e.g., `https://rc-www.canfar.net/rafts`).
 
 ---
 
@@ -40,7 +40,7 @@ Set these in the Swarm stack environment or via shell exports before `docker sta
 
 | Variable | Required | Description | Production Value |
 |----------|----------|-------------|-----------------|
-| `NEXTAUTH_URL` | YES | Public URL of the application | `https://rafts.canfar.net` |
+| `NEXTAUTH_URL` | YES | Public URL of the application (must include subpath) | `https://rc-www.canfar.net/rafts` |
 | `NEXTAUTH_SECRET` | YES | Session encryption key (generate with `openssl rand -base64 32`) | *unique per environment* |
 | `NEXTAUTH_DEBUG` | no | Enable debug logging | `false` |
 
@@ -48,7 +48,7 @@ Set these in the Swarm stack environment or via shell exports before `docker sta
 
 | Variable | Required | Description | Production Value |
 |----------|----------|-------------|-----------------|
-| `NEXT_DOI_BASE_URL` | YES | DOI backend endpoint | `https://ws-cadc.canfar.net/doi/instances` |
+| `NEXT_DOI_BASE_URL` | YES | DOI backend endpoint | `https://rc-ws-cadc.canfar.net/rdoi/instances` |
 
 ### CADC Access Control (AC) Service
 
@@ -145,18 +145,20 @@ Option 2 - Use an env file with the deploy script:
 
 ## Environment-Specific Values
 
-### Production
-
-```
-NEXTAUTH_URL=https://rafts.canfar.net
-NEXT_DOI_BASE_URL=https://ws-cadc.canfar.net/doi/instances
-```
-
 ### RC (Release Candidate)
 
 ```
-NEXTAUTH_URL=https://rc-rafts.canfar.net
+NEXTAUTH_URL=https://rc-www.canfar.net/rafts
 NEXT_DOI_BASE_URL=https://rc-ws-cadc.canfar.net/rdoi/instances
+NEXT_CITE_URL=DOItest/rafts
+```
+
+### Production
+
+```
+NEXTAUTH_URL=https://ws-cadc.canfar.net/rafts
+NEXT_DOI_BASE_URL=https://ws-cadc.canfar.net/doi/instances
+NEXT_CITE_URL=AstroDataCitationDOI/CISTI.CANFAR
 ```
 
 ### Local Development
@@ -164,4 +166,5 @@ NEXT_DOI_BASE_URL=https://rc-ws-cadc.canfar.net/rdoi/instances
 ```
 NEXTAUTH_URL=http://localhost:3000
 NEXT_DOI_BASE_URL=http://localhost:8080/rafts/instances
+NEXT_CITE_URL=rafts-test
 ```
