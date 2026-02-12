@@ -24,7 +24,7 @@ docker run --rm -p 3080:8080 \
 | `NEXT_CANFAR_RAFT_GROUP_NAME` | Reviewer group name in AC service | `RAFTS-reviewers` |
 | `NEXT_CANFAR_STORAGE_BASE_URL` | Vault file storage URL | `https://ws-cadc.canfar.net/vault/files` |
 | `NEXT_VAULT_BASE_ENDPOINT` | Vault files endpoint | `https://ws-cadc.canfar.net/vault/files` |
-| `NEXT_CITE_URL` | Storage path prefix for RAFT data | `AstroDataCitationDOI/CISTI.CANFAR` |
+| `NEXT_CITE_URL` | Storage path prefix for RAFT data | `DOItest/rafts` |
 | `NEXT_COOKIE_SSO_KEY` | SSO cookie key name | `CADC_SSO` |
 | `NEXT_CANFAR_COOKIE_DOMAIN` | CANFAR cookie domain | `canfar.net` |
 | `NEXT_CANFAR_COOKIE_URL` | CANFAR SSO cookie URL | `https://www.canfar.net/access/sso?cookieValue=` |
@@ -66,7 +66,7 @@ docker run --rm -p 8080:8080 \
   -e NEXT_CANFAR_RAFT_GROUP_NAME=RAFTS-reviewers \
   -e NEXT_CANFAR_STORAGE_BASE_URL=https://ws-cadc.canfar.net/vault/files \
   -e NEXT_VAULT_BASE_ENDPOINT=https://ws-cadc.canfar.net/vault/files \
-  -e NEXT_CITE_URL=AstroDataCitationDOI/CISTI.CANFAR \
+  -e NEXT_CITE_URL=DOItest/rafts \
   -e NEXT_COOKIE_SSO_KEY=CADC_SSO \
   -e NEXT_CANFAR_COOKIE_DOMAIN=canfar.net \
   -e NEXT_CANFAR_COOKIE_URL=https://www.canfar.net/access/sso?cookieValue= \

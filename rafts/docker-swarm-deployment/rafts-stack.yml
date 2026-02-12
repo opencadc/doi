@@ -11,12 +11,37 @@ services:
   rafts-frontend:
     image: ${RAFTS_FRONTEND_IMAGE:-bucket.canfar.net/rafts-frontend:latest}
     environment:
+      # Internal (fixed)
       NODE_ENV: 'production'
       PORT: '8080'
       NEXTAUTH_URL_INTERNAL: 'http://rafts-frontend:8080'
       VALIDATOR_URL_XML: 'http://rafts-ades-validator:8080/validate-xml'
       VALIDATOR_URL_PSV: 'http://rafts-ades-validator:8080/validate-psv'
       VALIDATOR_URL_MPC: 'http://rafts-ades-validator:8080/validate-mpc'
+      # Authentication (REQUIRED - set before deploy)
+      NEXTAUTH_URL: '${NEXTAUTH_URL}'
+      NEXTAUTH_SECRET: '${NEXTAUTH_SECRET}'
+      NEXTAUTH_DEBUG: '${NEXTAUTH_DEBUG:-false}'
+      # DOI Service
+      NEXT_DOI_BASE_URL: '${NEXT_DOI_BASE_URL:-https://ws-cadc.canfar.net/doi/instances}'
+      # CADC Access Control
+      NEXT_CANFAR_AC_LOGIN_URL: '${NEXT_CANFAR_AC_LOGIN_URL:-https://ws-cadc.canfar.net/ac/login}'
+      NEXT_CANFAR_AC_SEARCH_URL: '${NEXT_CANFAR_AC_SEARCH_URL:-https://ws-cadc.canfar.net/ac/search}'
+      NEXT_CANFAR_AC_WHOAMI_URL: '${NEXT_CANFAR_AC_WHOAMI_URL:-https://ws-cadc.canfar.net/ac/whoami}'
+      NEXT_CANFAR_AC_GROUPS_URL: '${NEXT_CANFAR_AC_GROUPS_URL:-https://ws-cadc.canfar.net/ac/groups}'
+      NEXT_CANFAR_RAFT_GROUP_NAME: '${NEXT_CANFAR_RAFT_GROUP_NAME:-RAFTS-reviewers}'
+      # Storage (Vault)
+      NEXT_CANFAR_STORAGE_BASE_URL: '${NEXT_CANFAR_STORAGE_BASE_URL:-https://ws-cadc.canfar.net/vault/files}'
+      NEXT_VAULT_BASE_ENDPOINT: '${NEXT_VAULT_BASE_ENDPOINT:-https://ws-cadc.canfar.net/vault/files}'
+      NEXT_CITE_URL: '${NEXT_CITE_URL:-DOItest/rafts}'
+      # SSO Cookies
+      NEXT_COOKIE_SSO_KEY: '${NEXT_COOKIE_SSO_KEY:-CADC_SSO}'
+      NEXT_CANFAR_COOKIE_DOMAIN: '${NEXT_CANFAR_COOKIE_DOMAIN:-canfar.net}'
+      NEXT_CANFAR_COOKIE_URL: '${NEXT_CANFAR_COOKIE_URL:-https://www.canfar.net/access/sso?cookieValue=}'
+      NEXT_CADC_COOKIE_DOMAIN: '${NEXT_CADC_COOKIE_DOMAIN:-cadc-ccda.hia-iha.nrc-cnrc.gc.ca}'
+      NEXT_CADC_COOKIE_URL: '${NEXT_CADC_COOKIE_URL:-https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/access/sso?cookieValue=}'
+      # Features
+      UI_REVIEW_ENABLED: '${UI_REVIEW_ENABLED:-true}'
     ports:
       - target: 8080
         published: 8080

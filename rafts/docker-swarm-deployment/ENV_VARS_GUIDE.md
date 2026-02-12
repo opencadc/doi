@@ -66,7 +66,7 @@ Set these in the Swarm stack environment or via shell exports before `docker sta
 |----------|----------|-------------|-----------------|
 | `NEXT_CANFAR_STORAGE_BASE_URL` | YES | Vault file storage URL | `https://ws-cadc.canfar.net/vault/files` |
 | `NEXT_VAULT_BASE_ENDPOINT` | YES | Vault files endpoint | `https://ws-cadc.canfar.net/vault/files` |
-| `NEXT_CITE_URL` | YES | Storage path prefix for RAFT data | `AstroDataCitationDOI/CISTI.CANFAR` |
+| `NEXT_CITE_URL` | YES | Storage path prefix for RAFT data | `DOItest/rafts` |
 
 ### SSO Cookie Configuration
 
