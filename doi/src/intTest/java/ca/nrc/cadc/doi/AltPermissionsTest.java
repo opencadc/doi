@@ -1,7 +1,5 @@
 package ca.nrc.cadc.doi;
 
-import ca.nrc.cadc.doi.datacite.Date;
-import ca.nrc.cadc.doi.datacite.DateType;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
@@ -15,17 +13,11 @@ import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.vospace.ContainerNode;
 
@@ -40,8 +32,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import org.opencadc.vospace.Node;
 
 public class AltPermissionsTest extends LifecycleTest {
 
@@ -102,13 +94,9 @@ public class AltPermissionsTest extends LifecycleTest {
 
             ContainerNode doiNode = getContainerNode(doiID, doiAltParentPathURI, doiAltVosClient);
             Assert.assertNotNull(doiNode);
-            Assert.assertEquals(2, doiNode.getReadOnlyGroup().size());
-            Assert.assertEquals(2, doiNode.getReadWriteGroup().size());
+            Assert.assertEquals(1, doiNode.getReadOnlyGroup().size());
+            Assert.assertEquals(1, doiNode.getReadWriteGroup().size());
             log.debug("readWriteSubject - DOI created successfully: " + doiID);
-
-            // update - success expected
-            update(actual, doiID, doiAltServiceURL);
-            log.debug("readWriteSubject - DOI updated successfully: " + doiID);
 
             // publish: failure expected
             mintDOI403Expected(doiID);
@@ -128,20 +116,29 @@ public class AltPermissionsTest extends LifecycleTest {
             List<DoiStatus> draftDoiStatusList = searchDOIStatuses(null, List.of("in progress"));
             long draftDOIsCount = draftDoiStatusList.stream().filter(e -> e.getStatus().equals(Status.DRAFT)).count();
             Assert.assertEquals(draftDoiStatusList.size(), draftDOIsCount);
+
+            // update doi status to 'review ready' so publisher has read access
+            log.debug("readWriteSubject - update status to 'review ready'");
+            updateStatus(doiID, Status.REVIEW_READY, true);
+            doiNode = getContainerNode(doiID, doiAltParentPathURI, doiAltVosClient);
+            checkStatus(doiNode, Status.REVIEW_READY);
+            log.debug("readWriteSubject - checked status");
+
             return doiID;
         });
 
         Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
             URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiSuffix));
+            log.debug("readWriteSubject - URL: " + doiURL);
 
             // Get DOI : Success expected
             Resource actual = getDOI(doiURL, doiSuffix);
             log.debug("publisherSubject - get DOI success for DOI ID : " + doiSuffix);
 
-            // get all DOIs - publisher should find the created draft DOI
+            // get all DOIs - publisher should find the 'review ready' DOI
             List<DoiStatus> doiStatusList = getDoiStatuses();
-            Optional<DoiStatus> createdDOIStatus = doiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(doiSuffix)).findFirst();
-            Assert.assertTrue(createdDOIStatus.isPresent());
+            Optional<DoiStatus> reviewReadyStatus = doiStatusList.stream().filter(doiStatus -> getDOISuffix(doiStatus.getIdentifier().getValue()).equals(doiSuffix)).findFirst();
+            Assert.assertTrue(reviewReadyStatus.isPresent());
             log.debug("publisherSubject - get All DOI Status success");
 
             // Get DOI status : Success expected
@@ -154,6 +151,13 @@ public class AltPermissionsTest extends LifecycleTest {
             Assert.assertNull(get.getThrowable());
             Assert.assertEquals(200, get.getResponseCode());
             log.debug("publisherSubject - get DOI status success for DOI ID : " + doiSuffix);
+
+            // update status to 'in review' to allow the publisher to publish the doi
+            log.debug("publisherSubject - update status to 'in review'");
+            updateStatus(doiSuffix, Status.IN_REVIEW, true);
+            ContainerNode doiNode = getContainerNode(doiSuffix, doiAltParentPathURI, doiAltVosClient);
+            checkStatus(doiNode, Status.IN_REVIEW);
+            log.debug("publisherSubject - checked status");
 
             //publish DOI : Success expected
             publish(actual, doiSuffix, DOISettingsType.ALT_DOI);
@@ -342,10 +346,26 @@ public class AltPermissionsTest extends LifecycleTest {
             Resource actual = create(expected, DOISettingsType.ALT_DOI);
             String doiID = getDOISuffix(actual.getIdentifier().getValue());
             Assert.assertNotNull(doiID);
+
+            // update doi status to review ready so publisher has read access
+            log.debug("readWriteSubject - update status to 'review ready'");
+            updateStatus(doiID, Status.REVIEW_READY, true);
+            Node doiNode = getContainerNode(doiID, doiAltParentPathURI, vosClient);
+            checkStatus(doiNode, Status.REVIEW_READY);
+            log.debug("readWriteSubject - checked status");
+
             return doiID;
         });
 
         Subject.doAs(publisherSubject, (PrivilegedExceptionAction<String>) () -> {
+
+            // update doi status to in review ready so publisher can publish
+            log.debug("publisherSubject - update status to 'in review'");
+            updateStatus(mintedDOIId, Status.IN_REVIEW, true);
+            Node doiNode = getContainerNode(mintedDOIId, doiAltParentPathURI, vosClient);
+            checkStatus(doiNode, Status.IN_REVIEW);
+            log.debug("readWriteSubject - checked status");
+
             URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, mintedDOIId));
             Resource actual = getDOI(doiURL, mintedDOIId);
 

@@ -73,6 +73,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiXmlWriter;
+import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
@@ -96,6 +97,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
+import org.opencadc.vospace.Node;
+import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
 import org.opencadc.vospace.client.async.RecursiveDeleteNode;
@@ -221,12 +224,40 @@ public abstract class IntTestBase extends TestBase {
         return (DataNode) getVOSClient(doiSettingsType).createNode(nodeURI, node);
     }
 
-    protected ContainerNode getContainerNode(String path, VOSURI doiParentPathURI,  VOSpaceClient vosClient) throws Exception {
+    protected ContainerNode getContainerNode(String path, VOSURI doiParentPathURI, VOSpaceClient vosClient) throws Exception {
         String nodePath = doiParentPathURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = String.format("%s/%s", nodePath, path);
         }
         return (ContainerNode) vosClient.getNode(nodePath);
+    }
+
+    protected DataNode getDataNode(String path, VOSURI doiParentPathURI, VOSpaceClient vosClient) throws Exception {
+        String nodePath = doiParentPathURI.getPath();
+        if (StringUtil.hasText(path)) {
+            nodePath = String.format("%s/%s", nodePath, path);
+        }
+        return (DataNode) vosClient.getNode(nodePath);
+    }
+
+    void updateStatus(String doiID, Status requestedStatus, boolean followRedirect)
+            throws Exception {
+        log.debug(String.format("update status to '%s'", requestedStatus.getValue()));
+        URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiID));
+        Map<String, String> params = new HashMap<>();
+        params.put(DOI.STATUS_NODE_PARAMETER, requestedStatus.getValue());
+        postDOI(doiURL , null, params, followRedirect);
+        log.debug(String.format("status updated to '%s'", requestedStatus.getValue()));
+    }
+
+    void checkStatus(Node doiNode, Status expectedStatus) {
+
+        Assert.assertNotNull(doiNode);
+
+        // check the status mode property
+        NodeProperty status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
+        Assert.assertNotNull(status);
+        Assert.assertEquals(expectedStatus.getValue(), status.getValue());
     }
 
     protected String postDOI(URL postUrl, String doiXML, Map<String, String> nodeMetadata, boolean followRedirect)
