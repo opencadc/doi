@@ -575,24 +575,20 @@ public class PostAction extends DoiAction {
                 }
 
                 // can only update to 'in progress' from 'review ready', 'in review', 'rejected', or 'approved'
-            } else if ((current == Status.REVIEW_READY || current == Status.IN_REVIEW
-                    || current == Status.REJECTED || current == Status.APPROVED)
-                    && updated == Status.DRAFT) {
+            } else if (current == Status.REVIEW_READY || current == Status.IN_REVIEW
+                    || current == Status.REJECTED && updated == Status.DRAFT) {
                 log.debug(String.format("update status: '%s' -> '%s'", current, updated));
 
-                // alt config only:
+                // alt config only, update status to 'in progress':
                 // - from 'review ready': requester or admin (author withdraws)
-                // - from 'in review': requester, publisher, or admin
+                // - from 'in review': publisher, or admin
                 // - from 'rejected': requester or admin
-                // - from 'approved': requester or admin (author wants to edit after approval)
                 boolean canTransition = false;
                 if (current == Status.REVIEW_READY) {
                     canTransition = isCallingUserRequester(doiNode) || isCallingUserDOIAdmin();
                 } else if (current == Status.IN_REVIEW) {
-                    canTransition = isCallingUserRequester(doiNode) || isCallingUserPublisher() || isCallingUserDOIAdmin();
+                    canTransition = isCallingUserPublisher() || isCallingUserDOIAdmin();
                 } else if (current == Status.REJECTED) {
-                    canTransition = isCallingUserRequester(doiNode) || isCallingUserDOIAdmin();
-                } else if (current == Status.APPROVED) {
                     canTransition = isCallingUserRequester(doiNode) || isCallingUserDOIAdmin();
                 } else {
                     String message = String.format("Invalid status change: '%s' -> '%s'", current, updated);
@@ -704,6 +700,14 @@ public class PostAction extends DoiAction {
             Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY));
             switch (mintingStatus) {
                 case DRAFT:
+                    if (isAlternativeConfiguration()) {
+                        throw new IllegalArgumentException("Cannot publish an 'in progress' DOI for an alternative configuration");
+                    }
+                    lockData(doiContainerNode);
+                    break;
+                case REVIEW_READY:
+                case REJECTED:
+                    throw new IllegalArgumentException("Cannot publish a DOI with status '" + mintingStatus + "'");
                 case IN_REVIEW:
                 case APPROVED:
                 case ERROR_LOCKING_DATA:

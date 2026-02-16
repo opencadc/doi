@@ -155,7 +155,7 @@ public class AltStatusTest extends LifecycleTest {
                 checkStatus(doiNode, Status.IN_REVIEW);
                 log.debug("publisher - checked status");
 
-                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                // 'inready' node permissions, doi-group:r reviewer-group:r public:false
                 checkPermissions(doiNode, false, false, 2,0);
                 log.debug("publisher - checked permissions");
 
@@ -272,23 +272,6 @@ public class AltStatusTest extends LifecycleTest {
                 // 'approved' node permissions, doi-group:r reviewer-group:r public:false
                 checkPermissions(doiNode, false, false, 2,0);
                 log.debug("publisher - checked permissions");
-
-                return null;
-            });
-
-            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
-
-                // update status = 'in progress'
-                log.debug("submitter - update status to 'in progress");
-                updateStatus(doiSuffix, Status.DRAFT, false);
-
-                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
-                checkStatus(doiNode, Status.DRAFT);
-                log.debug("submitter - checked status");
-
-                // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
-                checkPermissions(doiNode, false, false, 1,1);
-                log.debug("submitter - checked permissions");
 
                 return null;
             });
