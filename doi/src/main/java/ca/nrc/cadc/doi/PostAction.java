@@ -539,12 +539,12 @@ public class PostAction extends DoiAction {
 
         // If the status changed, update the node permissions for an alternate configuration
         if (updatedStatus != null && isAlternativeConfiguration()) {
-            updatePermissions(doiNode, vosuri, currentStatus, updatedStatus);
+            updatePermissions(doiNode, currentStatus, updatedStatus);
         }
         vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiNode);
     }
 
-    private void updatePermissions(Node doiNode, VOSURI vosuri, Status current, Status updated) throws Exception {
+    private void updatePermissions(Node doiNode, Status current, Status updated) throws Exception {
 
         if (current != updated) {
             GroupURI doiGroupUri = createGroupURI(doiGroupPrefix + doiSuffix);
@@ -574,7 +574,7 @@ public class PostAction extends DoiAction {
                     throw new IllegalArgumentException("Invalid status change: 'review ready' -> 'in review'");
                 }
 
-                // can only update to 'in progress' from 'review ready', 'in review', 'rejected', or 'approved'
+                // can only update to 'in progress' from 'review ready', 'in review', or 'rejected'
             } else if (current == Status.REVIEW_READY || current == Status.IN_REVIEW
                     || current == Status.REJECTED && updated == Status.DRAFT) {
                 log.debug(String.format("update status: '%s' -> '%s'", current, updated));
