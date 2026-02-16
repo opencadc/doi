@@ -279,6 +279,8 @@ public abstract class DoiAction extends RestAction {
     }
 
     protected List<Node> getAccessibleDOIs() throws Exception {
+        Set<Status> readStatus = Set.of(Status.REVIEW_READY, Status.IN_REVIEW, Status.APPROVED, Status.REJECTED);
+
         List<Node> ownedNodes = new ArrayList<>();
         ContainerNode doiRootNode = vospaceDoiClient.getContainerNode("");
         if (doiRootNode != null) {
@@ -297,10 +299,18 @@ public abstract class DoiAction extends RestAction {
                         }
 
                         Long requesterUserId = Long.parseLong(requester.getValue());
-                        if (callersNumericId.equals(requesterUserId)
-                                || isCallingUserDOIAdmin()
-                                || isCallingUserPublisher()) {
+                        if (callersNumericId.equals(requesterUserId) || isCallingUserDOIAdmin()) {
                             ownedNodes.add(childNode);
+                            continue;
+                        }
+
+                        // if the caller is a publisher and the node status is readable for a publisher
+                        NodeProperty statusProperty = childNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
+                        if (statusProperty != null && statusProperty.getValue() != null) {
+                            Status status = Status.toValue(statusProperty.getValue());
+                            if (isCallingUserPublisher() && readStatus.contains(status)) {
+                                ownedNodes.add(childNode);
+                            }
                         }
                     } catch (NumberFormatException e) {
                         log.error(String.format("Unable to parse requester uid[%s] for doi: %s",
@@ -480,7 +490,10 @@ public abstract class DoiAction extends RestAction {
 
     protected static class DoiOutputStream implements OutputStreamWrapper {
         private final Resource streamResource;
-        public DoiOutputStream(Resource streamRes) { this.streamResource = streamRes; }
+
+        public DoiOutputStream(Resource streamRes) {
+            this.streamResource = streamRes; }
+
         public void write(OutputStream out) throws IOException {
             DoiXmlWriter writer = new DoiXmlWriter();
             writer.write(streamResource, out);
