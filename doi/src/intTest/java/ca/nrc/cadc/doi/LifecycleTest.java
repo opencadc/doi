@@ -283,6 +283,8 @@ public class LifecycleTest extends IntTestBase {
 
         // Update the DOI
         Resource actual = doUpdateTest(expected, doiURL);
+        // tests randomly fails when the transfer to vospace is slow, hence the sleep cycles
+        Thread.sleep(3000);
         compareResource(expected, actual, true);
 
         // remove updated properties

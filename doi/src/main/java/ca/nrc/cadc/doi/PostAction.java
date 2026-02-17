@@ -575,8 +575,8 @@ public class PostAction extends DoiAction {
                 }
 
                 // can only update to 'in progress' from 'review ready', 'in review', or 'rejected'
-            } else if (current == Status.REVIEW_READY || current == Status.IN_REVIEW
-                    || current == Status.REJECTED && updated == Status.DRAFT) {
+            } else if ((current == Status.REVIEW_READY || current == Status.IN_REVIEW
+                    || current == Status.REJECTED) && updated == Status.DRAFT) {
                 log.debug(String.format("update status: '%s' -> '%s'", current, updated));
 
                 // alt config only, update status to 'in progress':
