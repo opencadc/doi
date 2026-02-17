@@ -155,7 +155,7 @@ public class AltStatusTest extends LifecycleTest {
                 checkStatus(doiNode, Status.IN_REVIEW);
                 log.debug("publisher - checked status");
 
-                // 'inready' node permissions, doi-group:r reviewer-group:r public:false
+                // 'in review' node permissions, doi-group:r reviewer-group:r public:false
                 checkPermissions(doiNode, false, false, 2,0);
                 log.debug("publisher - checked permissions");
 
