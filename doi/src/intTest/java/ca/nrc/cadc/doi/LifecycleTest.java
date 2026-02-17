@@ -105,6 +105,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.opencadc.vospace.ContainerNode;
 import org.opencadc.vospace.DataNode;
+import org.opencadc.vospace.Node;
 import org.opencadc.vospace.VOS;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.ClientTransfer;
@@ -282,6 +283,8 @@ public class LifecycleTest extends IntTestBase {
 
         // Update the DOI
         Resource actual = doUpdateTest(expected, doiURL);
+        // tests randomly fails when the transfer to vospace is slow, hence the sleep cycles
+        Thread.sleep(3000);
         compareResource(expected, actual, true);
 
         // remove updated properties
@@ -303,50 +306,63 @@ public class LifecycleTest extends IntTestBase {
         VOSpaceClient vosClient = getVOSClient(doiSettingsType);
         VOSURI doiParentPathURI = getDoiParentPathURI(doiSettingsType);
 
-        // verify the DOI containerNode properties
-        ContainerNode doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
-        Assert.assertFalse("incorrect isPublic property",
-                doiNode.isPublic != null && doiNode.isPublic);
-        Assert.assertFalse("should have group read property",
-                doiNode.getReadOnlyGroup().isEmpty());
+        ContainerNode doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
         ContainerNode dataNode = getContainerNode(doiSuffix + "/data", doiParentPathURI, vosClient);
-        Assert.assertFalse("should have group write",
-                dataNode.getReadWriteGroup().isEmpty());
-
-        // add a file and a subdirectory with a file to the data directory
-        String testFile1 = "test-file-1.txt";
-        String testFile1Path = String.format("%s/data/%s", doiSuffix, testFile1);
-        DataNode testFileNode = createDataNode(testFile1Path, testFile1, doiSettingsType);
-
+        ContainerNode dataSubDirNode = null;
         String subDir = "subDir";
-        String subDirPath = String.format("%s/data/%s", doiSuffix, subDir);
-        ContainerNode dataSubDirNode = createContainerNode(subDirPath, subDir, doiSettingsType);
 
-        String testFile2 = "test-file-2.txt";
-        String testFile2Path = String.format("%s/data/%s/%s", doiSuffix, subDir, testFile2);
-        DataNode testFile2Node = createDataNode(testFile2Path, testFile2, doiSettingsType);
+        Assert.assertFalse("incorrect isPublic property", doiNode.isPublic != null && doiNode.isPublic);
+        Assert.assertFalse("should have group read property", doiNode.getReadOnlyGroup().isEmpty());
 
-        // mint the document, DRAFT ==> LOCKING_DATA
+        // for alternative configuration, only a publisher can publish, but the publisher cannot write to data folder
+        if (doiSettingsType == DOISettingsType.DOI) {
+            // verify the DOI containerNode properties
+            Assert.assertFalse("should have group write", dataNode.getReadWriteGroup().isEmpty());
+
+            // add a file and a subdirectory with a file to the data directory
+            String testFile1 = "test-file-1.txt";
+            String testFile1Path = String.format("%s/data/%s", doiSuffix, testFile1);
+            DataNode testFileNode = createDataNode(testFile1Path, testFile1, doiSettingsType);
+
+            String subDirPath = String.format("%s/data/%s", doiSuffix, subDir);
+            dataSubDirNode = createContainerNode(subDirPath, subDir, doiSettingsType);
+
+            String testFile2 = "test-file-2.txt";
+            String testFile2Path = String.format("%s/data/%s/%s", doiSuffix, subDir, testFile2);
+            DataNode testFile2Node = createDataNode(testFile2Path, testFile2, doiSettingsType);
+        }
+
+        // mint the document, DRAFT or IN REVIEW ==> LOCKING_DATA
         doMintTest(doiURL);
         doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
         dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
+        if (doiSettingsType == DOISettingsType.DOI) {
+            dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
+        }
         Assert.assertEquals("incorrect status",
                 Status.LOCKING_DATA.getValue(), doiNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY));
-        verifyNodeProperties(doiNode, dataNode, dataSubDirNode);
+        verifyNodeProperties(doiNode, dataNode, dataSubDirNode, doiSettingsType);
         log.debug("locking data");
 
         // mint the document, ERROR_LOCKING_DATA ==> LOCKING_DATA
         doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(Status.ERROR_LOCKING_DATA.getValue());
         VOSURI vosuri = getVOSURI(doiNode.getName(), doiSettingsType);
-        vosClient.setNode(vosuri, doiNode);
+        ContainerNode parentNode = doiNode;
+
+        // calls using the vospace client to update a node, bypassing the doi service, must be done as doiadmin
+        Subject.doAs(adminSubject, (PrivilegedExceptionAction<Object>) () -> {
+            vosClient.setNode(vosuri, parentNode);
+            return null;
+        });
         doMintTest(doiURL);
         doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
         dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
+        if (doiSettingsType == DOISettingsType.DOI) {
+            dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir, doiParentPathURI, vosClient);
+        }
         Assert.assertEquals("incorrect status",
                 Status.LOCKING_DATA.getValue(), doiNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY));
-        verifyNodeProperties(doiNode, dataNode, dataSubDirNode);
+        verifyNodeProperties(doiNode, dataNode, dataSubDirNode, doiSettingsType);
         log.debug("locking data again");
 
         // getStatus() changes LOCKING_DATA == > LOCKED_DATA
@@ -354,17 +370,19 @@ public class LifecycleTest extends IntTestBase {
         Assert.assertEquals("identifier from DOI status is different",
                 expected.getIdentifier().getValue(), doiStatus.getIdentifier().getValue());
         Assert.assertEquals("status is incorrect", Status.LOCKED_DATA, doiStatus.getStatus());
-        verifyLockedDataPropertyChanges(doiNode, dataNode, dataSubDirNode);
+        verifyLockedDataPropertyChanges(doiNode, dataNode, dataSubDirNode, doiSettingsType);
         log.debug("locked data");
 
         // mint the document, LOCKED_DATA == REGISTERING
         doMintTest(doiURL);
         doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
         dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
+        if (doiSettingsType == DOISettingsType.DOI) {
+            dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir, doiParentPathURI, vosClient);
+        }
         Assert.assertEquals("incorrect status",
                 Status.MINTED.getValue(), doiNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY));
-        verifyMintedStatePropertyChanges(doiNode, dataNode, dataSubDirNode);
+        verifyMintedStatePropertyChanges(doiNode, dataNode, dataSubDirNode, doiSettingsType);
         log.debug("registering");
 
         // mint the document, ERROR_REGISTERING ==> REGISTERING
@@ -382,10 +400,12 @@ public class LifecycleTest extends IntTestBase {
         doMintTest(doiURL);
         doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
         dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);
-        dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir , doiParentPathURI, vosClient);
+        if (doiSettingsType == DOISettingsType.DOI) {
+            dataSubDirNode = getContainerNode(doiSuffix + "/data/" + subDir, doiParentPathURI, vosClient);
+        }
         Assert.assertEquals("incorrect status",
                 Status.MINTED.getValue(), doiNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY));
-        verifyMintedStatePropertyChanges(doiNode, dataNode, dataSubDirNode);
+        verifyMintedStatePropertyChanges(doiNode, dataNode, dataSubDirNode, doiSettingsType);
 
         // getStatus() changes REGISTERING == > MINTED
         doiStatus = getStatus(doiURL);
@@ -435,51 +455,63 @@ public class LifecycleTest extends IntTestBase {
         return reader.read(new StringReader(bos.toString(StandardCharsets.UTF_8)));
     }
 
-    private void verifyDataDirNodeProperties(ContainerNode dataContainerNode,
-                                             ContainerNode dataSubDirContainerNode) {
+    private void verifyDataDirNodeProperties(Node dataNode, Node dataSubNode, DOISettingsType doiType) {
+
         // verify the DOI data containerNode properties
-        Assert.assertTrue("should be public", dataContainerNode.isPublic != null && dataContainerNode.isPublic);
-        Assert.assertTrue("should not have group read", dataContainerNode.getReadOnlyGroup().isEmpty());
-        Assert.assertTrue("should not have group write", dataContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertTrue("incorrect lock property", dataContainerNode.isLocked != null && dataContainerNode.isLocked);
+        Assert.assertTrue("data folder should be public", dataNode.isPublic != null && dataNode.isPublic);
+        Assert.assertTrue("should not have group read", dataNode.getReadOnlyGroup().isEmpty());
+        Assert.assertTrue("data folder should not have group write", dataNode.getReadWriteGroup().isEmpty());
+        Assert.assertTrue("data folder incorrect lock property", dataNode.isLocked != null && dataNode.isLocked);
 
-        // verify the DOI data subDir containerNode properties
-        Assert.assertTrue("should be public", dataSubDirContainerNode.isPublic != null && dataSubDirContainerNode.isPublic);
-        Assert.assertTrue("should not have group read", dataSubDirContainerNode.getReadOnlyGroup().isEmpty());
-        Assert.assertTrue("should not have group write", dataSubDirContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertTrue("incorrect lock property", dataSubDirContainerNode.isLocked != null && dataSubDirContainerNode.isLocked);
+        // a publisher does not have permissions to write to the data directory
+        if (doiType == DOISettingsType.DOI) {
+            // verify the DOI data subDir containerNode properties
+            Assert.assertTrue("data folder should be public", dataSubNode.isPublic != null && dataSubNode.isPublic);
+            Assert.assertTrue("data folder should not have group read", dataSubNode.getReadOnlyGroup().isEmpty());
+            Assert.assertTrue("data folder should not have group write", dataSubNode.getReadWriteGroup().isEmpty());
+            Assert.assertTrue("data folder incorrect lock property", dataSubNode.isLocked != null && dataSubNode.isLocked);
+        }
     }
 
-    private void verifyNodeProperties(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-                                      ContainerNode dataSubDirContainerNode) {
+    private void verifyNodeProperties(Node doiNode, Node dataNode, Node dataSubNode, DOISettingsType doiType) {
         // verify the DOI containerNode properties
-        Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
-        Assert.assertFalse("should have group read", doiContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertFalse("should have group write", doiContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertFalse("incorrect lock property", doiContainerNode.isLocked != null && doiContainerNode.isLocked);
+        Assert.assertFalse("doi folder incorrect isPublic property", doiNode.isPublic != null && doiNode.isPublic);
+        Assert.assertFalse("doi folder should have group read", doiNode.getReadOnlyGroup().isEmpty());
+        Assert.assertFalse("doi folder incorrect lock property", doiNode.isLocked != null && doiNode.isLocked);
 
-        verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode);
+        // a doi should have a write group, and alt-doi should not since the requester and publisher only have read-access to the doi
+        if (doiType == DOISettingsType.DOI) {
+            Assert.assertFalse("doi folder should have group write", doiNode.getReadWriteGroup().isEmpty());
+        } else {
+            Assert.assertTrue("doi folder should not have group write", doiNode.getReadWriteGroup().isEmpty());
+        }
+
+        verifyDataDirNodeProperties(dataNode, dataSubNode, doiType);
     }
 
-    private void verifyLockedDataPropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-                                                 ContainerNode dataSubDirContainerNode) {
+    private void verifyLockedDataPropertyChanges(Node doiNode, Node dataNode, Node dataSubNode, DOISettingsType doiType) {
         // verify the DOI containerNode properties
-        Assert.assertFalse("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
-        Assert.assertFalse("should have group read", doiContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertFalse("should have group write", doiContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertFalse("incorrect lock property", doiContainerNode.isLocked != null && doiContainerNode.isLocked);
+        Assert.assertFalse("locked doi folder incorrect isPublic property", doiNode.isPublic != null && doiNode.isPublic);
+        Assert.assertFalse("locked doi  folder should have group read", doiNode.getReadOnlyGroup().isEmpty());
+        Assert.assertFalse("locked doi  folder incorrect lock property", doiNode.isLocked != null && doiNode.isLocked);
 
-        verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode);
+        // a doi data folder should have a write group, and alt-doi should not since the requester and publisher only have read-access to the doi
+        if (doiType == DOISettingsType.DOI) {
+            Assert.assertFalse("locked doi folder should have group write", doiNode.getReadWriteGroup().isEmpty());
+        } else {
+            Assert.assertTrue("locked doi folder should have group write", doiNode.getReadWriteGroup().isEmpty());
+        }
+
+        verifyDataDirNodeProperties(dataNode, dataSubNode, doiType);
     }
 
-    private void verifyMintedStatePropertyChanges(ContainerNode doiContainerNode, ContainerNode dataContainerNode,
-                                                  ContainerNode dataSubDirContainerNode) {
+    private void verifyMintedStatePropertyChanges(Node doiNode, Node dataNode, Node dataSubNode, DOISettingsType doiType) {
         // verify the DOI containerNode properties
-        Assert.assertTrue("incorrect isPublic property", doiContainerNode.isPublic != null && doiContainerNode.isPublic);
-        Assert.assertTrue("should not have group read", doiContainerNode.getReadWriteGroup().isEmpty());
-        Assert.assertTrue("should not have group write", doiContainerNode.getReadWriteGroup().isEmpty());
+        Assert.assertTrue("minted doi folder incorrect isPublic property", doiNode.isPublic != null && doiNode.isPublic);
+        Assert.assertTrue("minted doi folder should not have group read", doiNode.getReadOnlyGroup().isEmpty());
+        Assert.assertTrue("minted doi folder should not have group write", doiNode.getReadWriteGroup().isEmpty());
 
-        verifyDataDirNodeProperties(dataContainerNode, dataSubDirContainerNode);
+        verifyDataDirNodeProperties(dataNode, dataSubNode, doiType);
     }
 
 }

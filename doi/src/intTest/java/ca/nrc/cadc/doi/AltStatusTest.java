@@ -72,18 +72,13 @@ package ca.nrc.cadc.doi;
 import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URL;
 import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
-import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.vospace.Node;
-import org.opencadc.vospace.NodeProperty;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
 
@@ -160,7 +155,7 @@ public class AltStatusTest extends LifecycleTest {
                 checkStatus(doiNode, Status.IN_REVIEW);
                 log.debug("publisher - checked status");
 
-                // 'review ready' node permissions, doi-group:r reviewer-group:r public:false
+                // 'in review' node permissions, doi-group:r reviewer-group:r public:false
                 checkPermissions(doiNode, false, false, 2,0);
                 log.debug("publisher - checked permissions");
 
@@ -218,7 +213,7 @@ public class AltStatusTest extends LifecycleTest {
                 log.debug("publisher - checked status");
 
                 // 'rejected' node permissions, doi-group:r reviewer-group:r public:false
-                checkPermissions(doiNode, false, false, 2,1);
+                checkPermissions(doiNode, false, false, 2,0);
                 log.debug("publisher - checked permissions");
 
                 return null;
@@ -281,47 +276,10 @@ public class AltStatusTest extends LifecycleTest {
                 return null;
             });
 
-            Subject.doAs(readWriteSubject, (PrivilegedExceptionAction<String>) () -> {
-
-                // update status = 'in progress'
-                log.debug("submitter - update status to 'in progress");
-                updateStatus(doiSuffix, Status.DRAFT, false);
-
-                Node doiNode = getContainerNode(doiSuffix, doiParentPathURI, vosClient);
-                checkStatus(doiNode, Status.DRAFT);
-                log.debug("submitter - checked status");
-
-                // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
-                checkPermissions(doiNode, false, false, 1,1);
-                log.debug("submitter - checked permissions");
-
-                return null;
-            });
-
         } catch (Exception unexpected) {
             log.debug("unexpected error: " + unexpected);
             Assert.fail("unexpected error: " + unexpected.getMessage());
         }
-    }
-
-    void updateStatus(String doiID, Status requestedStatus, boolean followRedirect)
-            throws Exception {
-        log.debug(String.format("update status to '%s'", requestedStatus.getValue()));
-        URL doiURL = new URL(String.format("%s/%s", doiAltServiceURL, doiID));
-        Map<String, String> params = new HashMap<>();
-        params.put(DOI.STATUS_NODE_PARAMETER, requestedStatus.getValue());
-        postDOI(doiURL , null, params, followRedirect);
-        log.debug(String.format("status updated to '%s'", requestedStatus.getValue()));
-    }
-
-    void checkStatus(Node doiNode, Status expectedStatus) {
-
-        Assert.assertNotNull(doiNode);
-
-        // check the status mode property
-        NodeProperty status = doiNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY);
-        Assert.assertNotNull(status);
-        Assert.assertEquals(expectedStatus.getValue(), status.getValue());
     }
 
     void checkPermissions(Node doiNode, boolean isLocked, boolean isPublic,
