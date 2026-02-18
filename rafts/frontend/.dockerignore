@@ -1,0 +1,140 @@
+# =============================================================================
+# RAFTS Frontend - Docker Build Context Exclusions
+# =============================================================================
+# Optimize Docker build context size and speed.
+# These files are NOT needed for production builds.
+# =============================================================================
+
+# =============================================================================
+# VERSION CONTROL
+# =============================================================================
+.git
+.gitignore
+.gitattributes
+
+# =============================================================================
+# DEPENDENCIES (Will be installed fresh in container)
+# =============================================================================
+node_modules
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
+
+# =============================================================================
+# BUILD OUTPUT (Will be generated in container)
+# =============================================================================
+.next
+out
+build
+dist
+coverage
+.nyc_output
+
+# =============================================================================
+# ENVIRONMENT FILES
+# =============================================================================
+# Don't include local env files - use Docker environment variables
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production.local
+
+# Keep .env.example for reference (optional, remove if not needed)
+# !.env.example
+
+# =============================================================================
+# DEVELOPMENT & TESTING
+# =============================================================================
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__
+**/__mocks__
+jest.config.*
+vitest.config.*
+playwright.config.*
+cypress/
+cypress.config.*
+
+# Development tools
+.husky
+.eslintrc*
+.eslintignore
+.prettierrc*
+.prettierignore
+.editorconfig
+tsconfig.tsbuildinfo
+
+# Storybook
+.storybook
+storybook-static
+
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+*.md
+!README.md
+docs
+doc_n_dev
+CLAUDE.md
+CHANGELOG*
+LICENSE*
+
+# =============================================================================
+# CI/CD
+# =============================================================================
+.gitlab-ci.yml
+.github
+.circleci
+.travis.yml
+azure-pipelines.yml
+Jenkinsfile
+bitbucket-pipelines.yml
+
+# =============================================================================
+# OS FILES
+# =============================================================================
+.DS_Store
+Thumbs.db
+*.log
+
+# =============================================================================
+# DOCKER (Prevent recursive context)
+# =============================================================================
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# =============================================================================
+# SECURITY
+# =============================================================================
+*.pem
+*.key
+*.crt
+*.p12
+
+# =============================================================================
+# MISCELLANEOUS
+# =============================================================================
+tmp
+temp
+.cache
+*.bak
+*.backup
