@@ -163,7 +163,7 @@ export default function ManageUsers() {
           User Management
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Manage users, roles, and permissions for the RAFT system.
+          Manage users, roles, and permissions for the RAFTS system.
         </Typography>
 
         <Paper elevation={2} className="p-4 mb-6">
@@ -210,7 +210,7 @@ export default function ManageUsers() {
       </main>
 
       <footer className="row-start-3 w-full text-center text-sm text-gray-500 mt-8">
-        <div>CADC RAFT Publication System</div>
+        <div>CADC RAFTS Publication System</div>
       </footer>
     </div>
   )

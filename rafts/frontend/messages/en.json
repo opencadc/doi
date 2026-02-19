@@ -257,7 +257,8 @@
     "password": "Password",
     "email": "User Email",
     "signing_in": "Signing in",
-    "forgot_password": "Forgot password?"
+    "forgot_password": "Forgot password?",
+    "create_account": "Create an account"
   },
   "profile": {
     "name": "Name",

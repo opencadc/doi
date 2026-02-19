@@ -79,7 +79,7 @@ const LoginFormLayout = ({ children }: LoginFormLayoutProps) => {
         <CardHeader
           title={
             <Typography variant="h5" component="h1" className="text-center">
-              Research Announcements For The Solar System (RAFTs)
+              Research Announcements For The Solar System (RAFTS)
             </Typography>
           }
         />

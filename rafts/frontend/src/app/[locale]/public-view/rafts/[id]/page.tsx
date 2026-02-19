@@ -80,12 +80,12 @@ export async function generateMetadata(props: {
 
   if (!success || !data) {
     return {
-      title: 'RAFT Not Found',
+      title: 'RAFTS Not Found',
     }
   }
 
   return {
-    title: `RAFT - ${data?.generalInfo?.title || 'View RAFT'}`,
+    title: `RAFTS - ${data?.generalInfo?.title || 'View RAFTS'}`,
     description:
       data.observationInfo?.abstract?.substring(0, 160) ||
       'Research Announcement For The Solar System',

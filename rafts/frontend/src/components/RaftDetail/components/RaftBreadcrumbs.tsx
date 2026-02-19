@@ -91,13 +91,13 @@ export default function RaftBreadcrumbs({ title, basePath }: RaftBreadcrumbsProp
         <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: 'text.primary' }}>
           <FileText size={16} />
           <Box component="span" sx={{ ml: 0.5 }}>
-            RAFTs
+            RAFTSs
           </Box>
         </Box>
       </Link>
       <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
         <Box component="span" sx={{ ml: 0.5 }}>
-          {title || 'RAFT Details'}
+          {title || 'RAFTS Details'}
         </Box>
       </Typography>
     </Breadcrumbs>

@@ -151,7 +151,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
     if (!rowData.id) {
       setSnackbar({
         open: true,
-        message: 'No RAFT ID available',
+        message: 'No RAFTS ID available',
         severity: 'error',
       })
       setDeleteDialogOpen(false)
@@ -164,7 +164,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
       if (result.success) {
         setSnackbar({
           open: true,
-          message: 'RAFT deleted successfully',
+          message: 'RAFTS deleted successfully',
           severity: 'success',
         })
         setDeleteDialogOpen(false)
@@ -174,7 +174,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
       } else {
         setSnackbar({
           open: true,
-          message: result.message || 'Failed to delete RAFT',
+          message: result.message || 'Failed to delete RAFTS',
           severity: 'error',
         })
         setDeleteDialogOpen(false)
@@ -183,7 +183,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
       console.error('[ActionMenu] Error deleting RAFT:', error)
       setSnackbar({
         open: true,
-        message: 'An error occurred while deleting RAFT',
+        message: 'An error occurred while deleting RAFTS',
         severity: 'error',
       })
       setDeleteDialogOpen(false)
@@ -339,10 +339,10 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
         aria-labelledby="delete-dialog-title"
         aria-describedby="delete-dialog-description"
       >
-        <DialogTitle id="delete-dialog-title">Delete RAFT</DialogTitle>
+        <DialogTitle id="delete-dialog-title">Delete RAFTS</DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this RAFT? This action cannot be undone.
+            Are you sure you want to delete this RAFTS? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

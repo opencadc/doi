@@ -91,7 +91,7 @@ export default function View() {
         await signOut()
       }
       console.error('Error fetching DOI data:', error)
-      setError('Failed to load RAFT data. Please try again later.')
+      setError('Failed to load RAFTS data. Please try again later.')
     }
     setIsLoading(false)
   }, [])
@@ -109,7 +109,7 @@ export default function View() {
     <div className="grid grid-rows-[auto_1fr_auto] items-center min-h-screen p-4 pb-8 gap-8 sm:p-8 font-[family-name:var(--font-geist-sans)]">
       <header className="row-start-1 w-full">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Your submissions (RAFTs)</h1>
+          <h1 className="text-2xl font-bold">Your submissions (RAFTSs)</h1>
           <Link href="/form/create">
             <Button variant="contained" color="primary" startIcon={<Add />} size="medium">
               Create New Raft
@@ -125,7 +125,7 @@ export default function View() {
         )}
       </main>
       <footer className="row-start-3 w-full text-center text-sm text-gray-500 mt-8">
-        <div>CADC RAFT Publication System</div>
+        <div>CADC RAFTS Publication System</div>
       </footer>
     </div>
   )

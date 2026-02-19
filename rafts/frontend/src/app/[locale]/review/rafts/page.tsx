@@ -120,10 +120,10 @@ export default function ReviewRafts() {
     <div className="grid grid-rows-[auto_1fr_auto] items-center min-h-screen p-4 pb-8 gap-8 sm:p-8">
       <header className="row-start-1 w-full">
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Review RAFT Submissions
+          Review RAFTS Submissions
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Manage and review RAFT submissions based on their current status.
+          Manage and review RAFTS submissions based on their current status.
         </Typography>
 
         <StatusFilter
@@ -155,7 +155,7 @@ export default function ReviewRafts() {
       </main>
 
       <footer className="row-start-3 w-full text-center text-sm text-gray-500 mt-8">
-        <div>CADC RAFT Publication System</div>
+        <div>CADC RAFTS Publication System</div>
       </footer>
     </div>
   )

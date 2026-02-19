@@ -171,7 +171,7 @@ export const submitForReview = async (
 
     return {
       [SUCCESS]: true,
-      data: 'RAFT submitted for review successfully',
+      data: 'RAFTS submitted for review successfully',
     }
   } catch (error) {
     console.error('[submitForReview] Exception:', error)
@@ -268,7 +268,7 @@ export const revertToDraft = async (
 
     return {
       [SUCCESS]: true,
-      data: 'RAFT reverted to draft successfully',
+      data: 'RAFTS reverted to draft successfully',
     }
   } catch (error) {
     console.error('[revertToDraft] Exception:', error)

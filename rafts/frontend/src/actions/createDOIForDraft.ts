@@ -121,13 +121,13 @@ function buildMinimalDataCiteMetadata(title: string, creatorName: string): Recor
         ],
       },
       titles: {
-        $: [{ title: { $: title || 'Untitled RAFT Draft' } }],
+        $: [{ title: { $: title || 'Untitled RAFTS Draft' } }],
       },
       publisher: { $: 'NRC CADC' },
       publicationYear: { $: publicationYear },
       resourceType: {
         '@resourceTypeGeneral': 'Dataset',
-        $: 'RAFT Announcement',
+        $: 'RAFTS Announcement',
       },
     },
   }
@@ -144,7 +144,7 @@ function buildMinimalDataCiteMetadata(title: string, creatorName: string): Recor
  * @returns DOI identifier and URL on success
  */
 export async function createDOIForDraft(
-  title: string = 'Untitled RAFT Draft',
+  title: string = 'Untitled RAFTS Draft',
 ): Promise<IResponseData<CreateDOIResult>> {
   const session = await auth()
   const accessToken = session?.accessToken

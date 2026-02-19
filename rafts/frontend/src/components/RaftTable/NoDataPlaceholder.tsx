@@ -110,7 +110,7 @@ export default function NoDataPlaceholder({
 
       {showCreateButton && (
         <Button variant="contained" color="primary" onClick={() => router.push('/form/create')}>
-          Create a RAFT
+          Create a RAFTS
         </Button>
       )}
     </Box>

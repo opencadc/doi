@@ -107,7 +107,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
           setIsSubmitting(false)
           return
         }
-        onStatusChange?.('RAFT status changed to Draft.', 'success')
+        onStatusChange?.('RAFTS status changed to Draft.', 'success')
       } catch (error) {
         console.error('[ActionMenu] Error updating status:', error)
         onStatusChange?.('An error occurred', 'error')
@@ -132,7 +132,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
     try {
       const result = await submitForReview(raftId, rowData.dataDirectory)
       if (result.success) {
-        onStatusChange?.('RAFT status changed to Review Ready.', 'success')
+        onStatusChange?.('RAFTS status changed to Review Ready.', 'success')
       } else {
         console.error('[ActionMenu] Failed to submit for review:', result.message)
         onStatusChange?.(result.message || 'Failed to submit for review', 'error')
@@ -153,13 +153,13 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
 
   return (
     <Box sx={{ display: 'flex', gap: 0.5 }}>
-      <Tooltip title="View RAFT">
+      <Tooltip title="View RAFTS">
         <IconButton onClick={handleView} size="small">
           <Eye size={18} />
         </IconButton>
       </Tooltip>
 
-      <Tooltip title={isEditable ? 'Edit RAFT' : 'Cannot edit (not a draft)'}>
+      <Tooltip title={isEditable ? 'Edit RAFTS' : 'Cannot edit (not a draft)'}>
         <span>
           <IconButton onClick={handleEdit} size="small" disabled={!isEditable || isSubmitting}>
             <Edit size={18} />

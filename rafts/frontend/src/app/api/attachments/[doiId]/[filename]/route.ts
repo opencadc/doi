@@ -75,6 +75,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth/cadc-auth/credentials'
 import { downloadAttachment } from '@/services/attachmentService'
+import { sanitizeFilename } from '@/types/attachments'
 
 export async function GET(
   request: NextRequest,
@@ -121,7 +122,7 @@ export async function GET(
     return new NextResponse(arrayBuffer, {
       headers: {
         'Content-Type': result.mimeType || 'application/octet-stream',
-        'Content-Disposition': `inline; filename="${decodedFilename}"`,
+        'Content-Disposition': `inline; filename="${sanitizeFilename(decodedFilename)}"`,
         'Cache-Control': 'private, max-age=3600', // Cache for 1 hour
       },
     })

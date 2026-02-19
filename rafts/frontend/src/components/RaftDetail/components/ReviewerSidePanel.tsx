@@ -127,7 +127,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       const result = await claimForReview(raftId, raftData.dataDirectory)
 
       if (result.success) {
-        onNotify('success', 'RAFT status changed to In Review.')
+        onNotify('success', 'RAFTS status changed to In Review.')
         setTimeout(() => {
           router.refresh()
         }, 1000)
@@ -153,7 +153,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       const result = await releaseReview(raftId, raftData.dataDirectory)
 
       if (result.success) {
-        onNotify('success', 'RAFT status changed to Review Ready.')
+        onNotify('success', 'RAFTS status changed to Review Ready.')
         setTimeout(() => {
           router.refresh()
         }, 1000)
@@ -178,14 +178,14 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       })
 
       if (result.success) {
-        onNotify('success', result.message || `RAFT DOI published successfully.`)
+        onNotify('success', result.message || `RAFTS DOI published successfully.`)
 
         // Refresh the page after a short delay to get updated data
         setTimeout(() => {
           router.refresh()
         }, 2000)
       } else {
-        onNotify('error', result.message || 'Failed to publish RAFT DOI.')
+        onNotify('error', result.message || 'Failed to publish RAFTS DOI.')
       }
     } catch (error) {
       console.error('Error publishing DOI: ', error)
@@ -207,7 +207,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       if (result.success) {
         onNotify(
           'success',
-          result.message || `RAFT status changed to ${getStatusDisplayName(newStatus)}.`,
+          result.message || `RAFTS status changed to ${getStatusDisplayName(newStatus)}.`,
         )
 
         // Refresh the page after a short delay to get updated data
@@ -373,7 +373,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       case BACKEND_STATUS.REVIEW_READY:
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            <Tooltip title="Claim this RAFT for review and become the assigned reviewer">
+            <Tooltip title="Claim this RAFTS for review and become the assigned reviewer">
               <Button
                 variant="contained"
                 color="primary"
@@ -390,7 +390,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
               </Button>
             </Tooltip>
             <Typography variant="body2" color="text.secondary">
-              Claiming this RAFT will assign you as the reviewer and change the status to &quot;In
+              Claiming this RAFTS will assign you as the reviewer and change the status to &quot;In
               Review&quot;.
             </Typography>
           </Box>
@@ -401,7 +401,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Tooltip title="Approve RAFT">
+              <Tooltip title="Approve RAFTS">
                 <Button
                   variant="contained"
                   color="success"
@@ -417,7 +417,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
                   )}
                 </Button>
               </Tooltip>
-              <Tooltip title="Reject RAFT">
+              <Tooltip title="Reject RAFTS">
                 <Button
                   variant="contained"
                   color="error"
@@ -531,7 +531,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       case BACKEND_STATUS.MINTED:
         return (
           <Typography variant="body2" color="text.secondary">
-            This RAFT has been published and cannot be modified.
+            This RAFTS has been published and cannot be modified.
           </Typography>
         )
 
@@ -539,7 +539,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       case BACKEND_STATUS.IN_PROGRESS:
         return (
           <Typography variant="body2" color="text.secondary">
-            This RAFT is a draft and has not been submitted for review yet.
+            This RAFTS is a draft and has not been submitted for review yet.
           </Typography>
         )
 

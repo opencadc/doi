@@ -67,11 +67,12 @@
 
 import LandingChoice from '@/components/LandingPage/LandingChoice'
 import { auth } from '@/auth/cadc-auth/credentials'
+import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
 
 const HomePage = async () => {
   const session = await auth()
 
-  return <LandingChoice session={session} />
+  return <LandingChoice session={isStaleSession(session) ? null : session} />
 }
 
 export default HomePage

@@ -71,6 +71,7 @@ import LoginForm from '@/components/User/LoginForm'
 import LoginFormLayout from '@/components/Layout/LoginFormLayout'
 import { auth } from '@/auth/cadc-auth/credentials'
 import { authenticateUser } from '@/actions/auth'
+import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
 
 // Define types that match what Next.js is expecting
 interface PageProps {
@@ -85,7 +86,7 @@ const LoginPage = async ({ searchParams }: PageProps) => {
   const session = await auth()
   const defaultReturnUrl = '/'
 
-  if (session) {
+  if (session && !isStaleSession(session)) {
     redirect((resolvedSearchParams.returnUrl as string) || defaultReturnUrl)
   }
 

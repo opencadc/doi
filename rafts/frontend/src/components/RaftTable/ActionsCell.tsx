@@ -92,7 +92,7 @@ const ActionsCell: React.FC<ActionsCellProps> = ({ raft }) => {
   }
 
   return (
-    <Tooltip title="View RAFT">
+    <Tooltip title="View RAFTS">
       <IconButton onClick={handleView} size="small">
         <Eye size={18} />
       </IconButton>

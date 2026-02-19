@@ -212,7 +212,7 @@ export const claimForReview = async (
 
       return {
         [SUCCESS]: true,
-        data: `RAFT claimed for review by "${reviewerName}"`,
+        data: `RAFTS claimed for review by "${reviewerName}"`,
       }
     }
 

@@ -171,7 +171,7 @@ export const updateDOIStatus = async (
 
     return {
       [SUCCESS]: true,
-      [MESSAGE]: `RAFT status changed to ${getStatusDisplayName(newStatus)}.`,
+      [MESSAGE]: `RAFTS status changed to ${getStatusDisplayName(newStatus)}.`,
       data: responseText,
     }
   } catch (error) {
