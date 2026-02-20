@@ -69,6 +69,7 @@ import { ReactNode } from 'react'
 import AppBar from '@/components/Layout/AppBar'
 import { auth } from '@/auth/cadc-auth/credentials'
 import { VersionInfo } from '@/components/VersionInfo'
+import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -76,10 +77,11 @@ interface AppLayoutProps {
 
 const AppLayout = async ({ children }: AppLayoutProps) => {
   const session = await auth()
+  const validSession = isStaleSession(session) ? null : session
 
   return (
     <div className="w-full min-h-screen flex flex-col ">
-      <AppBar session={session} />
+      <AppBar session={validSession} />
       <main className="flex-1 w-full flex flex-col h-screen">{children}</main>
       <footer className="w-full flex gap-6 flex-wrap items-center justify-center p-8">
         <div className="flex flex-col gap-8 items-center">Footer</div>

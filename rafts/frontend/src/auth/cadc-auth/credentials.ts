@@ -104,6 +104,7 @@ export const {
  */
           // Step 3: Fetch user information
           const user: User | null = await fetchUserInfo(token)
+          if (!user) return null
 
           // Step 4: Fetch user groups/roles
           const { role: userRole, groups: userGroups } = await fetchUserGroups(token)
@@ -130,7 +131,11 @@ export const {
         token.role = user.role
         token.groups = user.groups
         token.affiliation = user.affiliation
-        token.name = user.firstName + ' ' + user.lastName
+        const firstName = user.firstName?.trim()
+        const lastName = user.lastName?.trim()
+        token.name = firstName || lastName
+          ? [firstName, lastName].filter(Boolean).join(' ')
+          : user.id || ''
       }
       return token
     },

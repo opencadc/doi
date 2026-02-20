@@ -98,7 +98,7 @@ export const updateRaft = async (
     }
 
     if (!raftId) {
-      return { success: false, error: 'RAFT ID is required for updates' }
+      return { success: false, error: 'RAFTS ID is required for updates' }
     }
 
     // Prepare the payload for submission

@@ -266,7 +266,8 @@
     "password": "Mot de passe",
     "email": "Courriel de l'utilisateur",
     "signing_in": "Connexion en cours...",
-    "forgot_password": "Mot de passe oublié?"
+    "forgot_password": "Mot de passe oublié?",
+    "create_account": "Créer un compte"
   },
   "profile": {
     "name": "Nom",

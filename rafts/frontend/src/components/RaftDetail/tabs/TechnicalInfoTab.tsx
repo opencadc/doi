@@ -95,7 +95,7 @@ const TechnicalInfoTab = ({ technical, doiId }: TechnicalInfoTabProps) => {
       <NoDataMessage
         icon={<AlertTriangle size={40} />}
         title="No Technical Information"
-        message="This RAFT does not contain any technical details."
+        message="This RAFTS does not contain any technical details."
       />
     )
   }

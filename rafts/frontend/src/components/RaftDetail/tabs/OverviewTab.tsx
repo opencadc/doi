@@ -274,7 +274,7 @@ export default function OverviewTab({
             <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" gutterBottom>
-                  Related RAFTs
+                  Related RAFTSs
                 </Typography>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>

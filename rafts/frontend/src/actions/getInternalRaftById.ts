@@ -81,7 +81,7 @@ export const getInternalRaftById = async (id: string) => {
       if (mockRaft) {
         return { success: true, data: mockRaft }
       } else {
-        return { success: false, error: 'RAFT not found' }
+        return { success: false, error: 'RAFTS not found' }
       }
     }
 

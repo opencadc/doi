@@ -91,14 +91,14 @@ export const routes: Record<string, RouteConfig> = {
     path: '/',
     roles: ['contributor', 'reviewer', 'admin'],
     title: 'Dashboard',
-    description: 'Overview of RAFT activities',
+    description: 'Overview of RAFTS activities',
   },
 
   // RAFT Creation
   createRaft: {
     path: '/form/create',
     roles: ['contributor', 'reviewer', 'admin'],
-    title: 'Create RAFT',
+    title: 'Create RAFTS',
     description: 'Submit a new research announcement',
   },
 
@@ -106,7 +106,7 @@ export const routes: Record<string, RouteConfig> = {
   viewRafts: {
     path: '/view',
     roles: ['contributor', 'reviewer', 'admin'],
-    title: 'View RAFTs',
+    title: 'View RAFTSs',
     description: 'Browse published announcements',
   },
 
@@ -114,38 +114,38 @@ export const routes: Record<string, RouteConfig> = {
   review: {
     path: '/review',
     roles: ['reviewer', 'admin'],
-    title: 'Review RAFTs',
-    description: 'Review and moderate submitted RAFTs',
+    title: 'Review RAFTSs',
+    description: 'Review and moderate submitted RAFTSs',
     children: {
       pending: {
         path: '/review/pending',
         roles: ['reviewer', 'admin'],
         title: 'Pending Review',
-        description: 'RAFTs awaiting initial review',
+        description: 'RAFTSs awaiting initial review',
       },
       inProgress: {
         path: '/review/in-progress',
         roles: ['reviewer', 'admin'],
         title: 'In Progress',
-        description: 'RAFTs currently being reviewed',
+        description: 'RAFTSs currently being reviewed',
       },
       approved: {
         path: '/review/approved',
         roles: ['reviewer', 'admin'],
         title: 'Approved',
-        description: 'RAFTs that have been approved',
+        description: 'RAFTSs that have been approved',
       },
       rejected: {
         path: '/review/rejected',
         roles: ['reviewer', 'admin'],
         title: 'Rejected',
-        description: 'RAFTs that have been rejected',
+        description: 'RAFTSs that have been rejected',
       },
       raftDetail: {
         path: '/review/rafts/:id',
         roles: ['reviewer', 'admin'],
-        title: 'RAFT Details',
-        description: 'Detailed view of a RAFT submission',
+        title: 'RAFTS Details',
+        description: 'Detailed view of a RAFTS submission',
       },
     },
   },

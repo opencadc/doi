@@ -162,7 +162,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
         }
         setSnackbar({
           open: true,
-          message: 'RAFT status changed to Draft.',
+          message: 'RAFTS status changed to Draft.',
           severity: 'success',
         })
       } catch (error) {
@@ -189,7 +189,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
     if (!raftData.id) {
       setSnackbar({
         open: true,
-        message: 'No RAFT ID available',
+        message: 'No RAFTS ID available',
         severity: 'error',
       })
       setDeleteDialogOpen(false)
@@ -202,7 +202,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
       if (result.success) {
         setSnackbar({
           open: true,
-          message: 'RAFT deleted successfully',
+          message: 'RAFTS deleted successfully',
           severity: 'success',
         })
         setDeleteDialogOpen(false)
@@ -212,7 +212,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
       } else {
         setSnackbar({
           open: true,
-          message: result.message || 'Failed to delete RAFT',
+          message: result.message || 'Failed to delete RAFTS',
           severity: 'error',
         })
         setDeleteDialogOpen(false)
@@ -221,7 +221,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
       console.error('[RaftDetail] Error deleting RAFT:', error)
       setSnackbar({
         open: true,
-        message: 'An error occurred while deleting RAFT',
+        message: 'An error occurred while deleting RAFTS',
         severity: 'error',
       })
       setDeleteDialogOpen(false)
@@ -247,7 +247,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
       if (result.success) {
         setSnackbar({
           open: true,
-          message: 'RAFT status changed to Review Ready.',
+          message: 'RAFTS status changed to Review Ready.',
           severity: 'success',
         })
         // Refresh the page to reflect the new status
@@ -292,7 +292,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
       if (result.success) {
         setSnackbar({
           open: true,
-          message: 'RAFT status changed to Draft.',
+          message: 'RAFTS status changed to Draft.',
           severity: 'success',
         })
         router.refresh()

@@ -83,10 +83,10 @@ export async function generateMetadata(props: {
   }
 
   return {
-    title: `Review RAFT - ${data?.generalInfo?.title || 'Review RAFT'}`,
+    title: `Review RAFTS - ${data?.generalInfo?.title || 'Review RAFTS'}`,
     description:
       data.observationInfo?.abstract?.substring(0, 160) ||
-      'Research Announcement For The Solar System',
+      'Research Announcements For The Solar System',
   }
 }
 

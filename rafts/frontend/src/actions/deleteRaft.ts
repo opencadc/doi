@@ -128,7 +128,7 @@ export const deleteRaft = async (doiSuffix: string): Promise<IResponseData<strin
       }
     }
 
-    return { [SUCCESS]: true, [MESSAGE]: 'RAFT deleted successfully' }
+    return { [SUCCESS]: true, [MESSAGE]: 'RAFTS deleted successfully' }
   } catch (error) {
     console.error('[deleteRaft] Exception:', error)
     return {

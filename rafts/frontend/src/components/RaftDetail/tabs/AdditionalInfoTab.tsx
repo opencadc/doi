@@ -86,7 +86,7 @@ export default function AdditionalInfoTab({ miscInfo, doiId }: AdditionalInfoTab
       <NoDataMessage
         icon={<AlertTriangle size={40} />}
         title="No Additional Information"
-        message="This RAFT does not contain any additional information."
+        message="This RAFTS does not contain any additional information."
       />
     )
   }

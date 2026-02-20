@@ -151,7 +151,7 @@ const AppBar = ({ session }: AppBarProps) => {
             sx={{ display: { xs: 'none', md: 'flex' } }}
           >
             <Typography variant="h6" color="inherit" component="h6">
-              Research Announcements For The Solar System (RAFTs)
+              Research Announcements For The Solar System (RAFTS)
             </Typography>
           </Box>
         </Box>

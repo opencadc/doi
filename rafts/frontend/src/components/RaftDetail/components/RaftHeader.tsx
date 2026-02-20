@@ -173,7 +173,7 @@ export default function RaftHeader({
           )}
 
           <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
-            {title || 'Untitled RAFT'}
+            {title || 'Untitled RAFTS'}
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
@@ -272,7 +272,7 @@ export default function RaftHeader({
             </Tooltip>
           )}
 
-          <Tooltip title="Download RAFT">
+          <Tooltip title="Download RAFTS">
             <Button
               variant="outlined"
               size="small"
@@ -285,7 +285,7 @@ export default function RaftHeader({
             </Button>
           </Tooltip>
 
-          <Tooltip title="Share RAFT">
+          <Tooltip title="Share RAFTS">
             <Button
               variant="outlined"
               size="small"
@@ -299,7 +299,7 @@ export default function RaftHeader({
           </Tooltip>
 
           {isEditable && (
-            <Tooltip title="Edit RAFT">
+            <Tooltip title="Edit RAFTS">
               <Button
                 variant="outlined"
                 size="small"
@@ -341,7 +341,7 @@ export default function RaftHeader({
           )}
 
           {isDeletable && (
-            <Tooltip title="Delete RAFT">
+            <Tooltip title="Delete RAFTS">
               <Button
                 variant="outlined"
                 size="small"

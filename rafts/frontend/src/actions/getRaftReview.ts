@@ -79,7 +79,7 @@ export const getRaftReview = async (raftId: string) => {
       const mockRaft = getMockRaftById(raftId)
 
       if (!mockRaft) {
-        return { success: false, error: 'RAFT not found' }
+        return { success: false, error: 'RAFTS not found' }
       }
 
       // Create a mock review based on the RAFT status

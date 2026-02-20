@@ -97,10 +97,10 @@ export default function DeleteConfirmationDialog({
       aria-labelledby="delete-dialog-title"
       aria-describedby="delete-dialog-description"
     >
-      <DialogTitle id="delete-dialog-title">Delete RAFT</DialogTitle>
+      <DialogTitle id="delete-dialog-title">Delete RAFTS</DialogTitle>
       <DialogContent>
         <DialogContentText id="delete-dialog-description">
-          Are you sure you want to delete this RAFT? This action cannot be undone.
+          Are you sure you want to delete this RAFTS? This action cannot be undone.
         </DialogContentText>
       </DialogContent>
       <DialogActions>

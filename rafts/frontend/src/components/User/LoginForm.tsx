@@ -74,7 +74,6 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import UserIcon from '@mui/icons-material/VerifiedUser'
 import { useState } from 'react'
-import Link from 'next/link'
 import { AuthState, LoginFormValues } from '@/actions/auth'
 import Turnstile from './Turnstile'
 
@@ -205,12 +204,24 @@ const LoginForm = ({ authAction, returnUrl }: LoginFormProps) => {
         }}
         disabled={isSubmitting}
       />
-      <Link
-        href="/request-password-reset"
-        className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
-      >
-        {t('forgot_password')}
-      </Link>
+      <div className="flex justify-between">
+        <a
+          href="https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/auth/resetPassword.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
+        >
+          {t('forgot_password')}
+        </a>
+        <a
+          href="https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/auth/request.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
+        >
+          {t('create_account')}
+        </a>
+      </div>
 
       {turnstileSiteKey && (
         <div className="flex justify-center my-4">

@@ -146,7 +146,7 @@ export const submitDOI = async (formData: TRaftContext): Promise<IResponseData<s
       console.error('[submitDOI] RAFT.json upload failed:', uploadResult.error.message)
       return {
         [SUCCESS]: false,
-        [MESSAGE]: `DOI created (${identifier}) but RAFT data save failed: ${uploadResult.error.message}`,
+        [MESSAGE]: `DOI created (${identifier}) but RAFTS data save failed: ${uploadResult.error.message}`,
       }
     }
 

@@ -89,7 +89,7 @@ export default function MeasurementsTab({ measurementInfo }: MeasurementsTabProp
       <NoDataMessage
         icon={<AlertTriangle size={40} />}
         title="No Measurement Data"
-        message="This RAFT does not contain any measurement information."
+        message="This RAFTS does not contain any measurement information."
       />
     )
   }

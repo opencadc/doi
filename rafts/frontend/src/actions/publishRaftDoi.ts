@@ -144,7 +144,7 @@ export const publishRAFTDOI = async (
 
     return {
       [SUCCESS]: true,
-      [MESSAGE]: 'RAFT status changed to Published.',
+      [MESSAGE]: 'RAFTS status changed to Published.',
     }
   } catch (error) {
     console.error('[publishRAFTDOI] Error:', error)

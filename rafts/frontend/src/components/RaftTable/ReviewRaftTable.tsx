@@ -184,7 +184,7 @@ export default function RaftTable({
       <Box sx={{ p: 2 }}>
         <FormControl fullWidth variant="outlined" size="small">
           <TextField
-            placeholder="Search RAFTs..."
+            placeholder="Search RAFTSs..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             InputProps={{
@@ -200,7 +200,7 @@ export default function RaftTable({
       </Box>
 
       <TableContainer>
-        <Table sx={{ minWidth: 650 }} aria-label="RAFT submissions table">
+        <Table sx={{ minWidth: 650 }} aria-label="RAFTS submissions table">
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

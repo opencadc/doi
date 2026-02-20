@@ -114,11 +114,10 @@ const middleware = async (request: NextRequest) => {
   const userRole = session?.user?.role
 
   // Skip locale handling for API routes
+  // Note: Next.js automatically strips basePath in middleware when configured in next.config.ts
   const pathname = request.nextUrl.pathname
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
-  const pathWithoutBase = pathname.replace(basePath, '')
 
-  if (pathWithoutBase.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     // For API routes, just return without locale handling
     const response = NextResponse.next()
     response.headers.set('Cache-Control', 'no-store, max-age=0')
@@ -138,12 +137,11 @@ const middleware = async (request: NextRequest) => {
     return response
   }
 
-  // If not authenticated (no session), redirect to login-required page
-  if (!session) {
+  // If not authenticated or session is stale (missing user name), redirect to login
+  const isStaleSession = session && (!session.user?.name || session.user.name.includes('undefined'))
+  if (!session || isStaleSession) {
     const loginRequiredUrl = new URL('/login-required', request.url)
-    // Preserve the current path as returnUrl - strip basePath to avoid double prepending
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
-    const returnPath = request.nextUrl.pathname.replace(basePath, '') || '/'
+    const returnPath = request.nextUrl.pathname || '/'
     loginRequiredUrl.searchParams.set('returnUrl', returnPath)
     return NextResponse.redirect(loginRequiredUrl)
   }

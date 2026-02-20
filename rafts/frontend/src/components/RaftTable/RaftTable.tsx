@@ -171,7 +171,7 @@ export default function RaftTable({ data, isLoading = false }: RaftTableProps) {
       <Box sx={{ p: 2 }}>
         <FormControl fullWidth variant="outlined" size="small">
           <TextField
-            placeholder="Search RAFTs..."
+            placeholder="Search RAFTSs..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             slotProps={{
@@ -189,7 +189,7 @@ export default function RaftTable({ data, isLoading = false }: RaftTableProps) {
       </Box>
 
       <TableContainer>
-        <Table sx={{ minWidth: 650 }} aria-label="RAFT submissions table">
+        <Table sx={{ minWidth: 650 }} aria-label="RAFTS submissions table">
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -240,8 +240,8 @@ export default function RaftTable({ data, isLoading = false }: RaftTableProps) {
               <TableRow>
                 <TableCell colSpan={columns.length} sx={{ py: 10 }}>
                   <NoDataPlaceholder
-                    message="No RAFTs found"
-                    subMessage="Try changing your search criteria or create a new RAFT"
+                    message="No RAFTSs found"
+                    subMessage="Try changing your search criteria or create a new RAFTS"
                   />
                 </TableCell>
               </TableRow>
