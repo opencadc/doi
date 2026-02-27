@@ -65,6 +65,24 @@
  ************************************************************************
  */
 
-export default function RootPage() {
-  return null
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages } from 'next-intl/server'
+import LandingChoice from '@/components/LandingPage/LandingChoice'
+import AppLayout from '@/components/Layout/AppLayout'
+import { auth } from '@/auth/cadc-auth/credentials'
+import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
+
+const RootPage = async () => {
+  const messages = await getMessages()
+  const session = await auth()
+
+  return (
+    <NextIntlClientProvider messages={messages}>
+      <AppLayout>
+        <LandingChoice session={isStaleSession(session) ? null : session} />
+      </AppLayout>
+    </NextIntlClientProvider>
+  )
 }
+
+export default RootPage

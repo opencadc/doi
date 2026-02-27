@@ -136,7 +136,9 @@ const LoginForm = ({ authAction, returnUrl }: LoginFormProps) => {
       // Handle successful login with a single redirect
       if (result.success) {
         // Use hard navigation to ensure server components refresh with new session
-        window.location.href = returnUrl
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+        const url = returnUrl.startsWith(basePath) ? returnUrl : `${basePath}${returnUrl}`
+        window.location.href = url
       }
     } catch (error) {
       console.error('Login error:', error)

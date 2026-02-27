@@ -140,7 +140,8 @@ const middleware = async (request: NextRequest) => {
   // If not authenticated or session is stale (missing user name), redirect to login
   const isStaleSession = session && (!session.user?.name || session.user.name.includes('undefined'))
   if (!session || isStaleSession) {
-    const loginRequiredUrl = new URL('/login-required', request.url)
+    const loginRequiredUrl = request.nextUrl.clone()
+    loginRequiredUrl.pathname = '/login-required'
     const returnPath = request.nextUrl.pathname || '/'
     loginRequiredUrl.searchParams.set('returnUrl', returnPath)
     return NextResponse.redirect(loginRequiredUrl)
@@ -150,7 +151,9 @@ const middleware = async (request: NextRequest) => {
   const hasAccess = canAccessRoute(pathnameWithoutLocale, userRole)
 
   if (!hasAccess) {
-    return NextResponse.redirect(new URL('/unauthorized', request.url))
+    const unauthorizedUrl = request.nextUrl.clone()
+    unauthorizedUrl.pathname = '/unauthorized'
+    return NextResponse.redirect(unauthorizedUrl)
   }
 
   // Continue with the locale-handled response
