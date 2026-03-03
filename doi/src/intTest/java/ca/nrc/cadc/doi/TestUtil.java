@@ -126,7 +126,7 @@ public class TestUtil {
 
     static URI DOI_ALT_VOSPACE_RESOURCE_ID;
 
-    static String DOI_ALT_IDENTIFIER_PREFIX;
+    static String DOI_ALT_IDENTIFIER_PREFIX = "doi-alt-";
 
     static {
 

@@ -283,6 +283,8 @@ public class LifecycleTest extends IntTestBase {
 
         // Update the DOI
         Resource actual = doUpdateTest(expected, doiURL);
+        log.debug("expected: " + expected);
+        log.debug("actual: " + actual);
         // tests randomly fails when the transfer to vospace is slow, hence the sleep cycles
         Thread.sleep(3000);
         compareResource(expected, actual, true);
@@ -295,9 +297,11 @@ public class LifecycleTest extends IntTestBase {
 
         // Update the DOI
         actual = doUpdateTest(expected, doiURL);
-        log.info("expected: " + expected);
-        log.info("actual: " + actual);
-//        compareResource(expected, actual, true);
+        log.debug("expected: " + expected);
+        log.debug("actual: " + actual);
+        // tests randomly fails when the transfer to vospace is slow, hence the sleep cycles
+        Thread.sleep(3000);
+        compareResource(expected, actual, true);
     }
 
     void publish(Resource expected, String doiSuffix, DOISettingsType doiSettingsType) throws Exception {
