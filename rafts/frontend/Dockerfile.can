@@ -1,0 +1,55 @@
+# Dockerfile.can
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Temporarily remove the prepare script
+RUN npm pkg delete scripts.prepare && npm install
+
+# Copy the source code
+COPY . .
+
+# Build the frontend application
+RUN npm run build
+
+# Production image
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+# Set environment to production
+ENV NODE_ENV=production
+ENV PORT=5000
+ENV NEXT_PUBLIC_BASE_PATH="/sessions/contrib"
+
+# Create the /skaha directory for CANFAR requirements
+RUN mkdir -p /skaha
+
+# Copy necessary files for running the application
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
+COPY --from=builder /app/next-env.d.ts ./
+
+# Copy package.json but remove the prepare script
+COPY --from=builder /app/package.json ./
+RUN npm pkg delete scripts.prepare
+
+# Install only runtime dependencies
+RUN npm install --omit=dev
+
+# Create the initialization and startup scripts for CANFAR
+COPY canfar-init.sh /skaha/init.sh
+COPY canfar-startup.sh /skaha/startup.sh
+RUN chmod +x /skaha/init.sh /skaha/startup.sh
+
+# Expose port 5000 as required by CANFAR
+EXPOSE 5000
+
+# Add a simple entry point for testing outside CANFAR
+# This makes the container keep running when testing locally
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["/skaha/init.sh"]

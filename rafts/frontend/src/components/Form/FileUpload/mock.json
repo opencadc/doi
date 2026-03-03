@@ -1,0 +1,50 @@
+{
+  "authorInfo": {
+    "title": "Discovery of Activity in 2022 RN3",
+    "correspondingAuthor": {
+      "firstName": "S. Serhii",
+      "lastName": "Zautkin",
+      "affiliation": "NRC",
+      "authorORCID": "7897-8978-9789-7897",
+      "email": "szautkin@gmail.com"
+    },
+    "contributingAuthors": []
+  },
+  "observationInfo": {
+    "topic": "comet",
+    "objectName": "2023 RN3",
+    "abstract": "We report observations of 2023 RN3 in r' -, g'  , and w'    -band (3 x    245 s in each filter) obtained by the LCO 1m telescope at    Teide Observatory in Tenerife, Canary Islands, Spain    (observatory code Z31) that show that 2023 RN3 is clearly    active. It has an elliptical coma centered on the nucleus with    the major axis oriented at a PA of 155 degrees East of North,",
+    "figure": "",
+    "acknowledgements": ""
+  },
+  "technical": {
+    "ephemeris": "",
+    "orbitalElements": "",
+    "mpcId": "2023 RN3",
+    "alertId": "",
+    "mjd": "",
+    "telescope": "",
+    "instrument": ""
+  },
+  "measurementInfo": {
+    "photometry": {
+      "wavelength": "r’ , g’ , w’ (LCO 1m); g_p, r _p, i _p, z _ s (FTN)",
+      "brightness": "",
+      "errors": ""
+    },
+    "spectroscopy": {
+      "wavelength": "",
+      "flux": "",
+      "errors": ""
+    },
+    "astrometry": {
+      "position": "",
+      "timeObserved": ""
+    }
+  },
+  "miscInfo": {
+    "misc": []
+  },
+  "status": "review_ready",
+  "id": "25.0053"
+}
