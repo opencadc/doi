@@ -174,6 +174,7 @@ export async function downloadAttachment(
   doiIdentifier: string,
   filename: string,
   asText: boolean = false,
+  directUrl?: string,
 ): Promise<DownloadAttachmentResult> {
   const session = await auth()
   const accessToken = session?.accessToken
@@ -183,7 +184,7 @@ export async function downloadAttachment(
   }
 
   try {
-    const result = await downloadFromVOSpace(doiIdentifier, filename, accessToken, asText)
+    const result = await downloadFromVOSpace(doiIdentifier, filename, accessToken, asText, directUrl)
 
     if (!result.success || !result.content) {
       return { success: false, error: result.error || 'Download failed' }

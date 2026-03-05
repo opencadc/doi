@@ -441,7 +441,7 @@ const FileUploadImage: React.FC<FileUploadImageProps> = ({
             </Box>
           )}
           {/* Use regular img for API routes, Next.js Image for base64 */}
-          {imagePreview.startsWith('/api/') ? (
+          {imagePreview.includes('/api/attachments/') ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imagePreview}

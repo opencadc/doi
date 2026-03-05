@@ -520,6 +520,14 @@ const FormLayoutWithContext = () => {
           dispatchAlert({ type: 'show', severity: 'success', message: t('submission_success') })
           setFormIsDirty(DIRTY_FORM)
 
+          // After a successful save, validate all sections to update checkmarks and Submit button
+          console.log('[handleSubmit] res.success:', res.success, 'isDraft:', isDraft)
+          if (isDraft) {
+            console.log('[handleSubmit] calling validateAllSections')
+            const allValid = validateAllSections(syncedData)
+            console.log('[handleSubmit] validateAllSections returned:', allValid)
+          }
+
           if (isDraft && isNewRaft && res.data) {
             const newId = typeof res.data === 'string' ? res.data.split('/').pop() : null
             if (newId) {

@@ -160,8 +160,12 @@ export default function AttachmentImage({
     const parsed = typeof value === 'string' ? parseStoredAttachment(value) : value
 
     if (isFileReference(parsed) && doiId) {
-      // It's a FileReference - use API route
-      const apiUrl = `/api/attachments/${doiId}/${encodeURIComponent(parsed.filename)}`
+      // It's a FileReference - use API route, pass stored url if available
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+      let apiUrl = `${basePath}/api/attachments/${doiId}/${encodeURIComponent(parsed.filename)}`
+      if (parsed.url) {
+        apiUrl += `?url=${encodeURIComponent(parsed.url)}`
+      }
       setImageUrl(apiUrl)
       setIsLoading(true) // Start loading - will be set to false by onLoad/onError
       lastResolvedRef.current = valueKey
@@ -180,7 +184,7 @@ export default function AttachmentImage({
     return null
   }
 
-  const isApiRoute = imageUrl.startsWith('/api/')
+  const isApiRoute = imageUrl.includes('/api/attachments/')
 
   return (
     <>

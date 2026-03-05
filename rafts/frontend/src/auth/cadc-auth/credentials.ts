@@ -72,15 +72,12 @@ import { fetchUserInfo } from './fetchUserInfo'
 import { fetchUserGroups } from './fetchUserGroups'
 import { authenticateUser } from '@/auth/cadc-auth/authenticateUser'
 
-const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
-
 export const {
   handlers: { GET, POST },
   auth,
   signIn,
   signOut,
 } = NextAuth({
-  basePath: `${appBasePath}/api/auth`,
   providers: [
     CredentialsProvider({
       name: 'CADC Login',

@@ -330,7 +330,11 @@ export function RaftFormProvider({
         const isValid = validateWithSchema(VALIDATION_SCHEMAS[section], sectionData)
         newValidation[section] = isValid
         if (!isValid) {
-          newErrors[section] = getValidationErrors(VALIDATION_SCHEMAS[section], sectionData)
+          const errors = getValidationErrors(VALIDATION_SCHEMAS[section], sectionData)
+          newErrors[section] = errors
+          console.log(`[validateAllSections] FAILED: ${section}`, { sectionData, errors })
+        } else {
+          console.log(`[validateAllSections] PASSED: ${section}`)
         }
       }
 

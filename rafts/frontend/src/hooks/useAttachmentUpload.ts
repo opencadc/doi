@@ -145,7 +145,7 @@ export interface UseAttachmentUploadReturn {
   /** Resolve an attachment value to displayable content */
   resolveAttachment: (value: AttachmentValue) => Promise<string | null>
   /** Get the API URL for viewing an attachment (for images) */
-  getAttachmentUrl: (filename: string) => string | null
+  getAttachmentUrl: (filename: string, vaultUrl?: string) => string | null
 }
 
 // ============================================================================
@@ -177,9 +177,14 @@ export function useAttachmentUpload(
    * Get the API URL for viewing an attachment (for images)
    */
   const getAttachmentUrl = useCallback(
-    (filename: string): string | null => {
+    (filename: string, vaultUrl?: string): string | null => {
       if (!doiIdentifier) return null
-      return `/api/attachments/${doiIdentifier}/${encodeURIComponent(filename)}`
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+      let apiUrl = `${basePath}/api/attachments/${doiIdentifier}/${encodeURIComponent(filename)}`
+      if (vaultUrl) {
+        apiUrl += `?url=${encodeURIComponent(vaultUrl)}`
+      }
+      return apiUrl
     },
     [doiIdentifier],
   )
@@ -402,7 +407,7 @@ export function useAttachmentUpload(
 
         // For images, use the API route URL (avoids downloading to client memory)
         if (value.mimeType.startsWith('image/')) {
-          return getAttachmentUrl(value.filename)
+          return getAttachmentUrl(value.filename, value.url)
         }
 
         // For text files, download via server action

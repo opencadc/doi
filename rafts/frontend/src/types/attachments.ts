@@ -88,6 +88,8 @@ export interface FileReference {
   size: number
   /** ISO timestamp when uploaded */
   uploadedAt: string
+  /** Full download URL for the file in vault */
+  url?: string
 }
 
 /**
@@ -246,6 +248,7 @@ export function createFileReference(
   filename: string,
   mimeType: string,
   size: number,
+  url?: string,
 ): FileReference {
   return {
     type: 'file-reference',
@@ -253,6 +256,7 @@ export function createFileReference(
     mimeType,
     size,
     uploadedAt: new Date().toISOString(),
+    ...(url && { url }),
   }
 }
 
