@@ -107,10 +107,10 @@ export const publishRAFTDOI = async (
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         Cookie: `CADC_SSO=${accessToken}`,
       },
-      body: '{}',
+      body: '',
     })
 
     const responseText = await response.text()

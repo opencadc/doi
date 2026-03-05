@@ -108,6 +108,14 @@ export const {
 
           // Step 4: Fetch user groups/roles
           const { role: userRole, groups: userGroups } = await fetchUserGroups(token)
+
+          // Debug: log full user profile and groups
+          console.log(`[AUTH] User login: ${credentials.username}`, {
+            profile: user,
+            role: userRole,
+            groups: userGroups,
+          })
+
           // Step 5: Combine all information into a complete user object
           return {
             id: credentials.username as string,
