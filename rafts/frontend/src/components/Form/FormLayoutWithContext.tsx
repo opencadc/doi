@@ -99,7 +99,7 @@ import { useTranslations } from 'next-intl'
 import { Button, Alert, Snackbar, Grid } from '@mui/material'
 import RaftBreadcrumbs from '@/components/RaftDetail/components/RaftBreadcrumbs'
 import { useRouter } from '@/i18n/routing'
-import { TAuthor, TMiscInfo, TObservation, TRaftSubmission, TTechInfo } from '@/shared/model'
+import { TAuthor, TMiscInfo, TObservation, TRaftSubmission, TSection, TTechInfo } from '@/shared/model'
 import JsonImportComponent from '@/components/Form/FileUpload/JsonImportComponent'
 import WarningDialog from '@/components/Layout/WarningDialog'
 import { AttentionBanner } from '@/components/Layout/AttentionBanner'
@@ -355,35 +355,44 @@ const FormLayoutWithContext = () => {
     (checked: boolean) => {
       setPostOptOut(checked)
 
-      updateRaftSection(PROP_GENERAL_INFO, {
+      const sectionData = {
         [PROP_TITLE]: titleValueRef.current,
         [PROP_POST_OPT_OUT]: checked,
         [PROP_STATUS]: raftData?.[PROP_GENERAL_INFO]?.[PROP_STATUS] ?? OPTION_DRAFT,
-      })
+      }
+
+      updateRaftSection(PROP_GENERAL_INFO, sectionData)
+      // Pass data directly to avoid stale closure over raftData
+      validateSection(PROP_GENERAL_INFO, sectionData)
 
       setFormIsDirty((prev) => ({ ...prev, [PROP_GENERAL_INFO]: true }))
     },
-    [raftData, updateRaftSection, setFormIsDirty],
+    [raftData, updateRaftSection, setFormIsDirty, validateSection],
   )
 
   // Handle section save - updates form data in context, marks as clean, and validates
   const handleSectionSave = useCallback(
-    (section: string) => {
+    (section: string, data?: TSection) => {
       setFormIsDirty((prev) => ({ ...prev, [section]: false }))
 
-      // Validate the section on save (user clicked Save button)
+      // Validate with the data just submitted (avoids stale raftData closure)
       if (section in VALIDATION_SCHEMAS) {
-        validateSection(section as keyof typeof VALIDATION_SCHEMAS)
+        const isValid = validateSection(section as keyof typeof VALIDATION_SCHEMAS, data)
+        dispatchAlert({
+          type: 'show',
+          severity: isValid ? 'success' : 'warning',
+          message: t(isValid ? 'section_validated' : 'section_validation_errors'),
+        })
       }
     },
-    [validateSection],
+    [validateSection, t],
   )
 
   // Memoized callbacks for form sections to prevent re-renders
   const handleAuthorSubmit = useCallback(
     (data: TAuthor) => {
       updateRaftSection(PROP_AUTHOR_INFO, data)
-      handleSectionSave(PROP_AUTHOR_INFO)
+      handleSectionSave(PROP_AUTHOR_INFO, data)
     },
     [updateRaftSection, handleSectionSave],
   )
@@ -391,7 +400,7 @@ const FormLayoutWithContext = () => {
   const handleObservationSubmit = useCallback(
     (data: TObservation) => {
       updateRaftSection(PROP_OBSERVATION_INFO, data)
-      handleSectionSave(PROP_OBSERVATION_INFO)
+      handleSectionSave(PROP_OBSERVATION_INFO, data)
     },
     [updateRaftSection, handleSectionSave],
   )
@@ -399,7 +408,7 @@ const FormLayoutWithContext = () => {
   const handleTechnicalSubmit = useCallback(
     (data: TTechInfo) => {
       updateRaftSection(PROP_TECHNICAL_INFO, data)
-      handleSectionSave(PROP_TECHNICAL_INFO)
+      handleSectionSave(PROP_TECHNICAL_INFO, data)
     },
     [updateRaftSection, handleSectionSave],
   )
@@ -407,7 +416,7 @@ const FormLayoutWithContext = () => {
   const handleMiscellaneousSubmit = useCallback(
     (data: TMiscInfo) => {
       updateRaftSection(PROP_MISC_INFO, data)
-      handleSectionSave(PROP_MISC_INFO)
+      handleSectionSave(PROP_MISC_INFO, data)
     },
     [updateRaftSection, handleSectionSave],
   )
@@ -517,15 +526,13 @@ const FormLayoutWithContext = () => {
         const res = await submitForm(isDraft, syncedData)
 
         if (res.success) {
-          dispatchAlert({ type: 'show', severity: 'success', message: t('submission_success') })
+          const successKey = isDraft ? 'draft_save_success' : 'submission_success'
+          dispatchAlert({ type: 'show', severity: 'success', message: t(successKey) })
           setFormIsDirty(DIRTY_FORM)
 
           // After a successful save, validate all sections to update checkmarks and Submit button
-          console.log('[handleSubmit] res.success:', res.success, 'isDraft:', isDraft)
           if (isDraft) {
-            console.log('[handleSubmit] calling validateAllSections')
-            const allValid = validateAllSections(syncedData)
-            console.log('[handleSubmit] validateAllSections returned:', allValid)
+            validateAllSections(syncedData)
           }
 
           if (isDraft && isNewRaft && res.data) {
@@ -534,21 +541,28 @@ const FormLayoutWithContext = () => {
               router.replace(`/form/edit/${newId}`)
             }
           }
+
+          if (!isDraft) {
+            setTimeout(() => {
+              router.push('/view/rafts')
+            }, 1000)
+          }
         } else {
+          const errorKey = isDraft ? 'draft_save_error' : 'submission_error'
           dispatchAlert({
             type: 'show',
             severity: 'error',
-            message: `${t('submission_error')} [${res.message}]`,
+            message: `${t(errorKey)} [${res.message}]`,
           })
         }
-
-        if (!isDraft) {
-          setTimeout(() => {
-            router.push('/view/rafts')
-          }, 3000)
-        }
-      } catch {
-        dispatchAlert({ type: 'show', severity: 'error', message: t('submission_error') })
+      } catch (err) {
+        const errorKey = isDraft ? 'draft_save_error' : 'submission_error'
+        const detail = err instanceof Error ? err.message : ''
+        dispatchAlert({
+          type: 'show',
+          severity: 'error',
+          message: detail ? `${t(errorKey)} [${detail}]` : t(errorKey),
+        })
       } finally {
         setSubmittingAction(null)
       }

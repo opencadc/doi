@@ -65,7 +65,7 @@
  ************************************************************************
  */
 
-import React, { useState, useRef, ChangeEvent, useEffect } from 'react'
+import React, { useState, useRef, useMemo, ChangeEvent, useEffect } from 'react'
 import {
   Button,
   Box,
@@ -175,6 +175,14 @@ const ADESFileUpload: React.FC<ADESFileUploadProps> = ({
   // Determine if we're in VOSpace upload mode
   const useVOSpaceUpload = Boolean(doiIdentifier) && canUpload
 
+  // Stable key for initialText — avoids re-running the effect when the object
+  // reference changes but the value is identical (e.g. parseStoredAttachment
+  // returning a new FileReference object from the same JSON on every render).
+  const initialTextKey = useMemo(
+    () => (isFileReference(initialText) ? initialText.filename + initialText.uploadedAt : String(initialText ?? '')),
+    [initialText],
+  )
+
   // Resolve initial text on mount or when it changes
   useEffect(() => {
     const resolveInitialText = async () => {
@@ -207,7 +215,8 @@ const ADESFileUpload: React.FC<ADESFileUploadProps> = ({
     }
 
     resolveInitialText()
-  }, [initialText, resolveAttachment])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTextKey])
 
   const handleFileKindChange = (event: SelectChangeEvent<ADESFileKind>) => {
     setFileKind(event.target.value as ADESFileKind)
@@ -299,15 +308,12 @@ const ADESFileUpload: React.FC<ADESFileUploadProps> = ({
     }
   }
 
-  const handleClear = async () => {
-    // If we have a FileReference and doiIdentifier, delete from VOSpace
+  const handleClear = () => {
+    // Delete from VOSpace in the background — don't block the UI
     if (currentFileRef && doiIdentifier) {
-      try {
-        await deleteFile(currentFileRef.filename)
-      } catch (err) {
+      deleteFile(currentFileRef.filename).catch((err) => {
         console.error('[ADESFileUpload] Failed to delete from VOSpace:', err)
-        // Continue with UI clear even if delete fails
-      }
+      })
     }
 
     resetValidation()

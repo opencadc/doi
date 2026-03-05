@@ -102,16 +102,27 @@ export const publishRAFTDOI = async (
 
     const url = `${SUBMIT_DOI_URL}/${raftId}/mint`
 
+    console.log(`[publishRAFTDOI] POST ${url}`)
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Cookie: `CADC_SSO=${accessToken}`,
       },
+      body: '{}',
     })
 
     const responseText = await response.text()
 
+    console.log(`[publishRAFTDOI] Response: ${response.status} ${response.statusText}`, responseText)
+
     if (!response.ok) {
+      console.error(`[publishRAFTDOI] Failed: ${response.status}`, {
+        url,
+        raftId,
+        responseText,
+      })
       return {
         [SUCCESS]: false,
         [MESSAGE]: `Failed to mint DOI: ${response.status} ${responseText}`,

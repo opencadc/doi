@@ -171,11 +171,17 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
   const handlePublishingDOI = async () => {
     try {
       setActionLoading(true)
+      console.log('[handlePublishingDOI] Publishing DOI for:', raftId, {
+        dataDirectory: raftData.dataDirectory,
+        previousStatus: raftData.generalInfo?.status,
+      })
 
       const result = await publishRAFTDOI(raftId, {
         dataDirectory: raftData.dataDirectory,
         previousStatus: raftData.generalInfo?.status,
       })
+
+      console.log('[handlePublishingDOI] Result:', result)
 
       if (result.success) {
         onNotify('success', result.message || `RAFTS DOI published successfully.`)
@@ -185,10 +191,11 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
           router.refresh()
         }, 2000)
       } else {
+        console.error('[handlePublishingDOI] Failed:', result.message)
         onNotify('error', result.message || 'Failed to publish RAFTS DOI.')
       }
     } catch (error) {
-      console.error('Error publishing DOI: ', error)
+      console.error('[handlePublishingDOI] Error:', error)
       onNotify('error', 'An unexpected error occurred.')
     }
   }
@@ -599,9 +606,14 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
             Topic
           </Typography>
           {raftData.observationInfo?.topic?.map?.((top) => (
-            <Typography key={top} variant="body2" sx={{ textTransform: 'capitalize' }}>
-              {top.replace('_', ' ') || 'N/A'}
-            </Typography>
+            <Chip
+              key={top}
+              label={top.replace(/_/g, ' ')}
+              size="small"
+              color="secondary"
+              variant="outlined"
+              sx={{ textTransform: 'capitalize', mb: 0.5 }}
+            />
           ))}
         </Box>
 
