@@ -86,6 +86,7 @@ export const fetchUserInfo = async (token?: string): Promise<TPerson | null> => 
     }
 
     const userData = await userResponse.json()
+    console.log(`[fetchUserInfo] Raw CADC profile response:`, JSON.stringify(userData, null, 2))
     return parseUserInfo(userData)
   } catch (error) {
     console.warn('Error fetching user data:', error)

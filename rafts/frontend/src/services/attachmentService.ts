@@ -353,8 +353,9 @@ export async function uploadAttachment(
       throw new Error(`Upload failed: ${response.status} ${errorText}`)
     }
 
-    // Create and return FileReference
-    const fileReference = createFileReference(sanitizedFilename, mimeType, contentLength)
+    // Create and return FileReference with the full download URL
+    const downloadUrl = getAttachmentDownloadUrl(doiIdentifier, sanitizedFilename)
+    const fileReference = createFileReference(sanitizedFilename, mimeType, contentLength, downloadUrl)
 
     return { success: true, fileReference }
   } catch (error) {
@@ -405,9 +406,10 @@ export async function downloadAttachment(
   filename: string,
   accessToken: string,
   asText: boolean = false,
+  directUrl?: string,
 ): Promise<DownloadResult> {
   try {
-    const url = getAttachmentDownloadUrl(doiIdentifier, filename)
+    const url = directUrl || getAttachmentDownloadUrl(doiIdentifier, filename)
 
     const response = await fetch(url, {
       method: 'GET',

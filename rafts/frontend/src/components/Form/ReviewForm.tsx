@@ -171,7 +171,7 @@ const ReviewForm = ({ raftData, onOptOutChange, doiId }: ReviewFormProps) => {
         <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
           {title}
         </Typography>
-        <Typography variant="body2" whiteSpace="pre-wrap" color="text.primary">
+        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }} color="text.primary">
           {content}
         </Typography>
       </Box>
