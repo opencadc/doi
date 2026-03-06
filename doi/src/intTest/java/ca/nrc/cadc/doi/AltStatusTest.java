@@ -78,6 +78,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.vospace.ContainerNode;
+import org.opencadc.vospace.DataNode;
 import org.opencadc.vospace.Node;
 import org.opencadc.vospace.VOSURI;
 import org.opencadc.vospace.client.VOSpaceClient;
@@ -121,6 +123,10 @@ public class AltStatusTest extends LifecycleTest {
                 checkPermissions(doiNode, false, false, 2,0);
                 log.debug("submitter - checked permissions");
 
+                // check /data files are readable by the doi group and publisher group
+                ContainerNode dataNode = getContainerNode(doiID + "/data", doiParentPathURI, vosClient);
+                checkDataNodePermission(dataNode, 2, 0);
+
                 // submitter can update status to 'in progress' from 'review ready'
                 log.debug("submitter - update status to 'in progress'");
                 updateStatus(doiID, Status.DRAFT, true);
@@ -131,6 +137,10 @@ public class AltStatusTest extends LifecycleTest {
                 // 'in progress' node permissions, doi-group:rw reviewer-group:- public:false
                 checkPermissions(doiNode, false, false, 1,1);
                 log.debug("submitter - checked permissions");
+
+                // check /data files are readable and writeable by the doi group only
+                dataNode = getContainerNode(doiID + "/data", doiParentPathURI, vosClient);
+                checkDataNodePermission(dataNode, 1, 1);
 
                 // submitter updates status to 'review ready' so a reviewer can review
                 log.debug("submitter - update status to 'review ready'");
@@ -305,6 +315,16 @@ public class AltStatusTest extends LifecycleTest {
 
         Assert.assertEquals(readOnlyGroups, doiNode.getReadOnlyGroup().size());
         Assert.assertEquals(readWriteGroups, doiNode.getReadWriteGroup().size());
+    }
+
+    void checkDataNodePermission(ContainerNode dataNode, int readOnlyGroups, int readWriteGroups) {
+        for (Node child : dataNode.getNodes()) {
+            if (child instanceof DataNode) {
+                checkPermissions(child,false, false, readOnlyGroups, readWriteGroups);
+            } else {
+                checkDataNodePermission((ContainerNode) child, readOnlyGroups, readWriteGroups);
+            }
+        }
     }
 
 }
