@@ -27,9 +27,6 @@ The doi.properties configures the DataCite service used to register new DOIs.
 # VOSpace uri to the parent DOI folder.
 ca.nrc.cadc.doi.vospaceParentUri = {parent folder URI}
 
-# DOI Identifier Prefix
-ca.nrc.cadc.doi.doiIdentifierPrefix = {DOI Identifier Prefix}
-
 # Prefix to the DOI metadata file
 ca.nrc.cadc.doi.metaDataPrefix = {metadata file prefix}
 
@@ -50,10 +47,11 @@ ca.nrc.cadc.doi.datacite.password = {password}
 
 # DataCite account prefix
 ca.nrc.cadc.doi.datacite.accountPrefix = {account prefix}
+
+# (optional) DOI Identifier Prefix
+ca.nrc.cadc.doi.doiIdentifierPrefix = {DOI Identifier Prefix}
 ```
 _parentUri_ is the URI to the DOI parent folder in the VOSpace service.
-
-_doiIdentifierPrefix_ is prefix to the DOI Identifier.
 
 _metaDataPrefix_ is the prefix prepended to the DOI name used to create the file for the DOI specific metadata stored in VOSpace.
 
@@ -68,6 +66,8 @@ _username_ is the DataCite account username.
 _password_ is the DataCite account password.
 
 _accountPrefix_ is the registered prefix for a DataCite account.
+
+_doiIdentifierPrefix_ is prefix to the DOI Identifier.
 
 **For Alternative DOI Settings ONLY**
 ```

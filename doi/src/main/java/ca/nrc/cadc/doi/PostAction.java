@@ -84,6 +84,7 @@ import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.HttpUpload;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.ByteArrayInputStream;
@@ -560,7 +561,13 @@ public class PostAction extends DoiAction {
                     updateNodePermissions(doiNode, readGroups, writeGroups);
 
                     // update doi metadata file and data folder permissions
-                    updateDOIPermissions(doiSuffix, readGroups, writeGroups);
+                    String dataPath = String.format("%s/data", doiSuffix);
+                    VOSURI dataURI = getVOSURI(dataPath);
+                    ContainerNode dataNode = vospaceDoiClient.getContainerNode(dataPath);
+                    updateDOIPermissions(doiSuffix, dataURI, dataNode, readGroups, writeGroups);
+
+                    // give the publisher group read permission to files in the data folder
+                    updateDataFilePermissions(dataURI, dataNode, readGroups);
                 } else {
                     throw new IllegalArgumentException("Invalid status change: 'in progress' -> 'review ready'");
                 }
@@ -605,7 +612,13 @@ public class PostAction extends DoiAction {
                     updateNodePermissions(doiNode, readGroups, writeGroups);
 
                     // update doi data folder permissions
-                    updateDOIPermissions(doiSuffix, readGroups, writeGroups);
+                    String dataPath = String.format("%s/data", doiSuffix);
+                    VOSURI dataURI = getVOSURI(dataPath);
+                    ContainerNode dataNode = vospaceDoiClient.getContainerNode(dataPath);
+                    updateDOIPermissions(doiSuffix, dataURI, dataNode, readGroups, writeGroups);
+
+                    // remove publisher group read permission for files in the data folder
+                    updateDataFilePermissions(dataURI, dataNode, readGroups);
                 } else {
                     String message = String.format("Status change denied: '%s' -> '%s'", current, updated);
                     throw new IllegalArgumentException(message);
@@ -646,7 +659,7 @@ public class PostAction extends DoiAction {
         doiNode.isPublic = false;
     }
 
-    private void updateDOIPermissions(String doiSuffix, Set<GroupURI> readGroups, Set<GroupURI> writeGroups) throws Exception {
+    private void updateDOIPermissions(String doiSuffix, VOSURI dataURI, ContainerNode dataNode, Set<GroupURI> readGroups, Set<GroupURI> writeGroups) throws Exception {
         // update metadata file permissions
         String metadataFilename = getDoiFilename(doiSuffix);
         String metadataPath = String.format("%s/%s", doiSuffix, metadataFilename);
@@ -656,11 +669,17 @@ public class PostAction extends DoiAction {
         vospaceDoiClient.getVOSpaceClient().setNode(metadataVOSURI, metadataNode);
 
         // update data folder permissions
-        String dataPath = String.format("%s/data", doiSuffix);
-        VOSURI dataURI = getVOSURI(dataPath);
-        ContainerNode dataFolderNode = vospaceDoiClient.getContainerNode(dataPath);
-        updateNodePermissions(dataFolderNode, readGroups, writeGroups);
-        vospaceDoiClient.getVOSpaceClient().setNode(dataURI, dataFolderNode);
+        updateNodePermissions(dataNode, readGroups, writeGroups);
+        vospaceDoiClient.getVOSpaceClient().setNode(dataURI, dataNode);
+    }
+
+    private void updateDataFilePermissions(VOSURI dataURI, ContainerNode dataNode, Set<GroupURI> readGroups)
+            throws IOException, ResourceNotFoundException, InterruptedException {
+        dataNode.getReadOnlyGroup().clear();
+        dataNode.getReadOnlyGroup().addAll(readGroups);
+        RecursiveSetNode setNode = vospaceDoiClient.getVOSpaceClient().createRecursiveSetNode(dataURI, dataNode);
+        setNode.setMonitor(true);
+        setNode.run();
     }
 
     private Map<URI, String> getNodeProperties(JSONObject nodeData) {
