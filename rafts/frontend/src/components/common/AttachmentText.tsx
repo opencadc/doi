@@ -139,11 +139,15 @@ export default function AttachmentText({
     const parsed = typeof value === 'string' ? parseStoredAttachment(value) : value
 
     if (isFileReference(parsed) && doiId) {
-      // It's a FileReference - fetch from API
+      // It's a FileReference - fetch from API, pass stored url if available
       setIsLoading(true)
       setError(null)
 
-      const apiUrl = `/api/attachments/${doiId}/${encodeURIComponent(parsed.filename)}`
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+      let apiUrl = `${basePath}/api/attachments/${doiId}/${encodeURIComponent(parsed.filename)}`
+      if (parsed.url) {
+        apiUrl += `?url=${encodeURIComponent(parsed.url)}`
+      }
 
       fetch(apiUrl)
         .then(async (response) => {

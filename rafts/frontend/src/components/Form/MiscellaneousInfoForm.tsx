@@ -298,6 +298,7 @@ const MiscellaneousInfoForm = forwardRef<
                       <TextFileUpload
                         label={t('misc_upload_file')}
                         hint={t('misc_upload_hint')}
+                        accept=".txt,.csv,.tsv,.psv,.xml,.json,.dat,.log,.ades,.mpc,.fits,.png,.jpg,.jpeg,.gif,.webp,.pdf,text/plain,image/*,application/pdf"
                         onFileLoaded={(data) => {
                           setValue(
                             `${PROP_MISC}.${index}.${PROP_MISC_VALUE}`,

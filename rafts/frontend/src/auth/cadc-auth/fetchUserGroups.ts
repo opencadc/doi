@@ -88,8 +88,15 @@ export const fetchUserGroups = async (token?: string): Promise<UserRoleInfo> => 
       credentials: 'include',
     })
 
+    const responseText = await response.text()
     const isRaftReviewer = response.ok
     const assignedRole = isRaftReviewer ? ROLE_REVIEWER : ROLE_CONTRIBUTOR
+
+    console.log(`[fetchUserGroups] GET ${groupCheckUrl} -> ${response.status}`, {
+      isRaftReviewer,
+      assignedRole,
+      responseBody: responseText,
+    })
 
     return {
       role: assignedRole,

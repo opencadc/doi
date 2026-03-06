@@ -264,8 +264,8 @@ export default function OverviewTab({
                 <Typography variant="h6" gutterBottom>
                   Acknowledgements
                 </Typography>
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                <Paper variant="outlined" sx={{ p: 2, overflow: 'hidden' }}>
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                     {acknowledgements}
                   </Typography>
                 </Paper>
@@ -276,8 +276,8 @@ export default function OverviewTab({
                 <Typography variant="h6" gutterBottom>
                   Related RAFTSs
                 </Typography>
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                <Paper variant="outlined" sx={{ p: 2, overflow: 'hidden' }}>
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                     {relatedPublishedRafts}
                   </Typography>
                 </Paper>

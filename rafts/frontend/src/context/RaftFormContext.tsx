@@ -132,7 +132,7 @@ interface RaftFormContextType {
   allSectionsCompleted: boolean
   errors: RecursiveStringify<TRaftSubmission>
   /** Validate a single section imperatively (runs Zod once, updates validationState + errors) */
-  validateSection: (section: keyof typeof VALIDATION_SCHEMAS) => boolean
+  validateSection: (section: keyof typeof VALIDATION_SCHEMAS, data?: TSection) => boolean
   /** Validate all sections imperatively. Returns true if all pass. */
   validateAllSections: (data?: TRaftContext) => boolean
   /** DOI identifier for attachment uploads (available after first save) */
@@ -300,8 +300,8 @@ export function RaftFormProvider({
 
   // Validate a single section imperatively (runs Zod once, updates validationState + errors)
   const validateSection = useCallback(
-    (section: keyof typeof VALIDATION_SCHEMAS) => {
-      const sectionData = raftData?.[section] ?? {}
+    (section: keyof typeof VALIDATION_SCHEMAS, data?: TSection) => {
+      const sectionData = data ?? raftData?.[section] ?? {}
       const isValid = validateWithSchema(VALIDATION_SCHEMAS[section], sectionData)
 
       setValidationState((prev) => ({ ...prev, [section]: isValid }))
@@ -330,7 +330,8 @@ export function RaftFormProvider({
         const isValid = validateWithSchema(VALIDATION_SCHEMAS[section], sectionData)
         newValidation[section] = isValid
         if (!isValid) {
-          newErrors[section] = getValidationErrors(VALIDATION_SCHEMAS[section], sectionData)
+          const errors = getValidationErrors(VALIDATION_SCHEMAS[section], sectionData)
+          newErrors[section] = errors
         }
       }
 

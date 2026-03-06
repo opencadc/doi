@@ -95,8 +95,11 @@ export async function GET(
     // Decode the filename (it may be URL encoded)
     const decodedFilename = decodeURIComponent(filename)
 
+    // Use the vault URL from the FileReference JSON if provided
+    const directUrl = request.nextUrl.searchParams.get('url') || undefined
+
     // Download from VOSpace
-    const result = await downloadAttachment(doiId, decodedFilename, accessToken, false)
+    const result = await downloadAttachment(doiId, decodedFilename, accessToken, false, directUrl)
 
     if (!result.success || !result.content) {
       console.error('[API attachments] Download failed:', result.error)
