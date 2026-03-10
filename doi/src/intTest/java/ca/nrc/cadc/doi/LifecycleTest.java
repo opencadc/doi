@@ -304,6 +304,21 @@ public class LifecycleTest extends IntTestBase {
         compareResource(expected, actual, true);
     }
 
+    void publishFailure(String doiSuffix,DOISettingsType doiSettingsType) throws Exception {
+        URL mintURL = new URL(String.format("%s/%s/%s", getDoiServiceURL(doiSettingsType), doiSuffix, DoiAction.MINT_ACTION));
+        Map<String, Object> params = new HashMap<>();
+
+        boolean failure = false;
+        try {
+            HttpPost post = new HttpPost(mintURL, params, false);
+            post.prepare();
+        } catch (Exception e) {
+            // expected
+            failure = true;
+        }
+        Assert.assertTrue("Expected exception for publish from invalid state", failure);
+    }
+
     void publish(Resource expected, String doiSuffix, DOISettingsType doiSettingsType) throws Exception {
         // For DOI tests below
         URL doiURL = new URL(String.format("%s/%s", getDoiServiceURL(doiSettingsType), doiSuffix));
@@ -336,7 +351,7 @@ public class LifecycleTest extends IntTestBase {
             DataNode testFile2Node = createDataNode(testFile2Path, testFile2, doiSettingsType);
         }
 
-        // mint the document, DRAFT or IN REVIEW ==> LOCKING_DATA
+        // mint the document, DRAFT, IN REVIEW, APPROVED ==> LOCKING_DATA
         doMintTest(doiURL);
         doiNode = getContainerNode(doiSuffix , doiParentPathURI, vosClient);
         dataNode = getContainerNode(doiSuffix + "/data" , doiParentPathURI, vosClient);

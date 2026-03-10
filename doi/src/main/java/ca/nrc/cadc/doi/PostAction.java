@@ -717,16 +717,13 @@ public class PostAction extends DoiAction {
             // process DOI based on current minting status
             ContainerNode doiContainerNode = vospaceDoiClient.getContainerNode(doiSuffix);
             Status mintingStatus = Status.toValue(doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY));
+
             switch (mintingStatus) {
                 case DRAFT:
-                    if (isAlternativeConfiguration()) {
-                        throw new IllegalArgumentException("Cannot publish an 'in progress' DOI for an alternative configuration");
+                    if (!isAlternativeConfiguration()) {
+                        lockData(doiContainerNode);
                     }
-                    lockData(doiContainerNode);
                     break;
-                case REVIEW_READY:
-                case REJECTED:
-                    throw new IllegalArgumentException("Cannot publish a DOI with status '" + mintingStatus + "'");
                 case IN_REVIEW:
                 case APPROVED:
                 case ERROR_LOCKING_DATA:
@@ -753,7 +750,7 @@ public class PostAction extends DoiAction {
                     log.debug("doi " + doiSuffix + " status: " + Status.COMPLETED);
                     break;
                 default:
-                    // do nothing
+                    throw new IllegalArgumentException("Cannot publish a DOI with status '" + mintingStatus + "'");
             }
 
             // Done, send redirect to GET for the XML file just minted
@@ -807,6 +804,8 @@ public class PostAction extends DoiAction {
             doiContainerNode.getProperties().add(jobURLProp);
             vospaceDoiClient.getVOSpaceClient().setNode(containerVOSURI, doiContainerNode);
         } catch (Exception ex) {
+            log.error("error locking data folder for " + doiSuffix, ex);
+
             // update status
             doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(Status.ERROR_LOCKING_DATA.getValue());
             String jobURLString = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_JOB_URL_PROPERTY);
@@ -868,6 +867,8 @@ public class PostAction extends DoiAction {
             vospaceDoiClient.getVOSpaceClient().setNode(doiURI, doiContainerNode);
 
         } catch (Exception ex) {
+            log.error("error registering DOI " + doiSuffix, ex);
+
             // update status to flag error state, and original properties of
             // container node and xml file
 

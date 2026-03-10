@@ -158,6 +158,10 @@ public class AltStatusTest extends LifecycleTest {
 
             Subject.doAs(publisherSubject, (PrivilegedExceptionAction<Object>) () -> {
 
+                // reviewer tries to publish when 'in review', should fail
+                log.debug("publisher - update status to 'minted'");
+                publishFailure(doiSuffix, DOISettingsType.ALT_DOI);
+
                 // reviewer updates status to 'in review'
                 log.debug("publisher - update status to 'in review'");
                 updateStatus(doiSuffix, Status.IN_REVIEW, true);
@@ -225,6 +229,10 @@ public class AltStatusTest extends LifecycleTest {
                 // 'rejected' node permissions, doi-group:r reviewer-group:r public:false
                 checkPermissions(doiNode, false, false, 2,0);
                 log.debug("publisher - checked permissions");
+
+                // reviewer tries to publish when 'rejected', should fail
+                log.debug("publisher - update status to 'minted'");
+                publishFailure(doiSuffix, DOISettingsType.ALT_DOI);
 
                 return null;
             });
