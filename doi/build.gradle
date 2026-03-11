@@ -16,7 +16,7 @@ sourceCompatibility = 11
 group = 'ca.nrc.cadc'
 
 war {
-    from(System.getenv('RPS') + '/resources/') {
+    from('../swagger/') {
         include 'swagger-openapi/'
     }
     from('.') {
