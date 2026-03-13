@@ -74,6 +74,7 @@ import { IResponseData } from '@/actions/types'
 import { BACKEND_STATUS } from '@/shared/backendStatus'
 import { updateRaftMetadata, downloadRaftFile } from '@/services/canfarStorage'
 import { RaftStatusChange } from '@/types/doi'
+import { getDOICurrentStatus } from '@/actions/updateDOIStatus'
 
 /**
  * Submits a RAFT for review by changing its status from 'in progress' to 'review ready'
@@ -102,6 +103,10 @@ export const submitForReview = async (
       return { [SUCCESS]: false, [MESSAGE]: 'Not authenticated' }
     }
 
+    // Log current status before submission
+    const beforeStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[submitForReview] ${doiId}: "${beforeStatus}" → "${BACKEND_STATUS.REVIEW_READY}"`)
+
     const url = `${SUBMIT_DOI_URL}/${doiId}`
 
     // Backend expects multipart form data with JSON blob labeled 'doiNodeData'
@@ -117,12 +122,16 @@ export const submitForReview = async (
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')
-      console.error('[submitForReview] Error response:', response.status, errorText)
+      console.error(`[submitForReview] ${doiId}: POST failed ${response.status}`, errorText)
       return {
         [SUCCESS]: false,
         [MESSAGE]: `Failed to submit for review: ${response.status} ${errorText}`,
       }
     }
+
+    // Verify status after submission
+    const afterStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[submitForReview] ${doiId}: confirmed status is now "${afterStatus}"`)
 
     // Update RAFT.json with submittedAt, statusHistory, and version
     if (dataDirectory) {
@@ -204,6 +213,10 @@ export const revertToDraft = async (
       return { [SUCCESS]: false, [MESSAGE]: 'Not authenticated' }
     }
 
+    // Log current status before reverting
+    const beforeStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[revertToDraft] ${doiId}: "${beforeStatus}" → "${BACKEND_STATUS.IN_PROGRESS}"`)
+
     const url = `${SUBMIT_DOI_URL}/${doiId}`
 
     // Backend expects multipart form data with JSON blob labeled 'doiNodeData'
@@ -219,12 +232,16 @@ export const revertToDraft = async (
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')
-      console.error('[revertToDraft] Error response:', response.status, errorText)
+      console.error(`[revertToDraft] ${doiId}: POST failed ${response.status}`, errorText)
       return {
         [SUCCESS]: false,
         [MESSAGE]: `Failed to revert to draft: ${response.status} ${errorText}`,
       }
     }
+
+    // Verify status after revert
+    const afterStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[revertToDraft] ${doiId}: confirmed status is now "${afterStatus}"`)
 
     // Update RAFT.json metadata with status history
     if (dataDirectory) {

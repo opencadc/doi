@@ -67,7 +67,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { RaftData } from '@/types/doi'
 import { RaftReview } from '@/types/reviews'
@@ -87,12 +87,15 @@ import {
   Tooltip,
   CircularProgress,
   Chip,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material'
 import { CheckCircle, XCircle, Undo2, UserCheck, UserX } from 'lucide-react'
 import StatusBadge from '@/components/common/StatusBadge'
 import { formatDate, formatUserName } from '@/utilities/formatter'
 import { useTranslations } from 'next-intl'
-import { publishRAFTDOI } from '@/actions/publishRaftDoi'
+import { publishRAFTDOI, getMintingStatus } from '@/actions/publishRaftDoi'
 
 interface ReviewerSidePanelProps {
   raftData?: Partial<RaftData>
@@ -106,7 +109,38 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
   const [statusAction, setStatusAction] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [showAllHistory, setShowAllHistory] = useState(false)
+  const [mintingStep, setMintingStep] = useState(-1) // -1 = not minting
+  const [mintingLabel, setMintingLabel] = useState('')
+  const mintingRef = useRef(false)
   const t = useTranslations('raft_table')
+
+  const MINT_STEPS = ['Locking Data', 'Registering', 'Published']
+
+  // Poll minting status while publish is in progress
+  const pollMintingStatus = useCallback(async () => {
+    if (!raftData?._id && !raftData?.id) return
+    const id = raftData._id || raftData.id || ''
+
+    mintingRef.current = true
+    while (mintingRef.current) {
+      try {
+        const result = await getMintingStatus(id)
+        setMintingStep(result.step)
+        setMintingLabel(result.label)
+        if (result.step >= 3 || !mintingRef.current) break
+      } catch {
+        break
+      }
+      await new Promise((r) => setTimeout(r, 2000))
+    }
+  }, [raftData])
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      mintingRef.current = false
+    }
+  }, [])
 
   if (!raftData) {
     return null
@@ -124,7 +158,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       setStatusAction('claim')
 
       // claimForReview sets both reviewer and status to "in review" in one call
-      const result = await claimForReview(raftId, raftData.dataDirectory)
+      const result = await claimForReview(raftId)
 
       if (result.success) {
         onNotify('success', 'RAFTS status changed to In Review.')
@@ -150,7 +184,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       setStatusAction('release')
 
       // releaseReview unassigns reviewer and sets status to "review ready" in one call
-      const result = await releaseReview(raftId, raftData.dataDirectory)
+      const result = await releaseReview(raftId)
 
       if (result.success) {
         onNotify('success', 'RAFTS status changed to Review Ready.')
@@ -171,32 +205,39 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
   const handlePublishingDOI = async () => {
     try {
       setActionLoading(true)
-      console.log('[handlePublishingDOI] Publishing DOI for:', raftId, {
-        dataDirectory: raftData.dataDirectory,
-        previousStatus: raftData.generalInfo?.status,
-      })
+      setMintingStep(0)
+      setMintingLabel('Starting...')
+
+      // Start polling status in parallel
+      pollMintingStatus()
 
       const result = await publishRAFTDOI(raftId, {
         dataDirectory: raftData.dataDirectory,
         previousStatus: raftData.generalInfo?.status,
       })
 
-      console.log('[handlePublishingDOI] Result:', result)
+      // Stop polling
+      mintingRef.current = false
 
       if (result.success) {
+        setMintingStep(3)
+        setMintingLabel('Published')
         onNotify('success', result.message || `RAFTS DOI published successfully.`)
 
-        // Refresh the page after a short delay to get updated data
         setTimeout(() => {
-          router.refresh()
+          router.push(`/public-view/rafts/${raftId}`)
         }, 2000)
       } else {
-        console.error('[handlePublishingDOI] Failed:', result.message)
         onNotify('error', result.message || 'Failed to publish RAFTS DOI.')
+        setMintingStep(-1)
       }
     } catch (error) {
+      mintingRef.current = false
+      setMintingStep(-1)
       console.error('[handlePublishingDOI] Error:', error)
       onNotify('error', 'An unexpected error occurred.')
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -206,10 +247,7 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       setActionLoading(true)
       setStatusAction(newStatus)
 
-      const result = await updateDOIStatus(raftId, newStatus, {
-        dataDirectory: raftData.dataDirectory,
-        previousStatus: raftData.generalInfo?.status,
-      })
+      const result = await updateDOIStatus(raftId, newStatus)
 
       if (result.success) {
         onNotify(
@@ -479,36 +517,52 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
       case BACKEND_STATUS.APPROVED:
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            <Tooltip title="Mint and Publish DOI">
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handlePublishingDOI}
-                startIcon={<CheckCircle />}
-                disabled={actionLoading}
-              >
-                {actionLoading && statusAction === BACKEND_STATUS.MINTED ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  'Publish DOI'
-                )}
-              </Button>
-            </Tooltip>
-            <Tooltip title="Send back for review">
-              <Button
-                variant="outlined"
-                color="warning"
-                onClick={() => handleStatusChange(BACKEND_STATUS.IN_REVIEW)}
-                startIcon={<Undo2 />}
-                disabled={actionLoading}
-              >
-                {actionLoading && statusAction === BACKEND_STATUS.IN_REVIEW ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  'Reopen Review'
-                )}
-              </Button>
-            </Tooltip>
+            {mintingStep >= 0 ? (
+              <Box sx={{ mb: 1 }}>
+                <Stepper activeStep={mintingStep} alternativeLabel>
+                  {MINT_STEPS.map((label) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1, gap: 1 }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="body2" color="text.secondary">
+                    {mintingLabel}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <Tooltip title="Mint and Publish DOI">
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handlePublishingDOI}
+                    startIcon={<CheckCircle />}
+                    disabled={actionLoading}
+                  >
+                    Publish DOI
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Send back for review">
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    onClick={() => handleStatusChange(BACKEND_STATUS.IN_REVIEW)}
+                    startIcon={<Undo2 />}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading && statusAction === BACKEND_STATUS.IN_REVIEW ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      'Reopen Review'
+                    )}
+                  </Button>
+                </Tooltip>
+              </>
+            )}
           </Box>
         )
 
@@ -533,6 +587,83 @@ export default function ReviewerSidePanel({ raftData, review, onNotify }: Review
             </Tooltip>
           </Box>
         )
+
+      // Intermediate minting statuses: may be stuck from a previous attempt
+      case BACKEND_STATUS.LOCKING_DATA:
+      case BACKEND_STATUS.LOCKED_DATA:
+      case BACKEND_STATUS.REGISTERING: {
+        const resumeStep =
+          currentStatus === BACKEND_STATUS.LOCKING_DATA ? 1 :
+          currentStatus === BACKEND_STATUS.LOCKED_DATA ? 2 :
+          2
+        return (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <Stepper activeStep={mintingStep >= 0 ? mintingStep : resumeStep} alternativeLabel>
+              {MINT_STEPS.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+            {mintingStep >= 0 ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2" color="text.secondary">
+                  {mintingLabel}
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  Publishing was started but did not complete.
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handlePublishingDOI}
+                  startIcon={<CheckCircle />}
+                  disabled={actionLoading}
+                >
+                  Resume Publishing
+                </Button>
+              </>
+            )}
+          </Box>
+        )
+      }
+
+      // Error during minting: allow retry
+      case BACKEND_STATUS.ERROR_LOCKING_DATA:
+      case BACKEND_STATUS.ERROR_REGISTERING: {
+        const errorStep = currentStatus === BACKEND_STATUS.ERROR_LOCKING_DATA ? 1 : 2
+        return (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <Stepper activeStep={errorStep} alternativeLabel>
+              {MINT_STEPS.map((label, i) => (
+                <Step key={label}>
+                  <StepLabel error={i === errorStep}>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+            <Typography variant="body2" color="error">
+              An error occurred during publishing. You can retry.
+            </Typography>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={handlePublishingDOI}
+              startIcon={<CheckCircle />}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Retry Publish'
+              )}
+            </Button>
+          </Box>
+        )
+      }
 
       // "minted" status: no actions available (published)
       case BACKEND_STATUS.MINTED:

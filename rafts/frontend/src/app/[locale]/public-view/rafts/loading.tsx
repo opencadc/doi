@@ -65,115 +65,30 @@
  ************************************************************************
  */
 
-'use client'
+import { Skeleton, Box } from '@mui/material'
 
-import { Chip, Tooltip } from '@mui/material'
-import { BACKEND_STATUS } from '@/shared/backendStatus'
-import { useTranslations } from 'next-intl'
-
-interface StatusBadgeProps {
-  status?: string
-}
-
-const getStatusInfo = (
-  status?: string,
-): { bg: string; color: string; tooltipKey: string; displayKey: string } => {
-  const normalizedStatus = status?.toLowerCase()
-
-  switch (normalizedStatus) {
-    case BACKEND_STATUS.MINTED:
-    case 'published':
-      return {
-        bg: 'success.main',
-        color: 'white',
-        tooltipKey: 'tooltip_published',
-        displayKey: 'minted',
-      }
-
-    case BACKEND_STATUS.APPROVED:
-      return {
-        bg: 'info.main',
-        color: 'white',
-        tooltipKey: 'tooltip_approved',
-        displayKey: 'approved',
-      }
-
-    case BACKEND_STATUS.REVIEW_READY:
-    case 'review_ready':
-      return {
-        bg: 'warning.light',
-        color: 'black',
-        tooltipKey: 'tooltip_review_ready',
-        displayKey: 'review ready',
-      }
-
-    case BACKEND_STATUS.IN_REVIEW:
-    case 'under_review':
-      return {
-        bg: 'warning.main',
-        color: 'black',
-        tooltipKey: 'tooltip_in_review',
-        displayKey: 'in review',
-      }
-
-    case BACKEND_STATUS.REJECTED:
-      return {
-        bg: 'error.main',
-        color: 'white',
-        tooltipKey: 'tooltip_rejected',
-        displayKey: 'rejected',
-      }
-
-    case BACKEND_STATUS.LOCKING_DATA:
-    case BACKEND_STATUS.LOCKED_DATA:
-    case BACKEND_STATUS.REGISTERING:
-      return {
-        bg: 'info.light',
-        color: 'white',
-        tooltipKey: 'tooltip_publishing',
-        displayKey: 'publishing',
-      }
-
-    case BACKEND_STATUS.ERROR_LOCKING_DATA:
-    case BACKEND_STATUS.ERROR_REGISTERING:
-      return {
-        bg: 'error.light',
-        color: 'white',
-        tooltipKey: 'tooltip_publish_error',
-        displayKey: 'publish_error',
-      }
-
-    case BACKEND_STATUS.IN_PROGRESS:
-    case 'draft':
-    default:
-      return {
-        bg: 'grey.400',
-        color: 'black',
-        tooltipKey: 'tooltip_draft',
-        displayKey: 'in progress',
-      }
-  }
-}
-
-export default function StatusBadge({ status }: StatusBadgeProps) {
-  const t = useTranslations('raft_table')
-
-  const { bg, color, tooltipKey, displayKey } = getStatusInfo(status)
-
+export default function Loading() {
   return (
-    <Tooltip title={t(tooltipKey)} arrow placement="top">
-      <Chip
-        label={t(displayKey)}
-        size="small"
-        sx={{
-          backgroundColor: bg,
-          color: color,
-          fontWeight: 'medium',
-          textTransform: 'capitalize',
-          minWidth: '80px',
-          justifyContent: 'center',
-        }}
-      />
-    </Tooltip>
+    <div className="grid grid-rows-[auto_1fr_auto] items-center min-h-screen p-4 pb-8 gap-8 sm:p-8 font-[family-name:var(--font-geist-sans)]">
+      <header className="row-start-1 w-full">
+        <Skeleton variant="text" width={280} height={40} />
+      </header>
+      <main className="row-start-2 w-full max-w-7xl mx-auto">
+        {/* Table header skeleton */}
+        <Box sx={{ mb: 2 }}>
+          <Skeleton variant="rounded" width="100%" height={56} />
+        </Box>
+
+        {/* Table rows skeleton */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} variant="rounded" width="100%" height={52} />
+          ))}
+        </Box>
+      </main>
+      <footer className="row-start-3 w-full text-center text-sm text-gray-500 mt-8">
+        <Skeleton variant="text" width={200} height={20} sx={{ mx: 'auto' }} />
+      </footer>
+    </div>
   )
 }

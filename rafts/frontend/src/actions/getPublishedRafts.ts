@@ -71,79 +71,45 @@ import { auth } from '@/auth/cadc-auth/credentials'
 import { SUBMIT_DOI_URL } from '@/actions/constants'
 import { parseXmlToJson } from '@/utilities/xmlParser'
 import { DOIData, RaftData } from '@/types/doi'
-import { downloadRaftFile } from '@/services/canfarStorage'
+import { downloadRaftFilePublic } from '@/services/canfarStorage'
 import { TRaftContext } from '@/context/types'
-import {
-  OPTION_REVIEW,
-  OPTION_UNDER_REVIEW,
-  OPTION_APPROVED,
-  OPTION_REJECTED,
-  OPTION_ALL,
-  OPTION_PUBLISHING,
-} from '@/shared/constants'
-
 import { BACKEND_STATUS } from '@/shared/backendStatus'
+import { RaftApiResponse } from '@/actions/getRafts'
 
-// Backend statuses that count as "publishing" (intermediate minting states)
-const PUBLISHING_STATUSES: string[] = [
-  BACKEND_STATUS.LOCKING_DATA,
-  BACKEND_STATUS.ERROR_LOCKING_DATA,
-  BACKEND_STATUS.LOCKED_DATA,
-  BACKEND_STATUS.REGISTERING,
-  BACKEND_STATUS.ERROR_REGISTERING,
-]
-
-// All statuses visible on the review page (everything except draft and minted)
-const ALL_REVIEW_STATUSES = [
-  BACKEND_STATUS.REVIEW_READY,
-  BACKEND_STATUS.IN_REVIEW,
-  BACKEND_STATUS.APPROVED,
-  BACKEND_STATUS.REJECTED,
-  ...PUBLISHING_STATUSES,
-]
-
-// Map frontend filter options to backend status values
-const STATUS_MAPPING: Record<string, string | string[]> = {
-  [OPTION_REVIEW]: BACKEND_STATUS.REVIEW_READY,
-  [OPTION_UNDER_REVIEW]: BACKEND_STATUS.IN_REVIEW,
-  [OPTION_APPROVED]: BACKEND_STATUS.APPROVED,
-  [OPTION_REJECTED]: BACKEND_STATUS.REJECTED,
-  [OPTION_PUBLISHING]: PUBLISHING_STATUSES,
-  [OPTION_ALL]: ALL_REVIEW_STATUSES,
-}
-
-export interface ReviewRaftsResponse {
-  data: RaftData[]
-  counts: Record<string, number>
-}
-
-export const getDOIsForReview = async (
-  filterStatus?: string,
-): Promise<{ success: boolean; data?: ReviewRaftsResponse; error?: string }> => {
+/**
+ * Fetch all published (minted) DOIs from the DOI backend and enrich with RAFT.json data.
+ * Minted DOIs have public data directories, so RAFT.json can be fetched without auth.
+ */
+export const getPublishedRafts = async (): Promise<{
+  success: boolean
+  data?: RaftApiResponse
+  error?: string
+}> => {
   try {
-    const session = await auth()
+    // Try authenticated fetch first (server-side), fall back to unauthenticated
+    const session = await auth().catch(() => null)
     const accessToken = session?.accessToken
 
-    if (!accessToken) {
-      console.error('[getDOIsForReview] No access token available')
-      return { success: false, error: 'Not authenticated' }
+    const headers: Record<string, string> = {
+      Accept: 'application/xml',
+    }
+    if (accessToken) {
+      headers.Cookie = `CADC_SSO=${accessToken}`
     }
 
-    // Fetch all DOIs
-    const response = await fetch(`${SUBMIT_DOI_URL}`, {
+    console.log(`[getPublishedRafts] Fetching DOIs from: ${SUBMIT_DOI_URL}`)
+    console.log(`[getPublishedRafts] Auth token present: ${!!accessToken}`)
+
+    const response = await fetch(SUBMIT_DOI_URL, {
       method: 'GET',
-      headers: {
-        Accept: 'application/xml',
-        Cookie: `CADC_SSO=${accessToken}`,
-      },
+      headers,
     })
+
+    console.log(`[getPublishedRafts] Response status: ${response.status}`)
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '')
-      console.error('[getDOIsForReview] Error response:', response.status, errorText)
-      if (response.status === 401 || response.status === 403) {
-        return { success: false, error: '401' }
-      }
+      console.error('[getPublishedRafts] Error response:', response.status, errorText)
       return {
         success: false,
         error: `Request failed with status ${response.status}`,
@@ -151,74 +117,38 @@ export const getDOIsForReview = async (
     }
 
     const xmlString = await response.text()
+    console.log(`[getPublishedRafts] Full XML response:\n`, xmlString)
+
     const doiDataList: DOIData[] = await parseXmlToJson(xmlString)
+    console.log(`[getPublishedRafts] Parsed ${doiDataList.length} DOIs total`)
+    console.log(`[getPublishedRafts] All statuses:`, doiDataList.map((d) => `${d.identifier}: "${d.status}"`))
 
-    console.log(`[getDOIsForReview] Loaded ${doiDataList.length} DOIs from backend:`)
-    doiDataList.forEach((doi) => {
-      console.log(`  - ${doi.identifier}: status="${doi.status}", reviewer="${doi.reviewer || 'none'}"`)
-    })
-
-    // Calculate counts for all statuses
-    const counts: Record<string, number> = {
-      [OPTION_ALL]: 0,
-      [OPTION_REVIEW]: 0,
-      [OPTION_UNDER_REVIEW]: 0,
-      [OPTION_APPROVED]: 0,
-      [OPTION_REJECTED]: 0,
-      [OPTION_PUBLISHING]: 0,
-    }
-
-    // Count DOIs by status
-    doiDataList.forEach((doi) => {
-      const status = doi.status?.toLowerCase()
-      if (status === BACKEND_STATUS.REVIEW_READY) {
-        counts[OPTION_REVIEW]++
-        counts[OPTION_ALL]++
-      } else if (status === BACKEND_STATUS.IN_REVIEW) {
-        counts[OPTION_UNDER_REVIEW]++
-        counts[OPTION_ALL]++
-      } else if (status === BACKEND_STATUS.APPROVED) {
-        counts[OPTION_APPROVED]++
-        counts[OPTION_ALL]++
-      } else if (status === BACKEND_STATUS.REJECTED) {
-        counts[OPTION_REJECTED]++
-        counts[OPTION_ALL]++
-      } else if (status && PUBLISHING_STATUSES.includes(status)) {
-        counts[OPTION_PUBLISHING]++
-        counts[OPTION_ALL]++
-      }
-    })
-
-    // Filter DOIs by requested status
-    const mappedStatus = filterStatus ? STATUS_MAPPING[filterStatus] : STATUS_MAPPING[OPTION_ALL]
-    const targetStatuses = Array.isArray(mappedStatus) ? mappedStatus : [mappedStatus]
-    const filteredDois = doiDataList.filter(
-      (doi) => doi.status && targetStatuses.includes(doi.status.toLowerCase()),
+    // Filter to only minted DOIs
+    const mintedDois = doiDataList.filter(
+      (doi) => doi.status?.toLowerCase() === BACKEND_STATUS.MINTED,
     )
+    console.log(`[getPublishedRafts] Minted DOIs: ${mintedDois.length}`)
 
-    // Fetch full RAFT data for each filtered DOI
+    // Fetch RAFT.json for each minted DOI (public data, no auth needed)
     const rafts: RaftData[] = []
 
-    for (const doi of filteredDois) {
+    for (const doi of mintedDois) {
       try {
-        // Extract identifier suffix from the full identifier (e.g., "RAFTS-7rtut-gkryn.test")
-        // Full identifier format: "doi:10.80791/RAFTS-7rtut-gkryn.test" or similar
         const identifierParts = doi.identifier.split('/')
-        const raftSuffix = identifierParts[identifierParts.length - 1] // Just the last part (RAFTS-xxx)
+        const raftSuffix = identifierParts[identifierParts.length - 1]
+        console.log(`[getPublishedRafts] Fetching RAFT.json for: ${doi.identifier}, dataDir: ${doi.dataDirectory}`)
 
-        // Download RAFT.json
-        const raftResponse = await downloadRaftFile(doi.dataDirectory, accessToken)
+        const raftResponse = await downloadRaftFilePublic(doi.dataDirectory)
+
+        console.log(`[getPublishedRafts] RAFT.json response for ${doi.identifier}: success=${raftResponse.success}, hasData=${!!raftResponse.data}, message=${raftResponse.message || 'none'}`)
 
         if (raftResponse.success && raftResponse.data) {
           const raftData = raftResponse.data as TRaftContext
 
-          // Override status from DOI list
           if (raftData.generalInfo && doi.status) {
             raftData.generalInfo.status = doi.status as typeof raftData.generalInfo.status
           }
 
-          // Convert to RaftData format - use raftSuffix for URL-safe ID
-          // Preserve metadata from RAFT.json if available, fall back to defaults
           rafts.push({
             _id: raftSuffix,
             id: raftSuffix,
@@ -233,29 +163,48 @@ export const getDOIsForReview = async (
             updatedAt: ((raftData as Record<string, unknown>).updatedAt as string) || '',
             doi: doi.identifier,
             dataDirectory: doi.dataDirectory,
-            submittedAt: (raftData as Record<string, unknown>).submittedAt as string | undefined,
-            version: (raftData as Record<string, unknown>).version as number | undefined,
-            statusHistory: (raftData as Record<string, unknown>).statusHistory as
-              | RaftData['statusHistory']
-              | undefined,
           } as RaftData)
         } else {
-          console.warn('[getDOIsForReview] Could not fetch RAFT.json for:', doi.identifier)
+          // No RAFT.json — build RaftData from DOI XML metadata
+          console.warn('[getPublishedRafts] No RAFT.json for:', doi.identifier, '— using DOI metadata')
+          rafts.push({
+            _id: raftSuffix,
+            id: raftSuffix,
+            generalInfo: {
+              title: doi.title || raftSuffix,
+              status: (doi.status || 'minted') as 'minted',
+            },
+            relatedRafts: [],
+            generateForumPost: false,
+            createdBy: '',
+            createdAt: '',
+            updatedAt: '',
+            doi: doi.identifier,
+            dataDirectory: doi.dataDirectory,
+          } as unknown as RaftData)
         }
       } catch (err) {
-        console.error('[getDOIsForReview] Error fetching RAFT for:', doi.identifier, err)
+        console.error('[getPublishedRafts] Error fetching RAFT for:', doi.identifier, err)
       }
     }
+
+    console.log(`[getPublishedRafts] Final result: ${rafts.length} RAFTs enriched with RAFT.json`)
 
     return {
       success: true,
       data: {
+        message: 'Published RAFTs loaded',
         data: rafts,
-        counts,
+        meta: {
+          total: rafts.length,
+          page: 1,
+          limit: rafts.length,
+          totalPages: 1,
+        },
       },
     }
   } catch (error) {
-    console.error('[getDOIsForReview] Exception:', error)
+    console.error('[getPublishedRafts] Exception:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unknown error occurred',

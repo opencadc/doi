@@ -67,8 +67,7 @@
 
 'use server'
 import { RaftData } from '@/types/doi'
-import { loadMockRaftData, getMockRaftCounts } from '@/tests/mock-data-loader'
-import { useMockData } from '@/config/environment'
+import { getPublishedRafts } from '@/actions/getPublishedRafts'
 
 export interface RaftApiResponse {
   message: string
@@ -90,58 +89,46 @@ export interface GetRaftsOptions {
 
 export const getRafts = async (options: GetRaftsOptions = {}) => {
   try {
-    // Use mock data if enabled
-    if (useMockData) {
-      const mockData = options.status ? loadMockRaftData(options.status) : loadMockRaftData()
-      const allCounts = getMockRaftCounts()
-      const total = options.status ? allCounts[options.status] || 0 : mockData.length
+    // Fetch published (minted) DOIs from the DOI backend + public VOSpace
+    const result = await getPublishedRafts()
 
-      const response: RaftApiResponse = {
-        message: 'Mock data loaded',
-        data: mockData,
-        meta: {
-          total: total,
-          page: options.page || 1,
-          limit: options.limit || 10,
-          totalPages: Math.ceil(total / (options.limit || 10)),
-        },
-      }
-      return { success: true, data: response }
-    }
-
-    // Get the session with the access token
-
-    // Build query parameters
-    const queryParams = new URLSearchParams()
-    if (options.page) queryParams.append('page', options.page.toString())
-    if (options.limit) queryParams.append('limit', options.limit.toString())
-    if (options.status) queryParams.append('status', options.status)
-    if (options.search) queryParams.append('search', options.search)
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ''
-
-    // Make the API call with the access token as a Bearer token
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/rafts${queryString}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('Failed to fetch RAFTs:', errorData)
+    if (!result.success || !result.data) {
       return {
         success: false,
-        error: errorData.message || `Request failed with status ${response.status}`,
+        error: result.error || 'Failed to fetch published RAFTs',
       }
     }
 
-    const data: RaftApiResponse = await response.json()
-    return { success: true, data: data }
+    let rafts = result.data.data
+
+    // Apply client-side search filter if provided
+    if (options.search) {
+      const searchLower = options.search.toLowerCase()
+      rafts = rafts.filter(
+        (raft) =>
+          raft.generalInfo?.title?.toLowerCase().includes(searchLower) ||
+          raft.doi?.toLowerCase().includes(searchLower) ||
+          raft._id?.toLowerCase().includes(searchLower),
+      )
+    }
+
+    const total = rafts.length
+    const page = options.page || 1
+    const limit = options.limit || total
+    const start = (page - 1) * limit
+    const paginatedRafts = rafts.slice(start, start + limit)
+
+    const response: RaftApiResponse = {
+      message: 'Published RAFTs loaded',
+      data: paginatedRafts,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    }
+    return { success: true, data: response }
   } catch (error) {
     console.error('Error fetching RAFTs:', error)
     return {

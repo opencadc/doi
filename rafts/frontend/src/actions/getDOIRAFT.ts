@@ -75,6 +75,7 @@ import { SUBMIT_DOI_URL } from '@/actions/constants'
 import { parseXmlToJson } from '@/utilities/xmlParser'
 import { DOIData } from '@/types/doi'
 import { dataCiteToRaft, parseDataCiteXml } from '@/utilities/dataCiteToRaft'
+import { getDOICurrentStatus } from '@/actions/updateDOIStatus'
 
 export const getDOIRaft = async (dataIdentifier: string): Promise<IResponseData<TRaftContext>> => {
   try {
@@ -104,17 +105,40 @@ export const getDOIRaft = async (dataIdentifier: string): Promise<IResponseData<
     const doiDataList: DOIData[] = await parseXmlToJson(xmlString)
 
     // Find the DOI entry matching the dataIdentifier (identifier ends with the dataIdentifier)
-    const matchingDoi = doiDataList.find((doi) => doi.identifier.endsWith(`/${dataIdentifier}`))
+    let matchingDoi = doiDataList.find((doi) => doi.identifier.endsWith(`/${dataIdentifier}`))
 
+    // Fallback: DOI may not appear in the list during minting transitions.
+    // Use the dedicated /status endpoint to get the current status.
     if (!matchingDoi) {
-      console.error('[getDOIRaft] No matching DOI found for:', dataIdentifier)
-      return { success: false, message: `No matching DOI found for: ${dataIdentifier}` }
+      console.warn(`[getDOIRaft] ${dataIdentifier}: not in list, trying /status endpoint`)
+      const status = await getDOICurrentStatus(dataIdentifier, accessToken)
+      if (status) {
+        matchingDoi = {
+          identifier: dataIdentifier,
+          identifierType: 'DOI',
+          title: '',
+          titleLang: null,
+          status,
+          dataDirectory: '',
+          journalRef: null,
+          reviewer: null,
+        }
+        console.log(`[getDOIRaft] ${dataIdentifier}: recovered status="${status}" from /status endpoint`)
+      } else {
+        console.error('[getDOIRaft] No matching DOI found for:', dataIdentifier)
+        return { success: false, message: `No matching DOI found for: ${dataIdentifier}` }
+      }
+    } else {
+      console.log(`[getDOIRaft] ${dataIdentifier}: backend status="${matchingDoi.status}", reviewer="${matchingDoi.reviewer || 'none'}"`)
     }
 
-    // Try to download RAFT.json first
-    const response = await downloadRaftFile(matchingDoi.dataDirectory, accessToken)
 
-    if (response.success && response.data) {
+    // Try to download RAFT.json first (skip if dataDirectory is not available)
+    const response = matchingDoi.dataDirectory
+      ? await downloadRaftFile(matchingDoi.dataDirectory, accessToken)
+      : null
+
+    if (response?.success && response.data) {
       // Override status from DOI list (RAFT.json may have stale status)
       const raftData = response.data
       if (raftData.generalInfo && matchingDoi.status) {

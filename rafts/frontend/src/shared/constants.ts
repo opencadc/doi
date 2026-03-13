@@ -125,6 +125,8 @@ export const OPTION_UNDER_REVIEW = 'under_review'
 export const OPTION_APPROVED = 'approved'
 export const OPTION_REJECTED = 'rejected'
 export const OPTION_PUBLISHED = 'published'
+export const OPTION_ALL = 'all'
+export const OPTION_PUBLISHING = 'publishing'
 // Backend status values — re-exported from single source of truth
 // Use BACKEND_STATUS from '@/shared/backendStatus' for new code
 export { BACKEND_STATUS } from './backendStatus'
