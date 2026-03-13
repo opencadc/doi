@@ -94,7 +94,7 @@
       page.setProgressBar('busy')
 
       return new Promise(function (resolve, reject) {
-        var statusUrl = serviceURL + '/' + doiName + '/status/public'
+        var statusUrl = serviceURL + '/' + doiName + '/status'
         var request = new XMLHttpRequest()
 
         // 'load' is the XMLHttpRequest 'finished' event
