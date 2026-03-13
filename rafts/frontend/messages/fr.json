@@ -347,14 +347,25 @@
     "tooltip_rejected": "Ce RAFTS a été rejeté et nécessite une révision",
     "tooltip_review_ready": "Ce RAFTS est prêt pour révision",
     "tooltip_in_review": "Ce RAFTS a été soumis et attend la révision",
-    "tooltip_draft": "Ceci est un brouillon RAFTS qui n'a pas été soumis pour révision"
+    "tooltip_draft": "Ceci est un brouillon RAFTS qui n'a pas été soumis pour révision",
+    "publishing": "Publication...",
+    "publish_error": "Erreur de publication",
+    "locking data directory": "Publication...",
+    "locked data directory": "Publication...",
+    "registering to DataCite": "Publication...",
+    "error locking data directory": "Erreur de verrouillage des données",
+    "error registering to DataCite": "Erreur d'enregistrement",
+    "tooltip_publishing": "Ce RAFTS est en cours de publication — verrouillage des données et enregistrement du DOI",
+    "tooltip_publish_error": "Une erreur s'est produite lors du processus de publication"
   },
   "review_page": {
     "filter_by_status": "Filtrer par statut :",
+    "status_all": "Tous",
     "status_review_ready": "Prêt pour révision",
     "status_under_review": "En cours de révision",
     "status_approved": "Approuvé",
-    "status_rejected": "Rejeté"
+    "status_rejected": "Rejeté",
+    "status_publishing": "Publication"
   },
   "raft_details": {
     "overview": "Aperçu",

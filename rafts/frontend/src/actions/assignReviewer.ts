@@ -72,8 +72,7 @@ import { SUBMIT_DOI_URL, MESSAGE, SUCCESS } from '@/actions/constants'
 import { createDoiFormData } from '@/actions/utils/doiFormData'
 import { IResponseData } from '@/actions/types'
 import { BACKEND_STATUS } from '@/shared/backendStatus'
-import { updateRaftMetadata } from '@/services/canfarStorage'
-import { RaftStatusChange } from '@/types/doi'
+import { getDOICurrentStatus } from '@/actions/updateDOIStatus'
 
 /**
  * Assigns a reviewer to a RAFT/DOI.
@@ -154,7 +153,6 @@ export const assignReviewer = async (
  */
 export const claimForReview = async (
   doiId: string,
-  dataDirectory?: string,
 ): Promise<IResponseData<string>> => {
   try {
     const session = await auth()
@@ -169,6 +167,12 @@ export const claimForReview = async (
     }
 
     const reviewerName = session.user.name
+
+    // Log current status before claiming
+    const beforeStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[claimForReview] ${doiId}: "${beforeStatus}" → "${BACKEND_STATUS.IN_REVIEW}" (reviewer: ${reviewerName})`)
+
+    // Claim via DOI backend API (updates VOSpace node properties)
     const url = `${SUBMIT_DOI_URL}/${doiId}`
 
     // Backend supports setting both reviewer and status in one call
@@ -186,29 +190,9 @@ export const claimForReview = async (
     })
 
     if (response.status === 303 || response.ok) {
-      // Update RAFT.json metadata with status history
-      if (dataDirectory) {
-        try {
-          const statusChange: RaftStatusChange = {
-            fromStatus: BACKEND_STATUS.REVIEW_READY,
-            toStatus: BACKEND_STATUS.IN_REVIEW,
-            changedBy: reviewerName,
-            changedAt: new Date().toISOString(),
-          }
-
-          await updateRaftMetadata(
-            dataDirectory,
-            {
-              updatedAt: new Date().toISOString(),
-              updatedBy: reviewerName,
-              statusHistory: [statusChange],
-            },
-            accessToken,
-          )
-        } catch (metaError) {
-          console.warn('[claimForReview] Metadata update failed (non-critical):', metaError)
-        }
-      }
+      // Verify status after claim
+      const afterStatus = await getDOICurrentStatus(doiId, accessToken)
+      console.log(`[claimForReview] ${doiId}: confirmed status is now "${afterStatus}"`)
 
       return {
         [SUCCESS]: true,
@@ -217,7 +201,7 @@ export const claimForReview = async (
     }
 
     const errorText = await response.text().catch(() => '')
-    console.error('[claimForReview] Error response:', response.status, errorText)
+    console.error(`[claimForReview] ${doiId}: POST failed ${response.status}`, errorText)
     return {
       [SUCCESS]: false,
       [MESSAGE]: `Failed to claim for review: ${response.status} ${errorText}`,
@@ -244,7 +228,6 @@ export const claimForReview = async (
  */
 export const releaseReview = async (
   doiId: string,
-  dataDirectory?: string,
 ): Promise<IResponseData<string>> => {
   try {
     const session = await auth()
@@ -254,6 +237,11 @@ export const releaseReview = async (
       return { [SUCCESS]: false, [MESSAGE]: 'Not authenticated' }
     }
 
+    // Log current status before releasing
+    const beforeStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[releaseReview] ${doiId}: "${beforeStatus}" → "${BACKEND_STATUS.REVIEW_READY}"`)
+
+    // Release via DOI backend API (updates VOSpace node properties)
     const url = `${SUBMIT_DOI_URL}/${doiId}`
 
     // Send empty reviewer and status back to review ready
@@ -271,34 +259,13 @@ export const releaseReview = async (
     })
 
     if (response.status === 303 || response.ok) {
-      // Update RAFT.json metadata with status history
-      if (dataDirectory) {
-        try {
-          const statusChange: RaftStatusChange = {
-            fromStatus: BACKEND_STATUS.IN_REVIEW,
-            toStatus: BACKEND_STATUS.REVIEW_READY,
-            changedBy: session?.user?.name || '',
-            changedAt: new Date().toISOString(),
-          }
-
-          await updateRaftMetadata(
-            dataDirectory,
-            {
-              updatedAt: new Date().toISOString(),
-              updatedBy: session?.user?.name || '',
-              statusHistory: [statusChange],
-            },
-            accessToken,
-          )
-        } catch (metaError) {
-          console.warn('[releaseReview] Metadata update failed (non-critical):', metaError)
-        }
-      }
-
+      const afterStatus = await getDOICurrentStatus(doiId, accessToken)
+      console.log(`[releaseReview] ${doiId}: confirmed status is now "${afterStatus}"`)
       return { [SUCCESS]: true, data: 'Review released successfully' }
     }
 
     const errorText = await response.text().catch(() => '')
+    console.error(`[releaseReview] ${doiId}: POST failed ${response.status}`, errorText)
     return {
       [SUCCESS]: false,
       [MESSAGE]: `Failed to release review: ${response.status} ${errorText}`,

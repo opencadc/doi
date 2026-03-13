@@ -65,9 +65,8 @@
  ************************************************************************
  */
 
-//rafts/page.tsx
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import RaftTable from '@/components/RaftTable/PublishedRaftTable'
 import { RaftData } from '@/types/doi'
 import { getRafts } from '@/actions/getRafts'
@@ -77,21 +76,21 @@ export default function View() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
-      const { success, data, error } = await getRafts()
-      if (success && data) {
-        setRaftData(data.data)
-      } else {
-        console.error('Error fetching DOI data:', error)
-        setError('Failed to load RAFTS data. Please try again later.')
-      }
-      setIsLoading(false)
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    const { success, data, error } = await getRafts()
+    if (success && data) {
+      setRaftData(data.data)
+    } else {
+      console.error('Error fetching DOI data:', error)
+      setError('Failed to load RAFTS data. Please try again later.')
     }
-
-    fetchData()
+    setIsLoading(false)
   }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   return (
     <div className="grid grid-rows-[auto_1fr_auto] items-center min-h-screen p-4 pb-8 gap-8 sm:p-8 font-[family-name:var(--font-geist-sans)]">
@@ -99,11 +98,7 @@ export default function View() {
         <h1 className="text-2xl font-bold mb-4">All Published (RAFTSs)</h1>
       </header>
       <main className="row-start-2 w-full max-w-7xl mx-auto">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <span>Loading RAFTSs...</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">{error}</div>
         ) : (
           <RaftTable data={raftData} isLoading={isLoading} />

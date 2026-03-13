@@ -74,6 +74,11 @@ export const BACKEND_STATUS = {
   IN_REVIEW: 'in review',
   APPROVED: 'approved',
   REJECTED: 'rejected',
+  LOCKING_DATA: 'locking data directory',
+  ERROR_LOCKING_DATA: 'error locking data directory',
+  LOCKED_DATA: 'locked data directory',
+  REGISTERING: 'registering to DataCite',
+  ERROR_REGISTERING: 'error registering to DataCite',
   MINTED: 'minted',
 } as const
 
@@ -87,6 +92,11 @@ const STATUS_DISPLAY_NAMES: Record<string, string> = {
   'in review': 'In Review',
   approved: 'Approved',
   rejected: 'Rejected',
+  'locking data directory': 'Publishing...',
+  'error locking data directory': 'Error Locking Data',
+  'locked data directory': 'Publishing...',
+  'registering to DataCite': 'Publishing...',
+  'error registering to DataCite': 'Error Registering',
   minted: 'Published',
 }
 
@@ -106,4 +116,7 @@ export const getStatusDisplayName = (status?: string): string => {
  * in review → request revision → in progress
  * approved → in progress (revision)
  * rejected → in progress (revision)
+ *
+ * Minting workflow (multi-step via /mint endpoint):
+ * approved → locking data directory → locked data directory → registering to DataCite → minted
  */

@@ -67,47 +67,238 @@
 
 'use client'
 
-import { Button, Box, Tooltip } from '@mui/material'
-import { ExternalLink, Database } from 'lucide-react'
-import { CITATION_PARTIAL_URL, STORAGE_PARTIAL_URL } from '@/utilities/constants'
-import { CITE_ULR } from '@/services/constants'
+import { useState, useCallback } from 'react'
+import {
+  Button,
+  Box,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Divider,
+  CircularProgress,
+  Chip,
+  IconButton,
+} from '@mui/material'
+import { ExternalLink, Database, FileText, X, Copy, Check } from 'lucide-react'
+import { STORAGE_PARTIAL_URL, STORAGE_VAULT_FILE_URL, DOI_XML_PREFIX } from '@/utilities/constants'
+import { parseDataCiteXml, formatCitationText, DOICitation } from '@/utilities/dataCiteParser'
+import { fetchDoiCitationXml } from '@/actions/fetchDoiCitationXml'
 
 interface DOILinksProps {
-  doi: string
+  dataDirectory?: string
 }
 
-const DOILinks = ({ doi }: DOILinksProps) => {
-  // Extract the DOI identifier part (e.g., "25.0042" from "10.11570/25.0042")
-  const doiIdentifier = doi.split('/').pop() || doi
+const DOILinks = ({ dataDirectory }: DOILinksProps) => {
+  const [open, setOpen] = useState(false)
+  const [citation, setCitation] = useState<DOICitation | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
-  // Construct the URLs
-  const landingPageUrl = `${CITATION_PARTIAL_URL}${doiIdentifier}`
-  const storageUrl = `${STORAGE_PARTIAL_URL}/${CITE_ULR}/${doiIdentifier}/data`
+  const raftRootDir = dataDirectory?.replace(/\/data\/?$/, '') || null
+  const raftFolderName = raftRootDir?.split('/').pop() || null
+
+  const doiXmlUrl =
+    raftRootDir && raftFolderName
+      ? `${STORAGE_VAULT_FILE_URL}${raftRootDir.startsWith('/') ? '' : '/'}${raftRootDir}/${DOI_XML_PREFIX}${raftFolderName}.xml`
+      : null
+
+  const storageUrl = dataDirectory
+    ? `${STORAGE_PARTIAL_URL}${dataDirectory.startsWith('/') ? '' : '/'}${dataDirectory}`
+    : null
+
+  const handleOpenCitation = useCallback(async () => {
+    if (!dataDirectory) return
+    setOpen(true)
+    setLoading(true)
+    setError(null)
+
+    try {
+      const result = await fetchDoiCitationXml(dataDirectory)
+      if (!result.success || !result.xml) throw new Error(result.error || 'No XML returned')
+      const parsed = parseDataCiteXml(result.xml)
+      if (!parsed) throw new Error('Failed to parse citation XML')
+      setCitation(parsed)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load citation')
+    } finally {
+      setLoading(false)
+    }
+  }, [dataDirectory])
+
+  const handleCopyCitation = useCallback(() => {
+    if (!citation) return
+    navigator.clipboard.writeText(formatCitationText(citation))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [citation])
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, my: 1 }}>
-      <Tooltip title={`View DOI landing page: ${landingPageUrl}`}>
-        <Button
-          variant="outlined"
-          size="small"
-          endIcon={<ExternalLink size={16} />}
-          onClick={() => window.open(landingPageUrl, '_blank')}
-        >
-          DOI
-        </Button>
-      </Tooltip>
+    <>
+      <Box sx={{ display: 'flex', gap: 2, my: 1 }}>
+        {doiXmlUrl && (
+          <Tooltip title="View DOI citation">
+            <Button
+              variant="outlined"
+              size="small"
+              endIcon={<FileText size={16} />}
+              onClick={handleOpenCitation}
+            >
+              DOI
+            </Button>
+          </Tooltip>
+        )}
 
-      <Tooltip title={`View storage data: ${storageUrl}`}>
-        <Button
-          variant="outlined"
-          size="small"
-          endIcon={<Database size={16} />}
-          onClick={() => window.open(storageUrl, '_blank')}
-        >
-          DOI Storage
-        </Button>
-      </Tooltip>
-    </Box>
+        {storageUrl && (
+          <Tooltip title={`View storage data: ${storageUrl}`}>
+            <Button
+              variant="outlined"
+              size="small"
+              endIcon={<Database size={16} />}
+              onClick={() => window.open(storageUrl, '_blank')}
+            >
+              DOI Storage
+            </Button>
+          </Tooltip>
+        )}
+      </Box>
+
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" component="span">
+            DOI Citation
+          </Typography>
+          <IconButton size="small" onClick={() => setOpen(false)}>
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {error && (
+            <Typography color="error" sx={{ py: 2 }}>
+              {error}
+            </Typography>
+          )}
+
+          {citation && !loading && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Title
+                </Typography>
+                <Typography variant="h6">{citation.title}</Typography>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Identifier
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Chip label={citation.identifierType} size="small" color="primary" />
+                  <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
+                    {citation.identifier}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  {citation.creators.length === 1 ? 'Creator' : 'Creators'}
+                </Typography>
+                {citation.creators.map((c, i) => (
+                  <Box key={i} sx={{ mb: 0.5 }}>
+                    <Typography variant="body1">
+                      {c.givenName} {c.familyName}
+                    </Typography>
+                    {c.affiliation && (
+                      <Typography variant="body2" color="text.secondary">
+                        {c.affiliation}
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </Box>
+
+              <Divider />
+
+              <Box sx={{ display: 'flex', gap: 4 }}>
+                <Box>
+                  <Typography variant="overline" color="text.secondary">
+                    Publisher
+                  </Typography>
+                  <Typography variant="body1">{citation.publisher}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="overline" color="text.secondary">
+                    Year
+                  </Typography>
+                  <Typography variant="body1">{citation.publicationYear}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="overline" color="text.secondary">
+                    Type
+                  </Typography>
+                  <Typography variant="body1">{citation.resourceType}</Typography>
+                </Box>
+              </Box>
+
+              {citation.dates.length > 0 && (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography variant="overline" color="text.secondary">
+                      Dates
+                    </Typography>
+                    {citation.dates.map((d, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Chip label={d.dateType} size="small" variant="outlined" />
+                        <Typography variant="body1">{d.date}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
+          <Button
+            size="small"
+            startIcon={copied ? <Check size={16} /> : <Copy size={16} />}
+            onClick={handleCopyCitation}
+            disabled={!citation}
+          >
+            {copied ? 'Copied' : 'Copy Citation'}
+          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {doiXmlUrl && (
+              <Button
+                size="small"
+                startIcon={<ExternalLink size={16} />}
+                onClick={() => window.open(doiXmlUrl, '_blank')}
+              >
+                View XML
+              </Button>
+            )}
+            <Button onClick={() => setOpen(false)}>Close</Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 }
 

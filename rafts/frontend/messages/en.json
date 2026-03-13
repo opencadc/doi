@@ -338,14 +338,25 @@
     "tooltip_rejected": "This RAFTS was rejected and needs revision",
     "tooltip_review_ready": "This RAFTS is ready for review",
     "tooltip_in_review": "This RAFTS has been submitted and is awaiting review",
-    "tooltip_draft": "This is a draft RAFTS that has not been submitted for review"
+    "tooltip_draft": "This is a draft RAFTS that has not been submitted for review",
+    "publishing": "Publishing...",
+    "publish_error": "Publish Error",
+    "locking data directory": "Publishing...",
+    "locked data directory": "Publishing...",
+    "registering to DataCite": "Publishing...",
+    "error locking data directory": "Error Locking Data",
+    "error registering to DataCite": "Error Registering",
+    "tooltip_publishing": "This RAFTS is being published — locking data and registering DOI",
+    "tooltip_publish_error": "An error occurred during the publishing process"
   },
   "review_page": {
     "filter_by_status": "Filter by status:",
+    "status_all": "All",
     "status_review_ready": "Ready for Review",
     "status_under_review": "Under Review",
     "status_approved": "Approved",
-    "status_rejected": "Rejected"
+    "status_rejected": "Rejected",
+    "status_publishing": "Publishing"
   },
   "raft_details": {
     "overview": "Overview",

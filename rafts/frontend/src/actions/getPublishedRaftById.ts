@@ -67,38 +67,100 @@
 
 'use server'
 
+import { auth } from '@/auth/cadc-auth/credentials'
+import { SUBMIT_DOI_URL } from '@/actions/constants'
+import { parseXmlToJson } from '@/utilities/xmlParser'
 import { RaftData } from '@/types/doi'
+import { downloadRaftFilePublic } from '@/services/canfarStorage'
+import { TRaftContext } from '@/context/types'
 
 export const getPublishedRaftById = async (id: string) => {
   try {
-    // Get the session with the access token
+    // Try authenticated fetch to get DOI list, fall back to unauthenticated
+    const session = await auth().catch(() => null)
+    const accessToken = session?.accessToken
 
-    // Make the API call with the access token as a Bearer token
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/rafts/published/${id}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    const headers: Record<string, string> = {
+      Accept: 'application/xml',
+    }
+    if (accessToken) {
+      headers.Cookie = `CADC_SSO=${accessToken}`
+    }
+
+    const response = await fetch(SUBMIT_DOI_URL, {
+      method: 'GET',
+      headers,
+    })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error(`Failed to fetch RAFT with ID ${id}:`, errorData)
+      console.error(`[getPublishedRaftById] DOI list fetch failed: ${response.status}`)
       return {
         success: false,
-        error: errorData.message || `Request failed with status ${response.status}`,
+        error: `Request failed with status ${response.status}`,
       }
     }
 
-    const responseData = await response.json()
-    const data: RaftData = responseData.data
+    const xmlString = await response.text()
+    const doiDataList = await parseXmlToJson(xmlString)
+
+    // Find the matching DOI by identifier suffix
+    const matchingDoi = doiDataList.find((doi) => doi.identifier.endsWith(`/${id}`))
+
+    if (!matchingDoi) {
+      console.error(`[getPublishedRaftById] No DOI found matching id: ${id}`)
+      return { success: false, error: 'RAFTS not found' }
+    }
+
+    // Download RAFT.json from public VOSpace (minted data directory is public)
+    const raftResponse = await downloadRaftFilePublic(matchingDoi.dataDirectory)
+
+    let data: RaftData
+
+    if (raftResponse.success && raftResponse.data) {
+      const raftData = raftResponse.data as TRaftContext
+
+      if (raftData.generalInfo && matchingDoi.status) {
+        raftData.generalInfo.status = matchingDoi.status as typeof raftData.generalInfo.status
+      }
+
+      data = {
+        _id: id,
+        id: id,
+        ...raftData,
+        relatedRafts: [],
+        generateForumPost: false,
+        createdBy:
+          ((raftData as Record<string, unknown>).createdBy as string) ||
+          raftData.authorInfo?.correspondingAuthor?.email ||
+          '',
+        createdAt: ((raftData as Record<string, unknown>).createdAt as string) || '',
+        updatedAt: ((raftData as Record<string, unknown>).updatedAt as string) || '',
+        doi: matchingDoi.identifier,
+        dataDirectory: matchingDoi.dataDirectory,
+      } as RaftData
+    } else {
+      // No RAFT.json — build RaftData from DOI XML metadata
+      console.warn(`[getPublishedRaftById] No RAFT.json for ${id}, using DOI metadata`)
+      data = {
+        _id: id,
+        id: id,
+        generalInfo: {
+          title: matchingDoi.title || id,
+          status: (matchingDoi.status || 'minted') as 'minted',
+        },
+        relatedRafts: [],
+        generateForumPost: false,
+        createdBy: '',
+        createdAt: '',
+        updatedAt: '',
+        doi: matchingDoi.identifier,
+        dataDirectory: matchingDoi.dataDirectory,
+      } as unknown as RaftData
+    }
 
     return { success: true, data }
   } catch (error) {
-    console.error(`Error fetching RAFT with ID ${id}:`, error)
+    console.error(`[getPublishedRaftById] Error fetching RAFT with ID ${id}:`, error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unknown error occurred',

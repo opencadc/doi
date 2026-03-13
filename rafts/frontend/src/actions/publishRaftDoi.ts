@@ -70,14 +70,47 @@
 import { auth } from '@/auth/cadc-auth/credentials'
 import { SUBMIT_DOI_URL, SUCCESS, MESSAGE } from '@/actions/constants'
 import { IResponseData } from '@/actions/types'
-import { updateRaftMetadata } from '@/services/canfarStorage'
-import { RaftStatusChange } from '@/types/doi'
+import { BACKEND_STATUS } from '@/shared/backendStatus'
+import { getDOICurrentStatus } from '@/actions/updateDOIStatus'
+
+const POLL_INTERVAL_MS = 3000
+const MAX_POLL_ATTEMPTS = 40 // 2 minutes max for locking phase
+
+const ERROR_STATUSES: string[] = [BACKEND_STATUS.ERROR_LOCKING_DATA, BACKEND_STATUS.ERROR_REGISTERING]
+
+/**
+ * Call POST /mint once.
+ */
+async function callMint(
+  raftId: string,
+  accessToken: string,
+): Promise<{ ok: boolean; status: number; text: string }> {
+  const url = `${SUBMIT_DOI_URL}/${raftId}/mint`
+  console.log(`[publishRAFTDOI] POST ${url}`)
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Cookie: `CADC_SSO=${accessToken}`,
+    },
+    body: '',
+  })
+
+  const text = await response.text()
+  console.log(`[publishRAFTDOI] ${raftId}: mint response ${response.status}`, text)
+
+  return { ok: response.ok, status: response.status, text }
+}
 
 /**
  * Mints/Publishes a DOI for a RAFT submission via the DOI backend.
- * Calls the dedicated /mint endpoint to trigger the minting workflow.
  *
- * Endpoint: POST /rafts/instances/{raftId}/mint
+ * The backend mint workflow is a 3-step state machine (confirmed from Java source):
+ *
+ * Step 1: POST /mint  → starts async data locking → status: LOCKING_DATA
+ * Step 2: Poll GET /status → the GET triggers LOCKING_DATA → LOCKED_DATA when job completes
+ * Step 3: POST /mint  → synchronous DataCite registration → status: MINTED
  *
  * @param raftId - The DOI identifier suffix (e.g., "RAFTS-7rtut-gkryn.test")
  * @returns Response object with success status and message
@@ -94,75 +127,147 @@ export const publishRAFTDOI = async (
     const accessToken = session?.accessToken
 
     if (!accessToken) {
-      return {
-        [SUCCESS]: false,
-        [MESSAGE]: 'Not authenticated',
+      return { [SUCCESS]: false, [MESSAGE]: 'Not authenticated' }
+    }
+
+    // Check current status to determine where to resume
+    const currentStatus = await getDOICurrentStatus(raftId, accessToken)
+    console.log(`[publishRAFTDOI] ${raftId}: starting, current status: "${currentStatus}"`)
+
+    // --- Step 1: Start locking (if not already locked) ---
+    if (
+      currentStatus === BACKEND_STATUS.APPROVED ||
+      currentStatus === BACKEND_STATUS.ERROR_LOCKING_DATA
+    ) {
+      console.log(`[publishRAFTDOI] ${raftId}: Step 1 - starting data lock`)
+      const result = await callMint(raftId, accessToken)
+      if (!result.ok) {
+        return { [SUCCESS]: false, [MESSAGE]: `Mint failed: ${result.status} ${result.text}` }
+      }
+
+      const statusAfterMint = await getDOICurrentStatus(raftId, accessToken)
+      console.log(`[publishRAFTDOI] ${raftId}: status after Step 1: "${statusAfterMint}"`)
+
+      if (statusAfterMint && ERROR_STATUSES.includes(statusAfterMint)) {
+        return { [SUCCESS]: false, [MESSAGE]: `Publishing failed: ${statusAfterMint}` }
       }
     }
 
-    const url = `${SUBMIT_DOI_URL}/${raftId}/mint`
+    // --- Step 2: Poll status until LOCKED_DATA (GET /status triggers the transition) ---
+    const statusBeforePoll = await getDOICurrentStatus(raftId, accessToken)
+    if (
+      statusBeforePoll === BACKEND_STATUS.LOCKING_DATA ||
+      statusBeforePoll === BACKEND_STATUS.APPROVED
+    ) {
+      console.log(`[publishRAFTDOI] ${raftId}: Step 2 - polling for lock completion`)
 
-    console.log(`[publishRAFTDOI] POST ${url}`)
+      for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Cookie: `CADC_SSO=${accessToken}`,
-      },
-      body: '',
-    })
+        // GET /status itself triggers the LOCKING_DATA → LOCKED_DATA transition
+        const status = await getDOICurrentStatus(raftId, accessToken)
+        console.log(`[publishRAFTDOI] ${raftId}: poll ${i + 1}/${MAX_POLL_ATTEMPTS}, status: "${status}"`)
 
-    const responseText = await response.text()
-
-    console.log(`[publishRAFTDOI] Response: ${response.status} ${response.statusText}`, responseText)
-
-    if (!response.ok) {
-      console.error(`[publishRAFTDOI] Failed: ${response.status}`, {
-        url,
-        raftId,
-        responseText,
-      })
-      return {
-        [SUCCESS]: false,
-        [MESSAGE]: `Failed to mint DOI: ${response.status} ${responseText}`,
-      }
-    }
-
-    // Update RAFT.json metadata with status history after successful mint
-    if (options?.dataDirectory) {
-      try {
-        const statusChange: RaftStatusChange = {
-          fromStatus: options.previousStatus || 'approved',
-          toStatus: 'minted',
-          changedBy: session?.user?.name || '',
-          changedAt: new Date().toISOString(),
+        if (status === BACKEND_STATUS.LOCKED_DATA) {
+          console.log(`[publishRAFTDOI] ${raftId}: data locked`)
+          break
         }
 
-        await updateRaftMetadata(
-          options.dataDirectory,
-          {
-            updatedAt: new Date().toISOString(),
-            updatedBy: session?.user?.name || '',
-            statusHistory: [statusChange],
-          },
-          accessToken,
-        )
-      } catch (metaError) {
-        console.warn('[publishRAFTDOI] Metadata update failed (non-critical):', metaError)
+        if (status === BACKEND_STATUS.MINTED) {
+          console.log(`[publishRAFTDOI] ${raftId}: already minted`)
+          return { [SUCCESS]: true, [MESSAGE]: 'RAFTS status changed to Published.' }
+        }
+
+        if (status && ERROR_STATUSES.includes(status)) {
+          return { [SUCCESS]: false, [MESSAGE]: `Publishing failed: ${status}` }
+        }
+
+        if (i === MAX_POLL_ATTEMPTS - 1) {
+          return {
+            [SUCCESS]: false,
+            [MESSAGE]: 'Data locking timed out. Use "Resume Publishing" to continue.',
+          }
+        }
       }
     }
 
+    // --- Step 3: Register with DataCite (synchronous) ---
+    const statusBeforeRegister = await getDOICurrentStatus(raftId, accessToken)
+    if (statusBeforeRegister === BACKEND_STATUS.MINTED) {
+      return { [SUCCESS]: true, [MESSAGE]: 'RAFTS status changed to Published.' }
+    }
+
+    if (
+      statusBeforeRegister === BACKEND_STATUS.LOCKED_DATA ||
+      statusBeforeRegister === BACKEND_STATUS.ERROR_REGISTERING
+    ) {
+      console.log(`[publishRAFTDOI] ${raftId}: Step 3 - registering with DataCite`)
+      const result = await callMint(raftId, accessToken)
+      if (!result.ok) {
+        return { [SUCCESS]: false, [MESSAGE]: `Mint failed: ${result.status} ${result.text}` }
+      }
+
+      const finalStatus = await getDOICurrentStatus(raftId, accessToken)
+      console.log(`[publishRAFTDOI] ${raftId}: final status: "${finalStatus}"`)
+
+      if (finalStatus === BACKEND_STATUS.MINTED) {
+        console.log(`[publishRAFTDOI] ${raftId}: minted successfully`)
+        return { [SUCCESS]: true, [MESSAGE]: 'RAFTS status changed to Published.' }
+      }
+
+      if (finalStatus && ERROR_STATUSES.includes(finalStatus)) {
+        return { [SUCCESS]: false, [MESSAGE]: `Publishing failed: ${finalStatus}` }
+      }
+    }
+
+    // Unexpected state
+    const unexpectedStatus = await getDOICurrentStatus(raftId, accessToken)
+    console.error(`[publishRAFTDOI] ${raftId}: unexpected status: "${unexpectedStatus}"`)
     return {
-      [SUCCESS]: true,
-      [MESSAGE]: 'RAFTS status changed to Published.',
+      [SUCCESS]: false,
+      [MESSAGE]: `Unexpected status: ${unexpectedStatus}. Use "Resume Publishing" to continue.`,
     }
   } catch (error) {
     console.error('[publishRAFTDOI] Error:', error)
-
     return {
       [SUCCESS]: false,
       [MESSAGE]: error instanceof Error ? error.message : 'An unknown error occurred',
     }
+  }
+}
+
+/**
+ * Get the current minting status for UI progress display.
+ * Can be called by the UI to poll progress while publishRAFTDOI is running.
+ */
+export const getMintingStatus = async (
+  raftId: string,
+): Promise<{ status: string | null; step: number; label: string }> => {
+  const session = await auth()
+  const accessToken = session?.accessToken
+
+  if (!accessToken) {
+    return { status: null, step: 0, label: 'Not authenticated' }
+  }
+
+  const status = await getDOICurrentStatus(raftId, accessToken)
+
+  switch (status) {
+    case BACKEND_STATUS.APPROVED:
+      return { status, step: 0, label: 'Starting...' }
+    case BACKEND_STATUS.LOCKING_DATA:
+      return { status, step: 1, label: 'Locking data...' }
+    case BACKEND_STATUS.LOCKED_DATA:
+      return { status, step: 2, label: 'Registering...' }
+    case BACKEND_STATUS.REGISTERING:
+      return { status, step: 2, label: 'Registering...' }
+    case BACKEND_STATUS.MINTED:
+      return { status, step: 3, label: 'Published' }
+    case BACKEND_STATUS.ERROR_LOCKING_DATA:
+      return { status, step: 1, label: 'Error locking data' }
+    case BACKEND_STATUS.ERROR_REGISTERING:
+      return { status, step: 2, label: 'Error registering' }
+    default:
+      return { status, step: 0, label: status || 'Unknown' }
   }
 }

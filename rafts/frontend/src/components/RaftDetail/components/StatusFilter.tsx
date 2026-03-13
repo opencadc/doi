@@ -70,6 +70,7 @@
 import React from 'react'
 import { Paper, Box, Typography, ButtonGroup, Button, Chip } from '@mui/material'
 import {
+  OPTION_ALL,
   OPTION_REVIEW,
   OPTION_UNDER_REVIEW,
   OPTION_APPROVED,
@@ -99,7 +100,13 @@ const StatusFilter: React.FC<StatusFilterProps> = ({ currentStatus, counts, onSt
     return 'inherit'
   }
 
-  const statusOptions = [OPTION_REVIEW, OPTION_UNDER_REVIEW, OPTION_APPROVED, OPTION_REJECTED]
+  const statusOptions = [
+    OPTION_ALL,
+    OPTION_REVIEW,
+    OPTION_UNDER_REVIEW,
+    OPTION_APPROVED,
+    OPTION_REJECTED,
+  ]
 
   return (
     <Paper elevation={2} className="p-4 mb-6">
