@@ -406,6 +406,60 @@ export const updateRaftMetadata = async (
   }
 }
 
+// Production vault endpoint — minted/public data may live on prod even when DOI service is on RC
+const VAULT_PROD_ENDPOINT = 'https://ws-cadc.canfar.net/vault/files'
+
+/**
+ * Download RAFT.json from a public (minted) data directory without authentication.
+ * Minted DOIs have isPublic=true so VOSpace serves them anonymously.
+ * Tries the configured vault first, then falls back to production vault.
+ */
+export const downloadRaftFilePublic = async (
+  dataDirectory: string,
+): Promise<IResponseData<TRaftContext>> => {
+  try {
+    const cleanedDataDirectory = dataDirectory.startsWith('/')
+      ? dataDirectory.slice(1)
+      : dataDirectory
+    const filePath = `${cleanedDataDirectory}/${DEFAULT_RAFT_NAME}`
+
+    // Try configured vault endpoint first
+    const url = `${VAULT_BASE_ENDPOINT}/${filePath}`
+    const response = await fetch(url, { method: 'GET' })
+
+    if (response.ok) {
+      const data = await response.json()
+      return { success: true, data }
+    }
+
+    // If configured vault is not production, try production as fallback
+    if (VAULT_BASE_ENDPOINT !== VAULT_PROD_ENDPOINT) {
+      const prodUrl = `${VAULT_PROD_ENDPOINT}/${filePath}`
+      console.log(`[downloadRaftFilePublic] RC returned ${response.status}, trying prod: ${prodUrl}`)
+      const prodResponse = await fetch(prodUrl, { method: 'GET' })
+
+      if (prodResponse.ok) {
+        const data = await prodResponse.json()
+        return { success: true, data }
+      }
+
+      const errorText = (await prodResponse.text()) || 'Failed to download public RAFT file'
+      console.error('[downloadRaftFilePublic] Prod also failed:', prodResponse.status, errorText)
+      return { success: false, message: errorText }
+    }
+
+    const errorText = (await response.text()) || 'Failed to download public RAFT file'
+    console.error('[downloadRaftFilePublic] Error:', response.status, errorText)
+    return { success: false, message: errorText }
+  } catch (error) {
+    console.error('[downloadRaftFilePublic] Exception:', error)
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
+    }
+  }
+}
+
 export const downloadRaftFile = async (
   dataDirectory: string,
   accessToken: string,

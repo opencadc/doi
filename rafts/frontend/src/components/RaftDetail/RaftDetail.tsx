@@ -147,10 +147,7 @@ export default function RaftDetail({ raftData }: RaftDetailProps) {
     // If the RAFT is rejected, change status to "in progress" (draft) before editing
     if (isRejected && raftData.id) {
       try {
-        const result = await updateDOIStatus(raftData.id, BACKEND_STATUS.IN_PROGRESS, {
-          dataDirectory: raftData.dataDirectory,
-          previousStatus: raftData.generalInfo?.status,
-        })
+        const result = await updateDOIStatus(raftData.id, BACKEND_STATUS.IN_PROGRESS)
         if (!result.success) {
           console.error('[RaftDetail] Failed to update status:', result.message)
           setSnackbar({

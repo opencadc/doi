@@ -72,26 +72,52 @@ import { SUBMIT_DOI_URL, SUCCESS, MESSAGE } from '@/actions/constants'
 import { createDoiFormData } from '@/actions/utils/doiFormData'
 import { IResponseData } from '@/actions/types'
 import { BackendStatusType, getStatusDisplayName } from '@/shared/backendStatus'
-import { downloadRaftFile, updateRaftMetadata } from '@/services/canfarStorage'
-import { RaftStatusChange } from '@/types/doi'
-import { BACKEND_STATUS } from '@/shared/backendStatus'
+import { parseXmlToJson } from '@/utilities/xmlParser'
+
+/**
+ * Fetch the current status of a DOI from the backend via GET /instances/{DOINum}/status.
+ * This is the authoritative status from the VOSpace node properties.
+ */
+export const getDOICurrentStatus = async (
+  doiId: string,
+  accessToken: string,
+): Promise<string | null> => {
+  try {
+    const url = `${SUBMIT_DOI_URL}/${doiId}/status`
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/xml',
+        Cookie: `CADC_SSO=${accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      console.warn(`[getDOICurrentStatus] ${doiId}: HTTP ${response.status}`)
+      return null
+    }
+
+    const xmlString = await response.text()
+    console.log(`[getDOICurrentStatus] ${doiId}: raw response:`, xmlString)
+    const parsed = await parseXmlToJson(`<doiStatuses>${xmlString}</doiStatuses>`)
+    return parsed[0]?.status || null
+  } catch (error) {
+    console.warn('[getDOICurrentStatus] Error:', error)
+    return null
+  }
+}
 
 /**
  * Updates the status of a RAFT/DOI via the DOI backend service.
- * Optionally updates RAFT.json metadata (statusHistory, version) when dataDirectory is provided.
+ * The backend updates VOSpace node properties (the authoritative status source).
  *
  * @param doiId - The DOI identifier suffix (e.g., "RAFTS-7rtut-gkryn.test")
  * @param newStatus - The new backend status value
- * @param options - Optional: dataDirectory for metadata update, previousStatus for history
  * @returns Response with success/error information
  */
 export const updateDOIStatus = async (
   doiId: string,
   newStatus: BackendStatusType,
-  options?: {
-    dataDirectory?: string
-    previousStatus?: string
-  },
 ): Promise<IResponseData<string>> => {
   try {
     const session = await auth()
@@ -101,6 +127,11 @@ export const updateDOIStatus = async (
       return { [SUCCESS]: false, [MESSAGE]: 'Not authenticated' }
     }
 
+    // Log current status before update
+    const beforeStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[updateDOIStatus] ${doiId}: "${beforeStatus}" → "${newStatus}"`)
+
+    // Update status via DOI backend API (updates VOSpace node properties)
     const url = `${SUBMIT_DOI_URL}/${doiId}`
 
     // Backend expects multipart form data with JSON blob labeled 'doiNodeData'
@@ -117,57 +148,16 @@ export const updateDOIStatus = async (
     const responseText = await response.text()
 
     if (!response.ok) {
+      console.error(`[updateDOIStatus] ${doiId}: POST failed ${response.status}`, responseText)
       return {
         [SUCCESS]: false,
         [MESSAGE]: `Failed to update status: ${response.status} ${responseText}`,
       }
     }
 
-    // After successful backend status change, update RAFT.json metadata if dataDirectory provided
-    if (options?.dataDirectory) {
-      try {
-        // Fetch current RAFT.json to get actual status for accurate fromStatus
-        const currentRaft = await downloadRaftFile(options.dataDirectory, accessToken)
-        const existing = (
-          currentRaft.success && currentRaft.data ? currentRaft.data : {}
-        ) as Record<string, unknown>
-        const existingHistory = (existing.statusHistory as RaftStatusChange[]) || []
-        const lastEntry = existingHistory[existingHistory.length - 1]
-
-        // Skip if already in the target state (prevents duplicate entries)
-        if (lastEntry && lastEntry.toStatus === newStatus) {
-          console.info(`[updateDOIStatus] Already "${newStatus}", skipping history update`)
-        } else {
-          // Use actual current status from history, fall back to passed previousStatus
-          const actualFromStatus = lastEntry?.toStatus || options.previousStatus || 'unknown'
-
-          const statusChange: RaftStatusChange = {
-            fromStatus: actualFromStatus,
-            toStatus: newStatus,
-            changedBy: session?.user?.name || '',
-            changedAt: new Date().toISOString(),
-          }
-
-          const metaUpdate: Record<string, unknown> = {
-            updatedAt: new Date().toISOString(),
-            updatedBy: session?.user?.name || '',
-          }
-
-          metaUpdate.statusHistory = [statusChange]
-
-          if (newStatus === BACKEND_STATUS.REVIEW_READY) {
-            metaUpdate.submittedAt = new Date().toISOString()
-            if (existingHistory.length > 0) {
-              metaUpdate.version = ((existing.version as number) || 1) + 1
-            }
-          }
-
-          await updateRaftMetadata(options.dataDirectory, metaUpdate, accessToken)
-        }
-      } catch (metaError) {
-        console.warn('[updateDOIStatus] Metadata update failed (non-critical):', metaError)
-      }
-    }
+    // Verify status after update
+    const afterStatus = await getDOICurrentStatus(doiId, accessToken)
+    console.log(`[updateDOIStatus] ${doiId}: confirmed status is now "${afterStatus}"`)
 
     return {
       [SUCCESS]: true,

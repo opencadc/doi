@@ -97,10 +97,7 @@ export default function ActionMenu({ rowData, onStatusChange }: ActionMenuProps)
     if (rowData.status === BACKEND_STATUS.REJECTED) {
       setIsSubmitting(true)
       try {
-        const result = await updateDOIStatus(raftId, BACKEND_STATUS.IN_PROGRESS, {
-          dataDirectory: rowData.dataDirectory,
-          previousStatus: rowData.status,
-        })
+        const result = await updateDOIStatus(raftId, BACKEND_STATUS.IN_PROGRESS)
         if (!result.success) {
           console.error('[ActionMenu] Failed to update status:', result.message)
           onStatusChange?.(result.message || 'Failed to revert to draft', 'error')

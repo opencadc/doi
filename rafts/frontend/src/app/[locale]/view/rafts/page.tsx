@@ -85,6 +85,8 @@ export default function View() {
     setIsLoading(true)
     const { success, data, error } = await getDOIData()
     if (success && data) {
+      console.log('RAFTS list - items:', data.map(d => ({ title: d.title, status: d.status })))
+      console.log('RAFTS list - item count:', data.length)
       setDoiData(data)
     } else {
       if (error === AUTH_FAILED) {

@@ -70,7 +70,7 @@ import { useState, useEffect } from 'react'
 import RaftTable from '@/components/RaftTable/ReviewRaftTable'
 import { RaftData } from '@/types/doi'
 import { getDOIsForReview } from '@/actions/getDOIsForReview'
-import { OPTION_REVIEW } from '@/shared/constants'
+import { OPTION_ALL } from '@/shared/constants'
 import { Typography, Paper, Alert } from '@mui/material'
 import StatusFilter from '@/components/RaftDetail/components/StatusFilter'
 
@@ -79,7 +79,7 @@ export default function ReviewRafts() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAuthError, setIsAuthError] = useState(false)
-  const [currentStatus, setCurrentStatus] = useState<string>(OPTION_REVIEW)
+  const [currentStatus, setCurrentStatus] = useState<string>(OPTION_ALL)
   const [counts, setCounts] = useState<Record<string, number>>({})
 
   const fetchData = async (status: string) => {

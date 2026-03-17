@@ -67,16 +67,14 @@
 
 import { Metadata } from 'next'
 import RaftDetail from '@/components/RaftDetail/PublishedRaftDetail'
-import { getRaftById } from '@/actions/getRaftById'
 import { notFound } from 'next/navigation'
 import { getPublishedRaftById } from '@/actions/getPublishedRaftById'
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  // Fetch RAFT data for metadata
   const params = await props.params
-  const { success, data } = await getRaftById(params?.id)
+  const { success, data } = await getPublishedRaftById(params?.id)
 
   if (!success || !data) {
     return {

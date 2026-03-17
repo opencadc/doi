@@ -69,7 +69,7 @@
 
 import { ColumnDef } from '@tanstack/react-table'
 import type { RaftData } from '@/types/doi'
-import ActionMenu from './PublishedActionMenu'
+import PublishedViewButton from './PublishedViewButton'
 import { Typography, Tooltip } from '@mui/material'
 import dayjs from 'dayjs'
 
@@ -163,7 +163,7 @@ export const columns: ColumnDef<RaftData>[] = [
     id: 'actions',
     header: '',
     cell: ({ row }) => {
-      return <ActionMenu rowData={row.original} />
+      return <PublishedViewButton raftId={row.original._id} />
     },
   },
 ]

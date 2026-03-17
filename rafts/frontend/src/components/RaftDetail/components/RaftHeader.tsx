@@ -127,7 +127,7 @@ export default function RaftHeader({
     createdAt,
     updatedAt,
     createdBy,
-    doi,
+    dataDirectory,
     generalInfo,
     reviewer,
     version,
@@ -232,7 +232,7 @@ export default function RaftHeader({
               </Typography>
             </Box>
           </Box>
-          {doi && <DOILinks doi={doi} />}
+          {dataDirectory && <DOILinks dataDirectory={dataDirectory} />}
         </Box>
 
         {/* Action buttons - below on mobile, right side on desktop */}
