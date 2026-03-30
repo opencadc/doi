@@ -290,10 +290,10 @@ public class LifecycleTest extends IntTestBase {
         compareResource(expected, actual, true);
 
         // remove updated properties
-        log.info("creaters before: " + expected.getCreators());
+        log.debug("creaters before: " + expected.getCreators());
         expected.getCreators().remove(creator);
         expected.getTitles().remove(title);
-        log.info("creaters after: " + expected.getCreators());
+        log.debug("creaters after: " + expected.getCreators());
 
         // Update the DOI
         actual = doUpdateTest(expected, doiURL);

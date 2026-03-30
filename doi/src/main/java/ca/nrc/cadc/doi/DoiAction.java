@@ -168,6 +168,9 @@ public abstract class DoiAction extends RestAction {
         this.accountPrefix = config.getFirstPropertyValue(DoiInitAction.DATACITE_ACCOUNT_PREFIX_KEY);
         this.publisherGroupURI = DoiInitAction.getPublisherGroupURI(config);
         this.doiGroupPrefix = config.getFirstPropertyValue(DoiInitAction.DOI_GROUP_PREFIX_KEY);
+        if (this.doiGroupPrefix == null) {
+            this.doiGroupPrefix = "";
+        }
 
         LocalAuthority localAuthority = new LocalAuthority();
         Set<URI> gmsServices = localAuthority.getResourceIDs(Standards.GMS_SEARCH_10);
@@ -234,6 +237,11 @@ public abstract class DoiAction extends RestAction {
                 doiSuffix = parts[0];
                 if (parts.length > 1) {
                     doiAction = parts[1];
+                }
+                // For status requests for individual DOIs, there is need to check
+                // to see if the DOI is public in order to provide access.
+                if (parts.length > 2 && (parts[2].equals("public"))) {
+                    includePublic = true;
                 }
             }
         }
