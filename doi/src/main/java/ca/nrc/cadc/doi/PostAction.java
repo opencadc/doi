@@ -307,10 +307,10 @@ public class PostAction extends DoiAction {
      * Returns the portion of the input string after the specified argument and a dot.
      *
      * Examples (arg=26):
-     * - "26.0001"       -> "0001"
-     * - "RAFTS-26.0001" -> "0001"
-     * - "25.0001"       -> null
-     * - "RAFTS-27.0001" -> null
+     * - "26.0001"       = "0001"
+     * - "RAFTS-26.0001" = "0001"
+     * - "25.0001"       = null
+     * - "RAFTS-27.0001" = null
      *
      * @param identifier    The string to parse.
      * @param year  The year to match.
