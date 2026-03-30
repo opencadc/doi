@@ -151,7 +151,7 @@ public class DoiInitAction extends InitAction {
 
         // required properties
         checkStringKey(props, sb, ok, true, METADATA_PREFIX_KEY);
-        checkStringKey(props, sb, ok, true, DOI_GROUP_PREFIX_KEY);
+
         checkStringKey(props, sb, ok, true, DOI_IDENTIFIER_PREFIX_KEY);
         checkStringKey(props, sb, ok, true, DATACITE_MDS_USERNAME_KEY);
         checkStringKey(props, sb, ok, true, DATACITE_MDS_PASSWORD_KEY);
@@ -161,6 +161,7 @@ public class DoiInitAction extends InitAction {
         checkURLKey(props, sb, ok, verify, DATACITE_MDS_URL_KEY);
 
         // optional properties
+        checkStringKey(props, sb, ok, false, DOI_GROUP_PREFIX_KEY);
         checkStringKey(props, sb, ok, false, RANDOM_TEST_ID_KEY);
 
         // alternative properties

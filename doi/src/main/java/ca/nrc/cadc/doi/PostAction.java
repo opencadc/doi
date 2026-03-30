@@ -107,6 +107,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
@@ -286,9 +288,9 @@ public class PostAction extends DoiAction {
         int maxDoi = 0;
         if (!baseNode.getNodes().isEmpty()) {
             for (Node childNode : baseNode.getNodes()) {
-                String[] nameParts = childNode.getName().split("\\.");
-                if (nameParts[0].equals(currentYear)) {
-                    int curDoiNum = Integer.parseInt(nameParts[1]);
+                String suffix = extractSuffix(childNode.getName(), currentYear);
+                if (suffix != null) {
+                    int curDoiNum = Integer.parseInt(suffix);
                     if (curDoiNum > maxDoi) {
                         maxDoi = curDoiNum;
                     }
@@ -299,6 +301,38 @@ public class PostAction extends DoiAction {
         maxDoi++;
         String formattedDOI = String.format("%04d", maxDoi);
         return currentYear + "." + formattedDOI;
+    }
+
+    /**
+     * Returns the portion of the input string after the specified argument and a dot.
+     *
+     * Examples (arg=26):
+     * - "26.0001"       -> "0001"
+     * - "RAFTS-26.0001" -> "0001"
+     * - "25.0001"       -> null
+     * - "RAFTS-27.0001" -> null
+     *
+     * @param identifier    The string to parse.
+     * @param year  The year to match.
+     * @return The captured suffix, or null if no match is found.
+     */
+    public static String extractSuffix(String identifier, String year) {
+        if (identifier == null) {
+            return null;
+        }
+
+        // (?:^|.*-) matches either the start of the string or any prefix ending with a dash.
+        // \\. matches the literal dot.
+        // (.*) captures everything after the dot.
+        String regex = "(?:^|.*-)" + year + "\\.(.*)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(identifier);
+
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+
+        return null;
     }
 
     // methods to assign to private field in Identity
