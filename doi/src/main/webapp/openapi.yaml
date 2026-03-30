@@ -24,5 +24,7 @@ paths:
     $ref: ./paths/doi-mint.yaml
   /instances/{DOINum}/status:
     $ref: ./paths/doi-status.yaml
+  /instances/{DOINum}/status/public:
+    $ref: ./paths/doi-status-public.yaml
   /search:
     $ref: ./paths/doi-search.yaml
