@@ -65,29 +65,40 @@
  ************************************************************************
  */
 
-import { ReactNode } from 'react'
-import Footer from '@/components/Layout/Footer'
-import AppBar from '@/components/Layout/AppBar'
-import { auth } from '@/auth/cadc-auth/credentials'
-import { VersionInfo } from '@/components/VersionInfo'
-import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
+import { NextRequest, NextResponse } from 'next/server'
+import { signIn } from '@/auth/cadc-auth/credentials'
+import { parseCADCSSOCookie } from '@/auth/cadc-auth/parseCADCSSOCookie'
 
-interface AppLayoutProps {
-  children: ReactNode
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+
+export async function GET(request: NextRequest) {
+  const cadcSso = request.cookies.get('CADC_SSO')?.value
+  const returnUrl = request.nextUrl.searchParams.get('returnUrl') || '/'
+
+  if (!cadcSso) {
+    return NextResponse.redirect(new URL(`${basePath}/login`, request.url))
+  }
+
+  const tokenInfo = parseCADCSSOCookie(cadcSso)
+  if (!tokenInfo) {
+    return NextResponse.redirect(new URL(`${basePath}/login`, request.url))
+  }
+
+  try {
+    // signIn triggers a redirect (throws NEXT_REDIRECT) which Next.js handles
+    // as a redirect response with Set-Cookie headers for the new session
+    await signIn('cadc-sso', {
+      token: cadcSso,
+      redirectTo: returnUrl,
+    })
+  } catch (error: unknown) {
+    // Rethrow redirect errors so Next.js handles them
+    const digest = (error as { digest?: string })?.digest
+    if (typeof digest === 'string' && digest.startsWith('NEXT_REDIRECT')) {
+      throw error
+    }
+    // For other errors (e.g. CADC APIs rejected the token), fall through to login
+    console.error('[SSO] Auto-login failed:', error)
+    return NextResponse.redirect(new URL(`${basePath}/login`, request.url))
+  }
 }
-
-const AppLayout = async ({ children }: AppLayoutProps) => {
-  const session = await auth()
-  const validSession = isStaleSession(session) ? null : session
-
-  return (
-    <div className="w-full min-h-screen flex flex-col ">
-      <AppBar session={validSession} />
-      <main className="flex-1 w-full flex flex-col h-screen">{children}</main>
-      <Footer />
-      <VersionInfo />
-    </div>
-  )
-}
-
-export default AppLayout

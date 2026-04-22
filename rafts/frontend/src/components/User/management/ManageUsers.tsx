@@ -69,6 +69,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import UserTable from '@/components/User/management/UserTable'
+import Footer from '@/components/Layout/Footer'
 import { User, getUsers } from '@/actions/user/getUsers'
 import { Typography, Paper, Box, Chip, Alert } from '@mui/material'
 import { Users, AlertCircle } from 'lucide-react'
@@ -209,9 +210,7 @@ export default function ManageUsers() {
         )}
       </main>
 
-      <footer className="row-start-3 w-full text-center text-sm text-gray-500 mt-8">
-        <div>CADC RAFTS Publication System</div>
-      </footer>
+      <Footer />
     </div>
   )
 }

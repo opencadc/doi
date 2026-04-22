@@ -346,7 +346,7 @@ const AnnouncementForm = forwardRef<
               }}
             />
             {errors[PROP_TOPIC] && (
-              <FormHelperText>{t(errors[PROP_TOPIC]?.message)}</FormHelperText>
+              <FormHelperText>{t(errors[PROP_TOPIC]?.message as string)}</FormHelperText>
             )}
           </FormControl>
 
@@ -355,7 +355,7 @@ const AnnouncementForm = forwardRef<
             className="object-name-field"
             label={t('object_name')}
             error={!!errors[PROP_OBJECT_NAME]}
-            helperText={errors[PROP_OBJECT_NAME] ? t(errors[PROP_OBJECT_NAME]?.message) : undefined}
+            helperText={errors[PROP_OBJECT_NAME] ? t(errors[PROP_OBJECT_NAME]?.message as string) : undefined}
             required={true}
             {...register(PROP_OBJECT_NAME, { required: t('is_required') })}
           />
@@ -372,7 +372,7 @@ const AnnouncementForm = forwardRef<
                   multiline
                   minRows={4}
                   error={!!errors[PROP_ABSTRACT]}
-                  helperText={errors[PROP_ABSTRACT] ? t(errors[PROP_ABSTRACT]?.message) : undefined}
+                  helperText={errors[PROP_ABSTRACT] ? t(errors[PROP_ABSTRACT]?.message as string) : undefined}
                   required={true}
                   fullWidth
                 />
@@ -403,7 +403,7 @@ const AnnouncementForm = forwardRef<
 
           {errors[PROP_FIGURE] && (
             <FormHelperText error>
-              {t(errors[PROP_FIGURE]?.message) || 'Error with the figure upload'}
+              {t(errors[PROP_FIGURE]?.message as string) || 'Error with the figure upload'}
             </FormHelperText>
           )}
 

@@ -68,7 +68,7 @@
 import { ReactElement } from 'react'
 import { Metadata } from 'next'
 import { RootLayoutProps } from '@/types/common'
-import { useLocale } from 'next-intl'
+import { routing } from '@/i18n/routing'
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 
 //auth
@@ -79,7 +79,7 @@ import '@fontsource/roboto/300.css'
 import '@fontsource/roboto/400.css'
 import '@fontsource/roboto/500.css'
 import '@fontsource/roboto/700.css'
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter'
 import ThemeProvider from '@/styles/ThemeProvider'
 
 // Tailwind Global Styles (Load After MUI)
@@ -95,9 +95,8 @@ export const metadata: Metadata = {
 }
 
 const RootLayout = ({ children }: RootLayoutProps): ReactElement => {
-  const locale = useLocale()
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={routing.defaultLocale} suppressHydrationWarning>
       <body>
         <AuthProvider>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>

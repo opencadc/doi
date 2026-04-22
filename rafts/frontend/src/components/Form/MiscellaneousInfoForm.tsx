@@ -286,7 +286,7 @@ const MiscellaneousInfoForm = forwardRef<
                       error={!!errors?.[PROP_MISC]?.[index]?.[PROP_MISC_KEY]}
                       helperText={
                         errors?.[PROP_MISC]?.[index]?.[PROP_MISC_KEY]
-                          ? t(errors?.[PROP_MISC]?.[index]?.[PROP_MISC_KEY]?.message)
+                          ? t(errors?.[PROP_MISC]?.[index]?.[PROP_MISC_KEY]?.message as string)
                           : isFileType
                             ? t('misc_file_label_helper')
                             : t('misc_key_helper')
@@ -320,7 +320,7 @@ const MiscellaneousInfoForm = forwardRef<
                         error={!!errors?.[PROP_MISC]?.[index]?.[PROP_MISC_VALUE]}
                         helperText={
                           errors?.[PROP_MISC]?.[index]?.[PROP_MISC_VALUE]
-                            ? t(errors?.[PROP_MISC]?.[index]?.[PROP_MISC_VALUE]?.message)
+                            ? t(errors?.[PROP_MISC]?.[index]?.[PROP_MISC_VALUE]?.message as string)
                             : t('misc_value_helper')
                         }
                         {...register(`${PROP_MISC}.${index}.${PROP_MISC_VALUE}`)}
