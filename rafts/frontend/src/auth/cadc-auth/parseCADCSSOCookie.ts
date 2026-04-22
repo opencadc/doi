@@ -65,112 +65,48 @@
  ************************************************************************
  */
 
-import { auth } from '@/auth/cadc-auth/credentials'
-import createIntlMiddleware from 'next-intl/middleware'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { routing } from '@/i18n/routing'
-
-// Create the internationalization middleware
-const intlMiddleware = createIntlMiddleware(routing)
-
-// Define routes and their allowed roles
-const routePermissions = {
-  '/form/create': ['contributor', 'reviewer', 'admin'],
-  '/review': ['reviewer', 'admin'],
-  '/admin': ['admin'],
+export interface CADCSSOToken {
+  expirytime: number
+  userID: string
+  X500: string
+  scope: string
+  domains: string[]
+  signature: string
 }
 
-// Check if a user with the given role can access a specific path
-const canAccessRoute = (path: string, role?: string): boolean => {
-  // Check each route pattern
-  for (const [route, allowedRoles] of Object.entries(routePermissions)) {
-    if (path.startsWith(route)) {
-      return role ? allowedRoles.includes(role) : false
+/**
+ * Decode and parse a CADC_SSO cookie value.
+ * Returns null if the cookie is malformed or expired.
+ */
+export function parseCADCSSOCookie(cookieValue: string): CADCSSOToken | null {
+  try {
+    const decoded = Buffer.from(cookieValue, 'base64').toString('utf-8')
+    const params = new URLSearchParams(decoded)
+
+    const expirytimeStr = params.get('expirytime')
+    const userID = params.get('userID')
+    const signature = params.get('signature')
+
+    if (!expirytimeStr || !userID || !signature) {
+      return null
     }
+
+    const expirytime = parseInt(expirytimeStr, 10)
+    if (isNaN(expirytime) || Date.now() > expirytime) {
+      return null
+    }
+
+    const domains = params.getAll('domain')
+
+    return {
+      expirytime,
+      userID,
+      X500: params.get('X500') || '',
+      scope: params.get('scope') || '',
+      domains,
+      signature,
+    }
+  } catch {
+    return null
   }
-
-  // If no specific restrictions found, allow access by default
-  return true
-}
-
-// Strip locale prefix from pathname (e.g., /en/view/rafts -> /view/rafts)
-const stripLocale = (pathname: string): string => {
-  const localePattern = /^\/(en|fr)(\/|$)/
-  return pathname.replace(localePattern, '/')
-}
-
-const middleware = async (request: NextRequest) => {
-  const publicPaths = ['/login', '/login-required', '/api/auth', '/unauthorized', '/public-view']
-  const pathnameWithoutLocale = stripLocale(request.nextUrl.pathname)
-
-  // Check if it's a public path (or the home page)
-  const isPublicPath =
-    pathnameWithoutLocale === '/' ||
-    publicPaths.some((path) => pathnameWithoutLocale.startsWith(path))
-
-  // Get session
-  const session = await auth()
-  const userRole = session?.user?.role
-
-  // Skip locale handling for API routes
-  // Note: Next.js automatically strips basePath in middleware when configured in next.config.ts
-  const pathname = request.nextUrl.pathname
-
-  if (pathname.startsWith('/api/')) {
-    // For API routes, just return without locale handling
-    const response = NextResponse.next()
-    response.headers.set('Cache-Control', 'no-store, max-age=0')
-    response.headers.set('Pragma', 'no-cache')
-    return response
-  }
-
-  // Handle locale for non-API routes
-  const response = await intlMiddleware(request)
-
-  // Set cache control headers to prevent caching of authenticated pages
-  response.headers.set('Cache-Control', 'no-store, max-age=0')
-  response.headers.set('Pragma', 'no-cache')
-
-  // If it's a public path, just handle the locale
-  if (isPublicPath) {
-    return response
-  }
-
-  // If not authenticated or session is stale (missing user name), redirect to login
-  const isStaleSession = session && (!session.user?.name || session.user.name.includes('undefined'))
-  if (!session || isStaleSession) {
-    const loginRequiredUrl = request.nextUrl.clone()
-    loginRequiredUrl.pathname = '/login-required'
-    const returnPath = request.nextUrl.pathname || '/'
-    loginRequiredUrl.searchParams.set('returnUrl', returnPath)
-    return NextResponse.redirect(loginRequiredUrl)
-  }
-
-  // Check role-based access (use pathname without locale prefix)
-  const hasAccess = canAccessRoute(pathnameWithoutLocale, userRole)
-
-  if (!hasAccess) {
-    const unauthorizedUrl = request.nextUrl.clone()
-    unauthorizedUrl.pathname = '/unauthorized'
-    return NextResponse.redirect(unauthorizedUrl)
-  }
-
-  // Continue with the locale-handled response
-  return response
-}
-
-export default middleware
-
-// Fix 5: Make matcher basePath-aware
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
 }

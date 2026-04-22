@@ -65,29 +65,123 @@
  ************************************************************************
  */
 
-import { ReactNode } from 'react'
-import Footer from '@/components/Layout/Footer'
-import AppBar from '@/components/Layout/AppBar'
 import { auth } from '@/auth/cadc-auth/credentials'
-import { VersionInfo } from '@/components/VersionInfo'
-import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
+import { parseCADCSSOCookie } from '@/auth/cadc-auth/parseCADCSSOCookie'
+import createIntlMiddleware from 'next-intl/middleware'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { routing } from '@/i18n/routing'
 
-interface AppLayoutProps {
-  children: ReactNode
+// Create the internationalization middleware
+const intlMiddleware = createIntlMiddleware(routing)
+
+// Define routes and their allowed roles
+const routePermissions = {
+  '/form/create': ['contributor', 'reviewer', 'admin'],
+  '/review': ['reviewer', 'admin'],
+  '/admin': ['admin'],
 }
 
-const AppLayout = async ({ children }: AppLayoutProps) => {
+// Check if a user with the given role can access a specific path
+const canAccessRoute = (path: string, role?: string): boolean => {
+  // Check each route pattern
+  for (const [route, allowedRoles] of Object.entries(routePermissions)) {
+    if (path.startsWith(route)) {
+      return role ? allowedRoles.includes(role) : false
+    }
+  }
+
+  // If no specific restrictions found, allow access by default
+  return true
+}
+
+// Strip locale prefix from pathname (e.g., /en/view/rafts -> /view/rafts)
+const stripLocale = (pathname: string): string => {
+  const localePattern = /^\/(en|fr)(\/|$)/
+  return pathname.replace(localePattern, '/')
+}
+
+const proxy = async (request: NextRequest) => {
+  const publicPaths = ['/login', '/login-required', '/api/auth', '/unauthorized', '/public-view']
+  const pathnameWithoutLocale = stripLocale(request.nextUrl.pathname)
+
+  // Check if it's a public path (or the home page)
+  const isPublicPath =
+    pathnameWithoutLocale === '/' ||
+    publicPaths.some((path) => pathnameWithoutLocale.startsWith(path))
+
+  // Get session
   const session = await auth()
-  const validSession = isStaleSession(session) ? null : session
+  const userRole = session?.user?.role
 
-  return (
-    <div className="w-full min-h-screen flex flex-col ">
-      <AppBar session={validSession} />
-      <main className="flex-1 w-full flex flex-col h-screen">{children}</main>
-      <Footer />
-      <VersionInfo />
-    </div>
-  )
+  // Skip locale handling for API routes
+  // Note: Next.js automatically strips basePath in middleware when configured in next.config.ts
+  const pathname = request.nextUrl.pathname
+
+  if (pathname.startsWith('/api/')) {
+    // For API routes, just return without locale handling
+    const response = NextResponse.next()
+    response.headers.set('Cache-Control', 'no-store, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    return response
+  }
+
+  // Handle locale for non-API routes
+  const response = await intlMiddleware(request)
+
+  // Set cache control headers to prevent caching of authenticated pages
+  response.headers.set('Cache-Control', 'no-store, max-age=0')
+  response.headers.set('Pragma', 'no-cache')
+
+  // If it's a public path, just handle the locale
+  if (isPublicPath) {
+    return response
+  }
+
+  // If not authenticated or session is stale (missing user name), try SSO or redirect to login
+  const isStaleSession = session && (!session.user?.name || session.user.name.includes('undefined'))
+  if (!session || isStaleSession) {
+    const returnPath = request.nextUrl.pathname || '/'
+
+    // Check for CADC_SSO cookie — auto-login if the user is already authenticated with CANFAR
+    const cadcSso = request.cookies.get('CADC_SSO')?.value
+    if (cadcSso && parseCADCSSOCookie(cadcSso)) {
+      const ssoUrl = request.nextUrl.clone()
+      ssoUrl.pathname = '/api/auth/sso'
+      ssoUrl.searchParams.set('returnUrl', returnPath)
+      return NextResponse.redirect(ssoUrl)
+    }
+
+    const loginRequiredUrl = request.nextUrl.clone()
+    loginRequiredUrl.pathname = '/login-required'
+    loginRequiredUrl.searchParams.set('returnUrl', returnPath)
+    return NextResponse.redirect(loginRequiredUrl)
+  }
+
+  // Check role-based access (use pathname without locale prefix)
+  const hasAccess = canAccessRoute(pathnameWithoutLocale, userRole)
+
+  if (!hasAccess) {
+    const unauthorizedUrl = request.nextUrl.clone()
+    unauthorizedUrl.pathname = '/unauthorized'
+    return NextResponse.redirect(unauthorizedUrl)
+  }
+
+  // Continue with the locale-handled response
+  return response
 }
 
-export default AppLayout
+export default proxy
+
+// Fix 5: Make matcher basePath-aware
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+}

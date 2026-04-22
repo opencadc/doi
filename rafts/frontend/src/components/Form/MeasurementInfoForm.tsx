@@ -163,7 +163,7 @@ const MeasurementInfoForm = ({
               error={!!errors.photometry?.wavelength}
               helperText={
                 errors.photometry?.wavelength
-                  ? t(errors.photometry?.wavelength?.message)
+                  ? t(errors.photometry?.wavelength?.message as string)
                   : undefined
               }
               {...register(`${PROP_PHOTOMETRY}.${PROP_WAVELENGTH}`)}
@@ -174,7 +174,7 @@ const MeasurementInfoForm = ({
               error={!!errors.photometry?.brightness}
               helperText={
                 errors.photometry?.brightness
-                  ? t(errors.photometry?.brightness?.message)
+                  ? t(errors.photometry?.brightness?.message as string)
                   : undefined
               }
               {...register(`${PROP_PHOTOMETRY}.${PROP_BRIGHTNESS}`)}
@@ -184,7 +184,7 @@ const MeasurementInfoForm = ({
               label={`${t('errors')} (${t('optional')})`}
               error={!!errors.photometry?.errors}
               helperText={
-                errors.photometry?.errors ? t(errors.photometry?.errors?.message) : undefined
+                errors.photometry?.errors ? t(errors.photometry?.errors?.message as string) : undefined
               }
               {...register(`${PROP_PHOTOMETRY}.${PROP_ERRORS}`)}
             />
@@ -201,7 +201,7 @@ const MeasurementInfoForm = ({
               error={!!errors.spectroscopy?.wavelength}
               helperText={
                 errors.spectroscopy?.wavelength
-                  ? t(errors.spectroscopy?.wavelength?.message)
+                  ? t(errors.spectroscopy?.wavelength?.message as string)
                   : undefined
               }
               {...register(`${PROP_SPECTROSCOPY}.${PROP_WAVELENGTH}`)}
@@ -211,7 +211,7 @@ const MeasurementInfoForm = ({
               label={t('flux')}
               error={!!errors.spectroscopy?.flux}
               helperText={
-                errors.spectroscopy?.flux ? t(errors.spectroscopy?.flux?.message) : undefined
+                errors.spectroscopy?.flux ? t(errors.spectroscopy?.flux?.message as string) : undefined
               }
               {...register(`${PROP_SPECTROSCOPY}.${PROP_FLUX}`)}
             />
@@ -220,7 +220,7 @@ const MeasurementInfoForm = ({
               label={`${t('errors')} (${t('optional')})`}
               error={!!errors.spectroscopy?.errors}
               helperText={
-                errors.spectroscopy?.errors ? t(errors.spectroscopy?.errors?.message) : undefined
+                errors.spectroscopy?.errors ? t(errors.spectroscopy?.errors?.message as string) : undefined
               }
               {...register(`${PROP_SPECTROSCOPY}.${PROP_ERRORS}`)}
             />
@@ -236,7 +236,7 @@ const MeasurementInfoForm = ({
               label={`${t('position')} (${t('optional')})`}
               error={!!errors.astrometry?.position}
               helperText={
-                errors.astrometry?.position ? t(errors.astrometry?.position?.message) : undefined
+                errors.astrometry?.position ? t(errors.astrometry?.position?.message as string) : undefined
               }
               {...register(`${PROP_ASTROMETRY}.${PROP_POSITION}`)}
             />
@@ -246,7 +246,7 @@ const MeasurementInfoForm = ({
               error={!!errors.astrometry?.timeObserved}
               helperText={
                 errors.astrometry?.timeObserved
-                  ? t(errors.astrometry?.timeObserved?.message)
+                  ? t(errors.astrometry?.timeObserved?.message as string)
                   : undefined
               }
               {...register(`${PROP_ASTROMETRY}.${PROP_TIME_OBSERVED}`)}

@@ -97,6 +97,7 @@ storybook-static/
 # =============================================================================
 .claude/
 CLAUDE.md
+.mcp.json
 .copilot/
 .cursor/
 .codex/

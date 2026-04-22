@@ -1,8 +1,7 @@
 import createNextIntlPlugin from 'next-intl/plugin'
-import path from 'path'
 import type { NextConfig } from 'next'
 
-const withNextIntl = createNextIntlPlugin()
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 const securityHeaders = [
   {
@@ -46,15 +45,9 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployment
   output: 'standalone',
 
-  // Disable linting during build for production
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // Webpack configuration for path aliases
-  webpack: (config) => {
-    config.resolve.alias['@'] = path.resolve(__dirname, 'src')
-    return config
+  // Allow local image optimization (required in Next.js 16)
+  images: {
+    localPatterns: [{ pathname: '/**', search: '' }],
   },
 
   // Original env variables
@@ -74,12 +67,4 @@ const nextConfig: NextConfig = {
   },
 }
 
-// next-intl 3.x sets experimental.turbo (deprecated in Next.js 15.5+)
-// Move it to turbopack until next-intl is upgraded to v4
-const config = withNextIntl(nextConfig) as NextConfig
-if (config.experimental?.turbo) {
-  config.turbopack = { ...config.turbopack, ...config.experimental.turbo }
-  delete config.experimental.turbo
-}
-
-export default config
+export default withNextIntl(nextConfig)

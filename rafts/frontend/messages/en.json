@@ -435,5 +435,10 @@
     "description": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
     "go_home": "Go to Home",
     "go_back": "Go Back"
+  },
+  "footer": {
+    "about": "RAFTS (Research Announcements For The Solar System) is part of the Canadian Advanced Network for Astronomical Research (CANFAR) science platform.",
+    "operated_by": "Operated by the Canadian Astronomy Data Centre (CADC) and the Digital Research Alliance of Canada.",
+    "copyright": "\u00a9 2022-{year} National Research Council of Canada"
   }
 }

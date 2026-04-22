@@ -278,7 +278,7 @@ const AuthorForm = forwardRef<
                 error={!!errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_FIRST_NAME]}
                 helperText={
                   errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_FIRST_NAME]
-                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_FIRST_NAME]?.message)
+                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_FIRST_NAME]?.message as string)
                     : undefined
                 }
                 required={true}
@@ -294,7 +294,7 @@ const AuthorForm = forwardRef<
                 error={!!errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_LAST_NAME]}
                 helperText={
                   errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_LAST_NAME]
-                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_LAST_NAME]?.message)
+                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_LAST_NAME]?.message as string)
                     : undefined
                 }
                 required={true}
@@ -310,7 +310,7 @@ const AuthorForm = forwardRef<
                 error={!!errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_ORCID]}
                 helperText={
                   errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_ORCID]
-                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_ORCID]?.message)
+                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_ORCID]?.message as string)
                     : undefined
                 }
                 {...register(`${PROP_CORRESPONDING_AUTHOR}.${PROP_AUTHOR_ORCID}`)}
@@ -323,7 +323,7 @@ const AuthorForm = forwardRef<
                 error={!!errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_AFFILIATION]}
                 helperText={
                   errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_AFFILIATION]
-                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_AFFILIATION]?.message)
+                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_AFFILIATION]?.message as string)
                     : undefined
                 }
                 required={true}
@@ -339,7 +339,7 @@ const AuthorForm = forwardRef<
                 error={!!errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_EMAIL]}
                 helperText={
                   errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_EMAIL]
-                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_EMAIL]?.message)
+                    ? t(errors[PROP_CORRESPONDING_AUTHOR]?.[PROP_AUTHOR_EMAIL]?.message as string)
                     : undefined
                 }
                 required={true}
@@ -364,7 +364,7 @@ const AuthorForm = forwardRef<
                       errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_FIRST_NAME]
                         ? t(
                             errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_FIRST_NAME]
-                              ?.message,
+                              ?.message as string,
                           )
                         : undefined
                     }
@@ -386,7 +386,7 @@ const AuthorForm = forwardRef<
                       errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_LAST_NAME]
                         ? t(
                             errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_LAST_NAME]
-                              ?.message,
+                              ?.message as string,
                           )
                         : undefined
                     }
@@ -405,7 +405,7 @@ const AuthorForm = forwardRef<
                       errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_ORCID]
                         ? t(
                             errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_ORCID]
-                              ?.message,
+                              ?.message as string,
                           )
                         : undefined
                     }
@@ -421,7 +421,7 @@ const AuthorForm = forwardRef<
                       errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_AFFILIATION]
                         ? t(
                             errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_AFFILIATION]
-                              ?.message,
+                              ?.message as string,
                           )
                         : undefined
                     }
@@ -443,7 +443,7 @@ const AuthorForm = forwardRef<
                       errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_EMAIL]
                         ? t(
                             errors[PROP_CONTRIBUTING_AUTHORS]?.[index]?.[PROP_AUTHOR_EMAIL]
-                              ?.message,
+                              ?.message as string,
                           )
                         : undefined
                     }
@@ -490,7 +490,7 @@ const AuthorForm = forwardRef<
                   error={!!errors[PROP_COLLABORATIONS]?.[index]}
                   helperText={
                     errors[PROP_COLLABORATIONS]?.[index]
-                      ? t(errors[PROP_COLLABORATIONS]?.[index]?.message)
+                      ? t(errors[PROP_COLLABORATIONS]?.[index]?.message as string)
                       : undefined
                   }
                   required={true}

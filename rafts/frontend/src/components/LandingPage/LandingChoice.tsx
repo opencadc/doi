@@ -68,6 +68,8 @@
 'use client'
 import { useRouter } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
+import landingImage from '@/../public/landing-image.png'
 import {
   Container,
   Typography,
@@ -89,7 +91,6 @@ import {
   Visibility as VisibilityIcon,
 } from '@mui/icons-material'
 
-import solar from '@/assets/systeme-solaire-og.jpg'
 import { useMemo } from 'react'
 import { Session } from 'next-auth'
 
@@ -166,38 +167,49 @@ const LandingChoice = ({ session }: { session: Session | null }) => {
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: 2,
           borderRadius: 2,
-          background: `linear-gradient(to right, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
+          backgroundColor: '#f5f5f5',
           mb: 6,
         }}
       >
-        <Grid container spacing={4} alignItems="center">
-          <Grid size={{ xs: 12, md: 7 }}>
-            <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
-              {t('hero_title')}
-            </Typography>
-            <Typography variant="h6" color="text.secondary" component={'p'}>
-              {t('hero_subtitle')}
-            </Typography>
-            <Typography component={'p'} variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-              {t('hero_description')}
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Box
-              component="img"
-              src={solar.src}
-              alt="Solar System Research"
-              sx={{
-                width: '100%',
-                height: 'auto',
-                borderRadius: 2,
-                boxShadow: 3,
-              }}
-            />
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: 1,
+          }}
+        >
+        <Image
+          src={landingImage}
+          alt=""
+          fill
+          priority
+          style={{ objectFit: 'cover', objectPosition: 'center' }}
+        />
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            py: 4,
+            px: 2,
+            backgroundColor: theme.palette.mode === 'dark'
+              ? 'rgba(0,0,0,0.7)'
+              : 'rgba(255,255,255,0.8)',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+            {t('hero_title')}
+          </Typography>
+          <Typography variant="h6" color="text.secondary" component={'p'}>
+            {t('hero_subtitle')}
+          </Typography>
+          <Typography component={'p'} variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+            {t('hero_description')}
+          </Typography>
+        </Box>
+        </Box>
       </Paper>
 
       <Grid container spacing={3} sx={{ mb: 6 }}>

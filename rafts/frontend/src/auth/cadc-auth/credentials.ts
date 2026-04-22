@@ -130,6 +130,42 @@ export const {
         return null
       },
     }),
+    CredentialsProvider({
+      id: 'cadc-sso',
+      name: 'CADC SSO',
+      credentials: {
+        token: { type: 'text' },
+      },
+      async authorize(credentials): Promise<User | null> {
+        try {
+          const token = credentials?.token as string
+          if (!token) return null
+
+          // Use the SSO token as Bearer to fetch user info (same CADC AC APIs)
+          const user: User | null = await fetchUserInfo(token)
+          if (!user) return null
+
+          const { role: userRole, groups: userGroups } = await fetchUserGroups(token)
+
+          console.log(`[AUTH] SSO login: ${user.id}`, {
+            profile: user,
+            role: userRole,
+            groups: userGroups,
+          })
+
+          return {
+            id: user.id || '',
+            ...user,
+            accessToken: token,
+            role: userRole,
+            groups: userGroups,
+          }
+        } catch {
+          // SSO authentication failed
+        }
+        return null
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {

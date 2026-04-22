@@ -65,29 +65,48 @@
  ************************************************************************
  */
 
-import { ReactNode } from 'react'
-import Footer from '@/components/Layout/Footer'
-import AppBar from '@/components/Layout/AppBar'
-import { auth } from '@/auth/cadc-auth/credentials'
-import { VersionInfo } from '@/components/VersionInfo'
-import { isStaleSession } from '@/auth/cadc-auth/isStaleSession'
+'use client'
 
-interface AppLayoutProps {
-  children: ReactNode
-}
+import { useTranslations } from 'next-intl'
+import { Box, Typography, Link as MuiLink } from '@mui/material'
 
-const AppLayout = async ({ children }: AppLayoutProps) => {
-  const session = await auth()
-  const validSession = isStaleSession(session) ? null : session
+const Footer = () => {
+  const t = useTranslations('footer')
 
   return (
-    <div className="w-full min-h-screen flex flex-col ">
-      <AppBar session={validSession} />
-      <main className="flex-1 w-full flex flex-col h-screen">{children}</main>
-      <Footer />
-      <VersionInfo />
-    </div>
+    <footer>
+      <Box
+        sx={{
+          width: '100%',
+          py: 3,
+          px: 4,
+          mt: 'auto',
+          textAlign: 'center',
+          borderTop: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          {t('about')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {t('operated_by')}{' '}
+          <MuiLink
+            href="https://www.canfar.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="inherit"
+            underline="hover"
+          >
+            CANFAR
+          </MuiLink>
+        </Typography>
+        <Typography variant="caption" color="text.disabled" sx={{ mt: 1, display: 'block' }}>
+          {t('copyright', { year: new Date().getFullYear() })}
+        </Typography>
+      </Box>
+    </footer>
   )
 }
 
-export default AppLayout
+export default Footer

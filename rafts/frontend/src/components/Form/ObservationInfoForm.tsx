@@ -319,7 +319,7 @@ const ObservationInfoForm = forwardRef<
                 error={!!errors.photometry?.wavelength}
                 helperText={
                   errors.photometry?.wavelength
-                    ? t(errors.photometry?.wavelength?.message)
+                    ? t(errors.photometry?.wavelength?.message as string)
                     : t('wavelength_helper')
                 }
                 {...register(`${PROP_PHOTOMETRY}.${PROP_WAVELENGTH}`)}
@@ -330,7 +330,7 @@ const ObservationInfoForm = forwardRef<
                 error={!!errors.photometry?.brightness}
                 helperText={
                   errors.photometry?.brightness
-                    ? t(errors.photometry?.brightness?.message)
+                    ? t(errors.photometry?.brightness?.message as string)
                     : t('brightness_helper')
                 }
                 {...register(`${PROP_PHOTOMETRY}.${PROP_BRIGHTNESS}`)}
@@ -340,7 +340,7 @@ const ObservationInfoForm = forwardRef<
                 label={`${t('errors')} (${t('optional')})`}
                 error={!!errors.photometry?.errors}
                 helperText={
-                  errors.photometry?.errors ? t(errors.photometry?.errors?.message) : undefined
+                  errors.photometry?.errors ? t(errors.photometry?.errors?.message as string) : undefined
                 }
                 {...register(`${PROP_PHOTOMETRY}.${PROP_ERRORS}`)}
               />
@@ -353,7 +353,7 @@ const ObservationInfoForm = forwardRef<
             <InputFormField
               label={`${t('mpc_id')} (${t('optional')})`}
               error={!!errors[PROP_MPC_ID]}
-              helperText={errors[PROP_MPC_ID] ? t(errors[PROP_MPC_ID]?.message) : undefined}
+              helperText={errors[PROP_MPC_ID] ? t(errors[PROP_MPC_ID]?.message as string) : undefined}
               {...register(PROP_MPC_ID)}
             />
           </div>
@@ -363,7 +363,7 @@ const ObservationInfoForm = forwardRef<
             label={`${t('alert_id')} (${t('optional')})`}
             error={!!errors[PROP_ALERT_ID]}
             helperText={
-              errors[PROP_ALERT_ID] ? t(errors[PROP_ALERT_ID]?.message) : t('alert_id_helper')
+              errors[PROP_ALERT_ID] ? t(errors[PROP_ALERT_ID]?.message as string) : t('alert_id_helper')
             }
             {...register(PROP_ALERT_ID)}
           />
@@ -373,7 +373,7 @@ const ObservationInfoForm = forwardRef<
             label={`${t('mjd')} (${t('optional')})`}
             type="text"
             error={!!errors[PROP_MJD]}
-            helperText={errors[PROP_MJD] ? t(errors[PROP_MJD]?.message) : t('mjd_helper')}
+            helperText={errors[PROP_MJD] ? t(errors[PROP_MJD]?.message as string) : t('mjd_helper')}
             {...register(PROP_MJD)}
           />
 
@@ -382,7 +382,7 @@ const ObservationInfoForm = forwardRef<
             className="telescope-field"
             label={`${t('telescope')} (${t('instrument')}) (${t('optional')})`}
             error={!!errors[PROP_TELESCOPE]}
-            helperText={errors[PROP_TELESCOPE] ? t(errors[PROP_TELESCOPE]?.message) : undefined}
+            helperText={errors[PROP_TELESCOPE] ? t(errors[PROP_TELESCOPE]?.message as string) : undefined}
             {...register(PROP_TELESCOPE)}
           />
           {/* File Upload Section */}
@@ -399,7 +399,7 @@ const ObservationInfoForm = forwardRef<
               customFilename="ephemeris.txt"
             />
             <FormHelperText>
-              {errors[PROP_EPHEMERIS] ? t(errors[PROP_EPHEMERIS]?.message) : undefined}
+              {errors[PROP_EPHEMERIS] ? t(errors[PROP_EPHEMERIS]?.message as string) : undefined}
             </FormHelperText>
 
             {/* Orbital Elements (Optional) */}
@@ -414,7 +414,7 @@ const ObservationInfoForm = forwardRef<
             />
             <FormHelperText>
               {errors[PROP_ORBITAL_ELEMENTS]
-                ? t(errors[PROP_ORBITAL_ELEMENTS]?.message)
+                ? t(errors[PROP_ORBITAL_ELEMENTS]?.message as string)
                 : undefined}
             </FormHelperText>
             {/*Spectrum File upload*/}
