@@ -35,10 +35,9 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  // Add these for CANFAR compatibility
-  // Use the BASE_PATH from environment if available
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
-  assetPrefix: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  // CANFAR deployment: app always runs at /rafts
+  basePath: '/rafts',
+  assetPrefix: '/rafts',
   // Trust the proxy headers
   poweredByHeader: false,
 

@@ -65,23 +65,22 @@
  ************************************************************************
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { redirect } from 'next/navigation'
 import { signIn } from '@/auth/cadc-auth/credentials'
 import { parseCADCSSOCookie } from '@/auth/cadc-auth/parseCADCSSOCookie'
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
 export async function GET(request: NextRequest) {
   const cadcSso = request.cookies.get('CADC_SSO')?.value
   const returnUrl = request.nextUrl.searchParams.get('returnUrl') || '/'
 
   if (!cadcSso) {
-    return NextResponse.redirect(new URL(`${basePath}/login`, request.url))
+    redirect('/login')
   }
 
   const tokenInfo = parseCADCSSOCookie(cadcSso)
   if (!tokenInfo) {
-    return NextResponse.redirect(new URL(`${basePath}/login`, request.url))
+    redirect('/login')
   }
 
   try {
@@ -99,6 +98,6 @@ export async function GET(request: NextRequest) {
     }
     // For other errors (e.g. CADC APIs rejected the token), fall through to login
     console.error('[SSO] Auto-login failed:', error)
-    return NextResponse.redirect(new URL(`${basePath}/login`, request.url))
+    redirect('/login')
   }
 }
