@@ -126,6 +126,27 @@ const proxy = async (request: NextRequest) => {
     return response
   }
 
+  // SSO auto-login: if no session but CADC_SSO cookie is present, bootstrap a session.
+  // This runs on ALL pages (public and protected) so the user appears logged in everywhere.
+  // Skip paths that would cause loops (login, SSO endpoint itself).
+  const isStaleSession = session && (!session.user?.name || session.user.name.includes('undefined'))
+  const ssoSkipPaths = ['/login', '/login-required', '/api/auth']
+  const shouldSkipSso = ssoSkipPaths.some((p) => pathnameWithoutLocale.startsWith(p))
+
+  if ((!session || isStaleSession) && !shouldSkipSso) {
+    const cadcSso = request.cookies.get('CADC_SSO')?.value
+    const ssoToken = cadcSso ? parseCADCSSOCookie(cadcSso) : null
+
+    if (cadcSso && ssoToken) {
+      const returnPath = request.nextUrl.pathname || '/'
+      const ssoUrl = request.nextUrl.clone()
+      ssoUrl.pathname = '/api/auth/sso'
+      ssoUrl.searchParams.set('returnUrl', returnPath)
+      console.log('[Proxy] SSO redirect for', ssoToken.userID, 'from', returnPath)
+      return NextResponse.redirect(ssoUrl)
+    }
+  }
+
   // Handle locale for non-API routes
   const response = await intlMiddleware(request)
 
@@ -138,20 +159,9 @@ const proxy = async (request: NextRequest) => {
     return response
   }
 
-  // If not authenticated or session is stale (missing user name), try SSO or redirect to login
-  const isStaleSession = session && (!session.user?.name || session.user.name.includes('undefined'))
+  // Protected path without session — redirect to login
   if (!session || isStaleSession) {
     const returnPath = request.nextUrl.pathname || '/'
-
-    // Check for CADC_SSO cookie — auto-login if the user is already authenticated with CANFAR
-    const cadcSso = request.cookies.get('CADC_SSO')?.value
-    if (cadcSso && parseCADCSSOCookie(cadcSso)) {
-      const ssoUrl = request.nextUrl.clone()
-      ssoUrl.pathname = '/api/auth/sso'
-      ssoUrl.searchParams.set('returnUrl', returnPath)
-      return NextResponse.redirect(ssoUrl)
-    }
-
     const loginRequiredUrl = request.nextUrl.clone()
     loginRequiredUrl.pathname = '/login-required'
     loginRequiredUrl.searchParams.set('returnUrl', returnPath)
