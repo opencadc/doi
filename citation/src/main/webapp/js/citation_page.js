@@ -156,31 +156,50 @@
 
     // ------------ HTTP/Ajax functions ------------
 
-    function prepareCall() {
+    // Simple in-memory cache for Registry.getServiceURL results, keyed by
+    // the 4 arguments passed to getServiceURL. This avoids repeated
+    // lookups to the remote registry service for the same endpoint.
+    const _serviceURLCache = {}
+
+    // The registry doesn't need to be called multiple times per page.  Cache it here.
+    function _getCachedServiceURL(authorityID, standardID, interfaceType, accessURI) {
+      const key = [authorityID, standardID, interfaceType, accessURI].join('|')
+
+      if (_serviceURLCache.hasOwnProperty(key)) {
+        // Return cached value wrapped in a resolved Promise to keep
+        // the same contract as Registry.getServiceURL
+        return Promise.resolve(_serviceURLCache[key])
+      }
+
       return _registryClient
-          .getServiceURL(
-              'ivo://cadc.nrc.ca/doi',
-              'http://www.opencadc.org/std/doi#instances-1.0',
-              'vs:ParamHTTP',
-              'cookie'
-          )
+          .getServiceURL(authorityID, standardID, interfaceType, accessURI)
+          .then(function (serviceURL) {
+            // Cache successful lookups only
+            _serviceURLCache[key] = serviceURL
+            return serviceURL
+          })
           .catch(function (err) {
             setAjaxFail('Error obtaining Service URL > ' + err)
           })
     }
 
+    function prepareCall() {
+      return _getCachedServiceURL(
+          'ivo://cadc.nrc.ca/doi',
+          'http://www.opencadc.org/std/doi#instances-1.0',
+          'vs:ParamHTTP',
+          'cookie'
+      )
+    }
+
     function prepareSearchCall() {
-          return _registryClient
-              .getServiceURL(
-                  'ivo://cadc.nrc.ca/doi',
-                  'http://www.opencadc.org/std/doi#search-1.0',
-                  'vs:ParamHTTP',
-                  'cookie'
-              )
-              .catch(function (err) {
-                setAjaxFail('Error obtaining Service URL > ' + err)
-              })
-        }
+      return _getCachedServiceURL(
+          'ivo://cadc.nrc.ca/doi',
+          'http://www.opencadc.org/std/doi#search-1.0',
+          'vs:ParamHTTP',
+          'cookie'
+      )
+    }
 
     function setAjaxCount(count) {
       _ajaxCallCount = count

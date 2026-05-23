@@ -9,7 +9,7 @@ reducing the amount of "paperwork" necessary to register datasets associated wit
 It provides a pre-publication data repository, a service to generate DOI metadata and publish it with DataCite, 
 and a landing page facility to support DOIs registered with DataCite through the service.
 
-Currently the service will:
+Currently, the service will:
 - create a draft DOI metadata document using the minimal information necessary
 - generate a VOSpace directory for the dataset to be housed and later archived when the DOI is minted
 - register the DOI with DataCite when the DOI is minted
@@ -113,3 +113,59 @@ A DOI managed through the CANFAR services has 2 states:
 - are publicly available
 - have been registered with DataCite.org
 - are findable through doi.org and other DOI search engines
+
+## Deployment
+
+The **citation** application is packaged as a WAR and can be deployed as a
+Docker container to Kubernetes using the provided Helm chart.
+
+### Building the Docker image
+
+The Dockerfile for the citation service is located at `citation/Dockerfile` and
+expects a built WAR at `citation/build/libs/citation.war`.
+
+From the repository root:
+
+1. Build the application WAR:
+
+   ```bash
+   ./gradlew :citation:clean :citation:build
+   ```
+
+2. Build the Docker image:
+
+   ```bash
+   docker build \
+     -t images.opencadc.org/canfar/citation:v1.0.0 \
+     -f citation/Dockerfile \
+     citation
+   ```
+
+Adjust the image name and tag as needed for your registry. The default Helm
+values expect the image to be available as `images.opencadc.org/canfar/citation`
+with a tag matching the chart `appVersion` (see `citation/helm/values.yaml`).
+
+### Deploying with Helm
+
+A Helm chart for deploying the citation service is provided in
+`citation/helm`. To install the chart into a Kubernetes cluster:
+
+```bash
+cd citation
+
+helm install citation ./helm \
+  --namespace citation \
+  --create-namespace \
+  --set image.repository=images.opencadc.org/canfar/citation \
+  --set image.tag=v1.0.0
+```
+
+Key notes:
+
+- Override `image.repository` and `image.tag` if your image is stored in a
+  different registry or uses a different tag.
+- Enable and configure `ingress` or `httpRoute` in `values.yaml` (or via
+  `--set`/`-f` overrides) to expose the service externally according to your
+  cluster's ingress or Gateway API setup.
+- Other operational parameters (replica count, resources, autoscaling, etc.)
+  can also be customized via `values.yaml`.
