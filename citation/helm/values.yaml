@@ -162,3 +162,23 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Optional base URL for CANFAR web resources (e.g. https://www.canfar.net).
+# When set, exposed to the container as CANFAR_WEB_HOST.
+canfarWebRoot: ""
+
+# cadc-tomcat Connector settings written to /config/catalina.properties.
+# These map to system properties referenced by server.xml in the base image:
+# https://github.com/opencadc/docker-base/blob/main/cadc-tomcat/src/server.xml
+#
+# Prefer enabling ingress or httpRoute so proxyName, scheme, proxyPort (and secure)
+# are derived from those resources. When both are disabled, set tomcat.connector
+# overrides below (defaults: hostname.example.com / https / 443 / secure=true).
+tomcat:
+  connector:
+    connectionTimeout: 20000
+    keepAliveTimeout: 120000
+    # proxyName: hostname.example.com
+    # scheme: https
+    # proxyPort: "443"
+    # secure: true
