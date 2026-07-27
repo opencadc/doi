@@ -1,0 +1,174 @@
+kubernetesClusterDomain: cluster.local
+
+replicaCount: 1
+
+image:
+  repository: bucket.canfar.net/doi
+  pullPolicy: IfNotPresent
+  tag: "1.2.0"
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+podSecurityContext: {}
+
+securityContext: {}
+
+deployment:
+  hostname: example.org
+  doi:
+    # Optional rename of the application from the default "doi".
+    applicationName: "doi"
+
+    # The endpoint to serve this from. If applicationName is changed, this should match.
+    endpoint: "/doi"
+
+    # VOSI endpoint used by Kubernetes health probes and the Helm test.
+    availabilityPath: "/doi/availability"
+
+    # Set the Registry URL pointing to the desired registry (https:// URL).
+    # registryURL: https://example.org/reg
+
+    # ID (URI) of the GMS Service. Required for auth-related registry lookups.
+    # gmsID: ivo://example.org/gms
+
+    # URI or URL of the OIDC (IAM) server. Used to validate incoming tokens.
+    # oidcURI: https://example.org/oidc
+
+    # The IdentityManager class handling authentication.
+    identityManagerClass: org.opencadc.auth.StandardIdentityManager
+
+    config:
+      # VOSpace URI to the parent DOI folder.
+      vospaceParentUri: "vos://example.org~arc/doi"
+
+      # Prefix prepended to the DOI name for metadata stored in VOSpace.
+      metaDataPrefix: "doi"
+
+      # Prefix prepended to the DOI name to create the backing GMS group name.
+      groupPrefix: "doi"
+
+      # DOI landing page URL.
+      landingUrl: "https://example.org/doi"
+
+      # DataCite MDS REST endpoint.
+      mdsUrl: "https://mds.datacite.org"
+
+      # Registered prefix for the DataCite account.
+      accountPrefix: ""
+
+      # Optional DOI identifier prefix.
+      doiIdentifierPrefix: ""
+
+      # Optional publisher group URI for alternative DOI settings.
+      publisherGroupURI: ""
+
+      # Optional self-publish flag for alternative DOI settings.
+      selfPublish: ""
+
+      # Developer testing only.
+      randomTestID: false
+
+    datacite:
+      auth:
+        # Existing Secret containing DataCite credentials.
+        existingSecret: "doi-datacite"
+        secretKeys:
+          username: username
+          password: password
+
+    certificates:
+      # Existing Secret containing doiadmin.pem and cadcproxy.pem.
+      existingSecret: "doi-certs"
+      secretKeys:
+        doiadmin: doiadmin.pem
+        cadcproxy: cadcproxy.pem
+
+    # Optionally set the DEBUG port.
+    # extraEnv:
+    # - name: CATALINA_OPTS
+    #   value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5555"
+    # extraPorts:
+    # - containerPort: 5555
+    #   protocol: TCP
+
+    # This applies to the DOI service pod.
+    # nodeAffinity: {}
+
+    # Optionally mount additional config or certificates.
+    # extraVolumeMounts:
+    # - mountPath: "/config/cacerts"
+    #   name: cacert-volume
+    # extraVolumes:
+    # - name: cacert-volume
+    #   secret:
+    #     defaultMode: 420
+    #     secretName: doi-cacert-secret
+
+    # Groups that can alter logging. Empty array means nobody can alter it.
+    loggingGroups: []
+
+    resources:
+      requests:
+        memory: "500Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "750m"
+
+  # Specify extra hostnames that will be added to the Pod's /etc/hosts file.
+  # extraHosts:
+  #   - ip: 127.3.34.5
+  #     hostname: myhost.example.org
+  # extraHosts: []
+
+tolerations: []
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /doi
+          pathType: Prefix
+  tls: []
+
+volumeInit:
+  image: busybox:1.36
+  imagePullPolicy: IfNotPresent
+  securityContext: {}
+  podSecurityContext: {}
+
+serviceAccount:
+  create: false
+  automount: false
+  annotations: {}
+  name: ""
+
+livenessProbe:
+  httpGet:
+    path: /doi/availability
+    port: http
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /doi/availability
+    port: http
+  periodSeconds: 15
+
+startupProbe:
+  httpGet:
+    path: /doi/availability
+    port: http
+  initialDelaySeconds: 10
+  timeoutSeconds: 30
+  periodSeconds: 10
+  failureThreshold: 30

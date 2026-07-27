@@ -114,6 +114,32 @@ docker run --rm -it doi:latest /bin/bash
 docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name doi doi:latest
 ```
 
+## Kubernetes deployment
+
+A Helm chart for deploying the DOI service is provided in `doi/helm` from the
+repository root. Start with `doi/helm/examples/values.example.yaml`, provide
+the environment-specific registry, service, VOSpace, and DataCite settings,
+and create the referenced credential and certificate Secrets out of band.
+
+Validate the chart before installation:
+
+```
+helm lint doi/helm \
+  --set deployment.doi.config.accountPrefix=10.5072
+helm template doi doi/helm \
+  --namespace doi \
+  --set deployment.doi.config.accountPrefix=10.5072
+```
+
+Install it with environment-specific values:
+
+```
+helm upgrade --install doi doi/helm \
+  --namespace doi \
+  --create-namespace \
+  --values <your-values.yaml>
+```
+
 ## running it with alternative settings
 ```
 docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name doi-alt doi:latest

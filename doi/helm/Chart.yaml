@@ -1,0 +1,13 @@
+apiVersion: v2
+name: doi
+description: "A Helm chart to install the Digital Object Identifier service"
+
+maintainers:
+  - name: Canadian Astronomy Data Centre
+    email: cadc@nrc-cnrc.gc.ca
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.2.0"
