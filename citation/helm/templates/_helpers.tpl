@@ -60,3 +60,62 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Tomcat catalina.properties connector settings for cadc-tomcat server.xml.
+Prefer Ingress, then HTTPRoute, else optional tomcat.connector overrides.
+See: https://github.com/opencadc/docker-base/tree/main/cadc-tomcat
+*/}}
+{{- define "citation.tomcatConnectorProxyName" -}}
+{{- if and .Values.ingress.enabled .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) -}}
+{{- (index .Values.ingress.hosts 0).host -}}
+{{- else if and .Values.httpRoute.enabled .Values.httpRoute.hostnames (gt (len .Values.httpRoute.hostnames) 0) -}}
+{{- index .Values.httpRoute.hostnames 0 -}}
+{{- else -}}
+{{- $conn := index (.Values.tomcat | default dict) "connector" | default dict -}}
+{{- index $conn "proxyName" | default "hostname.example.com" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "citation.tomcatConnectorScheme" -}}
+{{- if and .Values.ingress.enabled .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) -}}
+{{- if and .Values.ingress.tls (gt (len .Values.ingress.tls) 0) -}}https{{- else -}}http{{- end -}}
+{{- else if and .Values.httpRoute.enabled .Values.httpRoute.hostnames (gt (len .Values.httpRoute.hostnames) 0) -}}
+https
+{{- else -}}
+{{- $conn := index (.Values.tomcat | default dict) "connector" | default dict -}}
+{{- index $conn "scheme" | default "https" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "citation.tomcatConnectorProxyPort" -}}
+{{- if and .Values.ingress.enabled .Values.ingress.hosts (gt (len .Values.ingress.hosts) 0) -}}
+{{- if and .Values.ingress.tls (gt (len .Values.ingress.tls) 0) -}}443{{- else -}}80{{- end -}}
+{{- else if and .Values.httpRoute.enabled .Values.httpRoute.hostnames (gt (len .Values.httpRoute.hostnames) 0) -}}
+443
+{{- else -}}
+{{- $conn := index (.Values.tomcat | default dict) "connector" | default dict -}}
+{{- index $conn "proxyPort" | default "443" | toString -}}
+{{- end -}}
+{{- end }}
+
+{{- define "citation.tomcatConnectorSecure" -}}
+{{- $conn := index (.Values.tomcat | default dict) "connector" | default dict -}}
+{{- if hasKey $conn "secure" -}}
+{{- $conn.secure | toString -}}
+{{- else if eq (include "citation.tomcatConnectorScheme" .) "https" -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end }}
+
+{{- define "citation.tomcatConnectorConnectionTimeout" -}}
+{{- $conn := index (.Values.tomcat | default dict) "connector" | default dict -}}
+{{- index $conn "connectionTimeout" | default "20000" | toString -}}
+{{- end }}
+
+{{- define "citation.tomcatConnectorKeepAliveTimeout" -}}
+{{- $conn := index (.Values.tomcat | default dict) "connector" | default dict -}}
+{{- index $conn "keepAliveTimeout" | default "120000" | toString -}}
+{{- end }}
