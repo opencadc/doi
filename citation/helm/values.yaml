@@ -163,6 +163,10 @@ tolerations: []
 
 affinity: {}
 
+# Optional base URL for CANFAR web resources (e.g. https://www.canfar.net).
+# When set, exposed to the container as CANFAR_WEB_HOST.
+canfarWebRoot: ""
+
 # cadc-tomcat Connector settings written to /config/catalina.properties.
 # These map to system properties referenced by server.xml in the base image:
 # https://github.com/opencadc/docker-base/blob/main/cadc-tomcat/src/server.xml
