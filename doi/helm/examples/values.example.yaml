@@ -1,0 +1,58 @@
+# Example values for deploying the DOI service.
+#
+# Copy this file and replace the example values with your environment-specific
+# hostnames, registry IDs, VOSpace URI, DataCite account, and Secret names.
+
+image:
+  repository: bucket.canfar.net/doi
+  tag: "1.2.0"
+
+imagePullSecrets:
+  - name: bucket-registry-auth
+
+application:
+  registryURL: https://doi.example.org/reg
+  gmsID: ivo://example.org/gms
+  oidcURI: https://iam.example.org/
+
+  config:
+    vospaceParentUri: vos://example.org~arc/doi
+    metaDataPrefix: doi
+    groupPrefix: doi
+    landingUrl: https://doi.example.org/doi
+    mdsUrl: https://mds.datacite.org
+    accountPrefix: "10.5072"
+
+  datacite:
+    auth:
+      existingSecret: doi-datacite
+
+  certificates:
+    existingSecret: doi-certs
+
+  cookieSignaturePublicKey:
+    existingSecret:
+      name: doi-cookie-signature-public-key
+      path: RsaSignaturePub.key
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: doi.example.org
+      paths:
+        - path: /doi
+          pathType: Prefix
+
+httpRoute:
+  enabled: false
+  parentRefs:
+    - name: gateway
+      sectionName: http
+  hostnames:
+    - doi.example.org
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /doi
