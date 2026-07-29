@@ -10,27 +10,25 @@ image:
 imagePullSecrets:
   - name: bucket-registry-auth
 
-deployment:
-  hostname: doi.example.org
-  doi:
-    registryURL: https://doi.example.org/reg
-    gmsID: ivo://example.org/gms
-    oidcURI: https://iam.example.org/
+application:
+  registryURL: https://doi.example.org/reg
+  gmsID: ivo://example.org/gms
+  oidcURI: https://iam.example.org/
 
-    config:
-      vospaceParentUri: vos://example.org~arc/doi
-      metaDataPrefix: doi
-      groupPrefix: doi
-      landingUrl: https://doi.example.org/doi
-      mdsUrl: https://mds.datacite.org
-      accountPrefix: "10.5072"
+  config:
+    vospaceParentUri: vos://example.org~arc/doi
+    metaDataPrefix: doi
+    groupPrefix: doi
+    landingUrl: https://doi.example.org/doi
+    mdsUrl: https://mds.datacite.org
+    accountPrefix: "10.5072"
 
-    datacite:
-      auth:
-        existingSecret: doi-datacite
+  datacite:
+    auth:
+      existingSecret: doi-datacite
 
-    certificates:
-      existingSecret: doi-certs
+  certificates:
+    existingSecret: doi-certs
 
 ingress:
   enabled: true
@@ -40,3 +38,16 @@ ingress:
       paths:
         - path: /doi
           pathType: Prefix
+
+httpRoute:
+  enabled: false
+  parentRefs:
+    - name: gateway
+      sectionName: http
+  hostnames:
+    - doi.example.org
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /doi

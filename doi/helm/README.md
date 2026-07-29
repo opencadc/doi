@@ -25,13 +25,12 @@ kubectl create secret generic doi-certs \
 Set:
 
 ```yaml
-deployment:
-  doi:
-    datacite:
-      auth:
-        existingSecret: doi-datacite
-    certificates:
-      existingSecret: doi-certs
+application:
+  datacite:
+    auth:
+      existingSecret: doi-datacite
+  certificates:
+    existingSecret: doi-certs
 ```
 
 ## Example Values
@@ -44,15 +43,15 @@ Render and lint the chart with non-secret placeholder Secret names:
 
 ```shell
 helm lint doi/helm \
-  --set deployment.doi.datacite.auth.existingSecret=doi-datacite \
-  --set deployment.doi.certificates.existingSecret=doi-certs \
-  --set deployment.doi.config.accountPrefix=10.5072
+  --set application.datacite.auth.existingSecret=doi-datacite \
+  --set application.certificates.existingSecret=doi-certs \
+  --set application.config.accountPrefix=10.5072
 
 helm template doi doi/helm \
   --namespace doi \
-  --set deployment.doi.datacite.auth.existingSecret=doi-datacite \
-  --set deployment.doi.certificates.existingSecret=doi-certs \
-  --set deployment.doi.config.accountPrefix=10.5072
+  --set application.datacite.auth.existingSecret=doi-datacite \
+  --set application.certificates.existingSecret=doi-certs \
+  --set application.config.accountPrefix=10.5072
 ```
 
 Dry-run against a cluster:

@@ -33,6 +33,26 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Use the Gateway API hostname when HTTPRoute is enabled; otherwise use the
+first configured Ingress hostname. DOI needs this to construct external URLs.
+*/}}
+{{- define "doi.hostname" -}}
+{{- if .Values.httpRoute.enabled -}}
+{{- $hostnames := .Values.httpRoute.hostnames | default (list) -}}
+{{- if eq (len $hostnames) 0 -}}
+{{- fail "httpRoute.hostnames must contain at least one hostname when httpRoute.enabled is true" -}}
+{{- end -}}
+{{- index $hostnames 0 -}}
+{{- else -}}
+{{- $hosts := .Values.ingress.hosts | default (list) -}}
+{{- if eq (len $hosts) 0 -}}
+{{- fail "ingress.hosts must contain at least one hostname when httpRoute is disabled" -}}
+{{- end -}}
+{{- index (index $hosts 0) "host" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Create the name of the service account to use.
 */}}
 {{- define "doi.serviceAccountName" -}}
@@ -47,12 +67,12 @@ Create the name of the service account to use.
 DataCite credential Secret name.
 */}}
 {{- define "doi.dataciteAuthSecretName" -}}
-{{- required "deployment.doi.datacite.auth.existingSecret is required" .Values.deployment.doi.datacite.auth.existingSecret -}}
+{{- required "application.datacite.auth.existingSecret is required" .Values.application.datacite.auth.existingSecret -}}
 {{- end -}}
 
 {{/*
 PEM certificate Secret name.
 */}}
 {{- define "doi.certificateSecretName" -}}
-{{- required "deployment.doi.certificates.existingSecret is required" .Values.deployment.doi.certificates.existingSecret -}}
+{{- required "application.certificates.existingSecret is required" .Values.application.certificates.existingSecret -}}
 {{- end -}}

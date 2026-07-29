@@ -1,9 +1,9 @@
 {{- $containerPort := .Values.service.port -}}
-{{- $auth := .Values.deployment.doi.datacite.auth | default dict -}}
+{{- $auth := .Values.application.datacite.auth | default dict -}}
 {{- $authKeys := $auth.secretKeys | default dict -}}
 {{- $usernameKey := $authKeys.username | default "username" -}}
 {{- $passwordKey := $authKeys.password | default "password" -}}
-{{- $certs := .Values.deployment.doi.certificates | default dict -}}
+{{- $certs := .Values.application.certificates | default dict -}}
 {{- $certKeys := $certs.secretKeys | default dict -}}
 {{- $doiadminKey := $certKeys.doiadmin | default "doiadmin.pem" -}}
 {{- $cadcproxyKey := $certKeys.cadcproxy | default "cadcproxy.pem" -}}
@@ -32,7 +32,7 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "doi.serviceAccountName" . }}
       automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
-      {{- with .Values.deployment.doi.nodeAffinity }}
+      {{- with .Values.application.nodeAffinity }}
       affinity:
         nodeAffinity:
           {{- toYaml . | nindent 10 }}
@@ -88,15 +88,15 @@ spec:
           name: {{ .Release.Name }}-tomcat
           resources:
             requests:
-              memory: {{ .Values.deployment.doi.resources.requests.memory }}
-              cpu: {{ .Values.deployment.doi.resources.requests.cpu }}
+              memory: {{ .Values.application.resources.requests.memory }}
+              cpu: {{ .Values.application.resources.requests.cpu }}
             limits:
-              memory: {{ .Values.deployment.doi.resources.limits.memory }}
-              cpu: {{ .Values.deployment.doi.resources.limits.cpu }}
+              memory: {{ .Values.application.resources.limits.memory }}
+              cpu: {{ .Values.application.resources.limits.cpu }}
           securityContext:
             {{- $tomcatSC := merge (dict "allowPrivilegeEscalation" false) (.Values.securityContext | default dict) }}
             {{- toYaml $tomcatSC | nindent 12 }}
-          {{- with .Values.deployment.doi.extraEnv }}
+          {{- with .Values.application.extraEnv }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -104,13 +104,13 @@ spec:
             - name: http
               containerPort: {{ $containerPort }}
               protocol: TCP
-          {{- with .Values.deployment.doi.extraPorts }}
+          {{- with .Values.application.extraPorts }}
           {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - mountPath: "/config"
               name: config-merged
-          {{- with .Values.deployment.doi.extraVolumeMounts }}
+          {{- with .Values.application.extraVolumeMounts }}
           {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.livenessProbe }}
@@ -125,7 +125,7 @@ spec:
           startupProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.deployment.extraHosts }}
+      {{- with .Values.application.extraHosts }}
       hostAliases:
       {{- range $extraHost := . }}
         - ip: {{ $extraHost.ip }}
@@ -149,6 +149,6 @@ spec:
             secretName: {{ include "doi.certificateSecretName" . }}
         - name: config-merged
           emptyDir: {}
-      {{- with .Values.deployment.doi.extraVolumes }}
+      {{- with .Values.application.extraVolumes }}
       {{- toYaml . | nindent 8 }}
       {{- end }}

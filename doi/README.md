@@ -125,10 +125,10 @@ Validate the chart before installation:
 
 ```
 helm lint doi/helm \
-  --set deployment.doi.config.accountPrefix=10.5072
+  --set application.config.accountPrefix=10.5072
 helm template doi doi/helm \
   --namespace doi \
-  --set deployment.doi.config.accountPrefix=10.5072
+  --set application.config.accountPrefix=10.5072
 ```
 
 Install it with environment-specific values:
