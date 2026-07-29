@@ -7,6 +7,13 @@
 {{- $certKeys := $certs.secretKeys | default dict -}}
 {{- $doiadminKey := $certKeys.doiadmin | default "doiadmin.pem" -}}
 {{- $cadcproxyKey := $certKeys.cadcproxy | default "cadcproxy.pem" -}}
+{{- $cookieKey := .Values.application.cookieSignaturePublicKey | default dict -}}
+{{- $cookieKeySecret := $cookieKey.existingSecret | default dict -}}
+{{- $cookieKeySecretName := trim (($cookieKeySecret.name | default "") | toString) -}}
+{{- $cookieKeyPath := trim (($cookieKeySecret.path | default "RsaSignaturePub.key") | toString) -}}
+{{- if empty $cookieKeyPath -}}
+{{- $cookieKeyPath = "RsaSignaturePub.key" -}}
+{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -139,8 +146,20 @@ spec:
       {{- end }}
       volumes:
         - name: config-source
+          {{- if $cookieKeySecretName }}
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Release.Name }}-config
+              - secret:
+                  name: {{ $cookieKeySecretName }}
+                  items:
+                    - key: RsaSignaturePub.key
+                      path: {{ $cookieKeyPath | quote }}
+          {{- else }}
           configMap:
             name: {{ .Release.Name }}-config
+          {{- end }}
         - name: datacite-secret
           secret:
             secretName: {{ include "doi.dataciteAuthSecretName" . }}

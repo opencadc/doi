@@ -2,7 +2,7 @@
 
 Digital Object Identifier service Helm chart.
 
-This chart deploys the CADC DOI Tomcat service. Non-secret configuration is rendered into a ConfigMap under `/config`; DataCite credentials and the required `doiadmin.pem` and `cadcproxy.pem` files are read from Kubernetes Secrets and merged into the runtime config by an init container.
+This chart deploys the CADC DOI Tomcat service. Non-secret configuration is rendered into a ConfigMap under `/config`; DataCite credentials and the required `doiadmin.pem` and `cadcproxy.pem` files are read from Kubernetes Secrets and merged into the runtime config by an init container. An optional `RsaSignaturePub.key` can also be projected from a Secret for browser cookie validation.
 
 ## Required Secrets
 
@@ -22,6 +22,13 @@ kubectl create secret generic doi-certs \
   --from-file=cadcproxy.pem=./cadcproxy.pem
 ```
 
+Create the optional Secret containing the cookie-signature public key:
+
+```shell
+kubectl create secret generic doi-cookie-signature-public-key \
+  --from-file=RsaSignaturePub.key=./RsaSignaturePub.key
+```
+
 Set:
 
 ```yaml
@@ -31,6 +38,10 @@ application:
       existingSecret: doi-datacite
   certificates:
     existingSecret: doi-certs
+  cookieSignaturePublicKey:
+    existingSecret:
+      name: doi-cookie-signature-public-key
+      path: RsaSignaturePub.key
 ```
 
 ## Example Values

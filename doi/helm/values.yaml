@@ -84,6 +84,15 @@ application:
       doiadmin: doiadmin.pem
       cadcproxy: cadcproxy.pem
 
+  # Mount an RSA public key for browser cookie validation from a Secret.
+  # The Secret data key must be RsaSignaturePub.key. Leave the Secret name
+  # empty when cookie validation is not required.
+  cookieSignaturePublicKey:
+    existingSecret:
+      name: ""
+      # Filename under /config. Defaults to RsaSignaturePub.key when empty.
+      path: ""
+
   # Optionally set the DEBUG port.
   # extraEnv:
   # - name: CATALINA_OPTS

@@ -30,6 +30,11 @@ application:
   certificates:
     existingSecret: doi-certs
 
+  cookieSignaturePublicKey:
+    existingSecret:
+      name: doi-cookie-signature-public-key
+      path: RsaSignaturePub.key
+
 ingress:
   enabled: true
   className: traefik
