@@ -1,0 +1,158 @@
+{{- $app := .Values.application | default dict -}}
+{{- $nextauthSecret := $app.nextauthSecret | default dict -}}
+{{- $nextauthSecretName := trim (($nextauthSecret.existingSecret | default "") | toString) -}}
+{{- $nextauthSecretKey := $nextauthSecret.secretKey | default "NEXTAUTH_SECRET" -}}
+{{- $nextauthSecretValue := trim (($nextauthSecret.value | default "") | toString) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rafts.fullname" . }}
+  labels:
+    {{- include "rafts.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "rafts.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rafts.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rafts.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            {{- with $app.nextauthUrl }}
+            - name: NEXTAUTH_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if $nextauthSecretName }}
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $nextauthSecretName | quote }}
+                  key: {{ $nextauthSecretKey | quote }}
+            {{- else if $nextauthSecretValue }}
+            - name: NEXTAUTH_SECRET
+              value: {{ $nextauthSecretValue | quote }}
+            {{- end }}
+            {{- with $app.doiBaseUrl }}
+            - name: NEXT_DOI_BASE_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarAcLoginUrl }}
+            - name: NEXT_CANFAR_AC_LOGIN_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarAcSearchUrl }}
+            - name: NEXT_CANFAR_AC_SEARCH_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarAcWhoamiUrl }}
+            - name: NEXT_CANFAR_AC_WHOAMI_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarAcGroupsUrl }}
+            - name: NEXT_CANFAR_AC_GROUPS_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarRaftGroupName }}
+            - name: NEXT_CANFAR_RAFT_GROUP_NAME
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.cookieSsoKey }}
+            - name: NEXT_COOKIE_SSO_KEY
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarCookieDomain }}
+            - name: NEXT_CANFAR_COOKIE_DOMAIN
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarCookieUrl }}
+            - name: NEXT_CANFAR_COOKIE_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.citeUrl }}
+            - name: NEXT_CITE_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.canfarStorageBaseUrl }}
+            - name: NEXT_CANFAR_STORAGE_BASE_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.vaultBaseEndpoint }}
+            - name: NEXT_VAULT_BASE_ENDPOINT
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.validatorUrlXml }}
+            - name: VALIDATOR_URL_XML
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.validatorUrlPsv }}
+            - name: VALIDATOR_URL_PSV
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with $app.validatorUrlMpc }}
+            - name: VALIDATOR_URL_MPC
+              value: {{ . | quote }}
+            {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
