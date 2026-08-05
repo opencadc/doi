@@ -22,7 +22,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <base href="${fn:substring(url, 0, fn:length(url) - fn:length(uri))}${req.contextPath}/" />
+    <base href="${baseURL}${contextPath}/" />
 
     <c:import url="${baseURL}/canfar/includes/_page_top_styles.shtml" />
     <link rel="stylesheet" type="text/css"
