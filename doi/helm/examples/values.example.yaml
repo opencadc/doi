@@ -18,10 +18,11 @@ application:
   config:
     vospaceParentUri: vos://example.org~arc/doi
     metaDataPrefix: doi
-    groupPrefix: doi
     landingUrl: https://doi.example.org/doi
     mdsUrl: https://mds.datacite.org
     accountPrefix: "10.5072"
+    # Optional:
+    # groupPrefix: doi
 
   datacite:
     auth:
