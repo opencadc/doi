@@ -42,6 +42,9 @@ application:
     # VOSpace URI to the parent DOI folder.
     vospaceParentUri: "vos://example.org~arc/doi"
 
+    # Prefix prepended to the DOI name to create the backing GMS group name.
+    groupPrefix: "doi"
+
     # DOI landing page URL.
     landingUrl: "https://example.org/doi"
 
@@ -53,9 +56,6 @@ application:
 
     # Optional prefix prepended to the DOI name for metadata stored in VOSpace.
     metaDataPrefix: ""
-
-    # Optional prefix prepended to the DOI name to create the backing GMS group name.
-    groupPrefix: ""
 
     # Optional DOI identifier prefix.
     doiIdentifierPrefix: ""
