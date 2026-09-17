@@ -116,7 +116,7 @@ public class SearchInlineContentHandler implements InlineContentHandler {
         if (inputStream == null) {
             throw new IOException("The InputStream is closed");
         }
-        if (!contentType.toLowerCase().contains("application/json")) {
+        if (contentType == null || !contentType.toLowerCase().contains("application/json")) {
             throw new InlineContentException("Content-Type must be application/json");
         }
 
