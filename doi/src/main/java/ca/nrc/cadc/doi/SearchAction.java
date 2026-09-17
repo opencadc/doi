@@ -119,7 +119,7 @@ public class SearchAction extends DoiAction {
 
         JSONObject jsonObject = (JSONObject) syncInput.getContent(SearchInlineContentHandler.CONTENT_KEY);
         Set<String> keys = jsonObject.keySet();
-        log.info("jsonObject: " + jsonObject.toString(2));
+        log.debug("jsonObject: " + jsonObject.toString(2));
         validateKeys(keys);
 
         DoiSearchFilter searchFilter = new DoiSearchFilter();
@@ -137,7 +137,7 @@ public class SearchAction extends DoiAction {
             List<String> statusList = jsonArray.toList().stream()
                     .map(Object::toString)
                     .collect(Collectors.toList());
-            log.info("statusList: " + statusList);
+            log.debug("statusList: " + statusList);
             searchFilter.prepareStatusList(statusList);
         }
 
