@@ -76,6 +76,7 @@ import ca.nrc.cadc.doi.io.DoiXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
@@ -84,7 +85,6 @@ import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.AccessControlException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
@@ -304,9 +304,9 @@ public abstract class IntTestBase extends TestBase {
                     log.debug(String.format("RecursiveDeleteNode done, phase: %s  exception: %s",
                             recursiveDeleteNode.getPhase(), recursiveDeleteNode.getException()));
                     log.debug("deleted node: " + nodeUri.getPath());
-                } catch (AccessControlException e) {
-                    log.error("unexpected AccessControlException: ", e);
-                    Assert.fail("unexpected AccessControlException: " + e);
+                } catch (PermissionDeniedException e) {
+                    log.error("unexpected PermissionDeniedException: ", e);
+                    Assert.fail("unexpected PermissionDeniedException: " + e);
                 } catch (Exception e) {
                     log.error("unexpected exception", e);
                     Assert.fail("unexpected exception: " + e);

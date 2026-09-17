@@ -101,7 +101,7 @@ public class SearchAction extends DoiAction {
      * java.lang.IllegalArgumentException : 400
      * ca.nrc.cadc.auth.NotAuthenticatedException : 401
      * java.security.cert.CertificateException : 403 -- should be 401 with a suitable challenge
-     * java.security.AccessControlException : 403
+     * java.security.PermissionDeniedException : 403
      * ca.nrc.cadc.net.ResourceNotFoundException : 404
      * ca.nrc.cadc.net.ResourceAlreadyExistsException : 409
      * ca.nrc.cadc.net.PreconditionFailedException (and subclasses) : 412
