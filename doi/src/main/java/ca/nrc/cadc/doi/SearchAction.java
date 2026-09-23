@@ -101,7 +101,7 @@ public class SearchAction extends DoiAction {
      * java.lang.IllegalArgumentException : 400
      * ca.nrc.cadc.auth.NotAuthenticatedException : 401
      * java.security.cert.CertificateException : 403 -- should be 401 with a suitable challenge
-     * java.security.AccessControlException : 403
+     * java.security.PermissionDeniedException : 403
      * ca.nrc.cadc.net.ResourceNotFoundException : 404
      * ca.nrc.cadc.net.ResourceAlreadyExistsException : 409
      * ca.nrc.cadc.net.PreconditionFailedException (and subclasses) : 412
@@ -119,7 +119,7 @@ public class SearchAction extends DoiAction {
 
         JSONObject jsonObject = (JSONObject) syncInput.getContent(SearchInlineContentHandler.CONTENT_KEY);
         Set<String> keys = jsonObject.keySet();
-        log.info("jsonObject: " + jsonObject.toString(2));
+        log.debug("jsonObject: " + jsonObject.toString(2));
         validateKeys(keys);
 
         DoiSearchFilter searchFilter = new DoiSearchFilter();
@@ -137,7 +137,7 @@ public class SearchAction extends DoiAction {
             List<String> statusList = jsonArray.toList().stream()
                     .map(Object::toString)
                     .collect(Collectors.toList());
-            log.info("statusList: " + statusList);
+            log.debug("statusList: " + statusList);
             searchFilter.prepareStatusList(statusList);
         }
 

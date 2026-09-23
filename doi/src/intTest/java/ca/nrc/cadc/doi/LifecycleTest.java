@@ -83,13 +83,13 @@ import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -257,8 +257,7 @@ public class LifecycleTest extends IntTestBase {
                 VOSURI target1 = getVOSURI(writeFile, doiSettingsType);
                 DataNode dataNode1 = new DataNode(writeName);
                 vosClient.createNode(target1, dataNode1);
-            } catch (
-                    AccessControlException e) {
+            } catch (PermissionDeniedException e) {
                 log.debug("expected exception: " + e.getMessage());
             } catch (Exception e) {
                 Assert.fail("exception writing file: " + e.getMessage());

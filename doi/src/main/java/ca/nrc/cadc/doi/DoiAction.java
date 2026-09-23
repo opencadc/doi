@@ -81,6 +81,7 @@ import ca.nrc.cadc.doi.status.DoiStatusListJsonWriter;
 import ca.nrc.cadc.doi.status.DoiStatusListXmlWriter;
 import ca.nrc.cadc.doi.status.Status;
 import ca.nrc.cadc.net.OutputStreamWrapper;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
@@ -97,7 +98,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.AccessControlException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -218,7 +218,7 @@ public abstract class DoiAction extends RestAction {
         }
         // authorization, for now, is defined as having a set of principals
         if (callingSubject == null || callingSubject.getPrincipals().isEmpty()) {
-            throw new AccessControlException("Unauthorized");
+            throw new PermissionDeniedException("Unauthorized");
         }
     }
 
@@ -402,7 +402,7 @@ public abstract class DoiAction extends RestAction {
             doiStatus.reviewer = doiContainerNode.getPropertyValue(DOI.VOSPACE_DOI_REVIEWER_PROPERTY);
         } else {
             String msg = "Access Denied to " + doiSuffixString + ".";
-            throw new AccessControlException(msg);
+            throw new PermissionDeniedException(msg);
         }
         return doiStatus;
     }
@@ -418,44 +418,54 @@ public abstract class DoiAction extends RestAction {
                 VOSURI vosuri = new VOSURI(vaultResourceID, String.format("%s/%s", parentPath, doiContainerNode.getName()));
                 RecursiveSetNode recursiveSetNode = new RecursiveSetNode(jobURL, doiContainerNode);
                 recursiveSetNode.setSchemaValidation(false);
-                ExecutionPhase phase = recursiveSetNode.getPhase(20); // seconds
-                switch (phase) {
-                    case COMPLETED:
-                    case ARCHIVED:
-                        // job finished, set corresponding status
-                        if (status.equals(Status.LOCKING_DATA.getValue())) {
-                            localStatus = Status.LOCKED_DATA.getValue();
-                        } else if (status.equals(Status.REGISTERING.getValue())) {
-                            localStatus = Status.MINTED.getValue();
-                        }
-                        // delete jobURL property
-                        doiContainerNode.getProperties().remove(new NodeProperty(DOI.VOSPACE_DOI_JOB_URL_PROPERTY));
-                        doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(localStatus);
-                        vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
-                        break;
-                    case ERROR:
-                    case ABORTED:
-                    case UNKNOWN:
-                    case SUSPENDED:
-                    case HELD:
-                        // assume job resulted in error, set corresponding status
-                        if (status.equals(Status.LOCKING_DATA.getValue())) {
-                            localStatus = Status.ERROR_LOCKING_DATA.getValue();
-                        } else if (status.equals(Status.REGISTERING.getValue())) {
-                            localStatus = Status.ERROR_REGISTERING.getValue();
-                        }
-                        // delete jobURL property
-                        doiContainerNode.getProperties().remove(new NodeProperty(DOI.VOSPACE_DOI_JOB_URL_PROPERTY));
-                        doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(localStatus);
-                        vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
-                        break;
-                    case PENDING:
-                    case QUEUED:
-                    case EXECUTING:
-                        // job is in progress, do nothing
-                        break;
-                    default:
-                        // do nothing
+
+                ExecutionPhase phase;
+                try {
+                    phase = recursiveSetNode.getPhase(20); // seconds
+                } catch (RuntimeException ex) {
+                    log.error("error getting recursive lock nodes job status for " + doiContainerNode.getName(), ex);
+                    phase = ExecutionPhase.ERROR;
+                }
+
+                if (phase != null) {
+                    switch (phase) {
+                        case COMPLETED:
+                        case ARCHIVED:
+                            // job finished, set corresponding status
+                            if (status.equals(Status.LOCKING_DATA.getValue())) {
+                                localStatus = Status.LOCKED_DATA.getValue();
+                            } else if (status.equals(Status.REGISTERING.getValue())) {
+                                localStatus = Status.MINTED.getValue();
+                            }
+                            // delete jobURL property
+                            doiContainerNode.getProperties().remove(new NodeProperty(DOI.VOSPACE_DOI_JOB_URL_PROPERTY));
+                            doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(localStatus);
+                            vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+                            break;
+                        case ERROR:
+                        case ABORTED:
+                        case UNKNOWN:
+                        case SUSPENDED:
+                        case HELD:
+                            // assume job resulted in error, set corresponding status
+                            if (status.equals(Status.LOCKING_DATA.getValue())) {
+                                localStatus = Status.ERROR_LOCKING_DATA.getValue();
+                            } else if (status.equals(Status.REGISTERING.getValue())) {
+                                localStatus = Status.ERROR_REGISTERING.getValue();
+                            }
+                            // delete jobURL property
+                            doiContainerNode.getProperties().remove(new NodeProperty(DOI.VOSPACE_DOI_JOB_URL_PROPERTY));
+                            doiContainerNode.getProperty(DOI.VOSPACE_DOI_STATUS_PROPERTY).setValue(localStatus);
+                            vospaceDoiClient.getVOSpaceClient().setNode(vosuri, doiContainerNode);
+                            break;
+                        case PENDING:
+                        case QUEUED:
+                        case EXECUTING:
+                            // job is in progress, do nothing
+                            break;
+                        default:
+                            // do nothing
+                    }
                 }
             }
             return localStatus;
@@ -489,7 +499,7 @@ public abstract class DoiAction extends RestAction {
                     throw new ResourceNotFoundException(message);
                 }
                 if (message.contains("PermissionDenied")) {
-                    throw new java.security.AccessControlException(message);
+                    throw new PermissionDeniedException(message);
                 }
             }
             throw new RuntimeException((clientTransfer.getThrowable().getMessage()));

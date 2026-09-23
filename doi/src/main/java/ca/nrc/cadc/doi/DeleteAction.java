@@ -68,7 +68,7 @@
 package ca.nrc.cadc.doi;
 
 import ca.nrc.cadc.doi.status.Status;
-import java.security.AccessControlException;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -108,7 +108,7 @@ public class DeleteAction extends DoiAction {
             return;
         }
 
-        throw new AccessControlException("Not authorized to Delete this resource.");
+        throw new PermissionDeniedException("Not authorized to Delete this resource.");
     }
 
     private void doActionImpl() throws Exception {
@@ -125,7 +125,7 @@ public class DeleteAction extends DoiAction {
         // check the state of the doi
         String doiStatus = doiContainer.getPropertyValue(DOI.VOSPACE_DOI_STATUS_PROPERTY);
         if (doiStatus != null && doiStatus.equals(Status.MINTED.getValue())) {
-            throw new AccessControlException("Unable to delete " + doiSuffix + "DOI already minted.\n");
+            throw new PermissionDeniedException("Unable to delete " + doiSuffix + "DOI already minted.\n");
         }
         
         // Delete the DOI group. Will be format DOI-<DOINumInputStr>

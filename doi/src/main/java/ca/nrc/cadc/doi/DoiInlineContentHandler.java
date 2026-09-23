@@ -102,27 +102,27 @@ public class DoiInlineContentHandler implements InlineContentHandler {
 
         InlineContentHandler.Content content = new InlineContentHandler.Content();
         content.name = name;
-        log.info("content name: " + name);
-        log.info("content type: " + contentType);
+        log.debug("content name: " + name);
+        log.debug("content type: " + contentType);
         if (META_DATA_KEY.equals(name)) {
             if (contentType.equalsIgnoreCase(XML_CONTENT_TYPE)) {
-                log.info("content type: " + XML_CONTENT_TYPE);
+                log.debug("content type: " + XML_CONTENT_TYPE);
                 try {
                     // read xml file
                     DoiXmlReader reader = new DoiXmlReader(false);
                     content.value = reader.read(inputStream);
-                    log.info("content value: " + content.value);
+                    log.debug("content value: " + content.value);
                 } catch (DoiParsingException dpe) {
                     log.debug(dpe);
                     throw new InlineContentException(dpe.getMessage());
                 }
             } else if (contentType.equalsIgnoreCase(JSON_CONTENT_TYPE)) {
-                log.info("content type: " + JSON_CONTENT_TYPE);
+                log.debug("content type: " + JSON_CONTENT_TYPE);
                 try {
                     // read json file
                     DoiJsonReader reader = new DoiJsonReader();
                     content.value = reader.read(inputStream);
-                    log.info("content value: " + content.value);
+                    log.debug("content value: " + content.value);
                 } catch (DoiParsingException dpe) {
                     log.debug(dpe);
                     throw new InlineContentException(dpe.getMessage());
@@ -131,14 +131,14 @@ public class DoiInlineContentHandler implements InlineContentHandler {
         }
         else if (NODE_DATA_KEY.equals(name)) {
             if (contentType.equalsIgnoreCase(XML_CONTENT_TYPE)) {
-                log.info("content type: " + XML_CONTENT_TYPE);
+                log.debug("content type: " + XML_CONTENT_TYPE);
                 // xml not supported for node property updates
                 throw new IllegalArgumentException("XML node updates are not supported");
             } else if (contentType.equalsIgnoreCase(JSON_CONTENT_TYPE)) {
-                log.info("content type: " + JSON_CONTENT_TYPE);
+                log.debug("content type: " + JSON_CONTENT_TYPE);
                 // read json file
                 content.value = new JSONObject(new JSONTokener(inputStream));
-                log.info("content value: " + content.value);
+                log.debug("content value: " + content.value);
             }
         } else {
             throw new IllegalArgumentException("Unrecognized content type: " + name);

@@ -84,6 +84,7 @@ import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.HttpUpload;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.util.StringUtil;
@@ -94,7 +95,6 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.AccessControlException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -168,7 +168,7 @@ public class PostAction extends DoiAction {
             if (isPublisher && !isRequester) {
                 return;
             } else {
-                throw new AccessControlException("Not authorized to Mint this resource: " + doiSuffix);
+                throw new PermissionDeniedException("Not authorized to Mint this resource: " + doiSuffix);
             }
         }
 
@@ -177,7 +177,7 @@ public class PostAction extends DoiAction {
             return;
         }
 
-        throw new AccessControlException("Not authorized to update this resource: " + doiSuffix);
+        throw new PermissionDeniedException("Not authorized to update this resource: " + doiSuffix);
     }
 
     private String getDataciteCredentials() {
@@ -268,7 +268,6 @@ public class PostAction extends DoiAction {
                 sb.append(allowed.charAt(index));
             }
         }
-        sb.append(".test");
         return sb.toString();
     }
 
@@ -983,7 +982,7 @@ public class PostAction extends DoiAction {
         // check if an exception was thrown
         if (throwable != null) {
             if ((responseCode == 401) || (responseCode == 403)) {
-                throw new AccessControlException(throwable.getMessage());
+                throw new PermissionDeniedException(throwable.getMessage());
             } else {
                 throw new RuntimeException(body + ", " + throwable);
             }

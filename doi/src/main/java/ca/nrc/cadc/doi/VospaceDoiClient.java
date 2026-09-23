@@ -74,12 +74,12 @@ import ca.nrc.cadc.doi.datacite.Resource;
 import ca.nrc.cadc.doi.io.DoiParsingException;
 import ca.nrc.cadc.doi.io.DoiXmlReader;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.AccessControlException;
 import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
@@ -133,7 +133,7 @@ public class VospaceDoiClient {
     }
 
     public ContainerNode getContainerNode(String path)
-            throws NodeNotFoundException, AccessControlException {
+            throws NodeNotFoundException, PermissionDeniedException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -142,7 +142,7 @@ public class VospaceDoiClient {
 
         try {
             requestedNode = (ContainerNode) vosClient.getNode(nodePath);
-        } catch (AccessControlException ef) {
+        } catch (PermissionDeniedException ef) {
             throw ef;
         } catch (ResourceNotFoundException e) {
             throw new NodeNotFoundException(e.getMessage());
@@ -154,7 +154,7 @@ public class VospaceDoiClient {
     }
 
     public DataNode getDataNode(String path)
-            throws NodeNotFoundException, AccessControlException {
+            throws NodeNotFoundException, PermissionDeniedException {
         String nodePath = baseDataURI.getPath();
         if (StringUtil.hasText(path)) {
             nodePath = nodePath + "/" + path;
@@ -163,7 +163,7 @@ public class VospaceDoiClient {
 
         try {
             requestedNode = (DataNode) vosClient.getNode(nodePath);
-        } catch (AccessControlException ef) {
+        } catch (PermissionDeniedException ef) {
             throw ef;
         } catch (ResourceNotFoundException e) {
             throw new NodeNotFoundException(e.getMessage());
@@ -233,7 +233,7 @@ public class VospaceDoiClient {
                 throw new ResourceNotFoundException(message, clientTransfer.getThrowable());
             }
             if (message.contains("PermissionDenied")) {
-                throw new AccessControlException(message);
+                throw new PermissionDeniedException(message);
             }
             throw new RuntimeException(clientTransfer.getThrowable());
         }
@@ -269,8 +269,8 @@ public class VospaceDoiClient {
             RecursiveDeleteNode recursiveDeleteNode = getVOSpaceClient().createRecursiveDelete(nodeUri);
             recursiveDeleteNode.setMonitor(true);
             recursiveDeleteNode.run();
-        } catch (AccessControlException e) {
-            log.error("unexpected AccessControlException: ", e);
+        } catch (PermissionDeniedException e) {
+            log.error("unexpected PermissionDeniedException: ", e);
         } catch (Exception e) {
             log.error("unexpected exception", e);
         }
