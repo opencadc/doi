@@ -268,7 +268,6 @@ public class PostAction extends DoiAction {
                 sb.append(allowed.charAt(index));
             }
         }
-        sb.append(".test");
         return sb.toString();
     }
 
