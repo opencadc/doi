@@ -49,10 +49,9 @@ const nextConfig: NextConfig = {
     localPatterns: [{ pathname: '/**', search: '' }],
   },
 
-  // Original env variables
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH,
+    NEXT_PUBLIC_BASE_PATH: '/rafts',
   },
 
   // Security headers
