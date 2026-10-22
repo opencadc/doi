@@ -76,14 +76,14 @@
 export const CANFAR_STORAGE_BASE_URL =
   process.env.NEXT_CANFAR_STORAGE_BASE_URL || 'https://www.canfar.net/storage/vault/file'
 export const VAULT_BASE_ENDPOINT =
-  process.env.NEXT_VAULT_BASE_ENDPOINT || 'https://ws-cadc.canfar.net/vault/files'
+  process.env.NEXT_VAULT_BASE_ENDPOINT || 'https://cadc-west-01.canfar.net/vault/files'
 // Synctrans endpoint for file uploads (PUT)
 export const VAULT_SYNCTRANS_ENDPOINT =
-  process.env.NEXT_VAULT_SYNCTRANS_ENDPOINT || 'https://ws-cadc.canfar.net/vault/synctrans'
+  process.env.NEXT_VAULT_SYNCTRANS_ENDPOINT || 'https://cadc-west-01.canfar.net/vault/synctrans'
 export const DEFAULT_RAFT_NAME = 'RAFTS.json'
 // VOSpace authority for constructing vos:// URIs
 export const VOSPACE_AUTHORITY = process.env.NEXT_VOSPACE_AUTHORITY || 'cadc.nrc.ca~vault'
-// https://ws-cadc.canfar.net/vault/files/AstroDataCitationDOI/CISTI.CANFAR/25.0047/data/5397631_7799701.pdf
+// https://cadc-west-01.canfar.net/vault/files/AstroDataCitationDOI/CISTI.CANFAR/25.0047/data/5397631_7799701.pdf
 // partial url - configurable for local development (e.g., 'rafts-test')
 export const CITE_ULR = process.env.NEXT_CITE_URL || 'AstroDataCitationDOI/CISTI.CANFAR'
 console.log('[constants] NEXT_CITE_URL resolved to:', CITE_ULR)

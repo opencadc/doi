@@ -102,7 +102,7 @@ rafts/
 |----------|-------------|---------|
 | `NEXTAUTH_URL` | Public URL of the application | `https://rafts.example.com` |
 | `NEXTAUTH_SECRET` | Session encryption secret | `openssl rand -base64 32` |
-| `NEXT_DOI_BASE_URL` | DOI service endpoint | `https://ws-cadc.canfar.net/doi/instances` |
+| `NEXT_DOI_BASE_URL` | DOI service endpoint | `https://ws-uv.canfar.net/doi/instances` |
 | `NEXT_CANFAR_RAFT_GROUP_NAME` | Reviewer group name | `RAFTS-reviewers` |
 
 ### Optional Configuration

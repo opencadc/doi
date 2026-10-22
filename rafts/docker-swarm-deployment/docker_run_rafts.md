@@ -16,14 +16,14 @@ docker run --rm -p 3080:8080 \
 |----------|-------------|---------|
 | `NEXTAUTH_URL` | Public URL where the app is accessible (must include subpath if built with one) | `https://rc-www.canfar.net/rafts` |
 | `NEXTAUTH_SECRET` | Session encryption key. Generate: `openssl rand -base64 32` | `VPDZsUHEBl...` |
-| `NEXT_DOI_BASE_URL` | DOI backend API endpoint | `https://rc-ws-cadc.canfar.net/rdoi/instances` |
-| `NEXT_CANFAR_AC_LOGIN_URL` | CADC login endpoint | `https://ws-cadc.canfar.net/ac/login` |
-| `NEXT_CANFAR_AC_SEARCH_URL` | CADC user search endpoint | `https://ws-cadc.canfar.net/ac/search` |
-| `NEXT_CANFAR_AC_WHOAMI_URL` | CADC identity endpoint | `https://ws-cadc.canfar.net/ac/whoami` |
-| `NEXT_CANFAR_AC_GROUPS_URL` | CADC groups endpoint | `https://ws-cadc.canfar.net/ac/groups` |
+| `NEXT_DOI_BASE_URL` | DOI backend API endpoint | `https://rc-ws-uv.canfar.net/rdoi/instances` |
+| `NEXT_CANFAR_AC_LOGIN_URL` | CADC login endpoint | `https://cadc-west-01.canfar.net/ac/login` |
+| `NEXT_CANFAR_AC_SEARCH_URL` | CADC user search endpoint | `https://cadc-west-01.canfar.net/ac/search` |
+| `NEXT_CANFAR_AC_WHOAMI_URL` | CADC identity endpoint | `https://cadc-west-01.canfar.net/ac/whoami` |
+| `NEXT_CANFAR_AC_GROUPS_URL` | CADC groups endpoint | `https://cadc-west-01.canfar.net/ac/groups` |
 | `NEXT_CANFAR_RAFT_GROUP_NAME` | Reviewer group name in AC service | `RAFTS-reviewers` |
-| `NEXT_CANFAR_STORAGE_BASE_URL` | Vault file storage URL | `https://ws-cadc.canfar.net/vault/files` |
-| `NEXT_VAULT_BASE_ENDPOINT` | Vault files endpoint | `https://ws-cadc.canfar.net/vault/files` |
+| `NEXT_CANFAR_STORAGE_BASE_URL` | Vault file storage URL | `https://cadc-west-01.canfar.net/vault/files` |
+| `NEXT_VAULT_BASE_ENDPOINT` | Vault files endpoint | `https://cadc-west-01.canfar.net/vault/files` |
 | `NEXT_CITE_URL` | Storage path prefix for RAFT data | `DOItest/rafts` |
 | `NEXT_COOKIE_SSO_KEY` | SSO cookie key name | `CADC_SSO` |
 | `NEXT_CANFAR_COOKIE_DOMAIN` | CANFAR cookie domain | `canfar.net` |
@@ -58,14 +58,14 @@ docker run --rm -p 8080:8080 \
   --network rafts-network \
   -e NEXTAUTH_URL=https://rc-www.canfar.net/rafts \
   -e NEXTAUTH_SECRET=$(openssl rand -base64 32) \
-  -e NEXT_DOI_BASE_URL=https://rc-ws-cadc.canfar.net/rdoi/instances \
-  -e NEXT_CANFAR_AC_LOGIN_URL=https://ws-cadc.canfar.net/ac/login \
-  -e NEXT_CANFAR_AC_SEARCH_URL=https://ws-cadc.canfar.net/ac/search \
-  -e NEXT_CANFAR_AC_WHOAMI_URL=https://ws-cadc.canfar.net/ac/whoami \
-  -e NEXT_CANFAR_AC_GROUPS_URL=https://ws-cadc.canfar.net/ac/groups \
+  -e NEXT_DOI_BASE_URL=https://rc-ws-uv.canfar.net/rdoi/instances \
+  -e NEXT_CANFAR_AC_LOGIN_URL=https://cadc-west-01.canfar.net/ac/login \
+  -e NEXT_CANFAR_AC_SEARCH_URL=https://cadc-west-01.canfar.net/ac/search \
+  -e NEXT_CANFAR_AC_WHOAMI_URL=https://cadc-west-01.canfar.net/ac/whoami \
+  -e NEXT_CANFAR_AC_GROUPS_URL=https://cadc-west-01.canfar.net/ac/groups \
   -e NEXT_CANFAR_RAFT_GROUP_NAME=RAFTS-reviewers \
-  -e NEXT_CANFAR_STORAGE_BASE_URL=https://ws-cadc.canfar.net/vault/files \
-  -e NEXT_VAULT_BASE_ENDPOINT=https://ws-cadc.canfar.net/vault/files \
+  -e NEXT_CANFAR_STORAGE_BASE_URL=https://cadc-west-01.canfar.net/vault/files \
+  -e NEXT_VAULT_BASE_ENDPOINT=https://cadc-west-01.canfar.net/vault/files \
   -e NEXT_CITE_URL=DOItest/rafts \
   -e NEXT_COOKIE_SSO_KEY=CADC_SSO \
   -e NEXT_CANFAR_COOKIE_DOMAIN=canfar.net \
