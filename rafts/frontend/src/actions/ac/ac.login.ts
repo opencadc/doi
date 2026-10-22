@@ -73,7 +73,7 @@
  */
 
 // URL from cap.xml for login
-const LOGIN_URL = 'https://ws-cadc.canfar.net/ac/login'
+const LOGIN_URL = 'https://cadc-west-01.canfar.net/ac/login'
 
 export interface LoginData {
   username: string

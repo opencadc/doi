@@ -74,7 +74,7 @@ import {
 
 // VOSpace nodes endpoint for creating/managing nodes
 const VAULT_NODES_ENDPOINT =
-  process.env.NEXT_VAULT_NODES_ENDPOINT || 'https://ws-cadc.canfar.net/vault/nodes'
+  process.env.NEXT_VAULT_NODES_ENDPOINT || 'https://cadc-west-01.canfar.net/vault/nodes'
 import { StorageResponse } from '@/services/types'
 import { getCurrentPath } from '@/services/utils'
 import { TRaftContext } from '@/context/types'
@@ -407,7 +407,7 @@ export const updateRaftMetadata = async (
 }
 
 // Production vault endpoint — minted/public data may live on prod even when DOI service is on RC
-const VAULT_PROD_ENDPOINT = 'https://ws-cadc.canfar.net/vault/files'
+const VAULT_PROD_ENDPOINT = 'https://cadc-west-01.canfar.net/vault/files'
 
 /**
  * Download RAFT.json from a public (minted) data directory without authentication.

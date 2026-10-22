@@ -179,13 +179,13 @@ application:
     secretKey: NEXTAUTH_SECRET
 
   # DOI backend endpoint (NEXT_DOI_BASE_URL).
-  doiBaseUrl: "https://ws-cadc.canfar.net/rdoi/instances"
+  doiBaseUrl: "https://ws-uv.canfar.net/rdoi/instances"
 
   # CADC Access Control endpoints.
-  canfarAcLoginUrl: "https://ws-cadc.canfar.net/ac/login"
-  canfarAcSearchUrl: "https://ws-cadc.canfar.net/ac/search"
-  canfarAcWhoamiUrl: "https://ws-cadc.canfar.net/ac/whoami"
-  canfarAcGroupsUrl: "https://ws-cadc.canfar.net/ac/groups"
+  canfarAcLoginUrl: "https://cadc-west-01.canfar.net/ac/login"
+  canfarAcSearchUrl: "https://cadc-west-01.canfar.net/ac/search"
+  canfarAcWhoamiUrl: "https://cadc-west-01.canfar.net/ac/whoami"
+  canfarAcGroupsUrl: "https://cadc-west-01.canfar.net/ac/groups"
 
   # Reviewer group name in AC (NEXT_CANFAR_RAFT_GROUP_NAME).
   canfarRaftGroupName: "RAFTS-reviewers"
@@ -208,6 +208,6 @@ application:
   vaultSyncTransEndpoint: "https://cadc-west-01.canfar.net/vault/synctrans"
 
   # ADES validator endpoints.
-  validatorUrlXml: "https://ws-cadc.canfar.net/ades/validate-xml"
-  validatorUrlPsv: "https://ws-cadc.canfar.net/ades/validate-psv"
-  validatorUrlMpc: "https://ws-cadc.canfar.net/ades/validate-mpc"
+  validatorUrlXml: "https://ws-uv.canfar.net/ades/validate-xml"
+  validatorUrlPsv: "https://ws-uv.canfar.net/ades/validate-psv"
+  validatorUrlMpc: "https://ws-uv.canfar.net/ades/validate-mpc"

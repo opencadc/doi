@@ -83,7 +83,7 @@ export const VAULT_SYNCTRANS_ENDPOINT =
 export const DEFAULT_RAFT_NAME = 'RAFTS.json'
 // VOSpace authority for constructing vos:// URIs
 export const VOSPACE_AUTHORITY = process.env.NEXT_VOSPACE_AUTHORITY || 'cadc.nrc.ca~vault'
-// https://ws-cadc.canfar.net/vault/files/AstroDataCitationDOI/CISTI.CANFAR/25.0047/data/5397631_7799701.pdf
+// https://cadc-west-01.canfar.net/vault/files/AstroDataCitationDOI/CISTI.CANFAR/25.0047/data/5397631_7799701.pdf
 // partial url - configurable for local development (e.g., 'rafts-test')
 export const CITE_ULR = process.env.NEXT_CITE_URL || 'AstroDataCitationDOI/CISTI.CANFAR'
 console.log('[constants] NEXT_CITE_URL resolved to:', CITE_ULR)

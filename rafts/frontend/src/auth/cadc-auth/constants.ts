@@ -67,13 +67,13 @@
 
 export const AUTH_FAILED = '401'
 export const CANFAR_LOGIN_URL =
-  process.env.NEXT_PUBLIC_CANFAR_LOGIN_URL || 'https://ws-cadc.canfar.net/ac/login'
+  process.env.NEXT_PUBLIC_CANFAR_LOGIN_URL || 'https://cadc-west-01.canfar.net/ac/login'
 export const CANFAR_USERS_URL =
-  process.env.NEXT_PUBLIC_CANFAR_USERS_URL || 'https://ws-cadc.canfar.net/ac/users'
+  process.env.NEXT_PUBLIC_CANFAR_USERS_URL || 'https://cadc-west-01.canfar.net/ac/users'
 export const CANFAR_USER_URL =
-  process.env.NEXT_CANFAR_AC_WHOAMI_URL || 'https://ws-cadc.canfar.net/ac/whoami'
+  process.env.NEXT_CANFAR_AC_WHOAMI_URL || 'https://cadc-west-01.canfar.net/ac/whoami'
 export const CANFAR_USER_GROUPS_URL =
-  process.env.NEXT_CANFAR_AC_GROUPS_URL || 'https://ws-cadc.canfar.net/ac/groups'
+  process.env.NEXT_CANFAR_AC_GROUPS_URL || 'https://cadc-west-01.canfar.net/ac/groups'
 export const CANFAR_RAFT_REVIEWER_GROUP =
   process.env.NEXT_CANFAR_RAFT_GROUP_NAME || 'RAFTS-reviewers'
 export const CANFAR_COOKIE_DOMAIN_URL =

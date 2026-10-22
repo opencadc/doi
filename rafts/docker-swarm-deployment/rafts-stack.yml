@@ -26,16 +26,16 @@ services:
       NEXTAUTH_SECRET: '${NEXTAUTH_SECRET}'
       NEXTAUTH_DEBUG: '${NEXTAUTH_DEBUG:-false}'
       # DOI Service
-      NEXT_DOI_BASE_URL: '${NEXT_DOI_BASE_URL:-https://rc-ws-cadc.canfar.net/rdoi/instances}'
+      NEXT_DOI_BASE_URL: '${NEXT_DOI_BASE_URL:-https://rc-ws-uv.canfar.net/rdoi/instances}'
       # CADC Access Control
-      NEXT_CANFAR_AC_LOGIN_URL: '${NEXT_CANFAR_AC_LOGIN_URL:-https://ws-cadc.canfar.net/ac/login}'
-      NEXT_CANFAR_AC_SEARCH_URL: '${NEXT_CANFAR_AC_SEARCH_URL:-https://ws-cadc.canfar.net/ac/search}'
-      NEXT_CANFAR_AC_WHOAMI_URL: '${NEXT_CANFAR_AC_WHOAMI_URL:-https://ws-cadc.canfar.net/ac/whoami}'
-      NEXT_CANFAR_AC_GROUPS_URL: '${NEXT_CANFAR_AC_GROUPS_URL:-https://ws-cadc.canfar.net/ac/groups}'
+      NEXT_CANFAR_AC_LOGIN_URL: '${NEXT_CANFAR_AC_LOGIN_URL:-https://cadc-west-01.canfar.net/ac/login}'
+      NEXT_CANFAR_AC_SEARCH_URL: '${NEXT_CANFAR_AC_SEARCH_URL:-https://cadc-west-01.canfar.net/ac/search}'
+      NEXT_CANFAR_AC_WHOAMI_URL: '${NEXT_CANFAR_AC_WHOAMI_URL:-https://cadc-west-01.canfar.net/ac/whoami}'
+      NEXT_CANFAR_AC_GROUPS_URL: '${NEXT_CANFAR_AC_GROUPS_URL:-https://cadc-west-01.canfar.net/ac/groups}'
       NEXT_CANFAR_RAFT_GROUP_NAME: '${NEXT_CANFAR_RAFT_GROUP_NAME:-RAFTS-reviewers}'
       # Storage (Vault)
-      NEXT_CANFAR_STORAGE_BASE_URL: '${NEXT_CANFAR_STORAGE_BASE_URL:-https://ws-cadc.canfar.net/vault/files}'
-      NEXT_VAULT_BASE_ENDPOINT: '${NEXT_VAULT_BASE_ENDPOINT:-https://ws-cadc.canfar.net/vault/files}'
+      NEXT_CANFAR_STORAGE_BASE_URL: '${NEXT_CANFAR_STORAGE_BASE_URL:-https://cadc-west-01.canfar.net/vault/files}'
+      NEXT_VAULT_BASE_ENDPOINT: '${NEXT_VAULT_BASE_ENDPOINT:-https://cadc-west-01.canfar.net/vault/files}'
       NEXT_CITE_URL: '${NEXT_CITE_URL:-DOItest/rafts}'
       # SSO Cookies
       NEXT_COOKIE_SSO_KEY: '${NEXT_COOKIE_SSO_KEY:-CADC_SSO}'

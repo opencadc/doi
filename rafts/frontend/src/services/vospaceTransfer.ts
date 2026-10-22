@@ -78,7 +78,7 @@ import { VAULT_SYNCTRANS_ENDPOINT, VOSPACE_AUTHORITY } from '@/services/constant
 
 // VOSpace nodes endpoint for creating/managing nodes
 const VAULT_NODES_ENDPOINT =
-  process.env.NEXT_VAULT_NODES_ENDPOINT || 'https://ws-cadc.canfar.net/vault/nodes'
+  process.env.NEXT_VAULT_NODES_ENDPOINT || 'https://cadc-west-01.canfar.net/vault/nodes'
 
 // ============================================================================
 // XML Builders

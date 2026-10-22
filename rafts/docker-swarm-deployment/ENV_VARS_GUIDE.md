@@ -48,24 +48,24 @@ Set these in the Swarm stack environment or via shell exports before `docker sta
 
 | Variable | Required | Description | Production Value |
 |----------|----------|-------------|-----------------|
-| `NEXT_DOI_BASE_URL` | YES | DOI backend endpoint | `https://rc-ws-cadc.canfar.net/rdoi/instances` |
+| `NEXT_DOI_BASE_URL` | YES | DOI backend endpoint | `https://rc-ws-uv.canfar.net/rdoi/instances` |
 
 ### CADC Access Control (AC) Service
 
 | Variable | Required | Description | Production Value |
 |----------|----------|-------------|-----------------|
-| `NEXT_CANFAR_AC_LOGIN_URL` | YES | CADC login endpoint | `https://ws-cadc.canfar.net/ac/login` |
-| `NEXT_CANFAR_AC_SEARCH_URL` | YES | CADC user search endpoint | `https://ws-cadc.canfar.net/ac/search` |
-| `NEXT_CANFAR_AC_WHOAMI_URL` | YES | CADC identity endpoint | `https://ws-cadc.canfar.net/ac/whoami` |
-| `NEXT_CANFAR_AC_GROUPS_URL` | YES | CADC groups endpoint | `https://ws-cadc.canfar.net/ac/groups` |
+| `NEXT_CANFAR_AC_LOGIN_URL` | YES | CADC login endpoint | `https://cadc-west-01.canfar.net/ac/login` |
+| `NEXT_CANFAR_AC_SEARCH_URL` | YES | CADC user search endpoint | `https://cadc-west-01.canfar.net/ac/search` |
+| `NEXT_CANFAR_AC_WHOAMI_URL` | YES | CADC identity endpoint | `https://cadc-west-01.canfar.net/ac/whoami` |
+| `NEXT_CANFAR_AC_GROUPS_URL` | YES | CADC groups endpoint | `https://cadc-west-01.canfar.net/ac/groups` |
 | `NEXT_CANFAR_RAFT_GROUP_NAME` | YES | Reviewer group name in AC | `RAFTS-reviewers` |
 
 ### Storage (CANFAR Vault/VOSpace)
 
 | Variable | Required | Description | Production Value |
 |----------|----------|-------------|-----------------|
-| `NEXT_CANFAR_STORAGE_BASE_URL` | YES | Vault file storage URL | `https://ws-cadc.canfar.net/vault/files` |
-| `NEXT_VAULT_BASE_ENDPOINT` | YES | Vault files endpoint | `https://ws-cadc.canfar.net/vault/files` |
+| `NEXT_CANFAR_STORAGE_BASE_URL` | YES | Vault file storage URL | `https://cadc-west-01.canfar.net/vault/files` |
+| `NEXT_VAULT_BASE_ENDPOINT` | YES | Vault files endpoint | `https://cadc-west-01.canfar.net/vault/files` |
 | `NEXT_CITE_URL` | YES | Storage path prefix for RAFT data | `DOItest/rafts` |
 
 ### SSO Cookie Configuration
@@ -120,7 +120,7 @@ Option 1 - Export variables then deploy:
 ```bash
 export NEXTAUTH_URL=https://rafts.canfar.net
 export NEXTAUTH_SECRET=$(openssl rand -base64 32)
-export NEXT_DOI_BASE_URL=https://ws-cadc.canfar.net/doi/instances
+export NEXT_DOI_BASE_URL=https://ws-uv.canfar.net/doi/instances
 # ... set all required variables from section B above
 
 docker stack deploy -c rafts-stack.yml rafts
@@ -149,15 +149,15 @@ Option 2 - Use an env file with the deploy script:
 
 ```
 NEXTAUTH_URL=https://rc-www.canfar.net/rafts
-NEXT_DOI_BASE_URL=https://rc-ws-cadc.canfar.net/rdoi/instances
+NEXT_DOI_BASE_URL=https://rc-ws-uv.canfar.net/rdoi/instances
 NEXT_CITE_URL=DOItest/rafts
 ```
 
 ### Production
 
 ```
-NEXTAUTH_URL=https://ws-cadc.canfar.net/rafts
-NEXT_DOI_BASE_URL=https://ws-cadc.canfar.net/doi/instances
+NEXTAUTH_URL=https://www.canfar.net/rafts
+NEXT_DOI_BASE_URL=https://ws-uv.canfar.net/doi/instances
 NEXT_CITE_URL=AstroDataCitationDOI/CISTI.CANFAR
 ```
 
