@@ -202,7 +202,10 @@ application:
   canfarStorageBaseUrl: "https://www.canfar.net/storage/vault/list"
 
   # Vault Storage service base URL (NEXT_VAULT_BASE_ENDPOINT).
-  vaultBaseEndpoint: "https://ws-cadc.canfar.net/vault/files"
+  vaultBaseEndpoint: "https://cadc-west-01.canfar.net/vault/files"
+
+  # Vault synctrans endpoint (NEXT_VAULT_SYNCTRANS_ENDPOINT).
+  vaultSyncTransEndpoint: "https://cadc-west-01.canfar.net/vault/synctrans"
 
   # ADES validator endpoints.
   validatorUrlXml: "https://ws-cadc.canfar.net/ades/validate-xml"

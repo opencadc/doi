@@ -112,6 +112,10 @@ spec:
             - name: NEXT_VAULT_BASE_ENDPOINT
               value: {{ . | quote }}
             {{- end }}
+            {{- with $app.vaultSyncTransEndpoint }}
+            - name: NEXT_VAULT_SYNCTRANS_ENDPOINT
+              value: {{ . | quote }}
+            {{- end }}
             {{- with $app.validatorUrlXml }}
             - name: VALIDATOR_URL_XML
               value: {{ . | quote }}
